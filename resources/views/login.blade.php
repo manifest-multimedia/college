@@ -38,7 +38,7 @@
 
                     <div class="mb-6 row">
 
-                        <a href="http://auth.pnmtc.edu.gh/login?redirect_url={{ urlencode(route('auth.callback')) }}"
+                        <a href="https://auth.pnmtc.edu.gh/login?redirect_url={{ urlencode(route('auth.callback')) }}"
                             class="btn btn-lg btn-primary fs-11 w-100 text-primary-light">
                             Login with AuthCentral
                         </a>
