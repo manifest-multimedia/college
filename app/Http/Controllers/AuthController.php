@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -24,11 +25,28 @@ class AuthController extends Controller
             if ($response->header('Content-Type') === 'application/json') {
                 $authUser = $response->json();
 
-                // Verify authUser is not null
+                // Verify authUser is not null and contains necessary fields
                 if ($authUser !== null && isset($authUser['email']) && isset($authUser['name'])) {
-                    // Proceed with creating or updating the user
-                    // ...
+                    // Set a random password if the user doesn't exist in App1
+                    $password = Hash::make(Str::random(10));
+
+                    // Find or create the user in App1's local database using email
+                    $user = User::updateOrCreate(
+                        ['email' => $authUser['email']],
+                        [
+                            'name' => $authUser['name'],
+                            'password' => $password,
+                            'role' => $authUser['role'] ?? 'user',
+                        ]
+                    );
+
+                    // Log the user into App1
+                    Auth::login($user);
+
+                    // Redirect to the intended page or dashboard if no redirect URI provided
+                    return redirect($request->input('redirect_uri') ?? '/dashboard');
                 } else {
+                    // Redirect back to login if the response format is unexpected
                     return redirect()->route('login')->withErrors(['login' => 'Unexpected response format.']);
                 }
             } else {
@@ -42,6 +60,7 @@ class AuthController extends Controller
                 'body' => $response->body()
             ]);
 
+            // Redirect back to login with an error
             return redirect()->route('login')->withErrors(['login' => 'Authentication failed. Please try again.']);
         }
     }
