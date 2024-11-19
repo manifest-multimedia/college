@@ -31,7 +31,7 @@ class AuthController extends Controller
                 [
                     'name' => $authUser['name'],
                     'password' => $password,
-                    'role' => $authUser['role'] ?? 'student',
+                    'role' => $authUser['role'] ?? 'user',
                 ]
 
             );
