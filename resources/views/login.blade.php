@@ -24,6 +24,15 @@
                     <img class="img-fluid" style="height: 150px;" src="{{ asset('images/pnmtc-logo.png') }}"
                         alt="">
                     <h2 class="mb-4 font-heading fs-7">Sign in to your account</h2>
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                 </div>
                 <form class="px-4 mx-auto mw-sm">
 
