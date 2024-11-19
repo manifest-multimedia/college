@@ -17,7 +17,7 @@ class AuthController extends Controller
         $token = $request->get('token');
 
         // Verify the token with AuthCentral and retrieve user info
-        $response = Http::withToken($token)->get('http://auth.local/api/user');
+        $response = Http::withToken($token)->get('http://auth.pnmtc.edu.gh/api/user');
 
         if ($response->successful()) {
             $authUser = $response->json();
