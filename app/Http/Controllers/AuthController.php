@@ -28,7 +28,12 @@ class AuthController extends Controller
             // Find or create the user in App1's local database using email
             $user = User::updateOrCreate(
                 ['email' => $authUser['email']],
-                ['name' => $authUser['name'], 'password' => $password]
+                [
+                    'name' => $authUser['name'],
+                    'password' => $password,
+                    'role' => $authUser['role'] ?? 'student',
+                ]
+
             );
 
             // Log the user into App1
