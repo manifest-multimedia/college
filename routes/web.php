@@ -13,6 +13,10 @@ Route::get('/generate', function () {
     return redirect()->route('dashboard');
 })->name('generate-student-ids');
 
+Route::get('/sign-up', function () {
+    return redirect('https://auth.pnmtc.edu.gh/register');
+})->name('signup');
+
 Route::get('/', function () {
     // If the user is authenticated, redirect to dashboard
     if (Auth::check()) {

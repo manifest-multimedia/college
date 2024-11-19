@@ -36,7 +36,7 @@
 
                     </div>
                     <p class="mb-0 text-center fs-13 fw-medium text-light-dark"> <span>Don't have an account?</span>
-                        <a class="text-primary link-primary" href="{{ route('register') }}">Sign up</a>
+                        <a class="text-primary link-primary" href="{{ route('singup') }}">Sign up</a>
                     </p>
                 </form>
             </div>
