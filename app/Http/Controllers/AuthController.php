@@ -20,30 +20,29 @@ class AuthController extends Controller
         $response = Http::withToken($token)->get('http://auth.pnmtc.edu.gh/api/user');
 
         if ($response->successful()) {
-            $authUser = $response->json();
+            // Check if the response is JSON
+            if ($response->header('Content-Type') === 'application/json') {
+                $authUser = $response->json();
 
-            // Set a random password if the user doesn't exist in App1
-            $password = Hash::make(Str::random(10));
+                // Verify authUser is not null
+                if ($authUser !== null && isset($authUser['email']) && isset($authUser['name'])) {
+                    // Proceed with creating or updating the user
+                    // ...
+                } else {
+                    return redirect()->route('login')->withErrors(['login' => 'Unexpected response format.']);
+                }
+            } else {
+                // Handle non-JSON response
+                return redirect()->route('login')->withErrors(['login' => 'Invalid response format from authentication server.']);
+            }
+        } else {
+            // Log failure with status code and body
+            Log::error('Failed to authenticate with AuthCentral:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
 
-            // Find or create the user in App1's local database using email
-            $user = User::updateOrCreate(
-                ['email' => $authUser['email']],
-                [
-                    'name' => $authUser['name'],
-                    'password' => $password,
-                    'role' => $authUser['role'] ?? 'user',
-                ]
-
-            );
-
-            // Log the user into App1
-            Auth::login($user);
-
-            // Redirect to the intended page or dashboard if no redirect URI provided
-            return redirect($request->input('redirect_uri') ?? '/dashboard');
+            return redirect()->route('login')->withErrors(['login' => 'Authentication failed. Please try again.']);
         }
-
-        // Redirect back to login with error if authentication fails
-        return redirect()->route('login')->withErrors(['login' => 'Authentication failed. Please try again.']);
     }
 }
