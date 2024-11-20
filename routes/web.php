@@ -11,7 +11,7 @@ Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('a
 // Link to Tutor Accessment Form: 
 Route::get('/tutor-accessment', function () {
     return redirect("https://forms.gle/9EpmJY9fTDT6QaUw9");
-})
+});
 
 Route::get('/generate', function () {
     generateStudentID();
