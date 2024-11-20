@@ -7,40 +7,38 @@ use App\Http\Controllers\ReportGenerator;
 
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 
-
-// Link to Tutor Accessment Form: 
+// Link to Tutor Assessment Form:
 Route::get('/tutor-assessment', function () {
     return redirect("https://forms.gle/9EpmJY9fTDT6QaUw9");
 });
 
+// Generate Student IDs and redirect to dashboard
 Route::get('/generate', function () {
-    generateStudentID();
+    generateStudentID(); // Ensure this function exists
     return redirect()->route('dashboard');
 })->name('generate-student-ids');
 
+// Redirect to Sign-Up page
 Route::get('/sign-up', function () {
     return redirect('https://auth.pnmtc.edu.gh/register');
 })->name('signup');
 
+// Root route handling
 Route::get('/', function () {
-    // If the user is authenticated, redirect to dashboard
-    if (Auth::check()) {
-        return redirect()->route('dashboard');  // Adjust 'dashboard' to your preferred route
-    }
-
-    // Otherwise, show the login page
-    return view('login');
+    return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login'); // Prefer named routes
 })->middleware('guest');
 
+// Authenticated Routes
 Route::middleware([
     'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
+    Route::get('/admin', function () {
         return view('dashboard');
     })->name('dashboard');
 
-
     Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
+
+    Route::get('/exam-center', function () {
+        return view('examcenter');
+    })->name('examcenter');
 });

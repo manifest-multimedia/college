@@ -51,11 +51,11 @@ class AuthController extends Controller
                         ]
                     );
 
-                    // Log the user into App1
+                    //Authenticate User Access
                     Auth::login($user);
 
                     // Redirect to the intended page or dashboard if no redirect URI is provided
-                    return redirect($request->input('redirect_uri') ?? '/dashboard');
+                    return redirect($request->input('redirect_uri') ?? route('dashboard'));
                 } else {
                     // Redirect back to login if the response format is unexpected
                     return redirect()->route('login')->withErrors(['login' => 'Unexpected response format.']);

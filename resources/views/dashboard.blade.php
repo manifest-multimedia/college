@@ -1,4 +1,4 @@
-<x-backend.layout title="Dashboard">
+<x-dashboard.default title="User Dashboard">
 
 
 
@@ -30,4 +30,4 @@
             </div>
         </div>
     </section>
-</x-backend.layout>
+</x-dashboard.default>
