@@ -31,7 +31,7 @@ class AuthController extends Controller
                 ]
             ]);
 
-            dd($response);
+
 
             // Check if the response is successful and in JSON format
             if ($response->getStatusCode() === 200) {
