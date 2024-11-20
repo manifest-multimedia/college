@@ -41,9 +41,11 @@
                 <a href="#" class="btn btn-sm btn-light me-2"
                     data-bs-toggle="modal"
                     data-bs-target="#kt_modal_create_project">Create Exam</a>
-                <a href="#" class="btn btn-sm btn-danger"
-                    data-bs-toggle="modal"
-                    data-bs-target="#kt_modal_create_app">Access Question Bank</a>
+                    {{-- If Current Route is Not questionbank --}}
+                    @if(Route::currentRouteName() != 'questionbank')
+                <a href="{{ route('questionbank') }}" class="btn btn-sm btn-danger"
+                 >Access Question Bank</a>
+                    @endif
             </div>
             
 

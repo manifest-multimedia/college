@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReportGenerator;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeEmail;
 
 Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
@@ -53,10 +54,17 @@ Route::middleware([
     })->name('questionbank');
 
     Route::get('/support-center', function () {
-        return redirect()->away('https://https://desk.zoho.eu/support/pnmtc');
+        return redirect()->away('https://desk.zoho.eu/support/pnmtc');
     })->name('supportcenter');
 
     Route::get('/staffmail', function () {
         return redirect()->away('https://pnmtc.edu.gh/webmail');
     })->name('staffmail');
+
+
+    // Test Email route to send mail to johnson@pnmtc.edu.gh
+    Route::get('/test-email', function () {
+        Mail::to('johsnon@manifestghana.com')->send(new WelcomeEmail);
+        return redirect()->route('dashboard');
+    })->name('test-email');
 });
