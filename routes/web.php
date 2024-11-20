@@ -8,6 +8,11 @@ use App\Http\Controllers\ReportGenerator;
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 
 
+// Link to Tutor Accessment Form: 
+Route::get('/tutor-accessment', function () {
+    return redirect("https://forms.gle/9EpmJY9fTDT6QaUw9");
+})
+
 Route::get('/generate', function () {
     generateStudentID();
     return redirect()->route('dashboard');
