@@ -1,6 +1,19 @@
 <x-dashboard.default title="User Dashboard">
 
-
+   <!--begin::Row-->
+   <div class="mb-5 row g-5 gx-xl-10 mb-xl-10">
+    <!--begin::Col-->
+    <div class="col-xl-8">
+   Welcome to your Dashboard.
+    </div>
+    <!--end::Col-->
+    <!--begin::Col-->
+    {{-- if Route is dashbaord --}}
+    @if (Route::currentRouteName() == 'dashboard')
+   <x-app.support-widget />
+   @endif 
+    <!--end::Col-->
+</div>
 
 
 

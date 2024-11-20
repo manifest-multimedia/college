@@ -7,7 +7,7 @@
             <div class="m-0">
                 <!--begin::Title-->
                 <h1 class="mb-9 text-center text-white fw-semibold lh-lg">Need help with anything?
-                    <span class="fw-bolder">Here we are to Help</span>
+                    <span class="fw-bolder">Request help from IT Manager</span>
                 </h1>
                 <!--end::Title-->
                 <!--begin::Illustration-->

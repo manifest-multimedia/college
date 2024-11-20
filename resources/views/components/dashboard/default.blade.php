@@ -153,20 +153,7 @@
                     <div class="post d-flex flex-column-fluid" id="kt_post">
                         <!--begin::Container-->
                         <div id="kt_content_container" class="container-xxl">
-                            <!--begin::Row-->
-                            <div class="mb-5 row g-5 gx-xl-10 mb-xl-10">
-                                <!--begin::Col-->
-                                <div class="col-xl-8">
-                               Welcome to your Dashboard.
-                                </div>
-                                <!--end::Col-->
-                                <!--begin::Col-->
-                                {{-- if Route is dashbaord --}}
-                                @if (Route::currentRouteName() == 'dashboard')
-                               <x-app.support-widget />
-                               @endif 
-                                <!--end::Col-->
-                            </div>
+                         
                           {{ $slot }}
                            {{-- <x-partials.content-one /> --}}
                         </div>
