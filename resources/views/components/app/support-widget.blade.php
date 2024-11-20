@@ -22,11 +22,14 @@
                 <!--begin::Link-->
                 <a class="btn btn-sm btn-success btn-color-white me-2"
                     data-bs-target="#supportModal"
-                    data-bs-toggle="modal">Request Support</a>
+                    data-bs-toggle="modal"
+                    href="javascript:void(0);">Request Support</a>
                 <!--end::Link-->
                 <!--begin::Link-->
-                {{-- <a class="bg-white bg-opacity-20 btn btn-sm btn-color-white"
-                    href="pages/careers/list.html">Nurse</a> --}}
+                <a class="bg-white bg-opacity-20 btn btn-sm btn-color-white"
+                    data-bs-target="#featureModal"
+                    data-bs-toggle="modal"
+                    href="javascript:void(0);">Feature Request</a>
                 <!--end::Link-->
             </div>
             <!--end::Links-->

@@ -15,7 +15,7 @@ Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('a
 
 // Link to Tutor Assessment Form:
 Route::get('/tutor-assessment', function () {
-    return redirect("https://forms.gle/9EpmJY9fTDT6QaUw9");
+    return redirect()->away("https://forms.gle/9EpmJY9fTDT6QaUw9");
 });
 
 // Generate Student IDs and redirect to dashboard
@@ -47,4 +47,16 @@ Route::middleware([
     Route::get('/exam-center', function () {
         return view('examcenter');
     })->name('examcenter');
+
+    Route::get('/question-bank', function () {
+        return view('questionbank');
+    })->name('questionbank');
+
+    Route::get('/support-center', function () {
+        return redirect()->away('https://support.pnmtc.edu.gh');
+    })->name('supportcenter');
+
+    Route::get('/staffmail', function () {
+        return redirect()->away('https://pnmtc.edu.gh/webmail');
+    })->name('staffmail');
 });

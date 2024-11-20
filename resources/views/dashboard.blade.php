@@ -14,9 +14,9 @@
                 <!--end::Title-->
                 <!--begin::Description-->
                 <div class="text-white opacity-75 fs-6 fs-lg-5 fw-semibold">
-                    Dear {{ Auth::user()->name }},
+                    Dear {{ Auth::user()->name }}, <br />
 
-Boost your productivity with our new, simplified workspace! Quickly find and launch the apps you need from the icons below or the sidebar navigation.</div>
+                    We are excited to announce a more user-friendly experience! Your favorite apps and tools are now just a click away. Use the icons below or the sidebar to effortlessly access what you need. <br />Start exploring now!</div>
                 <!--end::Description-->
             </div>
             <!--end::Content-->
@@ -41,7 +41,7 @@ Boost your productivity with our new, simplified workspace! Quickly find and lau
         </div>
         <div class="col-6">
             <!--begin::Card-->
-            <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('examcenter') }}">
+            <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('questionbank') }}">
                 <i class="mb-5 text-gray-500 ki-duotone ki-gift fs-2tx ms-n1">
                     <span class="path1"></span>
                     <span class="path2"></span>
@@ -56,7 +56,7 @@ Boost your productivity with our new, simplified workspace! Quickly find and lau
       <div class="mt-5 row">
         <div class="col-6">
             <!--begin::Card-->
-            <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('examcenter') }}">
+            <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('staffmail') }}">
                 <i class="mb-5 text-gray-500 ki-duotone ki-gift fs-2tx ms-n1">
                     <span class="path1"></span>
                     <span class="path2"></span>
@@ -69,7 +69,7 @@ Boost your productivity with our new, simplified workspace! Quickly find and lau
         </div>
         <div class="col-6">
             <!--begin::Card-->
-            <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('examcenter') }}">
+            <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('supportcenter') }}">
                 <i class="mb-5 text-gray-500 ki-duotone ki-gift fs-2tx ms-n1">
                     <span class="path1"></span>
                     <span class="path2"></span>
