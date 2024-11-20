@@ -53,7 +53,7 @@ Route::middleware([
     })->name('questionbank');
 
     Route::get('/support-center', function () {
-        return redirect()->away('https://support.pnmtc.edu.gh');
+        return redirect()->away('https://https://desk.zoho.eu/support/pnmtc');
     })->name('supportcenter');
 
     Route::get('/staffmail', function () {
