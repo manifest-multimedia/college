@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class AuthController extends Controller
 {
@@ -17,18 +18,25 @@ class AuthController extends Controller
         // Get the token from AuthCentral
         $token = $request->get('token');
 
-        // Verify the token with AuthCentral and retrieve user info
-        $response = Http::withHeaders([
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ])->withToken($token)->get('http://auth.pnmtc.edu.gh/api/user');
+        // Initialize Guzzle client
+        $client = new Client();
 
-        if ($response->successful()) {
-            // Check if the response is JSON
-            if ($response->header('Content-Type') === 'application/json') {
-                $authUser = $response->json();
+        try {
+            // Send the request to AuthCentral with the Bearer token
+            $response = $client->request('GET', 'https://auth.pnmtc.edu.gh/api/user', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $token,
+                ]
+            ]);
 
-                // Verify authUser is not null and contains necessary fields
+            dd($response);
+
+            // Check if the response is successful and in JSON format
+            if ($response->getStatusCode() === 200) {
+                $authUser = json_decode($response->getBody(), true);
+
                 if ($authUser !== null && isset($authUser['email']) && isset($authUser['name'])) {
                     // Set a random password if the user doesn't exist in App1
                     $password = Hash::make(Str::random(10));
@@ -46,24 +54,25 @@ class AuthController extends Controller
                     // Log the user into App1
                     Auth::login($user);
 
-                    // Redirect to the intended page or dashboard if no redirect URI provided
+                    // Redirect to the intended page or dashboard if no redirect URI is provided
                     return redirect($request->input('redirect_uri') ?? '/dashboard');
                 } else {
                     // Redirect back to login if the response format is unexpected
                     return redirect()->route('login')->withErrors(['login' => 'Unexpected response format.']);
                 }
             } else {
-                // Handle non-JSON response
-                return redirect()->route('login')->withErrors(['login' => 'Invalid response format from authentication server.']);
+                // Handle non-200 responses
+                return redirect()->route('login')->withErrors(['login' => 'Authentication server error.']);
             }
-        } else {
-            // Log failure with status code and body
+        } catch (RequestException $e) {
+            // Log failure with status code and error details
             Log::error('Failed to authenticate with AuthCentral:', [
-                'status' => $response->status(),
-                'body' => $response->body()
+                'status' => $e->getResponse() ? $e->getResponse()->getStatusCode() : 'N/A',
+                'error' => $e->getMessage(),
+                'body' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : 'No response body'
             ]);
 
-            // Redirect back to login with an error
+            // Redirect back to login with an error message
             return redirect()->route('login')->withErrors(['login' => 'Authentication failed. Please try again.']);
         }
     }
