@@ -41,7 +41,22 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
             <!--begin:Menu item-->
-          
+            <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+            data-kt-menu-placement="right-start"
+            class="menu-item menu-lg-down-accordion menu-sub-lg-down-indention">
+            <!--begin:Menu link-->
+            <span class="menu-link">
+                <span class="menu-icon">
+                    <i class="ki-duotone ki-file fs-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </span>
+                <span class="menu-title">Students</span>
+               
+            </span>
+            <!--end:Menu link-->
+        </div>
             <!--end:Menu item-->
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">

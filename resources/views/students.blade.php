@@ -1,5 +1,6 @@
 <x-dashboard.default title="Exam Center" pageActions="examcenter">
 
-    <livewire:exam-center-widget  />
+  
+    @livewire('students-table-widget')
     
 </x-dashboard.default>
