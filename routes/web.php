@@ -5,6 +5,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReportGenerator;
 
+
+Route::get('/mcq', function () {
+    return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
+})->name('mcq');
+
+
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 
 // Link to Tutor Assessment Form:
