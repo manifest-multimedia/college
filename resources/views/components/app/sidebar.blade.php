@@ -40,6 +40,8 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             
             </div>
             <!--end:Menu item-->
+            @can('update')
+                
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
             data-kt-menu-placement="right-start"
@@ -57,6 +59,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </a>
             <!--end:Menu link-->
         </div>
+        @endcan
             <!--end:Menu item-->
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
