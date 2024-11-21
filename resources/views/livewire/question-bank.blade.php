@@ -26,7 +26,7 @@
                 
         @empty
         <div class="py-10 text-center fs-6 fw-bold">
-            <p>You have not created any questions yet.</p>
+            <p>Your Question bank is Empty. Select an Exam to view its questions or create a new one.</p>
             <div class="gap-3 mt-5 d-flex justify-content-center align-items-center">
                 <a class="btn btn-sm btn-success" href="{{ route('questionbank') }}">Create a New Question</a>
                 <span class="mx-2">or</span>
