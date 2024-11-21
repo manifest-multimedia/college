@@ -38,12 +38,11 @@
           @switch($pageActions)
             @case('examcenter')
             <div class="float-end">
-                <a href="#" class="btn btn-sm btn-light me-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#kt_modal_create_project">Create Exam</a>
+                <a href="{{ route('exams.create') }}" class="btn btn-sm btn-success me-2"
+                    >Create Exam</a>
                     {{-- If Current Route is Not questionbank --}}
                     @if(Route::currentRouteName() != 'questionbank')
-                <a href="{{ route('questionbank') }}" class="btn btn-sm btn-danger"
+                <a href="{{ route('questionbank') }}" class="btn btn-sm btn-primary"
                  >Access Question Bank</a>
                     @endif
             </div>

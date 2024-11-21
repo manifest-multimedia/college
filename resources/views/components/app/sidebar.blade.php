@@ -45,7 +45,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             data-kt-menu-placement="right-start"
             class="menu-item menu-lg-down-accordion menu-sub-lg-down-indention">
             <!--begin:Menu link-->
-            <span class="menu-link">
+            <a href={{ route('students') }} class="menu-link">
                 <span class="menu-icon">
                     <i class="ki-duotone ki-file fs-2">
                         <span class="path1"></span>
@@ -54,7 +54,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <span class="menu-title">Students</span>
                
-            </span>
+            </a>
             <!--end:Menu link-->
         </div>
             <!--end:Menu item-->

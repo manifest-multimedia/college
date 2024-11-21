@@ -1,62 +1,71 @@
     <div>
-    {{-- Nothing in the world is as soft and yielding as water. --}}
-    <div class="mt-20 card">
-        <div class="card-header">
-            <h3 class="card-title">Create New Exam</h3>
-        </div>
-    
-        <!-- Begin Exam Creation Form -->
-        <form wire:submit.prevent="createExam">
-            <div class="card-body">
-    
-                <!-- Course Code -->
-                <div class="mb-3">
-                    <label for="course_code" class="form-label">Course Code</label>
-                    <input type="text" id="course_code" class="form-control" wire:model="course_code">
-                    @error('course_code') <!-- Display error message for course_code -->
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </div>
-    
-                <!-- Exam Type -->
-                <div class="mb-3">
-                    <label for="exam_type" class="form-label">Exam Type</label>
-                    <select id="exam_type" class="form-select" wire:model="exam_type">
-                        <option value="mcq">MCQ</option>
-                        <option value="short_answer">Short Answer</option>
-                        <option value="essay">Essay</option>
-                        <option value="mixed">Mixed</option>
-                    </select>
-                    @error('exam_type') <!-- Display error message for exam_type -->
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </div>
-    
-                <!-- Exam Duration -->
-                <div class="mb-3">
-                    <label for="exam_duration" class="form-label">Exam Duration (minutes)</label>
-                    <input type="number" id="exam_duration" class="form-control" wire:model="exam_duration">
-                    @error('exam_duration') <!-- Display error message for exam_duration -->
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </div>
-    
-                <!-- Exam Password (hidden from lecturer) -->
-                <div class="mb-3">
-                    <label for="exam_password" class="form-label">Exam Password</label>
-                    <input type="text" id="exam_password" class="form-control" wire:model="exam_password" readonly>
-                    @error('exam_password') <!-- Display error message for exam_password -->
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </div>
-    
-                <!-- Submit Button -->
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary">Create Exam</button>
+        <div class="mt-20 mb-5 card mb-xl-10">
+            <div class="border-0 card-header">
+                <div class="card-title">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="text-gray-900 card-label fw-bold">Exams</span>
+                    </h3>
                 </div>
             </div>
-        </form>
-        <!-- End Exam Creation Form -->
+            <table class="table align-middle table-row-dashed table-row-gray-300 gs-0 gy-4">
+                <thead>
+                    <tr class="fw-bolder text-muted">
+                        <th class="ps-5 min-w-200px">Exam Name</th>
+                        <th class="min-w-100px">Date Created</th>
+                        <th class="min-w-100px">Duration</th>
+                        <th class="min-w-100px">Class</th>
+                        <th class="min-w-100px">Status</th>
+                        <th class="min-w-100px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($exams as $exam)
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="symbol symbol-50px me-5 ps-5">
+                                    <span class="symbol-label bg-light-danger">
+                                        <span class="text-white fs-6">A</span>
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-start flex-column">
+                                    <a href="#" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->subject }}</a>
+                                    <span class="text-muted fw-semibold d-block fs-7">{{ $exam->subject }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="#" class="mb-1 text-dark fw-bold text-hover-primary d-block fs-6">{{ $exam->subject }}</a>
+                            <span class="text-muted fw-semibold d-block fs-7">{{ $exam->subject }}</span>
+                        </td>
+                        <td>    
+                            <a href="#" class="mb-1 text-dark fw-bold text-hover-primary d-block fs-6">{{ $exam->subject }}</a>
+                            <span class="text-muted fw-semibold d-block fs-7">{{ $exam->subject }}</span>
+                        </td>
+                        <td>
+                            <a href="#" class="mb-1 text-dark fw-bold text-hover-primary d-block fs-6">{{ $exam->subject }}</a>
+                            <span class="text-muted fw-semibold d-block fs-7">{{ $exam->subject }}</span>
+                        </td>
+                        <td>
+                            <a href="#" class="mb-1 text-dark fw-bold text-hover-primary d-block fs-6">{{ $exam->subject }}</a>
+                            <span class="text-muted fw-semibold d-block fs-7">{{ $exam->subject }}</span>
+                        </td>
+                        <td class="">
+                            <a href="#" class="btn btn-sm btn-light btn-active-light-primary">Access Question Bank</a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="pt-10 pb-10fs-6 fw-bold">You have not created any exams yet.<br />
+                                <a class="mt-5 btn btn-sm btn-success" href="{{ route('exams.create') }}">Create a New Exam</a>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+                
+                </tbody>
+            </table>
+        </div>
     </div>
     
-</div>

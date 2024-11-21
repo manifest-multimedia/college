@@ -39,15 +39,24 @@ Route::get('/', function () {
 Route::middleware([
     'auth:sanctum',
 ])->group(function () {
-    Route::get('/admin', function () {
+    Route::get('/portal', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    Route::get('/students', function () {
+        return view('students');
+    })->name('students');
+
 
     Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
     Route::get('/exam-center', function () {
         return view('examcenter');
     })->name('examcenter');
+
+    Route::get('/create-exam', function () {
+        return view('exams.create');
+    })->name('exams.create');
 
     Route::get('/question-bank', function () {
         return view('questionbank');
