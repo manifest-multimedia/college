@@ -27,7 +27,7 @@ Route::get('/generate', function () {
 
 // Redirect to Sign-Up page
 Route::get('/sign-up', function () {
-    return redirect('https://auth.pnmtc.edu.gh/register');
+    return redirect('https://auth.pnmtc.edu.gh/sign-up');
 })->name('signup');
 
 // Root route handling
