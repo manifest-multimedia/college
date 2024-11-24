@@ -2,6 +2,7 @@
 
 use App\Models\Student;
 
+use Illuminate\Support\Str;
 
 
 if (!function_exists('getAge')) {
@@ -11,6 +12,16 @@ if (!function_exists('getAge')) {
         return $age;
     }
 }
+
+
+// GenerateSlugFunction 
+if (!function_exists('generateSlug')) {
+    function generateSlug($string)
+    {
+        return Str::slug($string);
+    }
+}
+
 
 if (!function_exists('getTitle')) {
     function getTitle($gender = null, $age = null, $marital_status = null)

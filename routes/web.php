@@ -47,6 +47,9 @@ Route::middleware([
         return view('students');
     })->name('students');
 
+    Route::get('/course-import', function () {
+        return view('courses.import');
+    })->name('courses.import');
 
     Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
