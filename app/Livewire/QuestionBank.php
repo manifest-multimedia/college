@@ -23,7 +23,7 @@ class QuestionBank extends Component
     public $bulk_file;
     public $uploadPath;
     protected $rules = [
-        'questions.*.question_text' => 'required|string|max:255',
+        'questions.*.question_text' => 'required|string',
         'questions.*.options.*.option_text' => 'required|string|max:255',
         'questions.*.options.*.is_correct' => 'required|boolean',
         'questions.*.marks' => 'integer|min:1',
