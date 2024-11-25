@@ -34,19 +34,19 @@ class QuestionImport implements ToModel, WithHeadingRow
         $options = [
             [
                 'option_text' => $this->replaceBooleanValue($row['option_one']),
-                'is_correct' => ($row['correct_option'] === 'option_one'),
+                'is_correct' => ($row['correct_option'] === 'option_one' || $row['correct_option'] === 'option one'),
             ],
             [
                 'option_text' => $this->replaceBooleanValue($row['option_two']),
-                'is_correct' => ($row['correct_option'] === 'option_two'),
+                'is_correct' => ($row['correct_option'] === 'option_two' || $row['correct_option'] === 'option two'),
             ],
             [
                 'option_text' => $this->replaceBooleanValue($row['option_three']),
-                'is_correct' => ($row['correct_option'] === 'option_three'),
+                'is_correct' => ($row['correct_option'] === 'option_three' || $row['correct_option'] === 'option three'),
             ],
             [
                 'option_text' => $this->replaceBooleanValue($row['option_four']),
-                'is_correct' => ($row['correct_option'] === 'option_four'),
+                'is_correct' => ($row['correct_option'] === 'option_four' || $row['correct_option'] === 'option four'),
             ],
         ];
         foreach ($options as $option) {
