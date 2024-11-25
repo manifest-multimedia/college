@@ -158,28 +158,7 @@ class QuestionBank extends Component
     }
 
 
-    /**
-     * Validate and store the uploaded file.
-     *
-     * @return string|null Full storage path of the file or null on failure.
-     */
-    private function validateAndStoreFile(): ?string
-    {
-        try {
-            // Validate and store the file in the 'datasets' directory
-            $path = $this->bulk_file->store('datasets', 'public');
 
-            // Ensure the file exists
-            if (!Storage::exists($path)) {
-                return null;
-            }
-
-            return $path;
-        } catch (\Throwable $e) {
-            Log::error('Error during file upload', ['error' => $e->getMessage()]);
-            return null;
-        }
-    }
 
     /**
      * Determine the Reader Type based on the file extension.
