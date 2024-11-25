@@ -138,33 +138,40 @@ class QuestionBank extends Component
 
     public function importQuestions()
     {
-        $this->validate(['bulk_file' => 'required|file']);
+        $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv,ods,tsv']);
 
-        // Store the uploaded file temporarily
-        if ($this->bulk_file) {
-            $filePath = $this->bulk_file->storeAs('temporary', $this->bulk_file->getClientOriginalName());
-            $fullPath = Storage::path($filePath);
-            // Determine the file type based on the extension
-            $extension = $this->bulk_file->getClientOriginalExtension();
-            $readerType = $this->getReaderType($extension);
+        // Store the uploaded file in the 'public/datasets' directory
+        $filePath = $this->bulk_file->storeAs('public/datasets', $this->bulk_file->getClientOriginalName());
+        $publicPath = Storage::path($filePath); // Get the full system path to the stored file
 
-            if (!$readerType) {
-                session()->flash('error', 'Unsupported file type.');
-                return;
-            }
+        Log::info('File stored for import:', ['path' => $publicPath]);
 
-            // Use the determined ReaderType
+        // Determine the file type based on its extension
+        $extension = $this->bulk_file->getClientOriginalExtension();
+        $readerType = $this->getReaderType($extension);
+
+        if (!$readerType) {
+            session()->flash('error', 'Unsupported file type.');
+            return;
+        }
+
+        try {
+            // Import the questions using Maatwebsite Excel
             Excel::import(
                 new QuestionImport($this->exam_id),
-                $fullPath,
+                $publicPath,
                 null,
                 $readerType
             );
 
             session()->flash('message', 'Questions imported successfully.');
             $this->loadQuestions();
+        } catch (\Exception $e) {
+            Log::error('Error during import:', ['message' => $e->getMessage()]);
+            session()->flash('error', 'An error occurred during the import process. Please check the file and try again.');
         }
     }
+
 
     /**
      * Determine the Reader Type based on file extension.
