@@ -27,6 +27,11 @@ class ExamCenterWidget extends Component
         $exams = Exam::where('user_id', Auth::user()->id)->whereNull('slug')->with('course')->get();
 
         $this->generateSlug($exams);
+
+        // Check for exams without passwords
+        $nopass = Exam::where('user_id', Auth::user()->id)->whereNull('password')->get();
+
+        $this->generatePassword($nopass);
     }
 
     // Handle form submission to create the exam
@@ -73,6 +78,16 @@ class ExamCenterWidget extends Component
             }
 
             $exam->update(['slug' => $slug]);
+        }
+    }
+    public function generatePassword($exams)
+    {
+        foreach ($exams as $exam) {
+            $password = Str::random(8);
+            while (Exam::where('password', $password)->exists()) {
+                $password = Str::random(8);
+            }
+            $exam->update(['password' => $password]);
         }
     }
 }

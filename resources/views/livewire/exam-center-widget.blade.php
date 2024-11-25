@@ -57,16 +57,7 @@
               </div>
               
             <table class="table align-middle table-row-dashed table-row-gray-300 gs-0 gy-4">
-                <thead>
-                    <tr class="fw-bolder text-muted">
-                        <th class="ps-5 min-w-200px">Exam Name</th>
-                        <th class="min-w-100px">Date Created</th>
-                        <th class="min-w-100px">Duration</th>
-                        <th class="min-w-100px">Class</th>
-                        <th class="min-w-100px">Status</th>
-                        <th class="min-w-100px">Actions</th>
-                    </tr>
-                </thead>
+                @include('components.partials.exam-table-header')
                 <tbody>
                     @forelse ($exams as $exam)
                   @include('components.partials.exam-table-row', ['exam' => $exam])

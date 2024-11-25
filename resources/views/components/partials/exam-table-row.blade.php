@@ -24,11 +24,17 @@
                             
                             <span class="text-muted fw-semibold d-block fs-7">{{ $exam->course->collegeClass->name . ' - ' . $exam->course->year->name . ' (' . $exam->course->semester->name . ')' }}</span>
                         </td>
+                        @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
+                        <td>
+                            
+                            <span class="text-muted fw-semibold d-block fs-7">{{ $exam->password }}</span>
+                        </td>
+                        @endif
                         <td>
                             
                             <span class="text-muted fw-semibold d-block fs-7">{{ ucfirst($exam->status) }}</span>
                         </td>
-                        <td class="">
-                            <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Access Question Bank</a>
+                        <td class="px-3">
+                            <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Question Bank</a>
                         </td>
                     </tr>
