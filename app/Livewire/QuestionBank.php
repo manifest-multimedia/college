@@ -141,28 +141,29 @@ class QuestionBank extends Component
         $this->validate(['bulk_file' => 'required|file']);
 
         // Store the uploaded file temporarily
-        $filePath = $this->bulk_file->storeAs('temporary', $this->bulk_file->getClientOriginalName());
-        $fullPath = storage_path('app/' . $filePath);
+        if ($this->bulk_file) {
+            $filePath = $this->bulk_file->storeAs('temporary', $this->bulk_file->getClientOriginalName());
+            $fullPath = storage_path('app/' . $filePath);
+            // Determine the file type based on the extension
+            $extension = $this->bulk_file->getClientOriginalExtension();
+            $readerType = $this->getReaderType($extension);
 
-        // Determine the file type based on the extension
-        $extension = $this->bulk_file->getClientOriginalExtension();
-        $readerType = $this->getReaderType($extension);
+            if (!$readerType) {
+                session()->flash('error', 'Unsupported file type.');
+                return;
+            }
 
-        if (!$readerType) {
-            session()->flash('error', 'Unsupported file type.');
-            return;
+            // Use the determined ReaderType
+            Excel::import(
+                new QuestionImport($this->exam_id),
+                $fullPath,
+                null,
+                $readerType
+            );
+
+            session()->flash('message', 'Questions imported successfully.');
+            $this->loadQuestions();
         }
-
-        // Use the determined ReaderType
-        Excel::import(
-            new QuestionImport($this->exam_id),
-            $fullPath,
-            null,
-            $readerType
-        );
-
-        session()->flash('message', 'Questions imported successfully.');
-        $this->loadQuestions();
     }
 
     /**
