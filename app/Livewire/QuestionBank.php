@@ -130,37 +130,37 @@ class QuestionBank extends Component
         $this->loadQuestions();
     }
 
-    // public function importQuestions()
-    // {
-    //     $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
-
-    //     Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
-
-    //     Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->getRealPath());
-
-    //     session()->flash('message', 'Questions imported successfully.');
-    //     $this->loadQuestions();
-    // }
-
     public function importQuestions()
     {
         $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
 
-        // Store the file and get its path
-        $filePath = $this->bulk_file->store('public/files');
-
         Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
-        Log::info('Stored File Path:', ['path' => $filePath]);
 
-        // Get the full path and import the file
-        $fullPath = Storage::path($filePath);
-        Log::info('Full File Path for Import:', ['full_path' => $fullPath]);
-
-        Excel::import(new QuestionImport($this->exam_id), $fullPath);
+        Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->getRealPath());
 
         session()->flash('message', 'Questions imported successfully.');
         $this->loadQuestions();
     }
+
+    // public function importQuestions()
+    // {
+    //     $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
+
+    //     // Store the file and get its path
+    //     $filePath = $this->bulk_file->storeAs('public/files', $this->bulk_file->getClientOriginalName());
+
+    //     Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
+    //     Log::info('Stored File Path:', ['path' => $filePath]);
+
+    //     // Get the full path and import the file
+    //     $fullPath = Storage::path($filePath);
+    //     Log::info('Full File Path for Import:', ['full_path' => $fullPath]);
+
+    //     Excel::import(new QuestionImport($this->exam_id), $fullPath);
+
+    //     session()->flash('message', 'Questions imported successfully.');
+    //     $this->loadQuestions();
+    // }
 
 
 
