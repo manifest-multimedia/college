@@ -132,7 +132,8 @@ class QuestionBank extends Component
 
     public function importQuestions()
     {
-        $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
+        // $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
+        $this->validate(['bulk_file' => 'required']);
 
         Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
 
