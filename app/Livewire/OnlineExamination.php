@@ -17,7 +17,7 @@ class OnlineExamination extends Component
         if ($exam) {
 
             $examQuestions = $exam->questions()->get();
-            // dd($examQuestions);
+
 
             $questions = $examQuestions->map(function ($question) {
                 return [

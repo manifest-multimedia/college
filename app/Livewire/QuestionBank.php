@@ -128,7 +128,10 @@ class QuestionBank extends Component
     public function importQuestions()
     {
         $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
-        Excel::import(new QuestionImport($this->exam_id), $this->bulk_file);
+        // Excel::import(new QuestionImport($this->exam_id), $this->bulk_file);
+
+        Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->getRealPath());
+
         session()->flash('message', 'Questions imported successfully.');
         $this->loadQuestions();
     }
