@@ -99,7 +99,7 @@
     
                 <!-- Exam Password (hidden from lecturer) -->
                 <div class="mb-3">
-                    <label for="exam_password" class="form-label">Exam Password</label>
+                    {{-- <label for="exam_password" class="form-label">Exam Password</label> --}}
                     <input type="hidden" id="exam_password" class="form-control" wire:model="exam_password" readonly>
                     @error('exam_password') <!-- Display error message for exam_password -->
                         <span class="text-danger">{{ $message }}</span>
