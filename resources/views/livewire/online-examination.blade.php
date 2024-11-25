@@ -56,7 +56,8 @@
     <!-- Main Exam Content -->
     <!-- Exam Header -->
     <div class="mb-4 text-center">
-      <h2>Course Title: Advanced Mathematics</h2>
+      <h2> Course Title: {{ $exam->course->name }}</h2>
+      <p>Paper Duration: {{ $exam->duration }} minutes</p>
       <p class="timer" id="countdown">Time Left: 00:30:00</p>
     </div>
     <div class="col-md-9">
@@ -96,18 +97,22 @@
     </div>
   </div>
   <!-- Modal for Navigation Warning -->
-<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true"
+
+
+data-bs-backdrop="static"
+>
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="warningModalLabel">Warning</h5>
+          <h5 class="modal-title text-danger" id="warningModalLabel" >Warning  <span id="strikeCount" class="text-danger"></span></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           You attempted navigating away from the exam screen. You'll be locked out of the exam after 3 attempts.
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
         </div>
       </div>
     </div>
@@ -139,80 +144,64 @@
   startCountdown();
 
   // Sample questions data (you could have more than 100+ questions)
-  const questionsData = Array.from({ length: 100 }, (_, i) => ({
-    questionNumber: i + 1,
-    text: `What is the answer to question ${i + 1}?`,
-    options: ["Option A", "Option B", "Option C", "Option D"],
-    marks: Math.floor(Math.random() * 5) + 1,
-    answered: false
-  }));
+//   const questionsData = Array.from({ length: 100 }, (_, i) => ({
+//     questionNumber: i + 1,
+//     text: `What is the answer to question ${i + 1}?`,
+//     options: ["Option A", "Option B", "Option C", "Option D"],
+//     marks: Math.floor(Math.random() * 5) + 1,
+//     answered: false
+//   }));
+
+   // Initialize questionsData with data from Livewire component
+   const questionsData = @json($questions);
 
   // Variables for pagination
   const questionsPerPage = 15;
   let currentPage = 0;
 
-  // Function to render questions
   function renderQuestions() {
-    const questionsContainer = document.getElementById('questionsContainer');
-    const questionsOverview = document.getElementById('questionsOverview');
-    const answeredCount = document.getElementById('answeredCount');
-    const leftCount = document.getElementById('leftCount');
+            const questionsContainer = document.getElementById('questionsContainer');
+            const questionsOverview = document.getElementById('questionsOverview');
+            const answeredCount = document.getElementById('answeredCount');
+            const leftCount = document.getElementById('leftCount');
 
-    questionsContainer.innerHTML = ""; // Clear previous questions
-    questionsOverview.innerHTML = ""; // Clear previous question status
+            questionsContainer.innerHTML = ""; // Clear previous questions
+            questionsOverview.innerHTML = ""; // Clear previous question status
 
-    const start = currentPage * questionsPerPage;
-    const end = start + questionsPerPage;
-    const questionsToDisplay = questionsData.slice(start, end);
+            const start = currentPage * questionsPerPage;
+            const end = start + questionsPerPage;
+            const questionsToDisplay = questionsData.slice(start, end);
 
-    questionsToDisplay.forEach((q, idx) => {
-      // Render question in main content
-      const questionDiv = document.createElement('div');
-      questionDiv.className = "question-container";
-      questionDiv.innerHTML = `
-        <h5>Question ${q.questionNumber} <small class="text-muted">(${q.marks} Marks)</small></h5>
-        <p class="lead">${q.text}</p>
-        ${q.options.map((option, optionIdx) => `
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="answer${q.questionNumber}" id="q${q.questionNumber}option${optionIdx + 1}" value="${option}" onchange="markAnswered(${q.questionNumber})">
-            <label class="form-check-label" for="q${q.questionNumber}option${optionIdx + 1}">${option}</label>
-          </div>
-        `).join('')}
-      `;
-      questionsContainer.appendChild(questionDiv);
+            console.log(questionsData);
 
-      // Render question number in sidebar (answered status)
-      const statusClass = q.answered ? 'answered' : 'not-answered';
-      const questionBox = document.createElement('div');
-      questionBox.className = statusClass;
-      questionBox.textContent = q.questionNumber;
-      questionBox.onclick = () => scrollToQuestion(q.questionNumber);
-      questionsOverview.appendChild(questionBox);
-    });
+            questionsToDisplay.forEach((q, idx) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = "question-container";
+                questionDiv.innerHTML = `
+                    <h5>Question ${idx + 1} <small class="text-muted">[${q.marks} Mark(s)]</small></h5>
+                    <p class="lead">${q.question}</p>
+                    ${q.options.map((option, optionIdx) => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="answer${q.id}" id="q${q.id}option${optionIdx + 1}" value="${option}" onchange="markAnswered(${q.id})">
+                            <label class="form-check-label" for="q${q.id}option${optionIdx + 1}">${option.option_text}</label>
+                        </div>
+                    `).join('')}
+                `;
+                questionsContainer.appendChild(questionDiv);
 
-    // Update answered/left counts
-    const answeredQuestions = questionsData.filter(q => q.answered).length;
-    answeredCount.textContent = answeredQuestions;
-    leftCount.textContent = questionsData.length - answeredQuestions;
+                const statusClass = q.answered ? 'answered' : 'not-answered';
+                const questionBox = document.createElement('div');
+                questionBox.className = statusClass;
+                questionBox.textContent = idx + 1;
+                questionBox.onclick = () => scrollToQuestion(q.id);
+                questionsOverview.appendChild(questionBox);
+            });
+            answeredCount.textContent = questionsData.filter(q => q.answered).length;
+            leftCount.textContent = questionsData.length - answeredCount.textContent;
+        }
 
-    // Show the submit button only if it's the last page of questions
-    const isLastPage = end >= questionsData.length;
-    const submitButton = document.getElementById('submitBtn');
-    if (isLastPage && !submitButton) {
-      const submitBtn = document.createElement('button');
-      submitBtn.type = 'submit';
-      submitBtn.className = 'btn btn-success mt-4';
-      submitBtn.id = 'submitBtn';
-      submitBtn.innerText = 'Submit Exam';
-      questionsContainer.appendChild(submitBtn);
-    } else if (!isLastPage && submitButton) {
-      submitButton.remove();
-    }
+        renderQuestions(); // Call function to render questions initially
 
-    // Update pagination button states
-    document.getElementById('prevBtn').disabled = currentPage === 0;
-    document.getElementById('nextBtn').disabled = isLastPage;
-  }
 
   // Function to mark a question as answered
   function markAnswered(questionNumber) {
@@ -256,6 +245,8 @@
 let attemptCount = 0;
 const maxAttempts = 3;
 
+
+
 // Modal reference
 const warningModal = new bootstrap.Modal(document.getElementById('warningModal'));
 
@@ -266,14 +257,23 @@ function showWarning() {
 
 // Function to handle strike count and warning display
 function handleStrike() {
-  if (attemptCount < maxAttempts - 1) {
+     if (attemptCount < maxAttempts - 1) {
     attemptCount++;
+   
     showWarning();
+    const strikeCount = document.getElementById('strikeCount');
+      if (strikeCount) {
+        strikeCount.textContent = `You have ${maxAttempts - attemptCount} attempts left`;
+      }
+
   } else {
     alert('You have attempted to navigate away from the exam too many times. You have been disqualified from this exam.');
     // Auto-submit logic can go here
   }
 }
+
+
+
 
 // Set a flag in sessionStorage to detect reloads
 sessionStorage.setItem('pageReloaded', 'true');
@@ -306,7 +306,12 @@ window.addEventListener('beforeunload', function (event) {
   } else {
     // Count the attempt if it's not a page reload
     if (attemptCount < maxAttempts) {
+      
+        
       handleStrike();
+
+    //   show count on id with stirkeCount
+     
       event.preventDefault(); // Prevent navigation
       event.returnValue = ''; // This is required for Chrome
     }
