@@ -60,7 +60,8 @@
                 <div class="p-10 mb-4 rounded border bg-light">
                     <div class="mb-3">
                         <label for="question{{ $index }}" class="form-label">Question Text:</label>
-                        <input type="text" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question">
+                        {{-- <input type="text" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question"> --}}
+                        <textarea rows="7" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question"></textarea>
                     </div>
 
                     <div class="row">
