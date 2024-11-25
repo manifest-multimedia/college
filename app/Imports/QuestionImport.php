@@ -27,7 +27,7 @@ class QuestionImport implements ToModel, WithHeadingRow
             'exam_id' => $this->exam_id,
             'question_text' => $row['question'],
             'exam_section' => $row['exam_section'] ?? '',
-            'marks' => $row['marks'] ?? 1,
+            'mark' => $row['marks'] ?? 1,
             'explanation' => $row['explanation'] ?? '',
         ]);
 
