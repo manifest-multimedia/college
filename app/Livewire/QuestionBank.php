@@ -143,7 +143,7 @@ class QuestionBank extends Component
         // Store the uploaded file temporarily
         if ($this->bulk_file) {
             $filePath = $this->bulk_file->storeAs('temporary', $this->bulk_file->getClientOriginalName());
-            $fullPath = storage_path('app/' . $filePath);
+            $fullPath = Storage::path($filePath);
             // Determine the file type based on the extension
             $extension = $this->bulk_file->getClientOriginalExtension();
             $readerType = $this->getReaderType($extension);

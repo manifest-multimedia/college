@@ -3,6 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\Exam;
+use App\Models\ExamSession;
+
 use Livewire\Component;
 
 class OnlineExamination extends Component
@@ -13,7 +15,7 @@ class OnlineExamination extends Component
     {
         $questions = [];
         $exam = Exam::with('course')
-            ->where('password', "eN8gLhkd")->first();
+            ->where('password', "vD0KJYjY")->first();
         if ($exam) {
 
             $examQuestions = $exam->questions()->get();
