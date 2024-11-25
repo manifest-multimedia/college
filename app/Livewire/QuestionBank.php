@@ -136,26 +136,37 @@ class QuestionBank extends Component
 
     // ...
 
-    public function importQuestions()
-    {
-        // Validate the uploaded file
-        $this->validate([
-            'bulk_file' => 'required|mimes:xlsx,csv,ods,tsv',
-        ]);
+    /*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Handle the import of questions via an uploaded file (xlsx, csv, ods, tsv).
+     *
+     * Validates the uploaded file, imports the questions using the QuestionImport
+     * class, and flashes a success message if the import is successful. If an
+     * error occurs, it is logged and a flash error is displayed.
+     *
+     * @return void
+     */
+    /******  b14fd3b7-45ea-4f23-940b-2ab1b252602b  *******/
+    // public function importQuestions()
+    // {
+    //     // Validate the uploaded file
+    //     $this->validate([
+    //         'bulk_file' => 'required|mimes:xlsx,csv,ods,tsv',
+    //     ]);
 
-        try {
-            // Import the file using its temporary path
-            Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->path());
+    //     try {
+    //         // Import the file using its temporary path
+    //         Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->path());
 
-            // Flash success message
-            session()->flash('message', 'Questions imported successfully.');
-            $this->loadQuestions(); // Reload questions after import
-        } catch (\Throwable $e) {
-            // Log and handle errors
-            Log::error('Error during import', ['error' => $e->getMessage()]);
-            session()->flash('error', 'An error occurred during the import process. Please check the file and try again.');
-        }
-    }
+    //         // Flash success message
+    //         session()->flash('message', 'Questions imported successfully.');
+    //         $this->loadQuestions(); // Reload questions after import
+    //     } catch (\Throwable $e) {
+    //         // Log and handle errors
+    //         Log::error('Error during import', ['error' => $e->getMessage()]);
+    //         session()->flash('error', 'An error occurred during the import process. Please check the file and try again.');
+    //     }
+    // }
 
 
 
@@ -178,25 +189,25 @@ class QuestionBank extends Component
     }
 
 
-    // public function importQuestions()
-    // {
-    //     $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
+    public function importQuestions()
+    {
+        $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
 
-    //     // Store the file and get its path
-    //     $filePath = $this->bulk_file->storeAs('public/files', $this->bulk_file->getClientOriginalName());
+        // Store the file and get its path
+        $filePath = $this->bulk_file->storeAs('public/files', $this->bulk_file->getClientOriginalName());
 
-    //     Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
-    //     Log::info('Stored File Path:', ['path' => $filePath]);
+        Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
+        Log::info('Stored File Path:', ['path' => $filePath]);
 
-    //     // Get the full path and import the file
-    //     $fullPath = Storage::path($filePath);
-    //     Log::info('Full File Path for Import:', ['full_path' => $fullPath]);
+        // Get the full path and import the file
+        $fullPath = Storage::path($filePath);
+        Log::info('Full File Path for Import:', ['full_path' => $fullPath]);
 
-    //     Excel::import(new QuestionImport($this->exam_id), $fullPath);
+        Excel::import(new QuestionImport($this->exam_id), $fullPath);
 
-    //     session()->flash('message', 'Questions imported successfully.');
-    //     $this->loadQuestions();
-    // }
+        session()->flash('message', 'Questions imported successfully.');
+        $this->loadQuestions();
+    }
 
 
 
