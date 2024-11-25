@@ -49,6 +49,14 @@
             </div>
 
             @forelse($questions as $index => $question)
+               <div class="p-10 mb-4 w-full rounded d-flex border-light">
+
+
+                {{-- Question No --}}
+                <div class="p-5 rounded border me-3 d-flex align-items-center justify-content-center bg-light"  style="width: 80px; height: 80px; border-radius: 50%; background-color: #f0f0f0;">
+                  Q  {{ $index + 1 }}
+                </div>
+                <div class="flex-grow-1">
                 <div class="p-10 mb-4 rounded border bg-light">
                     <div class="mb-3">
                         <label for="question{{ $index }}" class="form-label">Question Text:</label>
@@ -88,9 +96,13 @@
 
                     <!-- Delete Question Button -->
                     <div class="mt-3 text-end">
-                        <button class="btn btn-danger btn-sm" wire:click.prevent="deleteQuestion({{ $question['id'] }})">Delete Question</button>
+                        <button class="btn btn-dark btn-sm" wire:click.prevent="deleteQuestion({{ $question['id'] }})">Delete Question</button>
                     </div>
                 </div>
+                </div>
+
+
+               </div>
             @empty
             @if($exam_id)    
             <div class="container rounded border bg-light">
@@ -115,7 +127,10 @@
     
     @endforelse
     @if(count($questions)>0)
-    <button class="btn btn-success" wire:click.prevent="saveQuestions">Save Questions</button>
+    <div class="d-flex justify-content-center">
+
+        <button class="btn btn-success" wire:click.prevent="saveQuestions">Save Questions</button>
+    </div>
     @endif
         </div>
     </div>
