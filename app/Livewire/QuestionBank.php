@@ -138,68 +138,80 @@ class QuestionBank extends Component
 
     public function importQuestions()
     {
-        // $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv,ods,tsv']);
-        $this->validate(['bulk_file' => 'required|file']);
+        // Validate and store the file using Livewire's `store` method
+        $validatedFilePath = $this->validateAndStoreFile();
 
-
-        // $this->validate([
-        //     'bulk_file' => 'required|file|mimetypes:text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        // ]);
-
-
-        // Store the uploaded file in the 'public/datasets' directory
-        $filePath = $this->bulk_file->storeAs('public/datasets', $this->bulk_file->getClientOriginalName());
-        $publicPath = Storage::path($filePath); // Get the full system path to the stored file
-
-        Log::info('File stored for import:', ['path' => $publicPath]);
-
-        // Determine the file type based on its extension
-        $extension = $this->bulk_file->getClientOriginalExtension();
-        $readerType = $this->getReaderType($extension);
-
-        if (!$readerType) {
-            session()->flash('error', 'Unsupported file type.');
+        if (!$validatedFilePath) {
+            session()->flash('error', 'Failed to upload the file. Please try again.');
             return;
         }
 
         try {
-            // Import the questions using Maatwebsite Excel
-            Excel::import(
-                new QuestionImport($this->exam_id),
-                $publicPath,
-                null,
-                $readerType
-            );
+            // Determine the file type based on its extension
+            $extension = pathinfo($validatedFilePath, PATHINFO_EXTENSION);
+            $readerType = $this->getReaderType($extension);
+
+            if (!$readerType) {
+                session()->flash('error', 'Unsupported file type. Only xlsx, csv, ods, and tsv are allowed.');
+                return;
+            }
+
+            // Log successful file upload
+            Log::info('File stored for import', ['path' => $validatedFilePath]);
+
+            // Import questions using Maatwebsite Excel
+            Excel::import(new QuestionImport($this->exam_id), Storage::path($validatedFilePath), null, $readerType);
 
             session()->flash('message', 'Questions imported successfully.');
-            $this->loadQuestions();
-        } catch (\Exception $e) {
-            Log::error('Error during import:', ['message' => $e->getMessage()]);
+            $this->loadQuestions(); // Reload questions after successful import
+
+        } catch (\Throwable $e) {
+            // Log and handle errors
+            Log::error('Error during import', ['error' => $e->getMessage()]);
             session()->flash('error', 'An error occurred during the import process. Please check the file and try again.');
         }
     }
 
-
     /**
-     * Determine the Reader Type based on file extension.
+     * Validate and store the uploaded file.
+     *
+     * @return string|null Full storage path of the file or null on failure.
      */
-    protected function getReaderType($extension)
+    private function validateAndStoreFile(): ?string
     {
-        switch (strtolower($extension)) {
-            case 'csv':
-                return MaatExcel::CSV;
-            case 'xlsx':
-                return MaatExcel::XLSX;
-            case 'xls':
-                return MaatExcel::XLS;
-            case 'ods':
-                return MaatExcel::ODS;
-            case 'tsv':
-                return MaatExcel::TSV;
-            default:
+        try {
+            // Validate and store the file in the 'datasets' directory
+            $path = $this->bulk_file->store('datasets', 'public');
+
+            // Ensure the file exists
+            if (!Storage::exists($path)) {
                 return null;
+            }
+
+            return $path;
+        } catch (\Throwable $e) {
+            Log::error('Error during file upload', ['error' => $e->getMessage()]);
+            return null;
         }
     }
+
+    /**
+     * Determine the Reader Type based on the file extension.
+     *
+     * @param string $extension
+     * @return string|null
+     */
+    private function getReaderType(string $extension): ?string
+    {
+        return match (strtolower($extension)) {
+            'xlsx' => \Maatwebsite\Excel\Excel::XLSX,
+            'csv'  => \Maatwebsite\Excel\Excel::CSV,
+            'ods'  => \Maatwebsite\Excel\Excel::ODS,
+            'tsv'  => \Maatwebsite\Excel\Excel::TSV,
+            default => null,
+        };
+    }
+
 
     // public function importQuestions()
     // {

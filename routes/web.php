@@ -17,6 +17,12 @@ Route::get('/exams', function () {
     return view('frontend.exam');
 })->name('exams');
 
+
+Route::get('/take-exam', function () {
+    return view('frontend.take-exam');
+})->name('take-exam');
+
+
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 
 // Link to Tutor Assessment Form:
