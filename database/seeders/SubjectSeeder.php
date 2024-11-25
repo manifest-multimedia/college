@@ -16,7 +16,7 @@ class SubjectSeeder extends Seeder
     {
         // Define the correct file path
         // $filePath = public_path('storage/datasets/subjects.xlsx');
-        $filePath = asset('datasets/subjects.xlsx');
+        $filePath = public_path('datasets/subjects.xlsx');
 
         // Load the Excel data, skipping the first row for headers
         $data = Excel::toCollection(null, $filePath)->first();

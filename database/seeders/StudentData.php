@@ -14,7 +14,7 @@ class StudentData extends Seeder
         // Dataset Location: public/datasets/students.csv
 
         // $path = storage_path('app/public/datasets/correct_data.csv');
-        $path = asset('datasets/correct_data.csv');
+        $path = public_path('datasets/correct_data.csv');
         // $handle = fopen('storage/app/public/datasets/correct_data.csv', 'r');
 
         $handle = fopen($path, 'r');

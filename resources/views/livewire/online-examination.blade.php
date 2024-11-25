@@ -95,7 +95,27 @@
 
     </div>
   </div>
+  <!-- Modal for Navigation Warning -->
+<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="warningModalLabel">Warning</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          You attempted navigating away from the exam screen. You'll be locked out of the exam after 3 attempts.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+
+  
 
 <!-- Bootstrap JS and Countdown Timer Script -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -228,4 +248,75 @@
 
   // Initial render of questions
   renderQuestions();
+
+
+//   Navigating away
+ // Counter to track the number of navigation attempts
+  // Counter to track the number of navigation attempts
+let attemptCount = 0;
+const maxAttempts = 3;
+
+// Modal reference
+const warningModal = new bootstrap.Modal(document.getElementById('warningModal'));
+
+// Function to show the warning modal
+function showWarning() {
+  warningModal.show();
+}
+
+// Function to handle strike count and warning display
+function handleStrike() {
+  if (attemptCount < maxAttempts - 1) {
+    attemptCount++;
+    showWarning();
+  } else {
+    alert('You have attempted to navigate away from the exam too many times. You have been disqualified from this exam.');
+    // Auto-submit logic can go here
+  }
+}
+
+// Set a flag in sessionStorage to detect reloads
+sessionStorage.setItem('pageReloaded', 'true');
+
+// Event listener for visibility changes (detects tab switching)
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden') {
+    handleStrike();
+  }
+});
+
+// Event listener for key combinations (new tab or window)
+document.addEventListener('keydown', function(event) {
+  if ((event.ctrlKey && event.key === 't') || // Ctrl+T for new tab
+      (event.ctrlKey && event.key === 'n') || // Ctrl+N for new window
+      (event.ctrlKey && event.shiftKey && event.key === 'n') // Ctrl+Shift+N for incognito
+  ) {
+    event.preventDefault();
+    handleStrike();
+  }
+});
+
+// Event listener to detect when the user tries to leave the page
+window.addEventListener('beforeunload', function (event) {
+  // Check if page reload is permitted (detecting a reload vs. navigation attempt)
+  const isReload = sessionStorage.getItem('pageReloaded') === 'true';
+  if (isReload) {
+    // Clear the reload flag after handling
+    sessionStorage.removeItem('pageReloaded');
+  } else {
+    // Count the attempt if it's not a page reload
+    if (attemptCount < maxAttempts) {
+      handleStrike();
+      event.preventDefault(); // Prevent navigation
+      event.returnValue = ''; // This is required for Chrome
+    }
+  }
+});
+
+// Reset the reload flag on page load
+window.addEventListener('load', function() {
+  sessionStorage.removeItem('pageReloaded');
+});
+
+
 </script>
