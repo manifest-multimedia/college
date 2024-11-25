@@ -1,0 +1,325 @@
+num,class,first_name,last_name,other_names,gender,date_of_birth,nationality,country_of_residence,home_region,home_town,religion,mobile_number,email,gps_address,postal_address,residential_address,marital_status
+1,RGN,Jaweliatu,Abdul-rahim,,Female,2004-08-18,Ghanaian,Ghana,Ashanti,Agogo,Islamic,534724516,abdulrahimjaweliatu@gmail.com,BD-0003-5130,"P. o. box 11, agogo central mosque",An-0917-9132,Single
+2,RGN,Mariama,Abdul-rahman,,Female,1995-11-05,Ghanaian,Ghana,Bono,Japekrom,Islamic,247888299,abdulrahmanmariama75@gmail.com,BD-0003-5130,P. o. box 12 japperom,Bi-0022-8668,Married
+3,RGN,Enock,Achaliwe,,Male,2004-12-20,Ghanaian,Ghana,Upper east,Techiman bono east capital,Christian,532523296,enochachaliwe2004@gmail.com,BD-0003-5130,P. o. box 85 techiman,Bt-0193-7216,Single
+4,RGN,Djan,Acheampomaa,Mary,Female,2004-06-22,Ghanaian,Ghana,Ashanti,Konongo dwease ashanti akyem,Christian,552579748,acheampomaadjan@gmail.com,BD-0003-5130,"P. o. box 173, konongo ",Ga-363-6977,Single
+5,RGN,Winnifred,Achiaa poku,,Female,2004-05-23,Ghanaian,Ghana,Ashanti,Kwadaso,Christian,591493073,achiaapokuwinnifred@gmail.com,BD-0003-5130,"P. o. box 99, kwadaso",Ak-286-3687,Single
+6,RGN,Emmanuella,Ackom,,Female,2003-07-29,Ghanaian,Ghana,Ashanti,Atwima mim,Christian,552374885,ellanyarko11@gmail.com,BD-0003-5130,P. o. box 966 adum kumasi,Ah-0327-6903,Single
+7,RGN,Grace,Adambil-laar,Monipaak,Female,2004-11-28,Ghanaian,Ghana,North east,Najongno1,Christian,591087023,gracemonikaak385@gmail.com,BD-0003-5130,"P. o. box 2, najon no. 1","A12 najon no1, north east",Single
+8,RGN,Ednah,Adamo,Korlah,Female,2003-08-08,Ghanaian,Ghana,Greater accra,"Dawa,ningo",Christian,245766709,adamoednah@gmail.com,BD-0003-5130,"P. o. box 300,ningo","Dw/dw 057 dawa, greater accra",Single
+9,RGN,Nazir,Adams,,Male,2003-06-21,Ghanaian,Ghana,Ashanti,Offinso-anyinasusu,Islamic,552723295,adamsnazir353@gmail.com,BD-0003-5130,"P. o. box 83, offinso anyinasusu",A706299526 offinso anyinasusu,Single
+10,RGN,Prince,Addae,Osei,Male,2001-09-07,Ghanaian,Ghana,Western north,Dominibo no 2,Christian,557199336,addaeprince353@gmail.com,BD-0003-5130,"P. o. box151,bibiani",Wb-0639-2221,Single
+11,RGN,Raymond,Adjei,,Male,2000-02-10,Ghanaian,Ghana,Eastern,Kyebi amanfrom,Christian,209985365,rayadjei217@gmail.com,BD-0003-5130,"P. o. box 1934 kath,",Ak-034-2672,Single
+12,RGN,Ernest,Adjei,Damoah,Male,2004-02-25,Ghanaian,Ghana,Bono,Berekum,Christian,542975302,adjeidamoah123@gmail.com,BD-0003-5130,"P. o. box 150, berekum senase",Senanse east 246,Single
+13,RGN,Evelyn,Adjei,,Female,1996-07-24,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,202342197,adjeievelyn2424@gmail.com,BD-0003-5130,P. o. box 106 berekum jamdede,Jd\013\berekum jamdede,Single
+14,RGN,Selina,Adobea,,Female,2003-03-23,Ghanaian,Ghana,Ashanti,Ashanti akyem agogo,Christian,594959361,adobeaselina643@gmail.com,BD-0003-5130,"Post office box 27, agogo",6450-plt 1 blku u agogokonongo,Single
+15,RGN,Emmanuel,Adu,Bekwen,Male,2003-12-17,Ghanaian,Ghana,Bono,Kyebi,Christian,249770523,emmanueladu583@gmail.com,BD-0003-5130,"Post office box 4, kyebi",Ee-0800-6727,Single
+16,RGN,Mariam,Afrifa,Adwoa,Female,2003-08-04,Ghanaian,Ghana,Greater accra,Tema,Christian,592407648,mariambackleyafrifa@gmail.com,BD-0003-5130,P. o. box cs 8560 tema,Gt-074-3851,Single
+17,RGN,Pristable,Agoh,,Female,2000-11-27,Ghanaian,Ghana,Volta,Suhum,Christian,242946382,pristabelagoh55@gmail.com,BD-0003-5130,"P. o. box su256, suhum",Ee-0753-9743,Single
+18,RGN,Evans,Agyapong,,Male,2002-01-19,Ghanaian,Ghana,Ashanti,Hwidiem - asante akyem,Christian,539057351,agyapongevans1122@gmail.com,BD-0003-5130,P. o. box 16 hwidiem - asante akyem north,Hwidiem o/d 4,Single
+19,RGN,Precious,Agyeiwaa,,Female,2003-08-08,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,257823239,preciousafiaagyeiwa@gmail.com,BD-0003-5130,"P. o. box 47, dormaa ahenkro",Bd-02880590,Single
+20,RGN,Christiana,Agyeiwaa,Jnr,Female,2002-08-29,Ghanaian,Ghana,Bono east,Dormaa ahenkro,Christian,530026582,christianaagyeiwaa957@gmail.com,BD-0003-5130,"P. o. box 47, dormaa ahenkro",Bd-0023-4205,Single
+21,RGN,Juliet,Agyemang,,Female,2003-01-01,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,248940873,agyemangj333@gmail.com,BD-0003-5130,"P. o. box 9, dormaa ahenkro",Ot 38 dormaa ahenkro,Single
+22,RGN,Priscilla,Agyemang,,Female,2003-11-11,Ghanaian,Ghana,Bono east,Drobo,Christian,554633868,agyemangpriscilla2024@gmail.com,BD-0003-5130,"P. o. box 25, drobo",Wc-1915-6507,Single
+23,RGN,Irene,Aidoo,Turkson,Female,2004-10-22,Ghanaian,Ghana,Bono,Sunyani,Christian,532100940,aidooturksonirene@gmail.com,BD-0003-5130,P. o. box 2305 sunyani,"Kwa 060, kwatire, sunyani",Single
+24,RGN,Lillian,Akomea,Amoakoaa,Female,2002-11-03,Ghanaian,Ghana,Ashanti,Agogo asante akim,Christian,594595690,lillianamoakoaa@gmail.com,BD-0003-5130,"P. o. box 6, agogo",An-0006-1245,Single
+25,RGN,Mavis,Akwaboah,,Female,2002-06-06,Ghanaian,Ghana,Western north,Enchi,Christian,548263875,mavisakwaboah88@gmail.com,BD-0003-5130,"Post office box 8, enchi",Wa - 00328 -7966,Single
+26,RGN,Anita,Akyina,,Female,2004-11-11,Ghanaian,Ghana,Ashanti,Manso aponapon,Christian,597834537,akyinaanita@gmail.com,BD-0003-5130,"P. o. box 23, manso adubia",A/p no. 45 manso aponapon,Single
+27,RGN,Rita,Alale,Awinime,Female,1999-09-24,Ghanaian,Ghana,Bono,Wamfie,Christian,546279156,alaleritaawinime@gmail.com,BD-0003-5130,P. o. box 27 wamanafo,Be-1586-9453,Single
+28,RGN,George,Amakye,Serebour,Male,2003-03-11,Ghanaian,Ghana,Ashanti,Konongo odumasi,Christian,591737386,kobbyfocus5@gmail.com,BD-0003-5130,"P. o. box 10,konongo odumasi",Ac-0145-4374,Single
+29,RGN,Theresah,Amankwaa,,Female,2003-01-31,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,500694680,amankwaatheresah893@gmail.com,BD-0003-5130,"P. o. box 4, dormaa ahenkro",Bd-0003-0780,Single
+30,RGN,Ishmail,Amera,,Male,2004-07-15,Ghanaian,Ghana,Bono,Dormaa ahenkro,Islamic,257799119,ameraishmeal@gmail.com,BD-0003-5130,P. o. box 105 dormaa ahenkro,"Atb/l/060, dormaa ahenkro",Single
+31,RGN,Irene,Ameyaa,,Female,2005-09-15,Ghanaian,Ghana,Bono,Mayera,Christian,536266135,ameyaairene0@gmail.com,BD-0003-5130,"P. o. box 4, mayera",Bj-0999-1235,Single
+32,RGN,Oppong,Amoako,Edmund,Male,2024-01-22,Ghanaian,Ghana,Bono,Berekum,Christian,540305377,oppongamoakoedmnd@gmail.com,BD-0003-5130,P. o. box 4 wamanafo,"133 wawa r.g, ve-0269-8343",Single
+33,RGN,Evelyn,Amoako,Gyabaa,Female,2003-10-06,Ghanaian,Ghana,Ashanti,Nsuhia,Christian,531583541,evelynamoakogyabaa,BD-0003-5130,"P. o. box 9, dormaa ahenkro",Bd-0000-7616,Single
+34,RGN,Adwoa,Ampiah,Penamang,Female,2006-05-01,Ghanaian,Ghana,Central,Elmina,Christian,595683475,adwoapenamang401@gmail.com,BD-0003-5130,P. o. box ks14766 kumasi,As-105-0071,Single
+35,RGN,Nichodemus,Ampong,,Male,2004-03-17,Ghanaian,Ghana,Ashanti,Afrancho,Christian,247248975,nicoampong98@email.com,BD-0003-5130,"P. o. box 99, kuffour camp parish",Af-0290-3855,Single
+36,RGN,Reindolf,Amponsah,,Male,2003-10-11,Ghanaian,Ghana,Ashanti,Akumadan,Christian,547701587,reindolfamponsah94@gmail.com,BD-0003-5130,"P. o. box 15, akumadan",A6-0025-2765,Single
+37,RGN,Priscilla,Amponsah,,Female,2005-02-19,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,536553737,amponsahama419@gmail.com,BD-0003-5130,"P. o. box 151, dormaa ahenkro",G144/4 koraso,Single
+38,RGN,Sarah,Anima,,Female,1998-08-08,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,541730335,sarahanima08@gmail.com,BD-0003-5130,"Post office box 58, dormaa ahenkro",O.t.5 dormaa ahenkro,Single
+39,RGN,Sharlote,Ankoma,,Female,2003-11-11,Ghanaian,Ghana,Greater accra,Nkoranza north yefri,Christian,248257916,ankomasharlote@gmail.com,BD-0003-5130,"P. o. box 1, yefri",Gb-024-6363,Married
+40,RGN,Randolf,Ansu,Agyei,Male,2003-01-17,Ghanaian,Ghana,Bono,Drobo,Christian,530168023,portiaataakorama@gmail.com,BD-0003-5130,Post office box 80 drobo,Bi-0004-2084,Single
+41,RGN,Emmanuel,Appiah,,Male,2000-06-02,Ghanaian,Ghana,Ashanti,Kumasi ntonso,Christian,530266169,ekwarteng698@gmail.com,BD-0003-5130,"P. o. box 4,ntonso-ashanti",Ad-350-4361,Single
+42,RGN,Raphael,Appiah,,Male,2001-03-13,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,555654232,apprap812@gmail.com,BD-0003-5130,P. o. box 368 dormaa ahenkro,Daf/a/231 dormaa,Single
+43,RGN,Mercy,Arko,,Female,2002-08-28,Ghanaian,Ghana,Bono east,Atebubu,Christian,554140108,arkomercy01@gmail.com,BD-0003-5130,P. o. box 105atebubu,Ba-00110-1546,Single
+44,RGN,Christiana,Arthur,,Female,2001-10-08,Ghanaian,Ghana,Ashanti,Sarpeh,Christian,599035789,arthurchristiana66@gmail.com,BD-0003-5130,"P. o. box 88, nkawie",Ai-12121-0377,Single
+45,RGN,Jennifer,Asaa,,Female,1999-11-05,Ghanaian,Ghana,Bono,Jankufa,Christian,595163430,asaajennifer99@gmail.com,BD-0003-5130,"P. o. box 4, jankufa",Bj-3877-4370,Single
+46,RGN,Peggy,Asamoah,,Female,2003-05-02,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,553687803,peggyasamoah990@gmail.com,BD-0003-5130,"P. o. box 60, nyinahin ashanti",Tk0307 tachiman,Single
+47,RGN,Vera,Asamoah,,Female,2003-02-13,Ghanaian,Ghana,Bono,Berekum,Christian,594564912,akuan1454@gmail.com,BD-0003-5130,P. o. box 25 berekum,Bb-0004-1487,Single
+48,RGN,Janet,Asamoah,,Female,2002-08-09,Ghanaian,Ghana,Ashanti,Dadease,Christian,555618372,asamoahjanet213@gmail.com,BD-0003-5130,"P..o. box 58, effiduase - ashanti",Ge-003-3856,Single
+49,RGN,Atta,Asante,Benedict,Male,2004-04-16,Ghanaian,Ghana,Bono east,Dormaa ahenkro,Christian,598742517,benedictasante215@gmail.com,BD-0003-5130,"P. o. box 14,dormaa ahenkro","As53/1, dormaa ahenkro",Single
+50,RGN,Benedicta,Asante,,Female,2003-04-17,Ghanaian,Ghana,Bono,Yaakrom,Christian,549402741,benedictaasante402@gmail.com,BD-0003-5130,"P. o. box428, dormaa ahenkro","Easier said avenue 14 , jericho",Single
+51,RGN,Adjoa,Asantewaa,,Female,2005-03-07,Ghanaian,Ghana,Ashanti,Manso mem,Christian,240774563,asantewaaadjoa77@gmail.com,BD-0003-5130,P. o. box 15 amansie south,"Mm 189 , manso mem",Single
+52,RGN,Ellen,Asantewaa,,Female,2000-09-30,Ghanaian,Ghana,Bono,Aboabo-dormaa,Christian,557267933,asantewaaell2000@gmail.com,BD-0003-5130,Post office box 62 dormaa-ahenkro,"Mke/k/146, aboabo no 4",Single
+53,RGN,Gifty,Asare,,Female,2001-12-07,Ghanaian,Ghana,Eastern,Akwatia,Christian,549319218,asaregifty0549@gmail.com,BD-0003-5130,P. o. box 121 akwantia,Ed-0005-9458,Single
+54,RGN,Emmanuella,Asare-boafo,Akosua,Female,2005-06-19,Ghanaian,Ghana,Oti,Apesokubi,Christian,598285519,emmanuellaboafoasare@gmail.com,BD-0003-5130,"P. o. box 26, dormaa ahenkro",Bd-0013-5409,Single
+55,RGN,Ransford,Asenso,Amankwah,Male,2002-11-14,Ghanaian,Ghana,Bono east,Abease,Christian,538669915,ransfordasenso30@gmail.com,BD-0003-5130,"Post office box 1, abease",Aent123 abease,Single
+56,RGN,Jennifer,Asieduwaa,,Female,2000-10-24,Ghanaian,Ghana,Bono,Seikwa -atomfoso,Christian,546745482,jasieduwaa38@gmail.com,BD-0003-5130,"P. o. box 47,dormaa ahenkro",Bd-0003-7996,Single
+57,RGN,Jennifer,Asuama,Yeboaa,Female,2002-09-10,Ghanaian,Ghana,Bono,Domaa ahenkro,Christian,241625506,jenniferasuama95@gmail.com,BD-0003-5130,P. o. box 938 sunyani,Dax/a/074 nkyenkyenkye,Single
+58,RGN,Princella,Ataa twenewaa,,Female,2001-11-21,Ghanaian,Ghana,Bono,Berekum,Christian,596200138,priscillatwenewaa053@gmail.com,BD-0003-5130,P. o. box 2 berekum,Bb-0158-5595,Single
+59,RGN,Prosper,Awini,,Male,2003-08-03,Ghanaian,Ghana,Upper east,Zebilla,Christian,540340117,awini217@gmail.com,BD-0003-5130,"P. o. box 44,nkawie-kuma,",Ai-6240-2884,Single
+60,RGN,Bismark,Awuah,,Male,2003-06-11,Ghanaian,Ghana,Ashanti,Kumasi suame,Christian,551204961,youngfuture719@gmail.com,BD-0003-5130,P. o. box 56 effiduase dadease,Ar-0353-7964,Single
+61,RGN,Grace,Awuah,,Female,2003-02-01,Ghanaian,Ghana,Ashanti,Abuakwa maakro,Christian,543191034,awuahgrace692@gmail.com,BD-0003-5130,"P. o. box abk 55,abuakwa-ashanti",Ah-o832-2612,Single
+62,RGN,Swabira,Ayamdago,Salam,Female,2003-09-25,Ghanaian,Ghana,Upper east,Pusiga,Islamic,531840265,swabirasalamswabira@gmail.com,BD-0003-5130,Post.office box deega 1,Db 57 pusiga,Single
+63,RGN,Emmanuel,Baadah,,Male,2002-11-19,Ghanaian,Ghana,Ashanti,Asante effiduase,Christian,593311248,tonaldodezazta@gmail.com,BD-0003-5130,"P. o. box 6, agogo",Od3-agogo hwidiem,Single
+64,RGN,Eunice,Baffoe,Andrews,Female,2005-06-09,Ghanaian,Ghana,Ashanti,Agogo ashanti akyem,Christian,537216203,eunicebaffoe242@gmail.com,BD-0003-5130,P. o. box 180 agogo,An-0014-3683,Single
+65,RGN,Josephine,Baffour,Dwomoh,Female,2001-10-07,Ghanaian,Ghana,Greater accra,Adenta,Christian,242603809,jb408173@gmail.com,BD-0003-5130,P. o. box 2803 adenta,Gd-264-9050,Single
+66,RGN,Queendarling,Baah,,Female,2004-06-09,Ghanaian,Ghana,Bono,Berekum,Christian,507442946,queendarlingbaah@gmail.com,BD-0003-5130,"Post office box 11, wamanfo",Bb-0047-9840,Single
+67,RGN,Monica,Balenbu,,Female,2003-03-10,Ghanaian,Ghana,Northern,Bimbilla,Christian,598861623,monicabalenbu@gmail.com,BD-0003-5130,"P. o. box134, saboba",,Single
+68,RGN,Anthony,Bih,,Male,2003-09-21,Ghanaian,Ghana,Ahafo,Bomaa,Christian,531225125,oseitutudesmond474@gmail.com,BD-0003-5130,"Post office box 21, bormaa",B2-1208-2734,Single
+69,RGN,Beatrice,Blemano,Kabukie,Female,2003-05-14,Ghanaian,Ghana,Greater accra,Old ningo,Christian,547525194,beatriceblemano2@gmail.com,BD-0003-5130,P. o. box 340 ashaima,Gb-027-9558,Single
+70,RGN,Lawrencia,Boakye,,Female,2003-02-21,Ghanaian,Ghana,Ashanti,Kwadaso kumasi,Christian,533539428,lawrenciaboakye733@gmail.com,BD-0003-5130,"P. o. box 6, new asonomaso","Ad-389-1048 ,na56",Single
+71,RGN,Dorcas,Boamah,,Female,2005-09-04,Ghanaian,Ghana,Ashanti,Agogo asante akim,Christian,257307741,maryafrakoma572@gmail.com,BD-0003-5130,P. o. box 29 agogo asante akim,An-0013-1589,Single
+72,RGN,Rebecca,Boamah,Owusu,Female,1999-11-26,Ghanaian,Ghana,Ashanti,Kuamsi asennua,Christian,556919385,owusurebecca767@gmail.com,BD-0003-5130,"P. o. box 57 ,kumasi asennua",Ad-101-7442,Single
+73,RGN,Beckham,Boateng,,Male,2003-09-30,Ghanaian,Ghana,Ahafo,Goaso,Christian,532829704,boatengbeckham55@gmail.com,BD-0003-5130,P. o. box 130 goaso,Bu-0004-2859,Single
+74,RGN,Ruth,Boateng,,Female,2006-12-09,Ghanaian,Ghana,Eastern,Sikabeng,Christian,535002362,tsackeyjoseph@gmail.com,BD-0003-5130,"P. o. box 398 ,koforidua",Ey-0943-8085,Single
+75,RGN,Aboagyewaa,Boateng,,Female,2002-05-15,Ghanaian,Ghana,Eastern,Kwahu-nteso,Christian,247385369,boatengaboagyewaa69@gmail.com,BD-0003-5130,P. o. box 494 mampong-ashanti,Am-0048-1182,Single
+76,RGN,Blessing,Botah,Asantewaah,Female,2004-03-10,Ghanaian,Ghana,Ashanti,Ejisu abankro,Christian,257752436,blessingbotah10@gmail.com,BD-0003-5130,"P. o. box 594, dormaa ahenkro",Bd--0001-7605,Single
+77,RGN,Emelia,Damptey,,Female,2004-06-14,Ghanaian,Ghana,Ashanti,Obuasi,Christian,257304639,dampteyemelia742@gmail.com,BD-0003-5130,"P. o. box 546, obuasi",A2-2110-5785,Single
+78,RGN,Konadu,Dankwah yeboah,Abena,Female,2003-11-11,Ghanaian,Ghana,Ashanti,Ahwiaa,Christian,597032518,abenadankwahyeboah@gmail.com,BD-0003-5130,P. o. box 109 a/a/s juaso,"Plt4 blkd, ahwiaa",Single
+79,RGN,Stephanie,Darko,,Female,2002-06-17,Ghanaian,Ghana,Ashanti,Kwaso deduako,Christian,597521143,stephaniedarko72@gmail.com,BD-0003-5130,"P. o. box 3789, tafo, kumasi",Plot 28 block v bohyen,Single
+80,RGN,Hamdia,Dauda,,Female,2004-01-01,Ghanaian,Ghana,Upper east,Zebilla,Islamic,597663624,daudahamdia120@gmail.com,BD-0003-5130,"P. o. box 9, zebilla",Zb55-azanga,Single
+81,RGN,Helina,Donyina,Ofosu,Female,2003-09-25,Ghanaian,Ghana,Bono east,Nkoranza bono-east,Christian,257161107,donyinahelinaofosu65@gmail.com,BD-0003-5130,Post office box 28 nkoranza,Bo-0018-5718,Single
+82,RGN,Philis,Dumaa,,Female,2001-06-09,Ghanaian,Ghana,Bono east,Dormaa ahenkro,Christian,541051831,dumaaphilis@gmail.com,BD-0003-5130,"Post office box 513, saint dominic savior catholic church",Bd/0024/8246,Single
+83,RGN,Elizabeth,Duut,,Female,2004-08-26,Ghanaian,Ghana,Ashanti,Agogo asante akim north,Christian,532035842,duutelizabeth423@gmail.com,BD-0003-5130,"P. o. box 08, konongo odumase",An-0013-8149,Single
+84,RGN,Juliana,Effah,Abrafi,Female,2005-06-28,Ghanaian,Ghana,Ashanti,Konongo,Christian,558429175,effahjulianaabrafi@gmail.com,BD-0003-5130,P. o. box 76 konongo,Ac-0128-2826,Single
+85,RGN,Comfort,Effah,Asirifia,Female,1998-01-13,Ghanaian,Ghana,Greater accra,Anyinam,Christian,242863462,ceffah880@gmail.com,BD-0003-5130,"Pmb tema poyclinic, tema community 2","40 cudjoe dushie, tema community 25",Single
+86,RGN,Blessing,Eli,Adepa,Female,2005-09-02,Ghanaian,Ghana,Bono,Abesim,Christian,205557572,adepablessing@gmail.com,BD-0003-5130,"P. o. box156 abesim, sunyani","29a/18 abesim, sunyani",Single
+87,RGN,Morison,Fima,Yaa,Female,2005-04-28,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,597012916,morisonfima@gmail.com,BD-0003-5130,Post office box 61 dormaa ahenkro,H/no.srd/m/124 suromani,Single
+88,RGN,Priscilla,Frimpong,Boahemaa,Female,2001-09-12,Ghanaian,Ghana,Bono east,Nkoranza,Christian,546115479,frimpongboahemaa29@gmail.com,BD-0003-5130,"P. o. box bp 369, bohyen-kumasi",Bt-0345-3654,Single
+89,RGN,Ellen,Gyambea,,Female,2001-12-23,Ghanaian,Ghana,Bono east,Atebubu,Christian,535378374,white175ellen@gmail.com,BD-0003-5130,"P. o. box 97, atebubu",Ba-02345-7632,Single
+90,RGN,Precious,Gyamfuah,,Female,2002-07-13,Ghanaian,Ghana,Ashanti,Nyinahin,Christian,531431323,opokuedmund100@gmail.com,BD-0003-5130,"P. o. box9, nyinahin",Ai-0002-6531,Single
+91,RGN,Veronica,Gyimah,,Female,2004-11-14,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,506418061,gyimahv32@gmail.com,BD-0003-5130,"Post office box 110, dormaa ahenkro",Plot 40 dormaa ahenkro,Single
+92,RGN,Evans,Hanson,Toprah,Male,2004-09-23,Ghanaian,Ghana,Eastern,Asamankese,Christian,536707563,hansonevan10@gmail.com,BD-0003-5130,"P. o. box er6,koforidua",Ew-0027-0085,Single
+93,RGN,Ellen,Henewaa,,Female,2004-02-23,Ghanaian,Ghana,Bono,Nsoatre,Christian,536356136,henewaaellen221@gmail.com,BD-0003-5130,"P. o. box 38, nsoatre",Bb-0027-3034,Single
+94,RGN,Anita,Hotor,,Female,2004-02-15,Ghanaian,Ghana,Volta,Abozume kliko,Christian,533704507,anitahotor66@gmail.com,BD-0003-5130,"Post office box 148, suhum","Aywb14, suhum",Single
+95,RGN,Munawwara,Ibrahim,,Female,2003-05-10,Ghanaian,Ghana,Ashanti,Ejura,Islamic,546497096,madinaibrahim2713783@gmail.com,BD-0003-5130,"P. o. box 58,ejura",Aj-0001-9638,Single
+96,RGN,Salim,Ismael,Pidimah,Male,2002-06-13,Ghanaian,Ghana,Ashanti,Wellembele,Islamic,543633358,salimthiago6@gmail.com,BD-0003-5130,"P. o. box 35,badariya islamic school",As 068-2501,Single
+97,RGN,Lukman,Issah,,Male,2004-07-12,Ghanaian,Ghana,Savannah,Sawla,Islamic,536094518,lukmanissah740@gmail.com,BD-0003-5130,"P. o. box 10, sawla","E16 sawla, savannah region",Single
+98,RGN,Edna,Kissiwaa,,Female,2005-05-19,Ghanaian,Ghana,Bono,"Dormaa east, akontanim",Christian,598384145,ednakissiwaa9@gmail.com,BD-0003-5130,"P. o. box 5, akontanim",Be-1266-2537,Single
+99,RGN,Ernestina,Kombart,,Female,2001-11-21,Ghanaian,Ghana,Northern,Nagani,Christian,591143580,ernestinakombart@gmail.com,BD-0003-5130,"P .o box 4, sefwi juaboso",Wo-5455-1743,Single
+100,RGN,Ruth,Kongo,Mcdonald,Female,2003-01-08,Ghanaian,Ghana,Volta,Anloga,Christian,532818372,ruthkongo236@gmail.com,BD-0003-5130,"P. o. box 79, pokuase",Gd-048-9861,Single
+101,RGN,Erica,Konlan,Naakiniib,Female,2001-12-28,Ghanaian,Ghana,North east,Bunkpurugu north easth,Christian,592050910,ericanakiniib@gmail.com,BD-0003-5130,"P. o. box 40, sunyani",Np-3008-7062,Single
+102,RGN,Dennis,Kparib,Junior,Male,1999-09-25,Ghanaian,Ghana,Upper east,Binaba,Christian,598885223,kparibdeperryjuvenile@gmail.com,BD-0003-5130,"P. o. box ad162, adanwomase","Ad366-1856,ad 162",Single
+103,RGN,Obed,Kumah,Danso,Male,2003-12-06,Ghanaian,Ghana,Ashanti,Atwima foase,Christian,257736355,obed4650@gmail.com,BD-0003-5130,"P. o. box 243, bekwai-ashanti",Ak-166-0426,Single
+104,RGN,Amanda,Kusi,,Female,2003-08-26,Ghanaian,Ghana,Bono,Wamanafo,Christian,552566649,amandakusi008@gmail.com,BD-0003-5130,"Post office box 11, wamanafo",Wae//e/004,Single
+105,RGN,Elizabeth,Kwakye,,Female,2005-03-27,Ghanaian,Ghana,Ashanti,Asokore mampong,Christian,559817004,elizabethkwakye72@gmail.com,BD-0003-5130,"P. o. box 12760, kumasi",Ae-052815,Single
+106,RGN,Samuel,Kwakye,,Male,2002-08-16,Ghanaian,Ghana,Ashanti,Asiwa,Christian,544739504,kwakyeasare0662@gmail.com,BD-0003-5130,"P. o. box 311, asiwa- konongo",A4-0004-9150,Single
+107,RGN,Elizabeth,Kwakye,Ohenewaa,Female,2000-11-22,Ghanaian,Ghana,Ashanti,"Obogu, ashanti akyem south",Christian,592429650,kwakyeohenewaa55@gmail.com,BD-0003-5130,"P. o. box 199, obogu",Aa-0769-2227,Single
+108,RGN,Emmanuella,Kyeraa,,Female,2003-08-04,Ghanaian,Ghana,Bono,Berekum,Christian,594895844,kyeraaemmanuella315@gmail.com,BD-0003-5130,"Post office box 24, berekum",Bb-07589393,Single
+109,RGN,Sylvester,Kyeremeh,,Male,2004-09-22,Ghanaian,Ghana,Bono,Sunyani,Christian,595292736,kyeremehsylvester42@gmail.com,BD-0003-5130,"P. o. box 32, dormaa ahenkro",Bs-0055-3370,Single
+110,RGN,Barbara,Maasuadong,,Female,1998-07-15,Ghanaian,Ghana,Upper west,Jirapa,Christian,531493196,maasuadongbarbara@gmail.com,BD-0003-5130,"P. o. box 813, obuasi",Sj-00265617,Single
+111,RGN,Bernice,Manu,,Female,2003-12-03,Ghanaian,Ghana,Bono east,Tanoso,Christian,595779276,bernicegee77@gmail.com,BD-0003-5130,Post office box 5 tachiman-tanoso,Dt-1959-2769,Single
+112,RGN,Mary,Marfowaa,,Female,2003-04-04,Ghanaian,Ghana,Bono,Sunyani-chiraa,Christian,248087910,marymarfowaa144@gmail.com,BD-0003-5130,"P. o. box 10,chiraa","E61 newtown, chiraa",Single
+113,RGN,Hayford,Mensah,,Male,2000-10-01,Ghanaian,Ghana,Ashanti,Kwadaso nsuom,Christian,591492310,hayfordk425@gmail.com,BD-0003-5130,"P. o. box 480, kwadaso kumasi","Ak-351-4425, plot 2 block u",Single
+114,RGN,Jessica,Mensah,Gyemfuah,Female,2005-08-29,Ghanaian,Ghana,Ashanti,Ankaase,Christian,531766864,jessmens1212@gmail.com,BD-0003-5130,"P. o. box ah 2984, afrancho krobo",Af-0051-6162,Single
+115,RGN,Fati,Mohammed,,Female,2004-09-09,Ghanaian,Ghana,Upper east,Paga,Islamic,596589593,mofati2004@gmail.com,BD-0003-5130,"P. o. box 1 tuna, savannah region",Nw-06089-9489,Single
+116,RGN,Faustina,Musah,Akosua,Female,2003-03-15,Ghanaian,Ghana,North east,Bunkpurugu,Christian,553665635,faustinamusah8@gmail.com,BD-0003-5130,"P. o. box 2, bunkpurugu",E187 bunkpurugu north east,Single
+117,RGN,Jessica,Nketiah,,Female,2004-03-24,Ghanaian,Ghana,Bono,Atuna,Christian,552077827,nketiahjessica235@gmail.com,BD-0003-5130,"P. o. box 67, japekrom",Bl-2388-3265,Single
+118,RGN,Kelvin,Nketiah,,Male,2004-07-27,Ghanaian,Ghana,Ashanti,Juansa,Christian,531119868,nketiahkelvin04@gmail.com,BD-0003-5130,P. o. box 10 juansa,Juansa a/a 10,Single
+119,RGN,Richmond,Nsoh,Abugre,Male,2004-10-19,Ghanaian,Ghana,Upper east,Bolgatanga,Christian,530034745,richmondnsoh3@gmail.com,BD-0003-5130,"P. o. box 47, dormaa ahenkro","Gka 053 , bolgatanga",Single
+120,RGN,Gladys,Nsor,,Female,2002-08-14,Ghanaian,Ghana,Upper east,Bolegatanga,Christian,595646045,gladysakuansor@gmail.com,BD-0003-5130,"Post office box 2242, sunyani",Nk11/9 nkwabeng sunyani,Single
+121,RGN,Bridget,Nyantakyi,Serwaa,Female,2004-08-19,Ghanaian,Ghana,Ashanti,Offinso namong,Christian,560459243,nyantakyiserwaabridget@gmail.com,BD-0003-5130,P. o. box 3129 kumasi,Af-0289-9301,Single
+122,RGN,Esther,Nyarko,,Female,2002-09-06,Ghanaian,Ghana,Bono,Atronie,Christian,257316812,nyarkoesther804@gmail.com,BD-0003-5130,P. o. box ks 12536 adum-kumasi,Ag 7020-6342,Single
+123,RGN,Augustina,Obeng,Afra,Female,2000-09-02,Ghanaian,Ghana,Ashanti,Asante akim morso,Christian,242543070,obengafraaugustina@gmail.com,BD-0003-5130,"P. o. box 29, agogo asante akim",An-0013-1589,Single
+124,RGN,Blessed,Obeng,Asare,Male,2004-03-04,Ghanaian,Ghana,Ashanti,Afrancho,Christian,558694982,asareblessed9@gmail.com,BD-0003-5130,P. o. box se 2244 bregman,Af 024 224 51,Single
+125,RGN,Rosalind,Obeng,Kyeremaa,Female,2003-09-25,Ghanaian,Ghana,Bono,Dormaa ahenkuro,Christian,539939212,rosalindobeng18@gmail.com,BD-0003-5130,Sunyani central prison p. o. box 33,By-0404-8213,Single
+126,RGN,Paul,Obeng,,Male,1996-12-12,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,549980823,obengp740@gmail.com,BD-0003-5130,"P. o. box 26, dormaa ahenkro","Dam/a/021, ahantrase dormaa ahenkro",Single
+127,RGN,Doris,Offei,,Female,2001-07-03,Ghanaian,Ghana,Eastern,Akim oda,Christian,594857618,dorisoffei99@gmail.com,BD-0003-5130,P. o. box tnn70 nungua,Gz-042-0992,Single
+128,RGN,Florence,Ofori,Akua afriyie,Female,2000-10-10,Ghanaian,Ghana,Ashanti,Domaabra,Christian,246544158,oforiflorenceakuaafriyie@gmail.com,BD-0003-5130,"P. o. box se 782, suame-kumasi","Ak-074-7717 buokrom, kumasi",Single
+129,RGN,Emmanuel,Ofori,,Male,2002-08-21,Ghanaian,Ghana,Bono,Wamfie,Christian,530856230,emmanuelofori123@gmail.com,BD-0003-5130,"P. o. box 5, dormaa ahenkro",Bd-0009-1024,Single
+130,RGN,Beatrice,Ofori,,Female,1999-05-18,Ghanaian,Ghana,Western north,Bibiani,Christian,550352972,beatriceoforic207@gmail.com,BD-0003-5130,"P. o. box 54,bibiani old compound",Wb-000-1771,Single
+131,RGN,Kingsley,Ofosu,,Male,2002-06-01,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,557195295,ofosukingsley36@gmail.com,BD-0003-5130,"P. o. box 117, dormaa ahenkro",Kse/l/030 dormaa ahenkro,Single
+132,RGN,Beatrice,Okyere,,Female,2004-01-03,Ghanaian,Ghana,Ashanti,Dichemso,Christian,552591145,okyerebeatrice28@gmail.com,BD-0003-5130,"P. o. box as 41, kumasi",Ak-005-3940 ashtown,Single
+133,RGN,Kate,Okyere,Amankwah,Female,2004-05-16,Ghanaian,Ghana,Ashanti,Asante akyem agogo,Christian,598716958,kateamankwah123@gmail.com,BD-0003-5130,"P. o. box 14, effiduase",Ae-0610-9729,Single
+134,RGN,Peggy,Olympio,,Female,2005-06-28,Ghanaian,Ghana,Bono,Nkrankwanta,Christian,592098424,peggyolympio6@gmail.com,BD-0003-5130,"P. o. box 292, kumasi",Gt-339-7425,Single
+135,RGN,Angela,Omane,,Female,2004-05-11,Ghanaian,Ghana,Ashanti,Juaso,Christian,592429481,maamefosuaa04@gmail.com,BD-0003-5130,"Post office box 250, konongo",Ac-0056-0175,Single
+136,RGN,Comfort,Opoku,,Female,2005-02-25,Ghanaian,Ghana,Central,Abukwa abakomadi,Christian,538686922,comfortopoku@gmail.com,BD-0003-5130,"P. o. box ks9211 adum,kumasi","Plot 26 block c, abuakwa",Single
+137,RGN,Janet,Opoku,Agyarko,Female,2005-07-01,Ghanaian,Ghana,Ashanti,Asante akim formanso,Christian,597689329,janetagyarkoopoku@gmail.com,BD-0003-5130,"P .o. box ct 1363, cape coast","Aa-2531-113, h/no f/h. 18",Single
+138,RGN,Eugene,Oppong,Kwadwo,Male,2005-05-30,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,597677032,eugeneperry@gmail.com,BD-0003-5130,P. o. box 47 dormaa aheenkro,Bd-0004-2573,Single
+139,RGN,Lilian,Oppong,Achiaa,Female,2003-10-23,Ghanaian,Ghana,Ashanti,Adiebeba,Christian,531647322,lilianachiaa853@gmail.com,BD-0003-5130,"P. o. box st 122,stadium kumasi",Ak-302-1743,Single
+140,RGN,Bernice,Osabutey,Ama,Female,2002-06-08,Ghanaian,Ghana,Eastern,Obawale,Christian,549887813,berniceosabutey850@gmail.com,BD-0003-5130,"P. o. box 1,obawale",Ey-1191-9857,Single
+141,RGN,Dennis,Osei,Gyekye,Male,2002-10-22,Ghanaian,Ghana,Ashanti,Asiwa-bobiam,Christian,540942201,stabiloreigns@gmail.com,BD-0003-5130,"P. o. box 365, konongo-ashanti",A4-0004-7999,Single
+142,RGN,Ebenezer,Osei,Tetteh,Male,2003-06-04,Ghanaian,Ghana,Eastern,Somaya,Christian,553250699,oseitettehebenezer@gmail.com,BD-0003-5130,"P. o. box 47, dormaa ahenkro",Bd-0089-3277,Single
+143,RGN,Victor,Osei,Owusu,Male,2004-10-12,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,532449732,oseivictor224@gmail.com,BD-0003-5130,"P. o. box 230,dormaa ahenkro",Bd-0033-1539,Single
+144,RGN,Agyekum,Osei tutu,,Male,2004-06-02,Ghanaian,Ghana,Ashanti,Ashanti juaben,Christian,531122957,agyekumkwaku1530@gmail.com,BD-0003-5130,P. o. box 15 juaben,Jb 140 damaa,Single
+145,RGN,Rebecca,Owiredu,,Female,2002-09-18,Ghanaian,Ghana,Greater accra,Kwahu bepong,Christian,547178026,rebeccaowiredu2020@gmail.com,BD-0003-5130,P. o. box kn 3875 alabama,Ga-500-1228,Single
+146,RGN,Augustine,Owusu,Nuamah,Male,1998-10-17,Ghanaian,Ghana,Bono,Wenchi,Christian,540913645,quameaugustine@gmail.com,BD-0003-5130,P. o. box sy 2098 sunyani,Bw-0071-7331,Single
+147,RGN,Beatrice,Owusu,,Female,2002-03-30,Ghanaian,Ghana,Ashanti,Kumasi,Christian,532399278,na5395562@gmail.com,BD-0003-5130,"P. o box 716, knust kumasi",Ak-143-5147,Single
+148,RGN,Gideon,Owusu,,Male,2003-08-06,Ghanaian,Ghana,Bono east,Nkoranza north-yefri,Christian,592537232,owusugideon584@gmail.com,BD-0003-5130,P. o. box 1 yefri r/c,Bn-1886-6313,Single
+149,RGN,Francis,Owusu,,Male,1999-02-17,Ghanaian,Ghana,Ashanti,Suame,Christian,554382672,owusufrancis1945@gmail.com,BD-0003-5130,"P. o. box 60,nyinahin ashanti",Plot 14 block a suame,Single
+150,RGN,Vida,Owusu,,Female,2006-05-01,Ghanaian,Ghana,Bono,Atuahenekrom,Christian,537309485,anita.atkin2@gmail.com,BD-0003-5130,P. o. box 356 mampong,Bs-2038-3764,Single
+151,RGN,Priscilla,Owusu,,Female,2004-05-13,Ghanaian,Ghana,Central,Ajumako bisease,Christian,500612409,priscyowu2004@gmail.com,BD-0003-5130,"P. o. box aj 40, ajumako",Gd-120-1447,Single
+152,RGN,Charlotte,Owusu,,Female,2004-09-19,Ghanaian,Ghana,Central,Anum,Christian,546366031,owusucharlotte657@gmail.com,BD-0003-5130,"P. o. box 57,kasoa-galilea",Gs-0618-1775,Single
+153,RGN,Esther,Owusu,Afriyie,Female,2006-06-24,Ghanaian,Ghana,Bono,Berekum,Christian,595420905,estherowusuafriyie7@gmail.com,BD-0003-5130,"P. o. box 519, continental, berekum","L 29 nyamebekyere,berekum",Single
+154,RGN,Linda,Owusu,Kwarfowa,Female,2004-06-19,Ghanaian,Ghana,Ashanti,Asante akim agogo,Christian,504361068,ama99linda@gmail.com,BD-0003-5130,P. o. box 29 hwidiem,3he hwidiem,Single
+155,RGN,Princess,Peprah,,Female,2006-02-19,Ghanaian,Ghana,Bono,Sunyani-abesim,Christian,557925228,peprahprincess35@gmail.com,BD-0003-5130,"P. o. box 7, nkrankwanta",Bf-0652-0671,Single
+156,RGN,Olivia,Pomaa,,Female,2003-11-17,Ghanaian,Ghana,Bono east,Adiemmra no.4,Christian,558610819,pomaaolivia3@gmail.com,BD-0003-5130,P. o. box 49 adiemmra no.4,Bf-1431-3100,Single
+157,RGN,Stephanie,Prempeh,Serwaa,Female,2004-11-17,Ghanaian,Ghana,Ashanti,Asante- akyem agogo,Christian,531805526,serwaaprempehstephanie@gmail.com,BD-0003-5130,"P. o. box p3, old tafo",Af-0150-2214,Single
+158,RGN,Deborah,Quaicoe,,Female,2004-10-10,Ghanaian,Ghana,Western,Bibiani,Christian,531835180,dquaicoe43@gmail.com,BD-0003-5130,"P. o. box 10, prestea",Wn-3972-1608,Single
+159,RGN,Dorcas,Quaicoe,,Female,2003-08-23,Ghanaian,Ghana,Western,Takoradi,Christian,546365208,siawlarteymable@gmail.com,BD-0003-5130,"P. o. box 7, egyam",E203644751,Single
+160,RGN,David,Saabomo,,Male,2003-06-02,Ghanaian,Ghana,Upper west,Tuolung,Christian,593100622,dsaabomo@gmail.com,BD-0003-5130,"P. o. box 53,dormaa ahenkro",Be-4318-2069,Single
+161,RGN,Amida,Salifu,,Female,2004-02-22,Ghanaian,Ghana,Greater accra,Adenta,Islamic,257500787,amidasalifu222@gmail.com,BD-0003-5130,"P. o. box 138 toase, ashanti",Ah-0276-2474,Single
+162,RGN,Hannah,Samanja,,Female,2002-04-04,Ghanaian,Ghana,Ashanti,Agogo ashanti akim,Christian,592014080,samanjahanna@gmail.com,BD-0003-5130,P. o. box 26 agogo,Blk 101 agogo,Single
+163,RGN,Yvette,Sarkordie,Bamfowaah,Female,2004-03-05,Ghanaian,Ghana,Ashanti,Ahwiaa -kumasi,Christian,539411617,sarkodieyvette@gmail.com,BD-0003-5130,Post office box 3 juaso-kurofa,Ak-453-9610,Single
+164,RGN,Samuel,Sarpong,Kwaku,Male,2004-05-05,Ghanaian,Ghana,Ashanti,Agona,Christian,538506392,kkmotion24@gmail.com,BD-0003-5130,"P. o. box 52, agona",Ah-0557-5850,Single
+165,RGN,Vida,Serwaa,,Female,2000-09-07,Ghanaian,Ghana,Eastern,Sunyani,Christian,540728417,gideonoppong88@gmail.com,BD-0003-5130,"P. o. box 1237, sunyani",Aa-3076-6270,Single
+166,RGN,Esther,Somea,,Female,2002-05-24,Ghanaian,Ghana,Bono,Berekum,Christian,591221348,esthersomea91@icloud.com,BD-0003-5130,"P. o. box 526, berekum",Bb-0026-6807,Single
+167,RGN,Fuseini,Sulemana,,Male,2001-07-01,Ghanaian,Ghana,Ashanti,Bodwease,Islamic,549804457,sulemanadestiny123@gmail.com,BD-0003-5130,P. o. box 52 ma hwidiem near agogo,Ap-0946-9635,Single
+168,RGN,Sumaila,Sulemana,Ayikpa,Male,2001-02-22,Ghanaian,Ghana,Ashanti,Ashanti akim agogo,Islamic,249464754,sulemanasumaila256@gmail.com,BD-0003-5130,"P. o. box 01, agogo a/a",Plot 47 block k asante akim,Single
+169,RGN,Raymond,Takyi,,Male,2003-10-07,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,594049346,raymondtakyi90@gmail.com,BD-0003-5130,"P. o. box 271, dormaa ahenkro",Src/m 057 dormaa suromani,Single
+170,RGN,Deborah,Tetteh,Adeiko,Female,2004-03-15,Ghanaian,Ghana,Eastern,Akyim anyinam,Christian,532602415,dedorahtetteh813@gmail,BD-0003-5130,"P. o. box 101, nkawkaw",B234 akyim anyinam,Single
+171,RGN,Vera,Twum,,Female,2005-09-10,Ghanaian,Ghana,Ahafo,Derma,Christian,535449395,veratwum1009@gmail.com,BD-0003-5130,"P. o. box 1, derma","Plot 15 block a, bremang ak-159-1946",Single
+172,RGN,Festus,Wasah,Kuudeyir,Male,1999-08-04,Ghanaian,Ghana,Upper east,Nandom,Christian,241030490,wasahfestus77@gmail.com,BD-0003-5130,"P. o. box 24, st george's parish piina",Bu-1343-8484,Single
+173,RGN,Patience,Wiafe,,Female,2004-04-22,Ghanaian,Ghana,Ashanti,Kumawu,Christian,534706289,wiafepatience3158@gmail.com,BD-0003-5130,P. o. box se 2701 kumawu,Ap-0024-6669,Single
+174,RGN,Grace,Wilson,Ashikaa,Female,2003-03-27,Ghanaian,Ghana,Bono east,Doormaa-ahenkro,Christian,509873525,yhaarboo@gmail.com,BD-0003-5130,"P. o. box 1, adehyeman",Dda/a/134/2 dormaa ahenkro,Single
+175,RGN,Divina,Yeboaa,,Female,2004-10-04,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,241583743,yeboaadivina71@gmail.com,BD-0003-5130,"Post office box 56, sunyani",Bd-0021-4473,Single
+176,RGN,Freda,Yeboaa,Korkor,Female,2005-01-14,Ghanaian,Ghana,Bono,"Chiraa, sunyani",Christian,559044379,fredayeboahy@gmail.com,BD-0003-5130,P. o. box 70 chiraa,Lc214 chiraa,Single
+177,RGN,Elizabeth,Yeboaa,,Female,2005-02-24,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,597676676,innocentdeeyered@gmail.com,BD-0003-5130,P. o. box 26 dormaa ahenkro,"Asa/n/072, dormaa ahenkro",Single
+178,RGN,Isaac,Yeboah,,Male,2005-05-28,Ghanaian,Ghana,Eastern,Oboo kwahu,Christian,534316920,20yeboahisaac053@gmail.com,BD-0003-5130,P. o. box 220. danteng,Ej-0650-9145,Single
+179,RGN,Blessing,Yeboah,,Female,2004-09-21,Ghanaian,Ghana,Bono,Brekum,Christian,592524408,yeboahblessing140@gmail.com,BD-0003-5130,"P. o. box 153, korle bu accra",Gc-106-1618,Single
+180,RGN,Vester,Yeboah,,Female,2005-04-15,Ghanaian,Ghana,Western north,Sefwi yawmatwa,Christian,557788858,vestery4862@gmail.com,BD-0003-5130,"P. o. box 1, sefwi essem",Wd-2367-4086,Single
+181,RM,Sarah,Effah,,Female,2004-10-22,Ghanaian,Ghana,Bono,Jinijini,Christian,533009540,effahsarah@12gmail.com,BD-0003-5130,P. o. box 216 berekum,Bc-6756-6873,Single
+182,RM,Kate,Abakah,,Female,2004-11-03,Ghanaian,Ghana,Ashanti,Berekum,Christian,531890204,bengee171@gmail.com,BD-0003-5130,"P. o. box 77, duayaw-nkwanta",Ah-44 ahenbronoso,Single
+183,RM,Ellen,Abankwah,Serwaa,Female,2005-02-11,Ghanaian,Ghana,Ashanti,Effiduasi,Christian,256628935,eserwaa359@gmail.com,BD-0003-5130,P. o. box 28 nkoranza bono east,Ar-0000-3822,Single
+184,RM,Mariam,Abdul Aziz,,Female,2003-04-07,Ghanaian,Ghana,Ashanti,Asawasi,Islamic,551337334,mariamabdulaziz918@gmail.com,BD-0003-5130,"P. o. box 6699, kumasi","Blk d plt 46, asawasi kumasi",Single
+185,RM,Najat,Abdul Rahim,,Female,2004-04-09,Ghanaian,Ghana,Oti,Koe,Islamic,257163180,najatabdulrahim6@gmail.com,BD-0003-5130,"P. o. box t19, old tafo",Ad-303-5709,Single
+186,RM,Salma,Abdul Rashid,,Female,2001-10-09,Ghanaian,Ghana,Oti,Akim tafo,Islamic,556207892,salmaabdulrashid75@gmail.com,BD-0003-5130,"P. o. box 140, madina",Plt120 ogbojo,Single
+187,RM,Hajia,Abdul-rahman,Hawa,Female,2004-05-28,Ghanaian,Ghana,Bono,Japekrom,Islamic,530817804,hajiahawa401@gmail.com,BD-0003-5130,"P. o. box 12, japekrom",Bi-0023-8664,Single
+188,RM,Rosalinda,Abrefa,,Female,2004-10-09,Ghanaian,Ghana,Bono,Wenchi,Christian,204946716,abrefarosalinda@gmail.com,BD-0003-5130,"P. o. box 938, odumaseman",Bw-0099-6368,Single
+189,RM,Fatimatu,Abubakar,,Female,2002-01-05,Ghanaian,Ghana,Western north,Sefwi-bibiani,Islamic,535697644,053569764a@gmail.com,BD-0003-5130,P. o. box 39 dormaa ahenkro,"D7-14 bibiani, western north",Single
+190,RM,Angela,Acheampong,Asiraa,Female,2003-11-03,Ghanaian,Ghana,Bono east,Techiman,Christian,598255769,angelaacheampong218@gamil.com,BD-0003-5130,"P. o. box 4,techiman",Bt-0000-1012,Single
+191,RM,Angela,Achina,,Female,2000-12-22,Ghanaian,Ghana,Volta,Aflao,Christian,550871893,angelaachina13@gmail.com,BD-0003-5130,"P. o. box 508, knust",Ak-318-3573,Single
+192,RM,Juliet,Adarkwaa,,Female,2004-03-25,Ghanaian,Ghana,Bono,Wamanafo,Christian,552300364,julietadarkwaa408@gmail.com,BD-0003-5130,P. o. box 12 wamanafo,Be-0109-4988,Single
+193,RM,Sandra,Adoma,,Female,2002-02-22,Ghanaian,Ghana,Bono,Aboabo no 4,Christian,535514124,adomasandra2002@gmail.com,BD-0003-5130,P. o. box 6 aboabo,Mke/k/011 aboabo,Single
+194,RM,Sandra,Adoma,,Female,2004-01-21,Ghanaian,Ghana,Bono,"Asuano, wenchi",Christian,531364509,sandraadoma56@gmail.com,BD-0003-5130,P. o. box 88 wenchi,Bw-0441-4292,Single
+195,RM,Freda,Adu-gyamfi,,Female,2004-09-25,Ghanaian,Ghana,Bono,Asuotiano,Christian,597676772,adugyamfifreda7@gmail.com,BD-0003-5130,P. o. box 47 dormaa ahenkro,"J/141 zongo b, dormaa ahenkro",Single
+196,RM,Martha,Adutwumwaa,,Female,2002-12-26,Ghanaian,Ghana,Western north,Techimantia,Christian,559029347,adepananaama715@gmail.com,BD-0003-5130,P. o. box 11 techimantia,N.t. 8 techimantia,Single
+197,RM,Monacy,Afofie,,Female,2004-06-13,Ghanaian,Ghana,Bono,Banda,Christian,558499237,n9171701@gmail.com,BD-0003-5130,P. o. box 93 berekum,Bb-0126-6538,Single
+198,RM,Blessing,Agakpe,,Female,2001-05-28,Ghanaian,Ghana,Oti,Akpafu mempeasem,Christian,248524217,blessingagakpequeen7@gmail.com,BD-0003-5130,P. o. box 132 akpafu mempeasem,Vc-1522-4708,Single
+199,RM,Betty,Agyei,Johanna,Female,2003-09-01,Ghanaian,Ghana,Oti,Pampawie,Christian,539576788,agyeibettyjohanna92@gmail.com,BD-0003-5130,"P. o. box 48, kpando secondary school",D/a--vm2169-0062,Single
+200,RM,Queencilla,Agyei,Gyamfuaa,Female,2003-10-19,Ghanaian,Ghana,Ashanti,Wiamoase,Christian,595903968,mavisoppong94@yahoo.com,BD-0003-5130,Post box 22 ashanti region,Plot13 blka,Single
+201,RM,Joanicia,Agyei,Senior,Female,2004-01-01,Ghanaian,Ghana,Ashanti,Bonwire,Christian,537963654,joaniciasenioragyei0556@gmail.com,BD-0003-5130,"P. o. box 21, bonwire",Ak-002-2763,Single
+202,RM,Priscilla,Agyei-kumi,,Female,2004-10-23,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,536370090,agyeikumi5p@gmail.com,BD-0003-5130,"P. o. box 47, dormaa ahenkro",Bd-0013-6917,Single
+203,RM,Genevieve,Agyeiwaa,,Female,2004-10-19,Ghanaian,Ghana,Bono,Dormaa -ahenkro,Christian,592279982,vivegega2000@gmail.com,BD-0003-5130,"P. o. box 24, dormaa ahenkro",Bd-0005-4231,Single
+204,RM,Esther,Agyemang,,Female,2002-12-14,Ghanaian,Ghana,Ashanti,Sekyeredumase,Christian,557400600,agyemangesther597@gmail.com,BD-0003-5130,P. o. box 12 fowoade,Plot25b blocke fowoade,Single
+205,RM,Salomey,Akologo,Awintima,Female,2002-05-10,Ghanaian,Ghana,Upper east,Garu,Christian,544564926,salomeyakologo5@gmail.com,BD-0003-5130,P. o. box 88 nkawie,Ah-0693-1130,Single
+206,RM,Agartha,Akompi,,Female,2003-10-20,Ghanaian,Ghana,Ashanti,Daawaso,Christian,536023213,adugyamfisyivester956@gmail.com,BD-0003-5130,P. o. box 14 manso adubia,Gt 88 gygietroso,Single
+207,RM,Mary,Amanfi,Nkrumah,Female,2005-07-12,Ghanaian,Ghana,Western north,Sefwi essam,Christian,257082004,nanaadwoah262@gmail.com,BD-0003-5130,P. o. box 27 sefwi essam,Wd-0037-2166,Single
+208,RM,Vannesa,Amankwaah,,Female,2004-12-07,Ghanaian,Ghana,Ashanti,Akumadan afrancho,Christian,557786273,amankwaahvannesa979@gmail.com,BD-0003-5130,"P. o. box 29, akumadan afrancho",Bt-2601-4076,Single
+209,RM,Clementina,Amo,,Female,2005-02-06,Ghanaian,Ghana,Bono,Berekum,Christian,594759770,clementinaamo70@gmail.com,BD-0003-5130,"P. o. box 25, berekum","Jd361, jamdede berekum",Single
+210,RM,Priscilla,Amoah,,Female,2006-06-29,Ghanaian,Ghana,Bono,Dormaa-aboabo,Christian,537584932,priscillaamoah@gmail.com,BD-0003-5130,"P. o. box 6, aboabo no.4",Bd-0931-7820,Single
+211,RM,Christabel,Amoah,,Female,2005-01-10,Ghanaian,Ghana,Bono,"Drobo, gyapekrom",Christian,531948361,amoahchristabel700@gmail.com,BD-0003-5130,"P. o. box 9, gyapekrom",Bi-0044-6284,Single
+212,RM,Augusta,Amoani,Ahwirenmea,Female,2000-09-22,Ghanaian,Ghana,Eastern,Obodan,Christian,541270935,amoaniaugusta@gmail.com,BD-0003-5130,"P. o. box kp57, kofipare",Eo-1633-9267,Single
+213,RM,Hagar,Amoanimaa,,Female,1999-03-21,Ghanaian,Ghana,Ahafo,Techimantia,Christian,594930473,hagaramoanimaa98@gmail.com,BD-0003-5130,"P. o box 15 tecimantia, ahafo",B3-0772-3086,Single
+214,RM,Vera,Amponsah,,Female,2001-05-22,Ghanaian,Ghana,Ashanti,Konongo,Christian,242548684,veraabena450@gmail.com,BD-0003-5130,P. o. box 75 konongo,Ntblckf27 konongo,Single
+215,RM,Freda,Amponsah,Asantewa,Female,2003-09-27,Ghanaian,Ghana,Eastern,Tutu- akuapem,Christian,592121592,fredaasantewa2003@gmail.com,BD-0003-5130,"P. o. box 6,tutu akuapem",E2-1181-0259,Single
+216,RM,Veronica,Anaam,,Female,2002-07-02,Ghanaian,Ghana,Upper east,Bolgatanga,Christian,591708373,veronicaanaam94@gmail.com,BD-0003-5130,Post office box 10-nsoatre,Ag-0572-7225,Single
+217,RM,Rose,Anane,,Female,2004-02-15,Ghanaian,Ghana,Ashanti,Ejisu asewase,Christian,532017115,asamoahlydia0241@gmail.com,BD-0003-5130,P. o. box t 15 kumasi,As 4 asuasi,Single
+218,RM,Racheal,Ananga,,Female,2000-10-10,Ghanaian,Ghana,Upper east,Bolgatanga,Christian,501957302,anangaracheal01@gmail,BD-0003-5130,"P. o. box 128, wenchi.",Bw-0004-3750,Single
+219,RM,Belinda,Anima,,Female,2002-09-24,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,592368682,animabelinda112@gmail.com,BD-0003-5130,Post office box 62 dormaa-ahenkro,Khs/h/150 kyeremasu,Married
+220,RM,Patience,Anima,,Female,2000-06-15,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,559979273,animapatience77@gmail.com,BD-0003-5130,"P. o. box 18, bono region ghana",Bb-0008-0090,Single
+221,RM,Juliet,Animah,,Female,2003-09-28,Ghanaian,Ghana,Ashanti,Dormaa ahenkro,Christian,597166839,animahjuliet059@gmail.com,BD-0003-5130,"P. o. box 369,bohyen-kumasi",Af-0459-2859,Single
+222,RM,Fidelia,Annor,Boatemaa,Female,2004-05-07,Ghanaian,Ghana,Central,Winneba,Christian,597653220,fideliaannorboatemaa@gmail.com,BD-0003-5130,P. o. box kn 29 agona kwanyako,Cx-057-0048,Single
+223,RM,Francisca,Anokyewaa,,Female,1996-11-29,Ghanaian,Ghana,Western,Tarkwa,Christian,551262488,franciscaanokyewaa737@gmail.com,BD-0003-5130,"P. o. box 305, tarkwa","Bns 3, tarkwaa",Single
+224,RM,Doreciaa,Ansuaa,,Female,2003-08-09,Ghanaian,Ghana,Bono,Drobo,Christian,534967851,ansuaadoreciaaama@gmail.com,BD-0003-5130,P. o. box 139 japekrom,Ktk 20 drobo,Single
+225,RM,Margaret,Appiah,Kubi,Female,2005-10-14,Ghanaian,Ghana,Ashanti,Asonomaso,Christian,536977725,nanayaamarga@gmail.com,BD-0003-5130,"P. o. box 88,wenchi",Bw-0030-6430,Single
+226,RM,Afia,Appiah,Tiwah,Female,2005-11-04,Ghanaian,Ghana,Ashanti,Asokore-mampong,Christian,531958635,afiatiwaahappiah@gmail.com,BD-0003-5130,P. o. box 20 effiduase-asokore,Al-2045-7028,Single
+227,RM,Sakina,Appiah,,Female,2003-11-11,Ghanaian,Ghana,Bono east,Nkoranza,Christian,257471100,sakinaappiah755@gmail.com,BD-0003-5130,"P. o. box 55,nkoranza",Bo-ooo5-4000,Single
+228,RM,Priscilla,Appiah,,Female,2004-09-29,Ghanaian,Ghana,Ashanti,"Patasi, kumasi",Christian,541144325,cillaappiah65@gmail.com,BD-0003-5130,"P. o. box 10402 patasi, kumasi",Plot 4 block g patasi,Single
+229,RM,Erica,Arhinful,,Female,2002-12-30,Ghanaian,Ghana,Central,Dormaa ahenkro,Christian,591972961,arhinfulerica55@gmail.com,BD-0003-5130,P. o. box 81 bechem,K.d.s 7 dormaa ahenkro,Single
+230,RM,Benedicta,Arthur,Lovelace,Female,1999-04-13,Ghanaian,Ghana,Central,Asebu,Christian,547231300,arthurlovelace2100@gmail.com,BD-0003-5130,"P. o. box ab 56, abura dunkwa",Ca-1341-7700,Married
+231,RM,Eunice,Asamoah,Yeboah,Female,2001-10-22,Ghanaian,Ghana,Bono east,Techiman bono east,Christian,557580631,euniceohemaa80@gmail.com,BD-0003-5130,"P. o. box 2, dormaa west",Bt00988683,Single
+232,RM,Lovia,Asamoah,,Female,2004-03-15,Ghanaian,Ghana,Ashanti,Asanta akyem agogo,Christian,556654517,loviaasamoah02@gmail.com,BD-0003-5130,"P. o. box 6,asante akyem agogo","Bl3 n7 agogo, ashanti akyem",Single
+233,RM,Regina,Asante,,Female,2003-09-13,Ghanaian,Ghana,Ashanti,Obuasi,Christian,537271360,asanteregina8192@gmail.com,BD-0003-5130,P. o. box 813 obuasi,Ao-714-4083 obuasi,Single
+234,RM,Betty,Asantewaa,,Female,2004-01-09,Ghanaian,Ghana,Bono,Sunyani,Christian,204657289,naanabetty53@gmail.com,BD-0003-5130,"P. o. box150, berekum",As/7b kotorom/sunyani,Single
+235,RM,Mabel,Asantewaa,Mfodjo,Female,2005-01-27,Ghanaian,Ghana,Bono,Asiri,Christian,598207958,mfodjomabel@gmail.com,BD-0003-5130,Post office box 2 asiri,"Aso-aj-76, sampa",Single
+236,RM,Vera,Asare,,Female,2002-12-15,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,257100998,asarevera0998@gmail.com,BD-0003-5130,"P. o. box 47, dormaa ahenkro","Daf\08\08, jericho dormaa ahenkro",Single
+237,RM,Dora,Asigri,Wanindia,Female,2003-12-20,Ghanaian,Ghana,Upper east,Garu tempane,Christian,555818268,asigridora@gmail.com,BD-0003-5130,P. o. box at 714 achimota,39 hawk street achimota,Single
+238,RM,Margaret,Asiraa,,Female,2004-05-05,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,543360162,asiraamargaret5050@gmail.com,BD-0003-5130,"P. o. box 39, dormaa ahenkro","Abb25, dormaa ahenkro",Single
+239,RM,Felicia,Awienloya,,Female,2004-03-01,Ghanaian,Ghana,Bono,Wamfie,Christian,532845539,feliciaawienloya2004@gmail.com,BD-0003-5130,"P. o. box 1,amaasu",Be-0003-0706,Single
+240,RM,Grace,Baah,,Female,2003-06-18,Ghanaian,Ghana,Ashanti,Asante akyim agogo,Christian,243987215,baahg560@gmail.com,BD-0003-5130,"Post office box 125, revelation church of god",154 agogo zongo1,Single
+241,RM,Abigail,Baffoe,Andrews,Female,2003-05-17,Ghanaian,Ghana,Ashanti,Asante akim agogo,Christian,599611513,abigailbaffoeandrews@gmail.com,BD-0003-5130,"P. o. box 180, adansi obuasi",An-0014-3683,Single
+242,RM,Nathalia,Bagyina,,Female,2000-01-25,Ghanaian,Ghana,Upper west,Sombo,Christian,537208506,bagyinanathalia@gmail.com,BD-0003-5130,Post office box 65 kaleo -sombo,So-so-071 sombo upper west,Single
+243,RM,Charity,Bawuah,Opokuah,Female,2005-09-17,Ghanaian,Ghana,Ashanti,Pra river,Christian,530949369,nharnararmah4@gmail.com,BD-0003-5130,P. o. box 666 pra river- nkawkaw,Aa-3075-6476,Single
+244,RM,Belinda,Bediako,Anim,Female,2005-04-07,Ghanaian,Ghana,Central,Ajumako besease,Christian,538109812,belindaanimb@gmail.com,BD-0003-5130,"P. o. box 25, twifo hemang",Ab/27a ajumako,Single
+245,RM,Priscilla,Benewaa,,Female,2005-05-07,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,532415280,benewaapriscilla37@gmail.com,BD-0003-5130,Post offie box 58 dormaa ahenkro,Bd-0008-7590,Single
+246,RM,Eva,Boakye,,Female,2002-04-12,Ghanaian,Ghana,Ashanti,Offinso,Christian,543366183,boakyeeva867@gmail.com,BD-0003-5130,P. o. box 32 offinso ashanti,A7-0004-9122,Single
+247,RM,Rosina,Boakyewaa,Nyamekye,Female,2000-04-26,Ghanaian,Ghana,Upper west,Lawra,Christian,592442019,adepaamakimberlyn3@gmail.com,BD-0003-5130,P. o. box r/y 440 kotei,Ak-624-9055,Single
+248,RM,Comfort,Boateng,,Female,2004-04-12,Ghanaian,Ghana,Ashanti,Offinso-ahenkro,Christian,531796838,comfortboateng674@gmail.com,BD-0003-5130,P. o. box 62 kwadaso,Ag-0285-4152,Single
+249,RM,Angella,Boateng,,Female,2000-06-03,Ghanaian,Ghana,Ashanti,Kumawu besoro,Christian,548400766,angellaboateng7@gmail.com,BD-0003-5130,"Abk72, abuakwa- kumasi",Ah-0325-5016,Single
+250,RM,Linna,Bonsu,Manu,Female,2005-02-15,Ghanaian,Ghana,Ashanti,Juaben,Christian,552324628,bonsulinnamanu@gmail.com,BD-0003-5130,"P. o. box 4, juaben ashanti",Ae-1229-0633,Single
+251,RM,Linda,Brefo,,Female,2003-10-20,Ghanaian,Ghana,Ashanti,Tepa,Christian,596830458,brefolinda58@gmail.com,BD-0003-5130,"P. o. box57,goaso",Af-0021-6320,Single
+252,RM,Harriet,Donkor,,Female,2005-04-16,Ghanaian,Ghana,Bono,Nkrankwanta,Christian,530983543,donkorharriet376@gmail.com,BD-0003-5130,P. o. box 343 dormaa west distric hospital,Bf-0029-9160,Single
+253,RM,Wendy,Dufie,,Female,2001-09-24,Ghanaian,Ghana,Ashanti,Wadie- adwumakaase,Christian,596690399,dufiewendy8@gmail.com,BD-0003-5130,P. o. box 13 mamponteng- ashanti,Ad-211-7896,Single
+254,RM,Rispa,Dwaa,,Female,2003-12-01,Ghanaian,Ghana,Bono,Berekum,Christian,256786097,dwaarispa85@gmail.com,BD-0003-5130,P. o. box 75 berekum,Bb-0663-1435,Single
+255,RM,Mavis,Fonwaa,,Female,2004-05-31,Ghanaian,Ghana,Ahafo,Techimantia,Christian,531309041,adwoa.carta@icloud.com,BD-0003-5130,Post office box 2 techimentia,B3-0961-8401,Single
+256,RM,Bridget,Fosuaa,,Female,2003-02-14,Ghanaian,Ghana,Bono,Chiraa,Christian,552311441,bridgetfosuaa1@gmail.com,BD-0003-5130,"P. o. box10,sunyani-chiraa","A14, chiraa",Single
+257,RM,Sabbath,Frimpomaa,Candylove,Female,2000-10-03,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,592831745,frimpcandy@ gmail.com,BD-0003-5130,P. o. box47 dormaa ahenkro,Bd-0012-0104,Single
+258,RM,Lawrencia,Gyasiwaa,,Female,2004-04-24,Ghanaian,Ghana,Bono,Nkrankwanta,Christian,595407933,lawrenciagyasiwaa0879@gmail.com,BD-0003-5130,P. o. box 10 nkrankwanta,Df-0001-3940,Single
+259,RM,Sarah,Hammond,,Female,2004-09-17,Ghanaian,Ghana,Central,Saltpond,Christian,531385857,holyhammond20@gmail.com,BD-0003-5130,"P. o. box 353, darkuman-accra","B385/25, darkuman-accra",Single
+260,RM,Elizabeth,Huseini,,Female,2002-11-12,Ghanaian,Ghana,Bono east,Sunyani,Christian,595205327,abenanana889@gmail.com,BD-0003-5130,P. o. box 2198 presbyterian mmeredane,Nn 36\f odumase,Single
+261,RM,Rashidatu,Ibrahim,Mohammed,Female,2004-06-14,Ghanaian,Ghana,Bono,Berekum,Islamic,546136789,ibrahimrashida335@gmail.com,BD-0003-5130,"P. o. box 25,berekm",Bb-0024-5919,Single
+262,RM,Joyceline,Oforiwaa,,Female,2007-06-18,Ghanaian,Ghana,Bono,Seikwa,Christian,240100313,joymike14x@gmail.com,BD-0003-5130,"P. o. box 568, berekum",Bb-1071-8038,Single
+263,RM,Rose,Kintor,,Female,2003-04-20,Ghanaian,Ghana,Bono,Kato,Christian,552408140,roskintor1@gmail.com,BD-0003-5130,"P. o. box 540,berekum bono region","K/w 128 kato, berekum",Single
+264,RM,Francisca,Konadu,,Female,2003-03-05,Ghanaian,Ghana,Ashanti,Asanti akim juaso,Christian,552730226,kunadufrancisca@gmail.com,BD-0003-5130,"P. o. box blk 13, joasu",Aa-0008-1494,Single
+265,RM,Angelica,Konadu,,Female,2004-11-16,Ghanaian,Ghana,Bono,Berekum,Christian,536374879,angelicakonadu0@gmail.com,BD-0003-5130,"P. o. box 25, berekum",Bb-0073-9479,Single
+266,RM,Abigail,Kpambe,,Female,2000-04-30,Ghanaian,Ghana,Northern,Tatale,Christian,599959504,abigailkpambe@gmail.com,BD-0003-5130,"P. o. box 18, jinjin","Tma171b1, techiman",Single
+267,RM,Claudia,Kumi Asamoah,,Female,2005-07-08,Ghanaian,Ghana,Bono,Dormaa ahenkro,Christian,537055220,captainkayf@gmail.com,BD-0003-5130,"Post office box nt 1,dihemso",Ad-110-7064,Single
+268,RM,Linda,Kwarteng,,Female,1998-12-21,Ghanaian,Ghana,Ashanti,Asante juaben,Christian,531746582,afriyieadwoa365@gmail.com,BD-0003-5130,"P. o. box10, asante juaben",Ae-1310-9056,Single
+269,RM,Akumsah,Kyeremaa,Emmanuella,Female,2002-09-15,Ghanaian,Ghana,Bono east,Techiman,Christian,547075576,ellalove.054188@gmail.com,BD-0003-5130,P. o. box 353 berekum,Bb-0276-6765,Single
+270,RM,Abubakar,Laar,Rasheeda,Female,2004-06-03,Ghanaian,Ghana,Western north,Sefwi akaatiso,Islamic,530205947,abubakarrasheeda@gmail.com,BD-0003-5130,"P. o. box 40, bia west",Wd-4963-4618,Single
+271,RM,Erica,Lamptey,Naa Lamley,Female,2002-05-15,Ghanaian,Ghana,Greater accra,Nsakina,Christian,547736901,ericalamptey82@gmail.com,BD-0003-5130,"P. o. box an5356, ablekuma",Gc-088-1814,Single
+272,RM,Florence,Mansah,,Female,1996-07-24,Ghanaian,Ghana,Bono east,Nsawkaw - nsuhunu,Christian,550846142,mansahflorenc592@gmail.com,BD-0003-5130,"Post office box 10, nsawkaw",Bz-1753-2718,Single
+273,RM,Eunice,Manu,,Female,1999-11-27,Ghanaian,Ghana,Ashanti,Dichemso,Christian,542932849,eunicemanu@gmail.com,BD-0003-5130,"P. o. box bp 369, bohyen -kumasi",As-020-9909,Single
+274,RM,Sandra,Mfodwaa,,Female,2003-06-06,Ghanaian,Ghana,Bono,Asiri,Christian,555978206,afiasandra476@gmail.com,BD-0003-5130,"P. o. box 47, dormaa presby hospital",Bd-0007-8567,Single
+275,RM,Lubyna,Mohammed,,Female,2004-10-16,Ghanaian,Ghana,Bono,Berekum,Islamic,550234589,lubynamohammed@gmail.com,BD-0003-5130,P. o. box 38 berekum,F 26 berekum,Single
+276,RM,Fauzia,Mohammed,,Female,2004-07-21,Ghanaian,Ghana,Ashanti,Obuasi,Islamic,593337045,fauziamohammed148@gmail.com,BD-0003-5130,"P. o. box 333, obuasi","Ne/86, obuasi",Single
+277,RM,Aminatu,Mohammed,,Female,1994-05-20,Ghanaian,Ghana,Ashanti,Seniagya,Islamic,246045872,aminatumoha434@gmail.com,BD-0003-5130,P. o. box 47 nsawkaw,Bz-005-7485,Married
+278,RM,Rihanna,Mohammed,,Female,2001-05-05,Ghanaian,Ghana,Bono,Kyeremasu,Islamic,559321436,rihannamohammed363@gmail.com,BD-0003-5130,P. o. box 6 kyeremasu,Ksc/h/026 kyeremasu,Single
+279,RM,Humiyatu,Mumuni,Anaba,Female,2004-12-28,Ghanaian,Ghana,Upper east,Bawku,Islamic,246064391,mumunihumiyatu@gmail.com,BD-0003-5130,"P. o. box 137, offinso saboa","11az, offinso saboa",Single
+280,RM,Grace,Naabditme,,Female,2002-03-28,Ghanaian,Ghana,Upper east,Kpatia,Christian,541645742,naabditmegrace@gmail.com,BD-0003-5130,"Post office box 230, the church of pentecost offinso ashanti",Af-0095-1924,Single
+281,RM,Elizabeth,Nartey,,Female,2024-06-04,Ghanaian,Ghana,Eastern,Prampram,Christian,594030886,narteyelizabeth134@gmail.com,BD-0003-5130,"P. o. box kf 962, koforidua",Ad.29 suhum akorabo,Single
+282,RM,Christiana,Naye,,Female,1993-01-18,Ghanaian,Ghana,Bono,Wa,Christian,541891143,christiananaye5@gmail.com,BD-0003-5130,"P. o. box34,berekum",Df/24 berekum,Single
+283,RM,Helen,Nketiah,Afia Anima,Female,2005-07-08,Ghanaian,Ghana,Ashanti,Bekwai,Christian,535249328,achiesam@yahoo.com,BD-0003-5130,P. o. box os 2519 osu accra,Ab-0002-1703,Single
+284,RM,Agnes,Nkrumah,,Female,2005-11-11,Ghanaian,Ghana,Ashanti,Konongo,Christian,257584074,agnesnkrumah880@gmail.com,BD-0003-5130,"P. o. box 299,konongo","Ac-0002-9779, nt-59-blk-e",Single
+285,RM,Sussana,Ntawan,Uwumborwa,Female,1996-01-19,Ghanaian,Ghana,Northern,Saboba,Christian,546760389,ntawanuwumborwa@gmail.com,BD-0003-5130,P. o. box9 jema bono east region,Jm 1158 ntoase,Single
+286,RM,Cindy,Nyamesah,Kessewaa,Female,2005-10-08,Ghanaian,Ghana,Ashanti,Konongo,Christian,537221686,kessewaacindy2005@gmail.com,BD-0003-5130,"P. o. box 315, konongo",Ac-0051-3305,Single
+287,RM,Dorigin,Nyarko,Kyeretwie,Female,2004-11-27,Ghanaian,Ghana,Western,Anyinase,Christian,505655865,doriginnyarkok19@gmail.com,BD-0003-5130,"P. o. box os 2999, osu accra",Az 0000-2085,Single
+288,RM,Freda,Ofori,Agyeiwaah,Female,2005-11-19,Ghanaian,Ghana,Eastern,Akuapem larteh,Christian,558634030,ofiebaofori@gmail.com,BD-0003-5130,P. o. box 11922 adum kumasi,Ah-0016-5241,Single
+289,RM,Roselyn,Ofori,,Female,2004-08-03,Ghanaian,Ghana,Ashanti,Ashanti bekwai,Christian,548250701,abenah@gmail.com,BD-0003-5130,P. o. box 206 ashanti bekwai,K/o 262 ashanti bekwai,Single
+290,RM,Linda,Oforiwaa,Abena,Female,1995-05-16,Ghanaian,Ghana,Bono,Gonokrom,Christian,244490492,lindaoforiwaa014@gmail.com,BD-0003-5130,P. o. box 47 dormaa ahenkro,Gkb/l/011 dormaa ahenkro,Single
+291,RM,Philipa,Ohene,,Female,2004-08-05,Ghanaian,Ghana,Ashanti,Akumfi-abuwakwa,Christian,554732065,philipaohene5@gmail.com,BD-0003-5130,P. o. box 333 piwc obuasi,S.b 49,Single
+292,RM,Abigail,Oklu,,Female,1996-01-24,Ghanaian,Ghana,Volta,Penyi,Christian,547967711,okluabi@gmail.com,BD-0003-5130,P. o. box kn 5108 kaneshie accra,Gc-099-5833,Single
+293,RM,Ivy,Opoku,,Female,2003-10-09,Ghanaian,Ghana,Ashanti,Kwadaso,Christian,240012889,opokuivy96@gmail.com,BD-0003-5130,"P. o. box 1277,kumasi",Ak-286-2538,Single
+294,RM,Ivy,Opoku,,Female,2001-12-17,Ghanaian,Ghana,Ashanti,Darbaa,Christian,531827951,opokuivy827@gmail.com,BD-0003-5130,P. o. box 27 darbaa akropong,Ah-1143-7604,Single
+295,RM,Cinderella,Opoku,Appiah,Female,2001-08-02,Ghanaian,Ghana,Ashanti,Nyame ani,Christian,541360774,abenarealla@gmail.com,BD-0003-5130,"P. o. box 17, asante mampong","Blck7/plot 8, new amakom essension",Single
+296,RM,Zipporah,Opoku,,Female,2004-10-10,Ghanaian,Ghana,Ashanti,Bekwai ashanti,Christian,531129938,opokuzipporah48@gmail.com,BD-0003-5130,P. o. box 18 jachie pramso,Ak-311-4993,Single
+297,RM,Sandra,Opoku,Aboagyewaa,Female,1998-05-28,Ghanaian,Ghana,Ashanti,Ashanti akyem dampong,Christian,27997203,sandraopoku067@gmail.com,BD-0003-5130,P. o. box ml 961 mallam accra,Gw-0985-8231,Single
+298,RM,Angelina,Opoku,Okra,Female,2004-01-23,Ghanaian,Ghana,Bono,Nsuatre,Christian,532888057,opokuangelinaokra@gmail.com,BD-0003-5130,P. o. box 7 nsuatre bono region,"D59, nsuatre",Single
+299,RM,Erica,Osei,,Female,2003-07-26,Ghanaian,Ghana,Ashanti,Obuasi,Christian,597856061,amaafra323@gmail.com,BD-0003-5130,"P. o. box 17, ashanti mampong",Ak-409-1460,Single
+300,RM,Unity,Osei,Peprah,Female,2005-09-18,Ghanaian,Ghana,Ashanti,New-edubiase,Christian,545160204,unitypeprah0@gmail.com,BD-0003-5130,P. o. box sn 670 santasi,Ag-0742-3845,Single
+301,RM,Rebecca,Osei Bonsu,Abrafi,Female,2004-04-08,Ghanaian,Ghana,Ashanti,Tepa,Christian,545576947,oseiabrafirebecca@gamil.com,BD-0003-5130,"P. o. box 120,tepa","Tn15, tepa",Single
+302,RM,Saraphina,Otoo,,Female,2000-05-05,Ghanaian,Ghana,Northern,Kpandai,Christian,247737925,jonesphynna@gmail.com,BD-0003-5130,"P. o. box 36,kpandai hospital",Na-0000-3352,Single
+303,RM,Priscilla,Owusu,Amobea,Female,2004-02-22,Ghanaian,Ghana,Central,Apam,Christian,257386207,owusuamobea224@gmail.com,BD-0003-5130,P. o. box 381 berekum,Bb-01-065557,Single
+304,RM,Comfort,Owusu,,Female,2002-02-13,Ghanaian,Ghana,Ashanti,Offinso abofour,Christian,555800623,ocomfort952@gmail.com,BD-0003-5130,"P. o. box hn 2471 ash-town,kumasi",Sd -68 abofouroppong,Single
+305,RM,Gloria,Owusu,Sarfo,Female,1995-01-24,Ghanaian,Ghana,Ashanti,Acherensua,Christian,245334486,gloriaowususarfo891@gmail.com,BD-0003-5130,P. o. box n133 new-tafo kumasi,Ah-1487-7889 ah 9 asuofia-nketia,Single
+306,RM,Saviour,Owusuaa,,Female,2005-01-06,Ghanaian,Ghana,Bono,Subinkrom,Christian,594019606,saviourowusuaa196@gmail.com,BD-0003-5130,"P. o. box 2, kyeremasu",Sbh/002 subinkrom,Single
+307,RM,Evelyn,Owusuaa,Appau,Female,2005-03-10,Ghanaian,Ghana,Ashanti,Sekyedumase,Christian,531126073,owusuaaappauevelyn10@gmail.com,BD-0003-5130,"Post office 104, sunyani",Aj-4676-2720,Single
+308,RM,Dorothy,Pokuaa,,Female,2002-10-10,Ghanaian,Ghana,Bono east,Techiman buoyem,Christian,536814294,pokuaa dorothy@24gmail.com,BD-0003-5130,"P. o. box 3, nsoatre",Bmo320 tachiman,Single
+309,RM,Christabel,Pomaah,Tuah,Female,2004-01-14,Ghanaian,Ghana,Bono,Nkrankwanta,Christian,597907473,ekua2@gmail.com,BD-0003-5130,"P. o. box 23, kwame yeboahkrom",Bf-0701-2012,Single
+310,RM,Dora,Puori,,Female,2003-02-26,Ghanaian,Ghana,Upper west,Wa,Christian,591154555,akuadora98@gmail,BD-0003-5130,"P. o. box 12,chiraa",Bc-0717-7105,Single
+311,RM,Edna,Sarfo,,Female,2000-06-14,Ghanaian,Ghana,Ahafo,Kukuom,Christian,558719086,ednasarfo5@gmail.com,BD-0003-5130,"P. o. box 25, kukuom","Kbs/kk/045, kukuom",Married
+312,RM,Gifty,Serwaa,,Female,2001-10-01,Ghanaian,Ghana,Ahafo,Noberkaw,Christian,550947646,serwaagifty2001@gmail.com,BD-0003-5130,"P. o. box 19, noberkaw",Cx-091-8320,Single
+313,RM,Emmanuella,Serwaa,,Female,2002-10-29,Ghanaian,Ghana,Bono,Berekum,Christian,594585691,serwaaemmanuella89@gmail.com,BD-0003-5130,"P. o. box 1164, sunyani",Bs-0175-9073,Single
+314,RM,Olivia,Serwaa,,Female,2002-08-12,Ghanaian,Ghana,Bono,Berekum,Christian,257496072,serwwaaolivia38@gmail.com,BD-0003-5130,"P. o. box 123, berekum, bono",Bb-0064-4798,Single
+315,RM,Ellen,Tabuaa,,Female,2003-12-05,Ghanaian,Ghana,Bono,Chiraa,Christian,592375573,ellentabuaa1@gmail.com,BD-0003-5130,"P. o. box 10, chiraa","D66, chiraa new -town",Single
+316,RM,Samilia,Takyiwaa,Gyan,Female,2004-05-24,Ghanaian,Ghana,Bono,Drobo,Christian,595408797,takyiwaasamilia@gmail.com,BD-0003-5130,"P. o .box 67, drobo",Bl-0005-5902,Single
+317,RM,Victory,Takyiwaa,Adwoa,Female,2004-07-19,Ghanaian,Ghana,Bono,Yawkumikrom,Christian,598386129,vickyy2580@gmail.com,BD-0003-5130,"P. o. box 30, yawkrom",Bd-0013-4585,Single
+318,RM,Sarah,Teye-Nobi,Dede,Female,2003-05-21,Ghanaian,Ghana,Eastern,Somanya,Christian,551126008,cutestgyal16@gmail.com,BD-0003-5130,"P. o. p co 4274, comm.1, tema",H75/1 agormanya,Single
+319,RM,Vera,Tudor,Dzifa,Female,2000-11-05,Ghanaian,Ghana,Bono,Sunyani,Christian,208232785,v17225232@gmail.com,BD-0003-5130,"P. o. box 1031, sunyani-fiapre",Bs-0007-7182,Single
+320,RM,Jennifer,Twumasi,Serwaa,Female,2003-08-07,Ghanaian,Ghana,Ashanti,Asante akim agogo,Christian,558582992,twumasijenel@gmail.com,BD-0003-5130,"P. o. box 01604, osu-accra",Gw-0070-5097,Single
+321,RM,Salamatu,Watara,,Female,1990-05-14,Ghanaian,Ghana,Bono,Kofiasua,Christian,245877228,samponktamanja@yahoo.com,BD-0003-5130,P. o. box 62 dormaa-kofiasua,Blk 27 dormaa krasu,Married
+322,RM,Elizabeth,Yeboaa,Amma,Female,2002-01-22,Ghanaian,Ghana,Bono,Yawkrom,Christian,594918465,yeboaalizzy99@gmail.com,BD-0003-5130,"P. o. box 39, dormaa ahenkro",Y/k48 yawkrom,Single
+323,RM,Sarah,Yeboah,,Female,1994-02-17,Ghanaian,Ghana,Bono east,Techiman,Christian,245478873,yeboahsarah887@gmail.com,BD-0003-5130,P. o. box 6 techiman,Bx-0491-2335,Single
+324,RM,Priscilla,Zoyah,,Female,1996-04-06,Ghanaian,Ghana,Ahafo,Goaso,Christian,248257818,priscillazoyah20@gmail.com,BD-0003-5130,"P. o. box gs171,goaso",Bu-0038-2320,Married
