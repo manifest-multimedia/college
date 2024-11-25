@@ -13,7 +13,7 @@ class CreateQuestionsTable extends Migration
             $table->unsignedInteger('exam_id');
             $table->text('question_text');
             $table->string('exam_section')->nullable();
-            $table->string('correct_option'); // Reference option_one, option_two, etc.
+            $table->string('correct_option');
             $table->integer('mark')->default(1);
             $table->text('explanation')->nullable();
             $table->timestamps();

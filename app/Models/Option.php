@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Option extends Model
 {
-    protected $fillable = ['question_id', 'text'];
+    protected $fillable = ['question_id', 'option_text', 'is_correct'];
 
     /**
      * Question to which this option belongs.

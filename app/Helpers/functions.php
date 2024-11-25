@@ -75,6 +75,14 @@ if (!function_exists('getTitle')) {
     }
 }
 
+// Get First Letter
+if (!function_exists('getFirstLetter')) {
+    function getFirstLetter($string)
+    {
+        return substr($string, 0, 1);
+    }
+}
+
 //Generate Student ID
 if (!function_exists('generateStudentID')) {
     /**

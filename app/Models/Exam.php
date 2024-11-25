@@ -13,7 +13,7 @@ class Exam extends Model
      */
     public function course()
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Subject::class);
     }
 
     /**
