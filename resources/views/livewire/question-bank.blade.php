@@ -106,6 +106,8 @@
                </div>
             @empty
             @if($exam_id)    
+            <form enctype="multipart/form-data" wire:submit.prevent="importQuestions">
+
             <div class="container rounded border bg-light">
 
                 <p class="mt-5 text-center text-muted">No questions available for the selected exam. Start by creating a new question, or importing questions.</p>
@@ -113,12 +115,23 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text">Upload Question Bank Excel</span>
                     </div>
-                    <input type="file" wire:model="bulk_file" class="form-control">
+
+                        <input type="file" wire:model="bulk_file" class="form-control">
+                        {{-- Alpine JS Upload Progress  --}}
+                        <div wire:loading wire:target="bulk_file">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        @error('bulk_file') <span class="text-danger">{{ $message }}</span> @enderror
+                    
                     <div class="input-group-append">
                         <button class="btn btn-primary" wire:click.prevent="importQuestions">Bulk Import Questions</button>
                     </div>
+              
                 </div>
-            </div>
+            </div>  
+        </form>
             @else
             <p class="text-center text-muted">Please select an exam to view questions.</p>
             @endif
