@@ -11,6 +11,8 @@ use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionImport;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Excel as MaatExcel;
+
 
 use Illuminate\Support\Facades\Log;
 
@@ -130,17 +132,58 @@ class QuestionBank extends Component
         $this->loadQuestions();
     }
 
+
+
+    // ...
+
     public function importQuestions()
     {
-        // $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
-        $this->validate(['bulk_file' => 'required']);
+        $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
 
-        Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
+        // Store the uploaded file temporarily
+        $filePath = $this->bulk_file->storeAs('temporary', $this->bulk_file->getClientOriginalName());
+        $fullPath = storage_path('app/' . $filePath);
 
-        Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->getRealPath());
+        // Determine the file type based on the extension
+        $extension = $this->bulk_file->getClientOriginalExtension();
+        $readerType = $this->getReaderType($extension);
+
+        if (!$readerType) {
+            session()->flash('error', 'Unsupported file type.');
+            return;
+        }
+
+        // Use the determined ReaderType
+        Excel::import(
+            new QuestionImport($this->exam_id),
+            $fullPath,
+            null,
+            $readerType
+        );
 
         session()->flash('message', 'Questions imported successfully.');
         $this->loadQuestions();
+    }
+
+    /**
+     * Determine the Reader Type based on file extension.
+     */
+    protected function getReaderType($extension)
+    {
+        switch (strtolower($extension)) {
+            case 'csv':
+                return MaatExcel::CSV;
+            case 'xlsx':
+                return MaatExcel::XLSX;
+            case 'xls':
+                return MaatExcel::XLS;
+            case 'ods':
+                return MaatExcel::ODS;
+            case 'tsv':
+                return MaatExcel::TSV;
+            default:
+                return null;
+        }
     }
 
     // public function importQuestions()

@@ -1,7 +1,7 @@
 <div class="container mt-5">
     <h2>Import Courses</h2>
     
-    <form wire:submit.prevent="importCourses">
+    <form wire:submit.prevent="importCourses" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="file" class="form-label">Upload Excel File</label>
             <input type="file" wire:model="file" class="form-control" id="file" />
