@@ -138,39 +138,25 @@ class QuestionBank extends Component
 
     public function importQuestions()
     {
-        // Validate and store the file using Livewire's `store` method
-        $validatedFilePath = $this->validateAndStoreFile();
-
-        if (!$validatedFilePath) {
-            session()->flash('error', 'Failed to upload the file. Please try again.');
-            return;
-        }
+        // Validate the uploaded file
+        $this->validate([
+            'bulk_file' => 'required|mimes:xlsx,csv,ods,tsv',
+        ]);
 
         try {
-            // Determine the file type based on its extension
-            $extension = pathinfo($validatedFilePath, PATHINFO_EXTENSION);
-            $readerType = $this->getReaderType($extension);
+            // Import the file using its temporary path
+            Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->path());
 
-            if (!$readerType) {
-                session()->flash('error', 'Unsupported file type. Only xlsx, csv, ods, and tsv are allowed.');
-                return;
-            }
-
-            // Log successful file upload
-            Log::info('File stored for import', ['path' => $validatedFilePath]);
-
-            // Import questions using Maatwebsite Excel
-            Excel::import(new QuestionImport($this->exam_id), Storage::path($validatedFilePath), null, $readerType);
-
+            // Flash success message
             session()->flash('message', 'Questions imported successfully.');
-            $this->loadQuestions(); // Reload questions after successful import
-
+            $this->loadQuestions(); // Reload questions after import
         } catch (\Throwable $e) {
             // Log and handle errors
             Log::error('Error during import', ['error' => $e->getMessage()]);
             session()->flash('error', 'An error occurred during the import process. Please check the file and try again.');
         }
     }
+
 
     /**
      * Validate and store the uploaded file.
