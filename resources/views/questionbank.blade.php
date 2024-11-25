@@ -23,6 +23,10 @@
             <!--end::Link-->
         </div>
     </div>
+    @if(isset($exam_id))
+    <livewire:question-bank :exam_id="$exam_id" />
+    @else
     <livewire:question-bank />
+    @endif
   
 </x-dashboard.default>

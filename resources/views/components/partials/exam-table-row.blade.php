@@ -7,7 +7,7 @@
                                     </span>
                                 </div>
                                 <div class="d-flex justify-content-start flex-column">
-                                    <a href="#" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->course->name  }}</a>
+                                    <a href="{{ route('questionbank.with.id', $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->course->name  }}</a>
                                     <span class="text-muted fw-semibold d-block fs-7">{{ $exam->course->collegeClass->name . ' - ' . $exam->course->year->name . ' (' . $exam->course->semester->name . ')' }}</span>
                                 </div>
                             </div>
@@ -29,6 +29,6 @@
                             <span class="text-muted fw-semibold d-block fs-7">{{ ucfirst($exam->status) }}</span>
                         </td>
                         <td class="">
-                            <a href="#" class="btn btn-sm btn-light btn-active-light-primary">Access Question Bank</a>
+                            <a href="{{ route('questionbank.with.id', $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Access Question Bank</a>
                         </td>
                     </tr>

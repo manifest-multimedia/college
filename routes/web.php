@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReportGenerator;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeEmail;
+use Illuminate\Support\Facades\Request;
 
 Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
@@ -61,9 +62,16 @@ Route::middleware([
         return view('exams.create');
     })->name('exams.create');
 
+
     Route::get('/question-bank', function () {
         return view('questionbank');
     })->name('questionbank');
+
+    Route::get('/question-bank/{exam_id}', function ($exam_id) {
+        // Get Id passed int via route('questionbank, $exam->id);
+        $exam_id = $exam_id;
+        return view('questionbank', compact('exam_id'));
+    })->name('questionbank.with.id');
 
     Route::get('/support-center', function () {
         return redirect()->away('https://desk.zoho.eu/support/pnmtc');
