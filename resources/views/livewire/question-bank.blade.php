@@ -107,31 +107,55 @@
             @empty
             @if($exam_id)    
             <form enctype="multipart/form-data" wire:submit.prevent="importQuestions">
-
-            <div class="container rounded border bg-light">
-
-                <p class="mt-5 text-center text-muted">No questions available for the selected exam. Start by creating a new question, or importing questions.</p>
-                <div class="gap-2 mb-4 input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Upload Question Bank Excel</span>
-                    </div>
-
-                        <input type="file" wire:model="bulk_file" class="form-control">
-                        {{-- Alpine JS Upload Progress  --}}
-                        <div wire:loading wire:target="bulk_file">
+                <div class="container py-4 rounded border bg-light">
+                    <p class="mt-3 text-center text-muted">
+                        No questions available for the selected exam. Start by creating a new question, or importing questions.
+                    </p>
+                    
+                    <div class="gap-2 mb-4 input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Upload Question Bank Excel</span>
+                        </div>
+            
+                        <!-- File Input -->
+                        <input type="file" wire:model="bulk_file" class="form-control" accept=".xlsx,.csv">
+            
+                        <!-- Upload Progress -->
+                        <div class="mt-2 w-100" wire:loading wire:target="bulk_file">
                             <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                     role="progressbar" 
+                                     style="width: 100%;" 
+                                     aria-valuenow="100" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    Uploading...
+                                </div>
                             </div>
                         </div>
-                        @error('bulk_file') <span class="text-danger">{{ $message }}</span> @enderror
-                    
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" wire:click.prevent="importQuestions">Bulk Import Questions</button>
+            
+                        <!-- Validation Errors -->
+                        @error('bulk_file') 
+                            <span class="mt-1 text-danger">{{ $message }}</span> 
+                        @enderror
+            
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="bulk_file">
+                                Bulk Import Questions
+                            </button>
+                        </div>
                     </div>
-              
+            
+                    <!-- Loading Spinner -->
+                    <div wire:loading wire:target="importQuestions" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Processing...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Importing questions. Please wait...</p>
+                    </div>
                 </div>
-            </div>  
-        </form>
+            </form>
+            
             @else
             <p class="text-center text-muted">Please select an exam to view questions.</p>
             @endif
