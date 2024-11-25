@@ -19,7 +19,7 @@ class QuestionBank extends Component
     public $exam_id;
     public $questions = [];
     public $bulk_file;
-
+    public $uploadPath;
     protected $rules = [
         'questions.*.question_text' => 'required|string|max:255',
         'questions.*.options.*.option_text' => 'required|string|max:255',
@@ -33,6 +33,8 @@ class QuestionBank extends Component
         $this->exam_id = $examId;
         $this->loadQuestions();
     }
+
+
 
     public function loadQuestions()
     {
@@ -131,8 +133,6 @@ class QuestionBank extends Component
         $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
 
         Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
-
-        // Excel::import(new QuestionImport($this->exam_id), $this->bulk_file);
 
         Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->getRealPath());
 
