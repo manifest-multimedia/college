@@ -21,7 +21,13 @@ class ExamCenterWidget extends Component
 
     public $filter = '';
 
-    public function mount() {}
+    public function mount()
+    {
+        // Check for exams without slug and update with slug
+        $exams = Exam::where('user_id', Auth::user()->id)->whereNull('slug')->with('course')->get();
+
+        $this->generateSlug($exams);
+    }
 
     // Handle form submission to create the exam
 
@@ -46,7 +52,7 @@ class ExamCenterWidget extends Component
             )
             ->get();
 
-        // dd($exams);
+
 
         return view(
             'livewire.exam-center-widget',
@@ -54,5 +60,19 @@ class ExamCenterWidget extends Component
                 'exams' => $exams,
             ]
         );
+    }
+
+    public function generateSlug($exams)
+    {
+        foreach ($exams as $exam) {
+
+            $slug  = Str::slug($exam->course->name . '-' . now()->format('Y-m-d H:i:s'));
+
+            while (Exam::where('slug', $slug)->exists()) {
+                $slug = Str::slug($exam->course->name . '-' . now()->format('Y-m-d H:i:s'));
+            }
+
+            $exam->update(['slug' => $slug]);
+        }
     }
 }

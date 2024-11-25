@@ -20,6 +20,7 @@ class ExamManagement extends Component
     public $semester;
     public $class;
     public $year;
+    public $slug;
 
 
     // Validation rules for form input
@@ -42,9 +43,8 @@ class ExamManagement extends Component
     public function mount()
     {
         // Automatically generate an exam password
-        $this->exam_password = Str::random(8); // 8-character random password
+        $this->exam_password = $this->regeneratePassword();
     }
-
     // Handle form submission to create the exam
     public function createExam()
     {
@@ -57,6 +57,7 @@ class ExamManagement extends Component
             'exam_type' => $this->exam_type,
             'duration' => $this->exam_duration,
             'password' => $this->exam_password,
+            'slug' => $this->generateSlug(),
         ]);
 
         $this->reset(['course_code', 'exam_type', 'exam_duration', 'exam_password']);
@@ -95,12 +96,29 @@ class ExamManagement extends Component
             'courses' => $courses,
             'classes' => $classes,
             'years' => $years,
-            'semesters' => $semesters
+            'semesters' => $semesters,
+
         ]);
     }
 
     public function regeneratePassword()
     {
-        $this->exam_password = Str::random(8);
+        $password = Str::random(8);
+
+        while (Exam::where('password', $password)->exists()) {
+            $password = Str::random(8);
+        }
+
+        $this->exam_password = $password;
+    }
+
+    public function generateSlug()
+    {
+        // Generate Unique Slug from Course Name, Date and Time
+        $slug  = Str::slug($this->course_code . '-' . now()->format('Y-m-d H:i:s'));
+        while (Exam::where('slug', $slug)->exists()) {
+            $slug = Str::slug($this->course_code . '-' . now()->format('Y-m-d H:i:s'));
+        }
+        return $slug;
     }
 }
