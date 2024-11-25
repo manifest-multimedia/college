@@ -139,11 +139,12 @@ class QuestionBank extends Component
     public function importQuestions()
     {
         // $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv,ods,tsv']);
+        $this->validate(['bulk_file' => 'required|file']);
 
 
-        $this->validate([
-            'bulk_file' => 'required|file|mimetypes:text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        // $this->validate([
+        //     'bulk_file' => 'required|file|mimetypes:text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        // ]);
 
 
         // Store the uploaded file in the 'public/datasets' directory
