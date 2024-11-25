@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionImport;
+use Illuminate\Support\Facades\Log;
 
 class QuestionBank extends Component
 {
@@ -128,6 +129,9 @@ class QuestionBank extends Component
     public function importQuestions()
     {
         $this->validate(['bulk_file' => 'required|file|mimes:xlsx,csv']);
+
+        Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
+
         // Excel::import(new QuestionImport($this->exam_id), $this->bulk_file);
 
         Excel::import(new QuestionImport($this->exam_id), $this->bulk_file->getRealPath());
