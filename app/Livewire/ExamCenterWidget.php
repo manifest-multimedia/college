@@ -39,23 +39,41 @@ class ExamCenterWidget extends Component
 
     public function render()
     {
-        $exams = Exam::where('user_id', Auth::user()->id)
-            ->with(['course.collegeClass', 'course.semester', 'course.year'])
-            ->when(
-                $this->search,
-                function ($query) {
-                    return $query->whereHas('course', function ($query) {
-                        return $query->where('name', 'like', '%' . $this->search . '%');
-                    });
-                }
-            )
-            ->when(
-                $this->filter,
-                function ($query) {
-                    return $query->where('status', $this->filter);
-                }
-            )
-            ->get();
+        if (Auth::user()->role == 'admin' || Auth::user()->role == 'Super Admin') {
+            $exams = Exam::with(['course.collegeClass', 'course.semester', 'course.year'])
+                ->when(
+                    $this->search,
+                    function ($query) {
+                        return $query->whereHas('course', function ($query) {
+                            return $query->where('name', 'like', '%' . $this->search . '%');
+                        });
+                    }
+                )->when(
+                    $this->filter,
+                    function ($query) {
+                        return $query->where('status', $this->filter);
+                    }
+                )->get();
+        } else {
+
+            $exams = Exam::where('user_id', Auth::user()->id)
+                ->with(['course.collegeClass', 'course.semester', 'course.year'])
+                ->when(
+                    $this->search,
+                    function ($query) {
+                        return $query->whereHas('course', function ($query) {
+                            return $query->where('name', 'like', '%' . $this->search . '%');
+                        });
+                    }
+                )
+                ->when(
+                    $this->filter,
+                    function ($query) {
+                        return $query->where('status', $this->filter);
+                    }
+                )
+                ->get();
+        }
 
 
 
@@ -89,5 +107,19 @@ class ExamCenterWidget extends Component
             }
             $exam->update(['password' => $password]);
         }
+    }
+
+    /*************  ✨ Codeium Command ⭐  *************/
+    /**
+     * Delete an exam by its ID.
+     *
+     * @param int $id The ID of the exam to be deleted.
+     * @return void
+     */
+    /******  d1373e01-cbab-4675-b4ac-3ccf648c79b9  *******/
+    public function deleteExam($id)
+    {
+        $exam = Exam::find($id);
+        $exam->delete();
     }
 }

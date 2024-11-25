@@ -36,5 +36,9 @@
                         </td>
                         <td class="px-3">
                             <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Question Bank</a>
+                            {{-- Delete --}}
+                            @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
+                            <a href="javascript:void(0)" wire:click="deleteExam({{ $exam->id }})" class="btn btn-sm btn-light btn-active-light-danger">Delete</a>
+                            @endif
                         </td>
                     </tr>
