@@ -14,6 +14,7 @@ class OnlineExamination extends Component
     public function mount($examPassword)
     {
         $this->examPassword = $examPassword;
+        // $this->examPassword = "iX72jU50";
     }
 
     public function render()
@@ -39,7 +40,7 @@ class OnlineExamination extends Component
 
         return view('livewire.online-examination', [
             'questions' => $questions,
-            'exam' => $exam
+            'exam' => $exam,
         ]);
     }
 }

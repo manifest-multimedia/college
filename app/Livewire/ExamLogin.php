@@ -11,6 +11,16 @@ class ExamLogin extends Component
     public $studentId;
     public $examPassword;
 
+    public function mount()
+    {
+        // check environment set values for local
+        if (env('APP_ENV') == 'local') {
+
+            $this->studentId = "PNMTC/DA/RGN/24/25/001";
+            $this->examPassword = "iX72jU50";
+        }
+    }
+
     public function render()
     {
         return view('livewire.exam-login');

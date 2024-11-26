@@ -122,4 +122,4 @@ data-bs-backdrop="static"
 
 <!-- Bootstrap JS and Countdown Timer Script -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<x-partials.exam-scripts />
+<x-partials.exam-scripts :exam="$exam" />
