@@ -14,7 +14,7 @@ class StudentData extends Seeder
         // Dataset Location: public/datasets/students.csv
 
         // $path = storage_path('app/public/datasets/correct_data.csv');
-        $path = public_path('datasets/year_three_student_data.csv');
+        $path = public_path('datasets/year_three_student_data_updated.csv');
         // $handle = fopen('storage/app/public/datasets/correct_data.csv', 'r');
 
         $handle = fopen($path, 'r');
@@ -39,7 +39,7 @@ class StudentData extends Seeder
 
 
             $student = Student::firstOrCreate([
-                'student_id' => null,
+                'student_id' => $rowData['index_number'] ? $rowData['index_number'] : null,
                 'first_name' => ucfirst(strtolower($rowData['first_name'])),
                 'last_name' => ucfirst(strtolower($rowData['last_name'])),
                 'other_name' => ucfirst(strtolower($rowData['other_names'])),
