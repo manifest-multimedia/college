@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\Response;
 use Livewire\Component;
 use Carbon\Carbon;
+use App\Models\User;
 
 class OnlineExamination extends Component
 {
@@ -42,10 +43,12 @@ class OnlineExamination extends Component
 
     public function initializeExamSession()
     {
+        $student = Student::where('id', $this->student_id)->first();
+        $user = User::where('email', $student->email)->first();
         // Start the exam session and track start time
         $this->examSession = ExamSession::create([
             'exam_id' => $this->exam->id,
-            'student_id' => $this->student_id,
+            'student_id' => $user->id,
             'start_time' => now(),
             'end_time' => now()->addMinutes($this->exam->duration),
         ]);
