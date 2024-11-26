@@ -2,7 +2,11 @@
 <div class="container d-flex justify-content-center align-items-center vh-100">
     <div class="p-4 shadow-lg card" style="max-width: 400px; width: 100%;">
         <h3 class="mb-4 text-center">Exam Login</h3>
-
+@if(session('message'))
+<div class="alert alert-success">
+    <span>{{ session('message') }}</span>
+</div>
+@endif 
        
   @if($errors->any() || session()->has('error') || session()->has('message'))
         <div class="alert {{ $errors->any() || session()->has('error') ? 'alert-danger' : 'alert-success' }}">
@@ -27,7 +31,7 @@
         </div>
         <div class="mb-3">
             <label for="examPassword" class="form-label">Exam Password</label>
-            <input type="password" class="form-control" id="examPassword" placeholder="Enter your Exam Password" required wire:model="examPassword">
+            <input type="text" class="form-control" id="examPassword" placeholder="Enter your Exam Password" required wire:model="examPassword">
         </div>
             <button class="btn btn-primary w-100" type="submit">Start Exam</button>
         </form>

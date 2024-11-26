@@ -122,7 +122,8 @@ class OnlineExamination extends Component
 
         // Redirect or show completion message
         session()->flash('message', 'Exam submitted successfully.');
-        return redirect()->route('exam.results', ['examSession' => $this->examSession->id]);
+        return redirect()->route('take-exam');
+        // return redirect()->route('exam.results', ['examSession' => $this->examSession->id]);
     }
 
     public function endExam()
@@ -133,7 +134,12 @@ class OnlineExamination extends Component
         ]);
 
         session()->flash('message', 'Exam has ended due to time expiration.');
-        return redirect()->route('exam.results', ['examSession' => $this->examSession->id]);
+
+
+
+        // Return to take-exam route
+
+        return redirect()->route('take-exam');
     }
 
     public function calculateScore()
