@@ -128,9 +128,9 @@ class OnlineExamination extends Component
     public function endExam()
     {
         // Automatically end the exam after the duration
-        // $this->examSession->update([
-        //     'completed_at' => now(),
-        // ]);
+        $this->examSession->update([
+            'completed_at' => now(),
+        ]);
 
         session()->flash('message', 'Exam has ended due to time expiration.');
         return redirect()->route('exam.results', ['examSession' => $this->examSession->id]);
