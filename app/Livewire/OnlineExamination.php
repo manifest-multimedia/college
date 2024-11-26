@@ -43,32 +43,37 @@ class OnlineExamination extends Component
 
     public function initializeExamSession()
     {
-
         $user = '';
         try {
             $student = Student::where('id', $this->student_id)->first();
             // check if student has a user account else create
             if (User::where('email', $student->email)->exists()) {
-
                 $user = User::where('email', $student->email)->first();
             } else {
                 $student->createUser();
             }
-            // Start the exam session and track start time
-            $this->examSession = ExamSession::create([
-                'exam_id' => $this->exam->id,
-                'student_id' => $user->id,
-                'start_time' => now(),
-                'end_time' => now()->addMinutes($this->exam->duration),
-            ]);
+
+            // Check if there is an existing session for the student and exam
+            $this->examSession = ExamSession::where('exam_id', $this->exam->id)
+                ->where('student_id', $user->id)
+                ->whereNull('completed_at') // Only active sessions
+                ->first();
+
+            // If no session exists, create a new session (without marking it completed)
+            if (!$this->examSession) {
+                $this->examSession = ExamSession::create([
+                    'exam_id' => $this->exam->id,
+                    'student_id' => $user->id,
+                    'started_at' => now(),
+                    'end_time' => now()->addMinutes($this->exam->duration),
+                ]);
+            }
+
+            $this->examStartTime = $this->examSession->started_at;
+            $this->remainingTime = $this->examSession->completed_at->diffInSeconds(now()); // Calculate remaining time
         } catch (\Throwable $th) {
-            //throw $th;
+            // Handle any exceptions here (optional)
         }
-
-
-
-        $this->examStartTime = now();
-        $this->remainingTime = $this->exam->duration * 60; // seconds
     }
 
     public function loadQuestions()
@@ -77,6 +82,13 @@ class OnlineExamination extends Component
         $examQuestions = $this->exam->questions()->inRandomOrder()->get();
 
         $this->questions = $examQuestions->map(function ($question) {
+            // Load student's previous responses if any
+            $response = Response::where('exam_session_id', $this->examSession->id)
+                ->where('question_id', $question->id)
+                ->first();
+
+            $this->responses[$question->id] = $response ? $response->selected_option : null;
+
             return [
                 'id' => $question->id,
                 'question' => $question->question_text,
@@ -99,9 +111,13 @@ class OnlineExamination extends Component
 
     public function submitExam()
     {
-        // Mark the exam as completed
+        // Calculate score before marking the exam as completed
+        $score = $this->calculateScore();
+
+        // Mark the exam as completed and store the score
         $this->examSession->update([
             'completed_at' => now(),
+            'score' => $score,
         ]);
 
         // Redirect or show completion message
@@ -112,12 +128,25 @@ class OnlineExamination extends Component
     public function endExam()
     {
         // Automatically end the exam after the duration
-        $this->examSession->update([
-            'completed_at' => now(),
-        ]);
+        // $this->examSession->update([
+        //     'completed_at' => now(),
+        // ]);
 
         session()->flash('message', 'Exam has ended due to time expiration.');
         return redirect()->route('exam.results', ['examSession' => $this->examSession->id]);
+    }
+
+    public function calculateScore()
+    {
+        $score = 0;
+        // Calculate the score based on the responses
+        foreach ($this->responses as $questionId => $answer) {
+            $question = $this->exam->questions()->find($questionId);
+            if ($question && $answer == $question->correct_option) {
+                $score += $question->mark; // Add mark for correct answer
+            }
+        }
+        return $score;
     }
 
     public function render()
