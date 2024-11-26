@@ -36,27 +36,27 @@ class QuestionImport implements ToModel, WithHeadingRow
                 'option_text' => $this->replaceBooleanValue($row['option_one']),
                 'is_correct' => ($row['correct_option'] === 'option_one' || $row['correct_option'] === 'option one' ||
 
-                    $this->parseCorrectOption($row['option_one'], $row(['correct_option']), 'option_one') === 'option_one'
+                    $this->parseCorrectOption($row['option_one'], $row['correct_option'], 'option_one') === 'option_one'
 
                 ),
             ],
             [
                 'option_text' => $this->replaceBooleanValue($row['option_two']),
                 'is_correct' => ($row['correct_option'] === 'option_two' || $row['correct_option'] === 'option two' ||
-                    $this->parseCorrectOption($row['option_two'], $row(['correct_option']), 'option_two') === 'option_two'
+                    $this->parseCorrectOption($row['option_two'], $row['correct_option'], 'option_two') === 'option_two'
                 ),
             ],
             [
                 'option_text' => $this->replaceBooleanValue($row['option_three']),
                 'is_correct' => ($row['correct_option'] === 'option_three' || $row['correct_option'] === 'option three' ||
-                    $this->parseCorrectOption($row['option_three'], $row(['correct_option']), 'option_three') === 'option_three'
+                    $this->parseCorrectOption($row['option_three'], $row['correct_option'], 'option_three') === 'option_three'
 
                 ),
             ],
             [
                 'option_text' => $this->replaceBooleanValue($row['option_four']),
                 'is_correct' => ($row['correct_option'] === 'option_four' || $row['correct_option'] === 'option four' ||
-                    $this->parseCorrectOption($row['option_four'], $row(['correct_option']), 'option_four') === 'option_four'
+                    $this->parseCorrectOption($row['option_four'], $row['correct_option'], 'option_four') === 'option_four'
                 ),
             ],
         ];
