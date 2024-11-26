@@ -194,18 +194,25 @@ class QuestionBank extends Component
         $this->validate(['bulk_file' => 'required|file']);
 
         // Store the file and get its path
-        $filePath = $this->bulk_file->store('uploads');
-        $fullpath = Storage::path('app') . '/' . $filePath;
+        $filePath = $this->bulk_file->store('uploads', 'public');
+
+        // Log the file details
         Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
         Log::info('Stored File Path:', ['path' => $filePath]);
 
-        // Get the full path and import the file
-        // $fullPath = Storage::path($filePath);
-        Log::info('Full File Path for Import:', ['full_path' => $fullpath]);
+        // Get the full path to the file in the public disk
+        $fullPath = public_path('storage/' . $filePath);
 
-        $data = Excel::import(new QuestionImport($this->exam_id), $fullpath);
+        // Log the full path
+        Log::info('Full File Path for Import:', ['full_path' => $fullPath]);
 
+        // Import the file
+        $data = Excel::import(new QuestionImport($this->exam_id), $fullPath);
+
+        // Flash a success message
         session()->flash('message', 'Questions imported successfully.');
+
+        // Reload the questions
         $this->loadQuestions();
     }
 
