@@ -2,11 +2,11 @@
 <div class="container d-flex justify-content-center align-items-center vh-100">
     <div class="p-4 shadow-lg card" style="max-width: 400px; width: 100%;">
         <h3 class="mb-4 text-center">Exam Login</h3>
-@if(session('message'))
+{{-- @if(session('message'))
 <div class="alert alert-success">
     <span>{{ session('message') }}</span>
 </div>
-@endif 
+@endif  --}}
        
   @if($errors->any() || session()->has('error') || session()->has('message'))
         <div class="alert {{ $errors->any() || session()->has('error') ? 'alert-danger' : 'alert-success' }}">

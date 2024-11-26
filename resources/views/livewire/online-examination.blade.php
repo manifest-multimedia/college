@@ -1,5 +1,21 @@
 <div class="container my-5">
   <style>
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
       .timer {
           font-size: 1.25rem;
           color: #d9534f;
@@ -52,6 +68,15 @@
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
           <p>Student Name:  {{ $student_name }}</p>
           {{-- <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p> --}}
+          {{-- Use Alpine to return timelineft from getRemainingTime function on livewire component--}}
+          <div wire:poll="10s">
+            <h4 class="text-danger">
+                
+                <span class="badge bg-danger pulse">
+                    <strong>Time Left </strong>   {{ $remainingTime }}
+                </span>
+            </h4>
+        </div>
       </div>
 
       <div class="col-md-9">
@@ -96,7 +121,7 @@
       </div>
   </div>
 
-  <script>
+  {{-- <script>
  let timerInterval = setInterval(function () {
     @this.call('countdown'); // Livewire call
     let remainingTime = @this.get('remainingTime'); // Fetch updated time
@@ -106,5 +131,7 @@
     document.getElementById('timeLeft').innerText = `${hours}:${minutes}:${seconds}`;
 }, 1000);
 
-  </script>
+  </script> --}}
+
+
 </div>

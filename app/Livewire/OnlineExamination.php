@@ -185,11 +185,21 @@ class OnlineExamination extends Component
     public function getRemainingTime()
     {
         // Ensure consistent timezone for calculation
-        $currentTime = now()->setTimezone(config('app.timezone'));
-        $completedAt = Carbon::parse($this->examSession->completed_at)->setTimezone(config('app.timezone'));
+        // $currentTime = now()->setTimezone(config('app.timezone'));
+        // $completedAt = Carbon::parse($this->examSession->completed_at)->setTimezone(config('app.timezone'));
 
-        $remainingTime = $completedAt->diffInSeconds($currentTime, false); // Signed difference
+        // $remainingTime = $completedAt->diffInSeconds($currentTime, false); // Signed difference
 
-        return max($remainingTime, 0); // Ensure non-negative
+        // Parse the start and end times using Carbon
+        $startedAt = Carbon::parse($this->examSession->started_at);
+        $completedAt = Carbon::parse($this->examSession->completed_at);
+
+        // Calculate the difference between the two times
+        $this->remainingTime = $completedAt->diffForHumans($startedAt, true);
+
+
+
+        // return max($remainingTime, 0); // Ensure non-negative
+        return $this->remainingTime;
     }
 }
