@@ -51,7 +51,7 @@
           <h2>Course Title: {{ $exam->course->name }}</h2>
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
           <p>Student Name:  {{ $student_name }}</p>
-          <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p>
+          {{-- <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p> --}}
       </div>
 
       <div class="col-md-9">
@@ -97,13 +97,14 @@
   </div>
 
   <script>
-      let timerInterval = setInterval(function () {
-          @this.call('countdown');
-          let remainingTime = @this.get('remainingTime');
-          let hours = Math.floor(remainingTime / 3600);
-          let minutes = Math.floor((remainingTime % 3600) / 60);
-          let seconds = remainingTime % 60;
-          document.getElementById('timeLeft').innerText = `${hours}:${minutes}:${seconds}`;
-      }, 1000);
+ let timerInterval = setInterval(function () {
+    @this.call('countdown'); // Livewire call
+    let remainingTime = @this.get('remainingTime'); // Fetch updated time
+    let hours = Math.floor(remainingTime / 3600);
+    let minutes = Math.floor((remainingTime % 3600) / 60);
+    let seconds = remainingTime % 60;
+    document.getElementById('timeLeft').innerText = `${hours}:${minutes}:${seconds}`;
+}, 1000);
+
   </script>
 </div>

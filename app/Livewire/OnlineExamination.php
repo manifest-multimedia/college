@@ -43,6 +43,8 @@ class OnlineExamination extends Component
     }
     public function initializeExamSession()
     {
+
+
         $user = '';
         try {
             $student = Student::where('id', $this->student_id)->first();
@@ -60,12 +62,14 @@ class OnlineExamination extends Component
                 ->first();
 
             // If no session exists, create a new session
+            $duration = (int) $this->exam->duration;
+
             if (!$this->examSession) {
                 $this->examSession = ExamSession::create([
                     'exam_id' => $this->exam->id,
                     'student_id' => $user->id,
                     'started_at' => now(),
-                    'completed_at' => now()->addMinutes($this->exam->duration),
+                    'completed_at' => now()->addMinutes($duration), // Casted duration
                 ]);
             }
         } catch (\Throwable $th) {
@@ -173,17 +177,19 @@ class OnlineExamination extends Component
         $this->remainingTime = $this->getRemainingTime();
 
         if ($this->remainingTime <= 0) {
-            $this->endExam();
+            // $this->endExam();
         }
     }
 
 
     public function getRemainingTime()
     {
-        // Dynamically calculate remaining time using the database timestamps
-        $estimatedEndTime = Carbon::parse($this->examSession->completed_at);
-        $remainingTime = $estimatedEndTime->diffInSeconds(now());
+        // Ensure consistent timezone for calculation
+        $currentTime = now()->setTimezone(config('app.timezone'));
+        $completedAt = Carbon::parse($this->examSession->completed_at)->setTimezone(config('app.timezone'));
 
-        return max($remainingTime, 0); // Ensure it doesn't go negative
+        $remainingTime = $completedAt->diffInSeconds($currentTime, false); // Signed difference
+
+        return max($remainingTime, 0); // Ensure non-negative
     }
 }
