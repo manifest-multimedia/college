@@ -9,11 +9,19 @@ class ExamSession extends Model
     protected $fillable = ['exam_id', 'student_id', 'started_at', 'completed_at', 'score'];
 
     /**
-     * Exam to which this session belongs.
+     * The exam to which this session belongs.
      */
     public function exam()
     {
         return $this->belongsTo(Exam::class);
+    }
+
+    /**
+     * The student who is taking this exam session.
+     */
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
     }
 
     /**

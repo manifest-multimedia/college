@@ -53,6 +53,9 @@ class ExamLogin extends Component
             return;
         }
 
+        // Create User for Student
+        $student->createUser();
+
         // Login successful, redirect to the exam page
         return redirect()->route('exams', [
             'slug' => $exam->slug,

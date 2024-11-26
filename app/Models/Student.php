@@ -41,4 +41,13 @@ class Student extends Model
         return true;
         // Add your eligibility criteria here
     }
+
+    public function createUser()
+    {
+        $user = User::create([
+            'name' => $this->first_name . ' ' . $this->last_name,
+            'email' => $this->email,
+            'password' => bcrypt('password'),
+        ]);
+    }
 }
