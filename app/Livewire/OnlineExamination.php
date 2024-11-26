@@ -43,15 +43,29 @@ class OnlineExamination extends Component
 
     public function initializeExamSession()
     {
-        $student = Student::where('id', $this->student_id)->first();
-        $user = User::where('email', $student->email)->first();
-        // Start the exam session and track start time
-        $this->examSession = ExamSession::create([
-            'exam_id' => $this->exam->id,
-            'student_id' => $user->id,
-            'start_time' => now(),
-            'end_time' => now()->addMinutes($this->exam->duration),
-        ]);
+
+        $user = '';
+        try {
+            $student = Student::where('id', $this->student_id)->first();
+            // check if student has a user account else create
+            if (User::where('email', $student->email)->exists()) {
+
+                $user = User::where('email', $student->email)->first();
+            } else {
+                $student->createUser();
+            }
+            // Start the exam session and track start time
+            $this->examSession = ExamSession::create([
+                'exam_id' => $this->exam->id,
+                'student_id' => $user->id,
+                'start_time' => now(),
+                'end_time' => now()->addMinutes($this->exam->duration),
+            ]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+
+
 
         $this->examStartTime = now();
         $this->remainingTime = $this->exam->duration * 60; // seconds

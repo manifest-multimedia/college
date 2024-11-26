@@ -53,26 +53,29 @@ class ExamLogin extends Component
             session()->flash('error', 'You are not eligible to take this exam');
             return;
         }
+        // Login successful, redirect to the exam page
 
         // Create User for Student
         try {
             // Check if Student has user account, else create one
             if (User::where('email', $student->email)->exists()) {
-                return;
+                return redirect()->route('exams', [
+                    'slug' => $exam->slug,
+
+                    'student_id' => $student->id
+                ]);
             } else {
 
                 $student->createUser();
+                return redirect()->route('exams', [
+                    'slug' => $exam->slug,
+
+                    'student_id' => $student->id
+                ]);
             }
             //code...
         } catch (\Throwable $th) {
             //throw $th;
         }
-
-        // Login successful, redirect to the exam page
-        return redirect()->route('exams', [
-            'slug' => $exam->slug,
-
-            'student_id' => $student->id
-        ]);
     }
 }
