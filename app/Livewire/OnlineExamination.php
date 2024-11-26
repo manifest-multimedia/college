@@ -19,6 +19,7 @@ class OnlineExamination extends Component
     public $remainingTime;
     public $examStartTime;
     public $examSession;
+    public $student_name;
 
     protected $listeners = ['submitExam'];
 
@@ -26,6 +27,8 @@ class OnlineExamination extends Component
     {
         $this->examPassword = $examPassword;
         $this->student_id = $student_id;
+        $student = Student::where('id', $student_id)->first();
+        $this->student_name = $student->first_name . ' ' . $student->last_name;
         $this->exam = Exam::with('course')->where('password', $this->examPassword)->first();
 
         if (!$this->exam) {
@@ -71,7 +74,7 @@ class OnlineExamination extends Component
         // Store the student's response
         $response = Response::updateOrCreate(
             ['exam_session_id' => $this->examSession->id, 'question_id' => $questionId],
-            ['answer' => $answer]
+            ['selected_option' => $answer]
         );
 
         $this->responses[$questionId] = $answer; // Update local responses

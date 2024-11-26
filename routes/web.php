@@ -23,6 +23,12 @@ Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
 })->name('exams');
 
 
+Route::get('exam-results', function () {
+    return "Completed succeessfully.";
+})->name('exam.results');
+
+
+
 Route::get('/take-exam', function () {
     return view('frontend.take-exam');
 })->name('take-exam');

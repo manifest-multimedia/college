@@ -50,6 +50,7 @@
       <div class="mb-4 text-center">
           <h2>Course Title: {{ $exam->course->name }}</h2>
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
+          <p>Student Name:  {{ $student_name }}</p>
           <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p>
       </div>
 
@@ -75,10 +76,10 @@
                   </form>
               </div>
 
-              <div class="mt-4 d-flex justify-content-between">
+              {{-- <div class="mt-4 d-flex justify-content-between">
                   <button class="btn btn-secondary" id="prevBtn" disabled>Previous</button>
                   <button class="btn btn-primary" id="nextBtn" wire:click="submitExam">Next</button>
-              </div>
+              </div> --}}
           </div>
       </div>
 
@@ -88,8 +89,8 @@
               <!-- Dynamic question status will appear here -->
           </div>
           <div id="questionCounts">
-              <p>Answered: <span id="answeredCount">0</span></p>
-              <p>Left: <span id="leftCount">100</span></p>
+              {{-- <p>Answered: <span id="answeredCount">0</span></p> --}}
+              <p>Total Questions: <span id="leftCount">100</span></p>
           </div>
           <button class="btn btn-primary w-100" wire:click="submitExam" id="submitBtn">Submit Exam</button>
       </div>
