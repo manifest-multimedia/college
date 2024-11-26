@@ -112,7 +112,7 @@
                     <select class="form-select" name="users" wire:model.live="user_id" id="users">
                         <option value="">Select a user</option>
                         @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }}) </option>
+                            <option value="{{ $user->id }}">{{ $user->id }}-{{ $user->name }} ({{ $user->email }}) </option>
                         @endforeach
                     </select>
                     @error('users') <!-- Display error message for users -->
