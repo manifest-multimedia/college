@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Student;
 use App\Models\Exam;
 use Livewire\Component;
+use App\Models\User;
 
 class ExamLogin extends Component
 {
@@ -54,7 +55,18 @@ class ExamLogin extends Component
         }
 
         // Create User for Student
-        $student->createUser();
+        try {
+            // Check if Student has user account, else create one
+            if (User::where('email', $student->email)->exists()) {
+                return;
+            } else {
+
+                $student->createUser();
+            }
+            //code...
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
 
         // Login successful, redirect to the exam page
         return redirect()->route('exams', [
