@@ -22,6 +22,7 @@ class OnlineExamination extends Component
     public $examSession;
     public $student_name;
 
+
     protected $listeners = ['submitExam'];
 
     public function mount($examPassword, $student_id = null)
@@ -50,14 +51,15 @@ class OnlineExamination extends Component
             if (User::where('email', $student->email)->exists()) {
                 $user = User::where('email', $student->email)->first();
             } else {
-                $student->createUser();
+                $user = $student->createUser();
             }
 
             // Check if there is an existing session for the student and exam
             $this->examSession = ExamSession::where('exam_id', $this->exam->id)
                 ->where('student_id', $user->id)
-                ->whereNull('completed_at') // Only active sessions
                 ->first();
+
+
 
             // If no session exists, create a new session (without marking it completed)
             if (!$this->examSession) {
@@ -65,15 +67,17 @@ class OnlineExamination extends Component
                     'exam_id' => $this->exam->id,
                     'student_id' => $user->id,
                     'started_at' => now(),
-                    'end_time' => now()->addMinutes($this->exam->duration),
+                    'completed_at' => now()->addMinutes($this->exam->duration),
                 ]);
             }
-
-            $this->examStartTime = $this->examSession->started_at;
-            $this->remainingTime = $this->examSession->completed_at->diffInSeconds(now()); // Calculate remaining time
         } catch (\Throwable $th) {
             // Handle any exceptions here (optional)
         }
+
+
+        $this->examStartTime = Carbon::parse($this->examSession->started_at);
+        $estimatedEndTime = Carbon::parse($this->examSession->completed_at);
+        $this->remainingTime = $estimatedEndTime->diffInSeconds(now());
     }
 
     public function loadQuestions()
@@ -170,7 +174,7 @@ class OnlineExamination extends Component
         if ($this->remainingTime > 0) {
             $this->remainingTime--;
         } else {
-            $this->endExam();
+            // $this->endExam();
         }
     }
 }
