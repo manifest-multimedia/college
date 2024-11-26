@@ -103,6 +103,10 @@ Route::middleware([
         return redirect()->away('https://pnmtc.edu.gh/webmail');
     })->name('staffmail');
 
+    Route::get('/reset-pass', function () {
+        return view('users.password-reset');
+    })->name('reset-pass');
+
 
     // Test Email route to send mail to johnson@pnmtc.edu.gh
     Route::get('/test-email', function () {
