@@ -18,7 +18,7 @@ class QuestionSeeder extends Seeder
         $exam_id = 12; // Or fetch it from the database or set it dynamically
 
         // Path to the Excel file
-        $path = public_path('datasets/next_set.xlsx');
+        $path = public_path('datasets/abnormal_p.xlsx');
 
         // Import questions using the QuestionImport class and pass the exam_id if necessary
         Excel::import(new QuestionImport($exam_id), $path);
