@@ -89,8 +89,8 @@
               <!-- Dynamic question status will appear here -->
           </div>
           <div id="questionCounts">
-              {{-- <p>Answered: <span id="answeredCount">0</span></p> --}}
-              <p>Total Questions: <span id="leftCount">100</span></p>
+              {{-- <p>Answered: {{ count($answeredQuestions) }}</p> --}}
+              <p>Total Questions: {{ count($questions) }}</p>
           </div>
           <button class="btn btn-primary w-100" wire:click="submitExam" id="submitBtn">Submit Exam</button>
       </div>
