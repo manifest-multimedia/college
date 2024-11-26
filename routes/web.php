@@ -13,9 +13,13 @@ Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
 })->name('mcq');
 
-Route::get('/exams/{slug}', function ($slug) {
+Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
+
     $exam = Exam::where('slug', $slug)->first();
-    return view('frontend.exam', ['examPassword' => $exam->password]);
+    return view('frontend.exam', [
+        'examPassword' => $exam->password,
+        'student_id' => $student_id
+    ]);
 })->name('exams');
 
 

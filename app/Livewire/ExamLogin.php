@@ -54,6 +54,10 @@ class ExamLogin extends Component
         }
 
         // Login successful, redirect to the exam page
-        return redirect()->route('exams', ['slug' => $exam->slug]);
+        return redirect()->route('exams', [
+            'slug' => $exam->slug,
+
+            'student_id' => $student->id
+        ]);
     }
 }
