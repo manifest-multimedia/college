@@ -74,10 +74,13 @@ class OnlineExamination extends Component
             // Handle any exceptions here (optional)
         }
 
+        if (!session()->has('exam_start_time')) {
+            session()->put('exam_start_time', now());
+        }
 
         $this->examStartTime = Carbon::parse($this->examSession->started_at);
         $estimatedEndTime = Carbon::parse($this->examSession->completed_at);
-        $this->remainingTime = $estimatedEndTime->diffInSeconds(now());
+        $this->remainingTime = $estimatedEndTime->diffInSeconds(session()->get('exam_start_time'));
     }
 
     public function loadQuestions()
