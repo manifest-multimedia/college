@@ -194,7 +194,7 @@ class QuestionBank extends Component
         $this->validate(['bulk_file' => 'required|file']);
 
         // Store the file and get its path
-        $filePath = $this->bulk_file->store('uploads', 'public');
+        $filePath = $this->bulk_file->store('files', 'uploads');
 
         // Log the file details
         Log::info('File MIME Type:', ['mime' => $this->bulk_file->getMimeType()]);
