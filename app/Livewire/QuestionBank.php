@@ -201,9 +201,9 @@ class QuestionBank extends Component
 
         // Get the full path and import the file
         // $fullPath = Storage::path($filePath);
-        Log::info('Full File Path for Import:', ['full_path' => $fullPath]);
+        Log::info('Full File Path for Import:', ['full_path' => $fullpath]);
 
-        $data = Excel::import(new QuestionImport($this->exam_id), $fullPath);
+        $data = Excel::import(new QuestionImport($this->exam_id), $fullpath);
 
         session()->flash('message', 'Questions imported successfully.');
         $this->loadQuestions();
