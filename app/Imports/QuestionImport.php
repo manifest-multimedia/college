@@ -99,9 +99,13 @@ class QuestionImport implements ToModel, WithHeadingRow
             //code...
 
             $option = strtolower(trim($option));
-            $correctOption = strtolower(trim('$correctOption'));
+            $correctOption = strtolower(trim($correctOption));
             if ($option === $correctOption) {
+                echo $value . PHP_EOL;
+
                 return $value;
+            } else {
+                // echo "failed $option is not equal to $correctOption ";
             }
         } catch (\Throwable $th) {
             //throw $th;

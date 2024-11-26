@@ -15,7 +15,7 @@ class QuestionSeeder extends Seeder
     public function run(): void
     {
         // Ensure you have a valid exam_id
-        $exam_id = 8; // Or fetch it from the database or set it dynamically
+        $exam_id = 12; // Or fetch it from the database or set it dynamically
 
         // Path to the Excel file
         $path = public_path('datasets/next_set.xlsx');
