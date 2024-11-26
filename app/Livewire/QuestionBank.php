@@ -16,6 +16,11 @@ use Livewire\Attributes\Validate;
 
 use Illuminate\Support\Facades\Log;
 
+class TemppUpload extends  UploadedFile
+{
+    public static function generateHasNameWithOriginalNameEmbedded($file) {}
+}
+
 class QuestionBank extends Component
 {
     use WithFileUploads;
