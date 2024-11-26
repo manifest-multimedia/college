@@ -105,6 +105,21 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </div>
+                @if(Auth::user()->role=='Super Admin')
+                {{-- List Users --}}
+                <div class="mb-3">
+                    <label for="users" class="form-label">Users</label>
+                    <select class="form-select" name="users" wire:model.live="user_id" id="users">
+                        <option value="">Select a user</option>
+                        @foreach ($users as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }}) </option>
+                        @endforeach
+                    </select>
+                    @error('users') <!-- Display error message for users -->
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+                @endif
     
                 <!-- Submit Button -->
                 <div class="d-flex justify-content-end">

@@ -7,6 +7,7 @@ use App\Models\Exam;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Subject;
+use App\Models\User;
 
 class ExamCenterWidget extends Component
 {
@@ -18,6 +19,8 @@ class ExamCenterWidget extends Component
         'active' => 'Active',
         'completed' => 'Completed',
     ];
+
+
 
     public $filter = '';
 
@@ -81,6 +84,7 @@ class ExamCenterWidget extends Component
             'livewire.exam-center-widget',
             [
                 'exams' => $exams,
+                'users' => User::all(),
             ]
         );
     }

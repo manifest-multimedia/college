@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\CollegeClass;
 use App\Models\Year;
 use App\Models\Semester;
+use App\Models\User;
 
 class ExamManagement extends Component
 {
@@ -21,6 +22,7 @@ class ExamManagement extends Component
     public $class;
     public $year;
     public $slug;
+    public $user_id;
 
 
     // Validation rules for form input
@@ -42,6 +44,11 @@ class ExamManagement extends Component
 
     public function mount()
     {
+
+        if (Auth::user()->role != 'Super Admin') {
+            $this->user_id = Auth::user()->id;
+        }
+
         // Automatically generate an exam password
         $this->exam_password = $this->regeneratePassword();
     }
@@ -53,7 +60,7 @@ class ExamManagement extends Component
         // Create a new exam in the database
         Exam::create([
             'course_id' => $this->course_code,
-            'user_id' => Auth::user()->id,
+            'user_id' => $this->user_id,
             'exam_type' => $this->exam_type,
             'duration' => $this->exam_duration,
             'password' => $this->exam_password,
@@ -97,6 +104,7 @@ class ExamManagement extends Component
             'classes' => $classes,
             'years' => $years,
             'semesters' => $semesters,
+            'users' => User::all(),
 
         ]);
     }
