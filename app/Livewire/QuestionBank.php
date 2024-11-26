@@ -12,7 +12,6 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionImport;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Excel as MaatExcel;
-use Livewire\Attributes\Validate;
 
 use Illuminate\Support\Facades\Log;
 
@@ -23,8 +22,7 @@ class QuestionBank extends Component
     public $exam_id;
     public $questions = [];
 
-    #[Validate('required|file|mimes:xlsx,csv,ods,tsv|max:10240')]
-    public $bulk_file;
+
 
     public $uploadPath;
     protected $rules = [
