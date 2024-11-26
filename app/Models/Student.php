@@ -35,4 +35,10 @@ class Student extends Model
     {
         return $this->morphMany(Contact::class, 'contactable');
     }
+
+    public function isEligibleForExam($exam)
+    {
+        return true;
+        // Add your eligibility criteria here
+    }
 }

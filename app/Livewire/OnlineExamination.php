@@ -11,11 +11,16 @@ class OnlineExamination extends Component
 {
     public $examPassword = '';
 
+    public function mount($examPassword)
+    {
+        $this->examPassword = $examPassword;
+    }
+
     public function render()
     {
         $questions = [];
         $exam = Exam::with('course')
-            ->where('password', "vD0KJYjY")->first();
+            ->where('password', $this->examPassword)->first();
         if ($exam) {
 
             $examQuestions = $exam->questions()->get();

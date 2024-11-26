@@ -56,8 +56,8 @@
     <!-- Main Exam Content -->
     <!-- Exam Header -->
     <div class="mb-4 text-center">
-      <h2> Course Title: {{ $exam->course->name }}</h2>
-      <p>Paper Duration: {{ $exam->duration }} minutes</p>
+      <h2> Course Title: {{ $exam->course->name ? $exam->course->name : '' }}</h2>
+      <p>Paper Duration: {{ $exam->duration ? $exam->duration : '' }} minutes</p>
       <p class="timer" id="countdown">Time Left: 00:30:00</p>
     </div>
     <div class="col-md-9">
