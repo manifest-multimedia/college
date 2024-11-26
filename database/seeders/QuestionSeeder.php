@@ -7,16 +7,19 @@ use Illuminate\Database\Seeder;
 use Maatwebsite\Excel\Facades\Excel; // Correct facade
 use App\Imports\QuestionImport;
 
+
 class QuestionSeeder extends Seeder
 {
+
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
         // Ensure you have a valid exam_id
-        $exam_id = 5; // Or fetch it from the database or set it dynamically
-
+        // $exam_id = 5; 
+        $exam_id = 13;
         // Path to the Excel file
         $path = public_path('datasets/abnormal_p.xlsx');
 
