@@ -68,8 +68,7 @@
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
           <p>Student Name:  {{ $student_name }}</p>
           {{-- <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p> --}}
-          {{-- Use Alpine to return timelineft from getRemainingTime function on livewire component--}}
-          <div wire:poll="10s">
+          <div wire:poll.10s="getRemainingTime" >
             <h4 class="text-danger">
                 
                 <span class="badge bg-danger pulse">
