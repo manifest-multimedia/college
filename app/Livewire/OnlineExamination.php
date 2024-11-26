@@ -41,13 +41,13 @@ class OnlineExamination extends Component
         $this->initializeExamSession();
         $this->loadQuestions();
     }
-
     public function initializeExamSession()
     {
         $user = '';
         try {
             $student = Student::where('id', $this->student_id)->first();
-            // check if student has a user account else create
+
+            // Check if student has a user account, else create one
             if (User::where('email', $student->email)->exists()) {
                 $user = User::where('email', $student->email)->first();
             } else {
@@ -59,9 +59,7 @@ class OnlineExamination extends Component
                 ->where('student_id', $user->id)
                 ->first();
 
-
-
-            // If no session exists, create a new session (without marking it completed)
+            // If no session exists, create a new session
             if (!$this->examSession) {
                 $this->examSession = ExamSession::create([
                     'exam_id' => $this->exam->id,
@@ -74,14 +72,13 @@ class OnlineExamination extends Component
             // Handle any exceptions here (optional)
         }
 
-        if (!session()->has('exam_start_time')) {
-            session()->put('exam_start_time', now());
-        }
-
+        // Remove direct calculation of remaining time
         $this->examStartTime = Carbon::parse($this->examSession->started_at);
-        $estimatedEndTime = Carbon::parse($this->examSession->completed_at);
-        $this->remainingTime = $estimatedEndTime->diffInSeconds(session()->get('exam_start_time'));
+        $this->remainingTime = $this->getRemainingTime();
     }
+
+
+
 
     public function loadQuestions()
     {
@@ -173,11 +170,20 @@ class OnlineExamination extends Component
 
     public function countdown()
     {
-        // Update remaining time every second
-        if ($this->remainingTime > 0) {
-            $this->remainingTime--;
-        } else {
-            // $this->endExam();
+        $this->remainingTime = $this->getRemainingTime();
+
+        if ($this->remainingTime <= 0) {
+            $this->endExam();
         }
+    }
+
+
+    public function getRemainingTime()
+    {
+        // Dynamically calculate remaining time using the database timestamps
+        $estimatedEndTime = Carbon::parse($this->examSession->completed_at);
+        $remainingTime = $estimatedEndTime->diffInSeconds(now());
+
+        return max($remainingTime, 0); // Ensure it doesn't go negative
     }
 }
