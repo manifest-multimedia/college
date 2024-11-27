@@ -120,6 +120,12 @@
       </div>
   </div>
 
+  <script>
+    setInterval(() => {
+        @this.call('getRemainingTime');
+        console.log('remainingTime:', @this.get('remainingTime'));
+    }, 5000);
+</script>
   {{-- <script>
  let timerInterval = setInterval(function () {
     @this.call('countdown'); // Livewire call

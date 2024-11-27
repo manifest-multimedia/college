@@ -107,6 +107,9 @@ Route::middleware([
         return view('users.password-reset');
     })->name('reset-pass');
 
+    Route::get('track-responses', function () {
+        return view('exams.track-responses');
+    })->name('track-responses');
 
     // Test Email route to send mail to johnson@pnmtc.edu.gh
     Route::get('/test-email', function () {
