@@ -17,7 +17,7 @@ class ExamLogin extends Component
         // check environment set values for local
         if (env('APP_ENV') == 'local') {
 
-            $this->studentId = "PNMTC/DA/RGN/24/25/001";
+            // $this->studentId = "PNMTC/DA/RGN/24/25/001";
             $this->examPassword = "mQZU6Dc4";
         }
     }

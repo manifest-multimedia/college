@@ -87,7 +87,7 @@ class OnlineExamination extends Component
     public function loadQuestions()
     {
         // Reshuffle questions for each student
-        $examQuestions = $this->exam->questions()->inRandomOrder()->get();
+        $examQuestions = $this->exam->questions()->inRandomOrder()->take(140)->get();
 
         $this->questions = $examQuestions->map(function ($question) {
             // Load student's previous responses if any
@@ -182,24 +182,37 @@ class OnlineExamination extends Component
     }
 
 
+
+
     public function getRemainingTime()
     {
-        // Ensure consistent timezone for calculation
-        // $currentTime = now()->setTimezone(config('app.timezone'));
-        // $completedAt = Carbon::parse($this->examSession->completed_at)->setTimezone(config('app.timezone'));
-
-        // $remainingTime = $completedAt->diffInSeconds($currentTime, false); // Signed difference
-
-        // Parse the start and end times using Carbon
+        // Parse start and end times
         $startedAt = Carbon::parse($this->examSession->started_at);
         $completedAt = Carbon::parse($this->examSession->completed_at);
 
-        // Calculate the difference between the two times
-        $this->remainingTime = $completedAt->diffForHumans($startedAt, true);
+        // Calculate the total duration in seconds
+        $totalDurationSeconds = $startedAt->diffInSeconds($completedAt);
 
+        // Calculate the elapsed time since the exam started
+        $now = Carbon::now();
+        $elapsedSeconds = $startedAt->diffInSeconds($now, false);
 
+        // Calculate the remaining time in seconds
+        $remainingSeconds = $totalDurationSeconds - $elapsedSeconds;
 
-        // return max($remainingTime, 0); // Ensure non-negative
+        if ($remainingSeconds <= 0) {
+            // If time has elapsed, set "Time is up!"
+            $this->remainingTime = 'Time is up!';
+        } else {
+            // Convert seconds into hours, minutes, and seconds
+            $hours = floor($remainingSeconds / 3600);
+            $minutes = floor(($remainingSeconds % 3600) / 60);
+            $seconds = $remainingSeconds % 60;
+
+            // Format the time as HH:MM:SS
+            $this->remainingTime = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        }
+
         return $this->remainingTime;
     }
 }
