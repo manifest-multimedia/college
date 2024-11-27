@@ -18,7 +18,7 @@ class ExamLogin extends Component
         if (env('APP_ENV') == 'local') {
 
             // $this->studentId = "PNMTC/DA/RGN/24/25/001";
-            $this->examPassword = "mQZU6Dc4";
+            $this->examPassword = "Tg1ecnvj";
         }
     }
 
