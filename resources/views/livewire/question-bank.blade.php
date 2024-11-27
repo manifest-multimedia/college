@@ -106,13 +106,13 @@
                </div>
             @empty
             @if($exam_id)    
-            <form enctype="multipart/form-data" wire:submit.prevent="importQuestions">
+            {{-- <form enctype="multipart/form-data" wire:submit.prevent="importQuestions"> --}}
                 <div class="container py-4 rounded border bg-light">
                     <p class="mt-3 text-center text-muted">
                         No questions available for the selected exam. Start by creating a new question, or importing questions.
                     </p>
                     
-                    <div class="gap-2 mb-4 input-group">
+                    {{-- <div class="gap-2 mb-4 input-group">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Upload Question Bank Excel</span>
                         </div>
@@ -144,8 +144,9 @@
                                 Bulk Import Questions
                             </button>
                         </div>
-                    </div>
-            
+                    </div> --}}
+               
+                    <x-bulk-upload :examId="$exam_id" />
                     <!-- Loading Spinner -->
                     <div wire:loading wire:target="importQuestions" class="text-center">
                         <div class="spinner-border text-primary" role="status">
@@ -154,7 +155,7 @@
                         <p class="mt-2 text-muted">Importing questions. Please wait...</p>
                     </div>
                 </div>
-            </form>
+            {{-- </form> --}}
             
             @else
             <p class="text-center text-muted">Please select an exam to view questions.</p>

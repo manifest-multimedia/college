@@ -9,9 +9,16 @@ use App\Mail\WelcomeEmail;
 use Illuminate\Support\Facades\Request;
 use App\Models\Exam;
 
+use App\Http\Controllers\FileUploadController;
+
 Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
 })->name('mcq');
+
+
+
+Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file.upload');
+
 
 Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
 

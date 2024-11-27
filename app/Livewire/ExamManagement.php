@@ -63,13 +63,13 @@ class ExamManagement extends Component
             'user_id' => $this->user_id,
             'exam_type' => $this->exam_type,
             'duration' => $this->exam_duration,
-            'password' => $this->exam_password,
+            'password' => $this->regeneratePassword(),
             'slug' => $this->generateSlug(),
         ]);
 
         $this->reset(['course_code', 'exam_type', 'exam_duration', 'exam_password']);
 
-        $this->regeneratePassword();
+
 
         // Flash success message and redirect
         session()->flash('message', 'Exam created successfully!');
