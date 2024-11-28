@@ -118,6 +118,10 @@ Route::middleware([
         return view('exams.track-responses');
     })->name('track-responses');
 
+    Route::get('/exam-clearance', function () {
+        return view('exams.clearance');
+    });
+
     // Test Email route to send mail to johnson@pnmtc.edu.gh
     Route::get('/test-email', function () {
         Mail::to('johnson@manifestghana.com')->send(new WelcomeEmail);
