@@ -18,7 +18,7 @@ class DataMismatch extends Component
     public $selected_user_id;
     public $selected_exam_session_id;
 
-    public $students; // Holds filtered student list
+
     public $user;     // Holds user details for editing
     public $student;  // Holds student details for editing
     public $examSession; // Holds ExamSession details
@@ -31,12 +31,12 @@ class DataMismatch extends Component
     public function render()
     {
         // Apply filters for students
-        $this->students = Student::query()
+        $students = Student::query()
             ->when($this->filter_student_id, fn($q) => $q->where('student_id', 'like', '%' . $this->filter_student_id . '%'))
             ->paginate(15);
 
         return view('livewire.data-mismatch', [
-            'students' => $this->students,
+            'students' => $students,
         ]);
     }
 
