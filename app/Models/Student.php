@@ -36,7 +36,7 @@ class Student extends Model
         return $this->morphMany(Contact::class, 'contactable');
     }
 
-    public function isEligibleForExam($exam)
+    public function isEligibleForExam()
     {
 
         // Check FeeCollections if student_id is present and if is_eligble is true
