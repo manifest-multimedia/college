@@ -32,11 +32,11 @@
                                 <div class="p-3 mb-4 question rounded-border">
                                     <p><strong>Q{{ $index + 1 }}:</strong> {{ $question['question'] }}</p>
                 
-                                    <ul>
+                                    <ul class="list-unstyled">
                                         @foreach ($question['options'] as $option)
                                             <li>
-                                                <label>
-                                                    <input type="radio" name="responses[{{ $question['id'] }}]" 
+                                                <label class="form-check-label">
+                                                    <input type="radio" class="mx-3 form-check-input" name="responses[{{ $question['id'] }}]" 
                                                            value="{{ $option['id'] }}" 
                                                            wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})" 
                                                            @if (isset($responses[$question['id']]) && $responses[$question['id']] == $option['id']) checked @endif>
