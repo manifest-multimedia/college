@@ -28,76 +28,67 @@ class OnlineExamination extends Component
     public $student;
     public $student_index;
 
-
     protected $listeners = ['submitExam'];
 
     public function mount($examPassword, $student_id = null)
     {
         $this->examPassword = $examPassword;
         $this->student_id = $student_id;
-        $student = Student::where('id', $student_id)->first();
+
+        $student = Student::find($student_id);
+        if (!$student) {
+            abort(404, 'Student not found');
+        }
+
         $this->student_name = $student->first_name . ' ' . $student->last_name;
+        $this->student = $student; // Save student instance for reuse
         $this->exam = Exam::with('course')->where('password', $this->examPassword)->first();
 
         if (!$this->exam) {
             abort(404, 'Exam not found');
         }
-        $this->user = User::where('email', $student->email)->first();
 
-        // Initialize the session
+        // Initialize user and session
         $this->initializeExamSession();
         $this->loadQuestions();
     }
+
     public function initializeExamSession()
     {
-
-
-        $user = '';
         try {
-            $student = Student::where('id', $this->student_id)->first();
-            $this->student_index = $student->student_id;
-            // Check if student has a user account, else create one
-            if (User::where('email', $student->email)->exists()) {
-                $user = User::where('email', $student->email)->first();
-            } else {
-                $user = $student->createUser();
-            }
+            // Use existing or create a new user
+            $this->user = User::firstOrCreate(
+                ['email' => $this->student->email],
+                ['name' => $this->student_name]
+            );
 
-            // Check if there is an existing session for the student and exam
-            $this->examSession = ExamSession::where('exam_id', $this->exam->id)
-                ->where('student_id', $user->id)
-                ->first();
+            $this->student_index = $this->student->student_id;
 
-            // If no session exists, create a new session
-            $duration = (int) $this->exam->duration;
-
-            if (!$this->examSession) {
-                $this->examSession = ExamSession::create([
+            // Check or create exam session
+            $this->examSession = ExamSession::firstOrCreate(
+                [
                     'exam_id' => $this->exam->id,
-                    'student_id' => $user->id,
+                    'student_id' => $this->user->id,
+                ],
+                [
                     'started_at' => now(),
-                    'completed_at' => now()->addMinutes($duration), // Casted duration
-                ]);
-            }
+                    'completed_at' => now()->addMinutes((int) $this->exam->duration),
+                ]
+            );
+
+            $this->examStartTime = Carbon::parse($this->examSession->started_at);
+            $this->remainingTime = $this->getRemainingTime();
         } catch (\Throwable $th) {
-            // Handle any exceptions here (optional)
+            // Handle exceptions gracefully
+            report($th);
         }
-
-        // Remove direct calculation of remaining time
-        $this->examStartTime = Carbon::parse($this->examSession->started_at);
-        $this->remainingTime = $this->getRemainingTime();
     }
-
-
-
 
     public function loadQuestions()
     {
-        // Reshuffle questions for each student
         $examQuestions = $this->exam->questions()->inRandomOrder()->take(140)->get();
 
         $this->questions = $examQuestions->map(function ($question) {
-            // Load student's previous responses if any
             $response = Response::where('exam_session_id', $this->examSession->id)
                 ->where('question_id', $question->id)
                 ->first();
@@ -108,100 +99,70 @@ class OnlineExamination extends Component
                 'id' => $question->id,
                 'question' => $question->question_text,
                 'options' => $question->options()->get()->toArray(),
-                'marks' => $question->mark
+                'marks' => $question->mark,
             ];
         });
     }
 
     public function storeResponse($questionId, $answer)
     {
-        if ($this->user) {
-
-            // Store the student's response
+        try {
             $response = Response::updateOrCreate(
                 [
                     'exam_session_id' => $this->examSession->id,
                     'question_id' => $questionId,
                     'student_id' => $this->user->id,
-                    'option_id' => $answer
                 ],
-                ['selected_option' => $answer],
-
+                ['selected_option' => $answer]
             );
 
-            $this->responses[$questionId] = $answer; // Update local responses
-            // store in session
-
+            $this->responses[$questionId] = $answer;
             session()->put('responses', $this->responses);
-        } else {
-            $student = Student::where('id', $this->student_id)->first();
-            // dd($student, $this->student_id);
-            $this->user = User::where('email', $student->email)->first();
-
-            //Store the student's response
-            $response = Response::updateOrCreate(
-                [
-                    'exam_session_id' => $this->examSession->id,
-                    'question_id' => $questionId,
-                    'student_id' => $this->user->id,
-                    'option_id' => $answer
-                ],
-                ['selected_option' => $answer],
-
-            );
-
-            $this->responses[$questionId] = $answer; // Update local responses
-            // store in session
-
-            session()->put('responses', $this->responses);
+        } catch (\Throwable $th) {
+            // Handle exceptions gracefully
+            report($th);
         }
     }
 
-
     public function submitExam()
     {
-        // Calculate score before marking the exam as completed
-        $score = $this->calculateScore();
+        try {
+            $score = $this->calculateScore();
+            $this->examSession->update([
+                'completed_at' => now(),
+                'score' => $score,
+            ]);
 
-        // Mark the exam as completed and store the score
-        $this->examSession->update([
-            'completed_at' => now(),
-            'score' => $score,
-        ]);
-
-        // Redirect or show completion message
-        session()->flash('message', 'Exam submitted successfully.');
-        return redirect()->route('take-exam');
-        // return redirect()->route('exam.results', ['examSession' => $this->examSession->id]);
-    }
-
-    public function endExam()
-    {
-        // Automatically end the exam after the duration
-        $this->examSession->update([
-            'completed_at' => now(),
-        ]);
-
-        session()->flash('message', 'Exam has ended due to time expiration.');
-
-
-
-        // Return to take-exam route
-
-        return redirect()->route('take-exam');
+            session()->flash('message', 'Exam submitted successfully.');
+            return redirect()->route('take-exam');
+        } catch (\Throwable $th) {
+            // Handle submission errors
+            report($th);
+        }
     }
 
     public function calculateScore()
     {
         $score = 0;
-        // Calculate the score based on the responses
+
         foreach ($this->responses as $questionId => $answer) {
             $question = $this->exam->questions()->find($questionId);
             if ($question && $answer == $question->correct_option) {
-                $score += $question->mark; // Add mark for correct answer
+                $score += $question->mark;
             }
         }
+
         return $score;
+    }
+
+    public function getRemainingTime()
+    {
+        $startedAt = Carbon::parse($this->examSession->started_at);
+        $completedAt = Carbon::parse($this->examSession->completed_at);
+        $now = Carbon::now();
+
+        $remainingSeconds = $completedAt->diffInSeconds($now, false);
+        return max(0, $remainingSeconds);
     }
 
     public function render()
@@ -211,36 +172,5 @@ class OnlineExamination extends Component
             'exam' => $this->exam,
             'remainingTime' => $this->remainingTime,
         ]);
-    }
-
-    public function countdown()
-    {
-        $this->remainingTime = $this->getRemainingTime();
-
-        if ($this->remainingTime <= 0) {
-            // $this->endExam();
-        }
-    }
-
-
-    public function getRemainingTime()
-    {
-        // Parse start and end times
-        $startedAt = Carbon::parse($this->examSession->started_at);
-        $completedAt = Carbon::parse($this->examSession->completed_at);
-
-        // Calculate the total duration in seconds
-        $totalDurationSeconds = $startedAt->diffInSeconds($completedAt);
-
-        // Calculate the elapsed time since the exam started
-        $now = Carbon::now();
-        $elapsedSeconds = $startedAt->diffInSeconds($now, false);
-
-        // Calculate the remaining time in seconds
-        $remainingSeconds = $totalDurationSeconds - $elapsedSeconds;
-
-        $this->remainingTime = max(0, $remainingSeconds); // Ensure non-negative value
-
-        return $this->remainingTime;
     }
 }
