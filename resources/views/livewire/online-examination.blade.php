@@ -14,16 +14,19 @@
                 </span>
             </h4>
         </div> --}}
+<div class="container" style="width:90%" >
 
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Instructions</h5>
-                <div class="card-text">
-                    <p>You started the Exam {{ $startedAt }}</p>
-                    <p>Your Session Ends {{ $estimatedEndTime }}</p>
-                </div>
+    
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+           
+            <div class="p-3 pt-4 rounded border card-text bg-light" style="width:400px;
+            font-size:18px;font-weight:600">
+                <p>You started the Exam {{ $startedAt }}</p>
+                <p>Your Session Ends {{ $estimatedEndTime }}</p>
             </div>
-        </div>
+        
+    </div>
+</div>
 
       </div>
 
