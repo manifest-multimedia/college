@@ -27,6 +27,8 @@ class OnlineExamination extends Component
     public $user;
     public $student;
     public $student_index;
+    public $startedAt;
+    public $estimatedEndTime;
 
     protected $listeners = ['submitExam'];
 
@@ -159,6 +161,9 @@ class OnlineExamination extends Component
     {
         $startedAt = Carbon::parse($this->examSession->started_at);
         $completedAt = Carbon::parse($this->examSession->completed_at);
+
+        $this->startedAt = $startedAt->diffForHumans(); // Example: "2 hours ago"
+        $this->estimatedEndTime = $completedAt->diffForHumans(); // Example: "in 3 hours"
         $now = Carbon::now();
 
         $remainingSeconds = $completedAt->diffInSeconds($now, false);

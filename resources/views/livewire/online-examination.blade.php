@@ -7,13 +7,24 @@
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
           <p>Student Name:  {{ $student_name }} | Student ID : {{ $student_index }}</p>
         
-          <div>
+          {{-- <div>
             <h4 class="text-danger">
                 <span id="countdown" class="badge bg-danger pulse">
                     <strong>Time Left </strong> <span id="remaining-time">00:00:00</span>
                 </span>
             </h4>
+        </div> --}}
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Instructions</h5>
+                <div class="card-text">
+                    <p>You started the Exam {{ $startedAt }}</p>
+                    <p>Your Session Ends {{ $estimatedEndTime }}</p>
+                </div>
+            </div>
         </div>
+
       </div>
 
       <div class="row h-100">
