@@ -42,7 +42,7 @@ class OnlineExamination extends Component
             abort(404, 'Student not found');
         }
 
-        $this->student_name = $student->first_name . ' ' . $student->last_name;
+        $this->student_name = $student->first_name . ' ' . $student->last_name . ' ' . $student->other_name;
         $this->student = $student; // Save student instance for reuse
         $this->exam = Exam::with('course')->where('password', $this->examPassword)->first();
 
@@ -159,11 +159,19 @@ class OnlineExamination extends Component
 
     public function getRemainingTime()
     {
+
         $startedAt = Carbon::parse($this->examSession->started_at);
         $completedAt = Carbon::parse($this->examSession->completed_at);
 
-        $this->startedAt = $startedAt->diffForHumans(); // Example: "2 hours ago"
-        $this->estimatedEndTime = $completedAt->diffForHumans(); // Example: "in 3 hours"
+        $this->startedAt = $startedAt->format('l, jS F Y h:i A'); // Example: "Monday, 28th November 2024 10:30 AM"
+        $this->estimatedEndTime = $completedAt->format('l, jS F Y h:i A'); // Example: "Monday, 28th November 2024 1:30 PM"
+
+
+        // $startedAt = Carbon::parse($this->examSession->started_at);
+        // $completedAt = Carbon::parse($this->examSession->completed_at);
+
+        // $this->startedAt = $startedAt->diffForHumans(); // Example: "2 hours ago"
+        // $this->estimatedEndTime = $completedAt->diffForHumans(); // Example: "in 3 hours"
         $now = Carbon::now();
 
         $remainingSeconds = $completedAt->diffInSeconds($now, false);

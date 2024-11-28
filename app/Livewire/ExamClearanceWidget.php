@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\FeeCollection;
+use App\Models\Student;
 
 class ExamClearanceWidget extends Component
 {
@@ -36,6 +37,19 @@ class ExamClearanceWidget extends Component
         $this->resetPage();
     }
 
+    public function updated($propertyName)
+    {
+        if ($propertyName == 'student_id') {
+            $student = Student::where('student_id', $this->student_id)->first();
+            if ($student) {
+
+                $this->student_name = $student->first_name . ' ' . $student->last_name . ' ' . $student->other_name;
+            } else {
+                $this->student_name = '';
+            }
+        }
+    }
+
     public function toggleEligibility($id)
     {
         $student = FeeCollection::findOrFail($id);
@@ -47,8 +61,9 @@ class ExamClearanceWidget extends Component
     {
         $this->validate();
 
-        FeeCollection::create([
+        FeeCollection::FirstOrCreate([
             'student_id' => $this->student_id,
+        ], [
             'student_name' => $this->student_name,
             'is_eligble' => $this->is_eligble,
         ]);
@@ -57,6 +72,8 @@ class ExamClearanceWidget extends Component
         $this->reset(['student_id', 'student_name', 'is_eligble']);
 
         session()->flash('message', 'Student added successfully!');
+
+        $this->mode = 'index';
     }
 
     public function render()
@@ -68,5 +85,15 @@ class ExamClearanceWidget extends Component
         return view('livewire.exam-clearance-widget', [
             'students' => $students,
         ]);
+    }
+
+    public function addRecord()
+    {
+        $this->mode = 'add';
+    }
+
+    public function viewDetails($studentId)
+    {
+        $this->mode = 'view';
     }
 }

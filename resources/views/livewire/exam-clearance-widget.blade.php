@@ -10,8 +10,19 @@
                 </div>
                 <div class="card-body">
  <!-- Search Bar -->
+ 
+ 
  <input type="text" wire:model.live="search" class="mb-3 form-control" placeholder="Search by Student ID...">
+ <div class="container p-2">
 
+     @if($mode=='index')
+      <!-- Add Student Button -->
+      <button wire:click="addRecord" class="btn btn-primary">Add Student</button>
+      @else 
+      <!-- Back Button -->
+      <button wire:click="viewDetails" class="btn btn-primary">View Details</button>
+     @endif 
+ </div>
  <!-- Table of Students -->
  <table class="table table-bordered">
      <thead>
@@ -66,7 +77,7 @@
             <form wire:submit.prevent="addStudent">
                 <div class="mb-3">
                     <label for="student_id" class="form-label">Student ID</label>
-                    <input type="text" wire:model="student_id" id="student_id" class="form-control @error('student_id') is-invalid @enderror">
+                    <input type="text" wire:model.live="student_id" id="student_id" class="form-control @error('student_id') is-invalid @enderror">
                     @error('student_id') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
 

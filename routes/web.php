@@ -34,6 +34,9 @@ Route::get('exam-results', function () {
     return "Completed succeessfully.";
 })->name('exam.results');
 
+Route::get('/correct-data', function () {
+    return view('exams.correct-data');
+})->name('correct-data');
 
 
 Route::get('/take-exam', function () {
