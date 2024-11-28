@@ -36,7 +36,7 @@
                                         @foreach ($question['options'] as $option)
                                             <li>
                                                 <label class="form-check-label">
-                                                    <input type="radio" class="mx-3 form-check-input" name="responses[{{ $question['id'] }}]" 
+                                                    <input type="radio" class="mx-2 form-check-input" name="responses[{{ $question['id'] }}]" 
                                                            value="{{ $option['id'] }}" 
                                                            wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})" 
                                                            @if (isset($responses[$question['id']]) && $responses[$question['id']] == $option['id']) checked @endif>
