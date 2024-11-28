@@ -1,81 +1,12 @@
-<div class="container my-5">
-  <style>
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-      .timer {
-          font-size: 1.25rem;
-          color: #d9534f;
-      }
-      .question-card {
-          max-width: 800px;
-          margin: auto;
-      }
-      .scrollable-questions {
-          max-height: 70vh;
-          overflow-y: auto;
-          padding: 10px;
-      }
-      .question-container {
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          padding: 15px;
-          margin-bottom: 20px;
-      }
-      .answered {
-          background-color: #28a745;
-          color: white;
-          border-radius: 50%;
-          width: 30px;
-          height: 30px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin: 5px;
-          cursor: pointer;
-      }
-      .not-answered {
-          background-color: #6c757d;
-          color: white;
-          border-radius: 50%;
-          width: 30px;
-          height: 30px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin: 5px;
-          cursor: pointer;
-      }
-  </style>
+@include('components.partials.timer-styles')
 
   <div class="row">
       <!-- Main Exam Content -->
       <div class="mb-4 text-center">
           <h2>Course Title: {{ $exam->course->name }}</h2>
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
-          <p>Student Name:  {{ $student_name }} | Student ID={{ $student_index }}</p>
-          {{-- <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p> --}}
-          {{-- <div wire:poll.10s="getRemainingTime" >
-            <h4 class="text-danger">
-                
-                <span class="badge bg-danger pulse">
-                    <strong>Time Left </strong>   {{ $remainingTime }}
-                </span>
-            </h4>
-        </div> --}}
+          <p>Student Name:  {{ $student_name }} | Student ID : {{ $student_index }}</p>
+        
         <div>
             <h4 class="text-danger">
                 <span id="countdown" class="badge bg-danger pulse">
@@ -86,34 +17,34 @@
       </div>
 
       <div class="col-md-9">
-          <!-- Scrollable Questions Container -->
-          <div class="p-4 shadow-lg card question-card">
-              <div class="scrollable-questions" id="questionsContainer">
-                  <form id="examForm">
-                      @foreach($questions as $question)
-                          <div class="question-container">
-                              <p>{{ $question['question'] }}</p>
-                              @foreach($question['options'] as $option)
-                                  <div class="form-check">
-                                      <input class="form-check-input" type="radio" name="question{{ $question['id'] }}" value="{{ $option['id'] }}"
-                                             wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})">
-                                      <label class="form-check-label">
-                                          {{ $option['option_text'] }}
-                                      </label>
-                                  </div>
-                              @endforeach
-                          </div>
-                      @endforeach
-                  </form>
-              </div>
-
-              {{-- <div class="mt-4 d-flex justify-content-between">
-                  <button class="btn btn-secondary" id="prevBtn" disabled>Previous</button>
-                  <button class="btn btn-primary" id="nextBtn" wire:click="submitExam">Next</button>
-              </div> --}}
-          </div>
-      </div>
-
+        <!-- Scrollable Questions Container -->
+        <div class="p-4 shadow-lg card question-card position-relative">
+            <!-- Watermark -->
+            <div class="watermark">
+                {{ $student_name }}
+            </div>
+    
+            <div class="scrollable-questions" id="questionsContainer">
+                <form id="examForm">
+                    @foreach($questions as $question)
+                        <div class="question-container">
+                            <p>{{ $question['question'] }}</p>
+                            @foreach($question['options'] as $option)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="question{{ $question['id'] }}" value="{{ $option['id'] }}"
+                                           wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})">
+                                    <label class="form-check-label">
+                                        {{ $option['option_text'] }}
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
+                </form>
+            </div>
+        </div>
+    </div>
+    
       <div class="col-md-3">
           <h5>Questions Overview</h5>
           <div id="questionsOverview">
@@ -127,45 +58,34 @@
       </div>
   </div>
 
-  
- 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        let remainingSeconds = Math.floor(@json($remainingTime)); // Ensure whole seconds
-        const countdownElement = document.getElementById('remaining-time');
+  <style>
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg); /* Rotate watermark diagonally */
+        font-size: 3rem; /* Adjust size as needed */
+        font-weight: 900;
+        color: rgba(0, 0, 0, 0.050); /* Transparent black */
+        white-space: nowrap;
+        text-align: center;
+        z-index: 0;
+        pointer-events: none; /* Make it unclickable */
+        user-select: none; /* Prevent text selection */
+    }
 
-        // Function to format time as HH:MM:SS
-        function formatTime(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
+    .scrollable-questions {
+        position: relative;
+        z-index: 1; /* Ensure questions are on top of the watermark */
+        max-height: 500px; /* Adjust height as needed */
+        overflow-y: auto; /* Enable scrolling */
+        padding: 10px;
+    }
 
-        // Update the countdown every second
-        const interval = setInterval(() => {
-            if (remainingSeconds <= 0) {
-                countdownElement.textContent = 'Time is up!';
-                clearInterval(interval);
-                return;
-            }
-
-            // Decrease remaining time and update display
-            remainingSeconds -= 1;
-            countdownElement.textContent = formatTime(remainingSeconds);
-        }, 1000);
-
-        // Periodically fetch updated remaining time from the server
-        setInterval(() => {
-            @this.call('getRemainingTime').then(serverTime => {
-                const serverSeconds = Math.floor(serverTime); // Ensure whole seconds
-                // Synchronize only if there's significant drift
-                if (Math.abs(serverSeconds - remainingSeconds) > 2) {
-                    remainingSeconds = serverSeconds;
-                }
-            });
-        }, 10000); // Fetch every 10 seconds
-    });
-</script>
+    .question-card {
+        position: relative;
+    }
+</style>
+ @include('components.partials.timer-scripts')
 
 </div>
