@@ -66,13 +66,20 @@
       <div class="mb-4 text-center">
           <h2>Course Title: {{ $exam->course->name }}</h2>
           <p>Paper Duration: {{ $exam->duration }} minutes</p>
-          <p>Student Name:  {{ $student_name }}</p>
+          <p>Student Name:  {{ $student_name }} | Student ID={{ $student_index }}</p>
           {{-- <p class="timer" id="countdown">Time Left: <span id="timeLeft">{{ gmdate('H:i:s', $remainingTime) }}</span></p> --}}
-          <div wire:poll.10s="getRemainingTime" >
+          {{-- <div wire:poll.10s="getRemainingTime" >
             <h4 class="text-danger">
                 
                 <span class="badge bg-danger pulse">
                     <strong>Time Left </strong>   {{ $remainingTime }}
+                </span>
+            </h4>
+        </div> --}}
+        <div>
+            <h4 class="text-danger">
+                <span id="countdown" class="badge bg-danger pulse">
+                    <strong>Time Left </strong> <span id="remaining-time">00:00:00</span>
                 </span>
             </h4>
         </div>
@@ -120,23 +127,45 @@
       </div>
   </div>
 
-  <script>
-    setInterval(() => {
-        @this.call('getRemainingTime');
-        console.log('remainingTime:', @this.get('remainingTime'));
-    }, 5000);
+  
+ 
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let remainingSeconds = Math.floor(@json($remainingTime)); // Ensure whole seconds
+        const countdownElement = document.getElementById('remaining-time');
+
+        // Function to format time as HH:MM:SS
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update the countdown every second
+        const interval = setInterval(() => {
+            if (remainingSeconds <= 0) {
+                countdownElement.textContent = 'Time is up!';
+                clearInterval(interval);
+                return;
+            }
+
+            // Decrease remaining time and update display
+            remainingSeconds -= 1;
+            countdownElement.textContent = formatTime(remainingSeconds);
+        }, 1000);
+
+        // Periodically fetch updated remaining time from the server
+        setInterval(() => {
+            @this.call('getRemainingTime').then(serverTime => {
+                const serverSeconds = Math.floor(serverTime); // Ensure whole seconds
+                // Synchronize only if there's significant drift
+                if (Math.abs(serverSeconds - remainingSeconds) > 2) {
+                    remainingSeconds = serverSeconds;
+                }
+            });
+        }, 10000); // Fetch every 10 seconds
+    });
 </script>
-  {{-- <script>
- let timerInterval = setInterval(function () {
-    @this.call('countdown'); // Livewire call
-    let remainingTime = @this.get('remainingTime'); // Fetch updated time
-    let hours = Math.floor(remainingTime / 3600);
-    let minutes = Math.floor((remainingTime % 3600) / 60);
-    let seconds = remainingTime % 60;
-    document.getElementById('timeLeft').innerText = `${hours}:${minutes}:${seconds}`;
-}, 1000);
-
-  </script> --}}
-
 
 </div>

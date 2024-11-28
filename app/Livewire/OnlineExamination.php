@@ -21,6 +21,12 @@ class OnlineExamination extends Component
     public $examStartTime;
     public $examSession;
     public $student_name;
+    public $hours;
+    public $minutes;
+    public $seconds;
+    public $user;
+    public $student;
+    public $student_index;
 
 
     protected $listeners = ['submitExam'];
@@ -36,6 +42,7 @@ class OnlineExamination extends Component
         if (!$this->exam) {
             abort(404, 'Exam not found');
         }
+        $this->user = User::where('email', $student->email)->first();
 
         // Initialize the session
         $this->initializeExamSession();
@@ -48,7 +55,7 @@ class OnlineExamination extends Component
         $user = '';
         try {
             $student = Student::where('id', $this->student_id)->first();
-
+            $this->student_index = $student->student_id;
             // Check if student has a user account, else create one
             if (User::where('email', $student->email)->exists()) {
                 $user = User::where('email', $student->email)->first();
@@ -108,14 +115,48 @@ class OnlineExamination extends Component
 
     public function storeResponse($questionId, $answer)
     {
-        // Store the student's response
-        $response = Response::updateOrCreate(
-            ['exam_session_id' => $this->examSession->id, 'question_id' => $questionId],
-            ['selected_option' => $answer]
-        );
+        if ($this->user) {
 
-        $this->responses[$questionId] = $answer; // Update local responses
+            // Store the student's response
+            $response = Response::updateOrCreate(
+                [
+                    'exam_session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                    'student_id' => $this->user->id,
+                    'option_id' => $answer
+                ],
+                ['selected_option' => $answer],
+
+            );
+
+            $this->responses[$questionId] = $answer; // Update local responses
+            // store in session
+
+            session()->put('responses', $this->responses);
+        } else {
+            $student = Student::where('id', $this->student_id)->first();
+            // dd($student, $this->student_id);
+            $this->user = User::where('email', $student->email)->first();
+
+            //Store the student's response
+            $response = Response::updateOrCreate(
+                [
+                    'exam_session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                    'student_id' => $this->user->id,
+                    'option_id' => $answer
+                ],
+                ['selected_option' => $answer],
+
+            );
+
+            $this->responses[$questionId] = $answer; // Update local responses
+            // store in session
+
+            session()->put('responses', $this->responses);
+        }
     }
+
 
     public function submitExam()
     {
@@ -182,8 +223,6 @@ class OnlineExamination extends Component
     }
 
 
-
-
     public function getRemainingTime()
     {
         // Parse start and end times
@@ -200,18 +239,7 @@ class OnlineExamination extends Component
         // Calculate the remaining time in seconds
         $remainingSeconds = $totalDurationSeconds - $elapsedSeconds;
 
-        if ($remainingSeconds <= 0) {
-            // If time has elapsed, set "Time is up!"
-            $this->remainingTime = 'Time is up!';
-        } else {
-            // Convert seconds into hours, minutes, and seconds
-            $hours = floor($remainingSeconds / 3600);
-            $minutes = floor(($remainingSeconds % 3600) / 60);
-            $seconds = $remainingSeconds % 60;
-
-            // Format the time as HH:MM:SS
-            $this->remainingTime = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
-        }
+        $this->remainingTime = max(0, $remainingSeconds); // Ensure non-negative value
 
         return $this->remainingTime;
     }
