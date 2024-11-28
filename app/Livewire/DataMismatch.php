@@ -13,6 +13,8 @@ class DataMismatch extends Component
 {
     use WithPagination;
 
+    protected $paginationTheme = 'bootstrap';
+
     public $mode = 'index'; // Modes: index, view, edit
     public $selected_student_id;
     public $selected_user_id;
@@ -70,8 +72,15 @@ class DataMismatch extends Component
 
     public function updateExamSession()
     {
+        dd('clicked');
         $this->examSession->save();
         $this->mode = 'view';
         session()->flash('message', 'ExamSession updated successfully.');
+    }
+
+    public function back()
+    {
+
+        $this->mode = 'index';
     }
 }

@@ -1,7 +1,7 @@
 <div class="container">
     @if ($mode === 'index')
         <h2 class="my-4">Data Mismatch Dashboard</h2>
-        
+   
         <!-- Filters -->
         <div class="mb-4">
             <div class="row g-2">
@@ -42,6 +42,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="d-flex justify-content-center">
+            {{ $students->links() }}
+        </div>
     @elseif ($mode === 'view')
         <h2 class="my-4">Details for Student: {{ $student->first_name }} {{ $student->last_name }}</h2>
         
@@ -63,14 +66,15 @@
 
         <!-- Exam Session -->
         <div class="mb-4">
-            <h3>ExamSession</h3>
+            <h3>Exam Session</h3>
             <p><strong>Exam ID:</strong> {{ $examSession->exam_id }}</p>
-            {{-- Get Exam and Return Course Name --}}
-            <p><strong>Course Name:</strong> {{ $examSession->exam->course->name }}</p>
+            <p><strong>Course Name:</strong> {{ optional($examSession->exam->course)->name }}</p>
             <p><strong>Started At:</strong> {{ $examSession->started_at }}</p>
             <p><strong>Completed At:</strong> {{ $examSession->completed_at }}</p>
             <button class="btn btn-secondary" wire:click="editDetails('examSession')">Edit ExamSession</button>
         </div>
+
+        <button class="btn btn-primary" wire:click="back">Back</button>
     @elseif (str_starts_with($mode, 'edit'))
         <div class="my-4">
             @if ($mode === 'edit-student')
@@ -88,6 +92,7 @@
                     <input type="email" id="email" class="form-control" wire:model="student.email">
                 </div>
                 <button class="btn btn-success" wire:click="updateStudent">Save</button>
+                <button class="btn btn-primary" wire:click="back">Back</button>
             @elseif ($mode === 'edit-user')
                 <h2>Edit User Details</h2>
                 <div class="mb-3">
@@ -99,6 +104,7 @@
                     <input type="email" id="userEmail" class="form-control" wire:model="user.email">
                 </div>
                 <button class="btn btn-success" wire:click="updateUser">Save</button>
+                <button class="btn btn-primary" wire:click="back">Back</button>
             @elseif ($mode === 'edit-examSession')
                 <h2>Edit ExamSession Details</h2>
                 <div class="mb-3">
@@ -110,7 +116,9 @@
                     <input type="text" id="completedAt" class="form-control" wire:model="examSession.completed_at">
                 </div>
                 <button class="btn btn-success" wire:click="updateExamSession">Save</button>
+                <button class="btn btn-primary" wire:click="back">Back</button>
             @endif
         </div>
     @endif
+    
 </div>
