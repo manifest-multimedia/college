@@ -38,7 +38,18 @@ class Student extends Model
 
     public function isEligibleForExam($exam)
     {
-        return true;
+
+        // Check FeeCollections if student_id is present and if is_eligble is true
+        $feeCollection = FeeCollection::where('student_id', $this->student_id)->first();
+        if (!$feeCollection || !$feeCollection->is_eligible) {
+            return false;
+        } else {
+
+            return true;
+        }
+
+
+
         // Add your eligibility criteria here
     }
 
