@@ -43,6 +43,10 @@ Route::get('/take-exam', function () {
     return view('frontend.take-exam');
 })->name('take-exam');
 
+Route::get('/extra-time', function () {
+    return view('exams.extra-time');
+})->name('extra-time');
+
 
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 

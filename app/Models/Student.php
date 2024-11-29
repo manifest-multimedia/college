@@ -53,6 +53,12 @@ class Student extends Model
         // Add your eligibility criteria here
     }
 
+    public function user()
+    {
+        return $this->hasOne(User::class, 'email', 'email');
+    }
+
+
     public function createUser()
     {
         $user = User::create([
@@ -61,4 +67,12 @@ class Student extends Model
             'password' => bcrypt('password'),
         ]);
     }
+
+    // public function examSessions()
+    // {
+    //     /* Student has many exam sessions 
+    //     through user model
+    //     */
+    //     return $this->hasMany(ExamSession::class);
+    // }
 }

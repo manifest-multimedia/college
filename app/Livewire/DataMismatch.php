@@ -35,6 +35,8 @@ class DataMismatch extends Component
         // Apply filters for students
         $students = Student::query()
             ->when($this->filter_student_id, fn($q) => $q->where('student_id', 'like', '%' . $this->filter_student_id . '%'))
+            ->when($this->filter_email, fn($q) => $q->where('email', 'like', '%' . $this->filter_email . '%'))
+
             ->paginate(15);
 
         return view('livewire.data-mismatch', [
