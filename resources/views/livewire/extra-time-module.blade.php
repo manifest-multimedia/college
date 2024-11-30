@@ -7,7 +7,7 @@
         </div>
         <div class="card-actions">
             {{-- Filter By Exam --}}
-            <input type="text" wire:model.live="filter_exam_id" class="form-control" placeholder="Filter by Exam">
+            <input type="text" wire:model.live="exam_filter" class="form-control" placeholder="Filter by Exam">
         </div>
     </div>
     <div class="card-body">

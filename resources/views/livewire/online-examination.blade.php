@@ -24,7 +24,9 @@
                 <p>You started the Exam {{ $startedAt }}</p>
                 <p>Your Session Ends {{ $estimatedEndTime }}</p>
             </div>
-        
+           
+            <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" />
+
     </div>
 </div>
 
@@ -67,18 +69,21 @@
             </div>
         </div>
     
-        <div class="col-md-3 sidebar h-100 d-flex flex-column">
-            <div>
+        <div class="shadow-lg col-md-3 sidebar h-100 d-flex flex-column card question-card">
+            <div class="p-4 text-center">
                 <h5>Questions Overview</h5>
-                <p>Questions Answered: <strong id="answeredCount">{{ count(array_filter($responses)) }}</strong> / {{ count($questions) }}</p>
+                <p class="mb-0">Questions Answered: <strong id="answeredCount">{{ count(array_filter($responses)) }}</strong> / {{ count($questions) }}</p>
             </div>
             <div id="questionsOverview" class="overflow-y-auto flex-grow-1">
-                <div class="question-tracker h-100 d-flex flex-column">
+                <div class="question-tracker h-100 d-flex flex-column align-items-center justify-content-center">
                     
-                    <div class="flex-wrap tracker-container d-flex align-items-center justify-content-between h-100">
+                    <div class="flex-wrap tracker-container d-flex align-items-center 
+                    {{-- space between "> --}}
+                        justify-content-between"
                         @foreach ($questions as $index => $question)
                             <div class="tracker-item rounded-circle text-center 
-                                        @if(isset($responses[$question['id']])) answered @else unanswered @endif">
+                                        @if(isset($responses[$question['id']])) answered @else unanswered @endif"
+                                        style="width: 40px; height: 40px">
                                 {{ $index + 1 }}
                             </div>
                         @endforeach
@@ -86,13 +91,17 @@
                 </div>
                 
             </div>
-            <button class="mt-3 btn btn-primary w-100" wire:click="submitExam" id="submitBtn">Submit Exam</button>
+            <div class="card-footer d-flex justify-content-center align-items-center">
+                <div>
+                    <button class="btn btn-primary w-100" wire:click="submitExam" id="submitBtn">Submit Exam</button>
+                </div>
+            </div>
         </div>
     </div>
     
   </div>
 
  @include('components.partials.timer-scripts')
- 
+
 </div>
 

@@ -30,6 +30,9 @@ class OnlineExamination extends Component
     public $startedAt;
     public $estimatedEndTime;
 
+    public $timerStart;
+    public $timerFinish;
+
     protected $listeners = ['submitExam'];
 
     public function mount($examPassword, $student_id = null)
@@ -162,6 +165,8 @@ class OnlineExamination extends Component
 
         $startedAt = Carbon::parse($this->examSession->started_at);
         $completedAt = Carbon::parse($this->examSession->completed_at);
+        $this->timerStart = $startedAt;
+        $this->timerFinish = $completedAt;
 
         $this->startedAt = $startedAt->format('l, jS F Y h:i A'); // Example: "Monday, 28th November 2024 10:30 AM"
         $this->estimatedEndTime = $completedAt->format('l, jS F Y h:i A'); // Example: "Monday, 28th November 2024 1:30 PM"
