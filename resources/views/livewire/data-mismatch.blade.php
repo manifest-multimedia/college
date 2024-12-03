@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <div class="rounded border-2 border-dark">
+        <div class="p-5 m-5 rounded border border-1 border-dark">
             <h1>
                 Records for Leticia, RGN Class 
                 
@@ -29,9 +29,10 @@
                 @if(\App\Models\ExamSession::where('student_id', 131)->count() > 0)
                 @foreach (\App\Models\ExamSession::where('student_id', 131)->get() as $sessions)
             {{ \App\Models\User::where('id', 131)->first()->name }} <br>   
-                {{ $sessions->exam->exam_code }} <br>
-                    {{ $sessions->exam->course->name }} <br>
-                    {{ $sessions->responses->count() }} <br>
+                {{-- {{ $sessions->exam->exam_code }} <br> --}}
+                    Course: {{ $sessions->exam->course->name }} <br>
+                    Responses: {{ $sessions->responses->count() }} <br>
+                    Session ID: {{ $sessions->id }} <br>
                     <hr>
                     
                 @endforeach
@@ -42,9 +43,10 @@
                     @if(\App\Models\ExamSession::where('student_id', 90)->count() > 0)
                     @foreach (\App\Models\ExamSession::where('student_id', 90)->get() as $sessions)
                 {{ \App\Models\User::where('id', 90)->first()->name }} <br>   
-                    {{ $sessions->exam->exam_code }} <br>
-                        {{ $sessions->exam->course->name }} <br>
-                        {{ $sessions->responses->count() }} <br>
+                    {{-- {{ $sessions->exam->exam_code }} <br> --}}
+                        Course: {{ $sessions->exam->course->name }} <br>
+                        Responses: {{ $sessions->responses->count() }} <br>
+                       Session ID: {{ $sessions->id }} <br>
                         <hr>
                         
                     @endforeach
