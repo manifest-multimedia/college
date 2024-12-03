@@ -71,7 +71,7 @@
             
         <div class="mb-4">
             <h3>Exam Session</h3>
-            <p><strong>Exam ID:</strong> {{ $examSession->exam_id }}</p>
+            {{-- <p><strong>Exam ID:</strong> {{ $examSession->exam_id }}</p> --}}
             <p><strong>Course Name:</strong> {{ optional($examSession->exam->course)->name }}</p>
             <p><strong>Started At:</strong> {{ $examSession->started_at }}</p>
             <p><strong>Completed At:</strong> {{ $examSession->completed_at }}</p>
