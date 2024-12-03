@@ -71,8 +71,8 @@
                 {{-- Check if Env is Production --}}
               
                     <span class="badge bg-success">Production</span>
-                @if(\App\Models\ExamSession::where('student_id', 131)->count() > 0)
-                @foreach (\App\Models\ExamSession::where('student_id', 131)->get() as $sessions)
+                @if(\App\Models\ExamSession::where('student_id', 191)->count() > 0)
+                @foreach (\App\Models\ExamSession::where('student_id', 191)->get() as $sessions)
             {{ \App\Models\User::where('id', 191)->first()->name }} <br>   
                 {{-- {{ $sessions->exam->exam_code }} <br> --}}
                     Course: {{ $sessions->exam->course->name }} <br>
@@ -90,8 +90,8 @@
     
             <p>     <span class="badge bg-warning">Local</span>
                 {{-- ID on Local is 90 --}}
-                @if(\App\Models\ExamSession::where('student_id', 90)->count() > 0)
-                @foreach (\App\Models\ExamSession::where('student_id', 90)->get() as $sessions)
+                @if(\App\Models\ExamSession::where('student_id', 36)->count() > 0)
+                @foreach (\App\Models\ExamSession::where('student_id', 36)->get() as $sessions)
             {{ \App\Models\User::where('id', 36)->first()->name }} <br>   
                 {{-- {{ $sessions->exam->exam_code }} <br> --}}
                     Course: {{ $sessions->exam->course->name }} <br>
