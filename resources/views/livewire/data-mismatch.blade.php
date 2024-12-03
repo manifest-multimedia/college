@@ -68,7 +68,7 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
                                         <div class="p-2 rounded border border-1 border-success">
                                             Course Name: {{ optional($session->exam->course)->name }}<br>    
                                             <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
-                                        </div>        
+                                        </div>,      
                                         {{-- @else 
                                         <div class="p-2 rounded border border-1 border-danger">
                                             Course Name: {{ optional($session->exam->course)->name }}<br>    
