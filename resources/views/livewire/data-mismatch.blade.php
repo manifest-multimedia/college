@@ -38,7 +38,7 @@
                             <td>
                                 @if(\App\Models\ExamSession::where('student_id', $student->id)->count() > 0)
                                     
-                                <span class="badge bg-success">Sessions: {{ \App\Models\ExamSession::where('student_id', $student->id)->count() }}</span>
+                                <span class="text-white badge bg-dark">Sessions: {{ \App\Models\ExamSession::where('student_id', $student->id)->count() }}</span>
                                     @foreach (\App\Models\ExamSession::where('student_id', $student->id)->get() as $session)
                                 <div class="p-2 rounded border border-1 border-success">
                                 Course Name: {{ optional($session->exam->course)->name }}<br>    
