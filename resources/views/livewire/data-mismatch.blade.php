@@ -128,18 +128,27 @@
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                             <td>{{ $student->email }}</td>
                             <td>
-                                @if(\App\Models\ExamSession::where('student_id', $student->id)->count() > 0)
-                                    
-                                <span class="text-white badge bg-dark">Sessions: {{ \App\Models\ExamSession::where('student_id', $student->id)->count() }}</span>
-                                    @foreach (\App\Models\ExamSession::where('student_id', $student->id)->get() as $session)
-                                <div class="p-2 rounded border border-1 border-success">
-                                Course Name: {{ optional($session->exam->course)->name }}<br>    
-                                <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
-                                </div>        
+                                {{-- @php
+                                $examSessions = \App\Models\ExamSession::where('student_id', $student->id)->with('exam.course', 'responses')->get();
+
+                                @endphp --}}
+                                @php
+$examSessions = \App\Models\ExamSession::where('student_id', optional($student->user)->id)
+    ->with('exam.course', 'responses')
+    ->get();
+@endphp
+                                @if($examSessions->isNotEmpty())
+                                    <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
+                                    @foreach ($examSessions as $session)
+                                        <div class="p-2 rounded border border-1 border-success">
+                                            Course Name: {{ optional($session->exam->course)->name }}<br>    
+                                            <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
+                                        </div>        
                                     @endforeach
                                 @else
                                     <span class="badge bg-danger">No sessions or responses found</span>
                                 @endif
+                                
                             </td>
                             <td>
                                 <button class="btn btn-primary btn-sm" wire:click="viewDetails({{ $student->id }})">View</button>

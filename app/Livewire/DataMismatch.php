@@ -36,7 +36,8 @@ class DataMismatch extends Component
         $students = Student::query()
             ->when($this->filter_student_id, fn($q) => $q->where('student_id', 'like', '%' . $this->filter_student_id . '%'))
             ->when($this->filter_email, fn($q) => $q->where('email', 'like', '%' . $this->filter_email . '%'))
-
+            // Retrieve the user account for the student based on the studen'ts email
+            ->with('user')
             ->paginate(15);
 
         return view('livewire.data-mismatch', [
@@ -49,7 +50,7 @@ class DataMismatch extends Component
     {
         $this->student = Student::find($studentId);
         $this->user = User::where('email', $this->student->email)->first();
-        $this->examSessions = ExamSession::where('student_id', $studentId)->get();
+        $this->examSessions = ExamSession::where('student_id', $this->user->id)->get();
         $this->mode = 'view';
     }
 
