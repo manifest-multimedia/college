@@ -38,7 +38,7 @@ class DataMismatch extends Component
             ->when($this->filter_email, fn($q) => $q->where('email', 'like', '%' . $this->filter_email . '%'))
             // Retrieve the user account for the student based on the studen'ts email
             ->with('user')
-            ->paginate(500);
+            ->paginate(15);
 
         return view('livewire.data-mismatch', [
             'students' => $students,

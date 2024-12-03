@@ -19,7 +19,7 @@
 
 
         <!-- Table -->
-        <div class="table-responsive" id="exportToExcel">
+        <div class="table-responsive">
             <table class="table align-middle table-bordered table-hover">
                 <thead class="table-dark">
                     <tr>
@@ -62,22 +62,15 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
                            
                               
                                 )
-                                    {{-- <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span> --}}
+                                    <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
                                     @foreach ($examSessions as $session )
-                                    @if($session->responses->count() <100)
                                         <div class="p-2 rounded border border-1 border-success">
                                             Course Name: {{ optional($session->exam->course)->name }}<br>    
                                             <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
-                                        </div>,      
-                                        {{-- @else 
-                                        <div class="p-2 rounded border border-1 border-danger">
-                                            Course Name: {{ optional($session->exam->course)->name }}<br>    
-                                            <span class="badge bg-danger">Responses are more than 100 for this course.</span>
-                                        </div>         --}}
-                                        @endif
+                                        </div>        
                                     @endforeach
                                 @else
-                                    {{-- <span class="badge bg-danger">No sessions or responses found</span> --}}
+                                    <span class="badge bg-danger">No sessions or responses found</span>
                                 @endif
                                 
                             </td>
@@ -174,18 +167,5 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
             @endif
         </div>
     @endif
-    <button id="exportToExcel" class="btn btn-primary" onclick="exportToExcel()">Export to Excel</button>
-
-<script>
-  
-    function exportToExcel() {
-        // Select the table
-        const table = document.querySelector('table'); // Update selector if needed
-        const workbook = XLSX.utils.table_to_book(table);
-        
-        // Export as an Excel file
-        XLSX.writeFile(workbook, 'TableData.xlsx');
-    }
-</script>
-
+    
 </div>
