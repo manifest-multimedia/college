@@ -25,6 +25,7 @@
                         <th>Student ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Sessions & Responses</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -34,6 +35,20 @@
                             <td>{{ $student->student_id }}</td>
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                             <td>{{ $student->email }}</td>
+                            <td>
+                                @if(\App\Models\ExamSession::where('student_id', $student->id)->count() > 0)
+                                    
+                                <span class="badge bg-success">Sessions: {{ \App\Models\ExamSession::where('student_id', $student->id)->count() }}</span>
+                                    @foreach (\App\Models\ExamSession::where('student_id', $student->id)->get() as $session)
+                                <div class="p-2 rounded border border-1 border-success">
+                                Course Name: {{ optional($session->exam->course)->name }}<br>    
+                                <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
+                                </div>        
+                                    @endforeach
+                                @else
+                                    <span class="badge bg-danger">No sessions or responses found</span>
+                                @endif
+                            </td>
                             <td>
                                 <button class="btn btn-primary btn-sm" wire:click="viewDetails({{ $student->id }})">View</button>
                             </td>
@@ -46,13 +61,13 @@
             {{ $students->links() }}
         </div>
     @elseif ($mode === 'view')
-        <h2 class="my-4">Details for Student: {{ $student->first_name }} {{ $student->last_name }}</h2>
+        <h2 class="my-4">Details for Student: {{ $student->first_name }} {{ $student->last_name }}{{ $student->other_name }}</h2>
         
         <!-- User Account -->
         <div class="mb-4">
             <h3>User Account</h3>
-            <p><strong>Name:</strong> {{ $user->name }}</p>
-            <p><strong>Email:</strong> {{ $user->email }}</p>
+            <p><strong>Name:</strong> {{ $user->name ?? 'Not Found' }}</p>
+            <p><strong>Email:</strong> {{ $user->email ?? 'Not Found' }}</p>
             <button class="btn btn-secondary" wire:click="editDetails('user')">Edit User</button>
         </div>
 

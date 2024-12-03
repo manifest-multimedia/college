@@ -41,6 +41,7 @@ class DataMismatch extends Component
 
         return view('livewire.data-mismatch', [
             'students' => $students,
+
         ]);
     }
 
