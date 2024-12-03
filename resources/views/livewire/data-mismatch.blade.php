@@ -17,6 +17,43 @@
             </div>
         </div>
 
+        <div class="rounded border-2 border-dark">
+            <h1>
+                Records for Leticia, RGN Class 
+                
+            </h1>
+            <p>
+                {{-- Check if Env is Production --}}
+                @if(env('APP_ENV') === 'production')
+                    <span class="badge bg-success">Production</span>
+                @if(\App\Models\ExamSession::where('student_id', 131)->count() > 0)
+                @foreach (\App\Models\ExamSession::where('student_id', 131)->get() as $sessions)
+            {{ \App\Models\User::where('id', 131)->first()->name }} <br>   
+                {{ $sessions->exam->exam_code }} <br>
+                    {{ $sessions->exam->course->name }} <br>
+                    {{ $sessions->responses->count() }} <br>
+                    <hr>
+                    
+                @endforeach
+                @endif
+                @else
+                    <span class="badge bg-warning">Local</span>
+                    {{-- ID on Local is 90 --}}
+                    @if(\App\Models\ExamSession::where('student_id', 90)->count() > 0)
+                    @foreach (\App\Models\ExamSession::where('student_id', 90)->get() as $sessions)
+                {{ \App\Models\User::where('id', 90)->first()->name }} <br>   
+                    {{ $sessions->exam->exam_code }} <br>
+                        {{ $sessions->exam->course->name }} <br>
+                        {{ $sessions->responses->count() }} <br>
+                        <hr>
+                        
+                    @endforeach
+                    @endif
+                @endif 
+            </p>
+        </div>
+
+
         <!-- Table -->
         <div class="table-responsive">
             <table class="table align-middle table-bordered table-hover">
@@ -29,6 +66,8 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
+
+               
                 <tbody>
                     @foreach ($students as $student)
                         <tr>
