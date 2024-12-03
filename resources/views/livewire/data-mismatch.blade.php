@@ -62,22 +62,22 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
                            
                               
                                 )
-                                    <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
+                                    {{-- <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span> --}}
                                     @foreach ($examSessions as $session )
                                     @if($session->responses->count() <100)
                                         <div class="p-2 rounded border border-1 border-success">
                                             Course Name: {{ optional($session->exam->course)->name }}<br>    
                                             <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
                                         </div>        
-                                        @else 
+                                        {{-- @else 
                                         <div class="p-2 rounded border border-1 border-danger">
                                             Course Name: {{ optional($session->exam->course)->name }}<br>    
                                             <span class="badge bg-danger">Responses are more than 100 for this course.</span>
-                                        </div>        
+                                        </div>         --}}
                                         @endif
                                     @endforeach
                                 @else
-                                    <span class="badge bg-danger">No sessions or responses found</span>
+                                    {{-- <span class="badge bg-danger">No sessions or responses found</span> --}}
                                 @endif
                                 
                             </td>
