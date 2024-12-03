@@ -22,7 +22,7 @@
                 Records for Leticia, RGN Class 
                 
             </h1>
-            @if (env('APP_ENV') == 'production')
+            @if (env('APP_ENV') != 'local')
             <p>
                 {{-- Check if Env is Production --}}
               
