@@ -51,4 +51,6 @@ License: For each use you must have a valid license purchased only from above li
             window.top.location.replace(window.self.location.href);
         }
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>

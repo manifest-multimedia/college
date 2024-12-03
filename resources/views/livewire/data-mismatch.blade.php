@@ -19,10 +19,11 @@
 
 
         <!-- Table -->
-        <div class="table-responsive">
+        <div class="table-responsive" id="exportToExcel">
             <table class="table align-middle table-bordered table-hover">
                 <thead class="table-dark">
                     <tr>
+                        <th>#</th>
                         <th>Student ID</th>
                         <th>Name</th>
                         <th>Email</th>
@@ -35,6 +36,10 @@
                 <tbody>
                     @foreach ($students as $student)
                         <tr>
+                            <td>{{ 
+                                // Loop iteration for paginated data
+                                ($students->currentPage() - 1) * $students->perPage() + $loop->iteration
+                                }}</td>
                             <td>{{ $student->student_id }}</td>
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                             <td>{{ $student->email }}</td>
@@ -47,14 +52,29 @@
 $examSessions = \App\Models\ExamSession::where('student_id', optional($student->user)->id)
     ->with('exam.course', 'responses')
     ->get();
+
+
+
 @endphp
-                                @if($examSessions->isNotEmpty())
+                                @if($examSessions->isNotEmpty()
+                              
+
+                           
+                              
+                                )
                                     <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
-                                    @foreach ($examSessions as $session)
+                                    @foreach ($examSessions as $session )
+                                    @if($session->responses->count() <100)
                                         <div class="p-2 rounded border border-1 border-success">
                                             Course Name: {{ optional($session->exam->course)->name }}<br>    
                                             <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
                                         </div>        
+                                        @else 
+                                        <div class="p-2 rounded border border-1 border-danger">
+                                            Course Name: {{ optional($session->exam->course)->name }}<br>    
+                                            <span class="badge bg-danger">Responses are more than 100 for this course.</span>
+                                        </div>        
+                                        @endif
                                     @endforeach
                                 @else
                                     <span class="badge bg-danger">No sessions or responses found</span>
@@ -92,13 +112,12 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
         </div>
 
         <!-- Exam Session -->
-        {{-- Count Exam Sessions --}}
+       
         @if($examSessions->count() > 0)
         @foreach ($examSessions as $examSession)
             
         <div class="mb-4">
             <h3>Exam Session</h3>
-            {{-- <p><strong>Exam ID:</strong> {{ $examSession->exam_id }}</p> --}}
             <p><strong>Course Name:</strong> {{ optional($examSession->exam->course)->name }}</p>
             <p><strong>Started At:</strong> {{ $examSession->started_at }}</p>
             <p><strong>Completed At:</strong> {{ $examSession->completed_at }}</p>
@@ -155,5 +174,26 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
             @endif
         </div>
     @endif
-    
+    <button id="exportToExcel" class="btn btn-primary" onclick="exportToExcel()">Export to Excel</button>
+
+<script>
+    document.getElementById('exportToExcel').addEventListener('click', function () {
+        // Select the table
+        const table = document.querySelector('table'); // Update selector if needed
+        const workbook = XLSX.utils.table_to_book(table);
+        
+        // Export as an Excel file
+        XLSX.writeFile(workbook, 'TableData.xlsx');
+    });
+
+    function exportToExcel() {
+        // Select the table
+        const table = document.querySelector('table'); // Update selector if needed
+        const workbook = XLSX.utils.table_to_book(table);
+        
+        // Export as an Excel file
+        XLSX.writeFile(workbook, 'TableData.xlsx');
+    }
+</script>
+
 </div>
