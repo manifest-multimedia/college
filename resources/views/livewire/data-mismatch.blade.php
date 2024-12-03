@@ -177,15 +177,7 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
     <button id="exportToExcel" class="btn btn-primary" onclick="exportToExcel()">Export to Excel</button>
 
 <script>
-    document.getElementById('exportToExcel').addEventListener('click', function () {
-        // Select the table
-        const table = document.querySelector('table'); // Update selector if needed
-        const workbook = XLSX.utils.table_to_book(table);
-        
-        // Export as an Excel file
-        XLSX.writeFile(workbook, 'TableData.xlsx');
-    });
-
+  
     function exportToExcel() {
         // Select the table
         const table = document.querySelector('table'); // Update selector if needed
