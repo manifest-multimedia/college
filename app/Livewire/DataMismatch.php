@@ -23,7 +23,7 @@ class DataMismatch extends Component
 
     public $user;     // Holds user details for editing
     public $student;  // Holds student details for editing
-    public $examSession; // Holds ExamSession details
+    public $examSessions; // Holds ExamSession details
 
     // Filters
     public $filter_student_id;
@@ -48,7 +48,7 @@ class DataMismatch extends Component
     {
         $this->student = Student::find($studentId);
         $this->user = User::where('email', $this->student->email)->first();
-        $this->examSession = ExamSession::where('student_id', $studentId)->first();
+        $this->examSessions = ExamSession::where('student_id', $studentId)->get();
         $this->mode = 'view';
     }
 

@@ -39,4 +39,9 @@ class Exam extends Model
     {
         return $this->hasMany(ExamSession::class);
     }
+
+    public function proctoringSessions()
+    {
+        return $this->hasMany(ProctoringSession::class);
+    }
 }

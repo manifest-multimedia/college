@@ -1,5 +1,6 @@
 <div>
-    <div id="countdown" class="text-xl font-bold badge bg-danger pulse"></div>
+    @include('components.partials.styles.timer-styles')
+    <div id="countdown" class="text-xl font-bold timer-text badge bg-danger pulse"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -19,6 +20,13 @@
             const savedCompletedAt = parseInt(localStorage.getItem(STORAGE_COMPLETED_AT), 10);
             let timeLeft = parseInt(localStorage.getItem(STORAGE_TIME_LEFT), 10) || (savedCompletedAt - new Date().getTime());
 
+            // If completedAt is in the past, show "Time's up!" and stop the timer
+            if (new Date().getTime() >= savedCompletedAt) {
+                document.getElementById('countdown').innerText = "Time's up!";
+                localStorage.removeItem(STORAGE_TIME_LEFT);
+                return;
+            }
+
             // Ensure timeLeft is not negative
             timeLeft = Math.max(timeLeft, 0);
 
@@ -28,15 +36,14 @@
                     return;
                 }
 
-                // Calculate remaining minutes and seconds
+                // Calculate remaining hours, minutes, and seconds
                 const hours = Math.floor(timeLeft / 1000 / 60 / 60);
-                const minutes = Math.floor(timeLeft / 1000 / 60);
+                const minutes = Math.floor(timeLeft / 1000 / 60) % 60;
                 const seconds = Math.floor((timeLeft / 1000) % 60);
 
                 // Format countdown timer as hh:mm:ss
-
                 const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                document.getElementById('countdown').innerText ='Time Left ' + formattedTime;
+                document.getElementById('countdown').innerText = 'Time Left ' + formattedTime;
 
                 // Decrease timeLeft by 1 second
                 timeLeft -= 1000;

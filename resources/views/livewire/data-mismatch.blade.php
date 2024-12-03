@@ -65,14 +65,22 @@
         </div>
 
         <!-- Exam Session -->
+        {{-- Count Exam Sessions --}}
+        @if($examSessions->count() > 0)
+        @foreach ($examSessions as $examSession)
+            
         <div class="mb-4">
             <h3>Exam Session</h3>
             <p><strong>Exam ID:</strong> {{ $examSession->exam_id }}</p>
             <p><strong>Course Name:</strong> {{ optional($examSession->exam->course)->name }}</p>
             <p><strong>Started At:</strong> {{ $examSession->started_at }}</p>
             <p><strong>Completed At:</strong> {{ $examSession->completed_at }}</p>
+            <p><strong>Duration:</strong> {{ $examSession->duration }} minutes</p>
+            <p>Total Responses Received: {{ $examSession->responses->count() }}</p>
             <button class="btn btn-secondary" wire:click="editDetails('examSession')">Edit ExamSession</button>
         </div>
+        @endforeach
+        @endif
 
         <button class="btn btn-primary" wire:click="back">Back</button>
     @elseif (str_starts_with($mode, 'edit'))

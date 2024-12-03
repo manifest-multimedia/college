@@ -97,11 +97,11 @@
                     @enderror
                 </div>
     
-                <!-- Exam Password (hidden from lecturer) -->
+                <!-- Questions Per Session -->
                 <div class="mb-3">
-                    {{-- <label for="exam_password" class="form-label">Exam Password</label> --}}
-                    <input type="hidden" id="exam_password" class="form-control" wire:model="exam_password" readonly>
-                    @error('exam_password') <!-- Display error message for exam_password -->
+                    <label for="questions_per_session" class="form-label">Specify total Number of Questions to Be Answered Per Session</label>
+                    <input type="number" id="questions_per_session" class="form-control" wire:model="questions_per_session">
+                    @error('questions_per_session') <!-- Display error message for exam_password -->
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </div>

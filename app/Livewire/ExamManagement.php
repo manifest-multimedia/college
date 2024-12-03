@@ -23,6 +23,7 @@ class ExamManagement extends Component
     public $year;
     public $slug;
     public $user_id;
+    public $questions_per_session;
 
 
     // Validation rules for form input
@@ -64,6 +65,7 @@ class ExamManagement extends Component
             'exam_type' => $this->exam_type,
             'duration' => $this->exam_duration,
             'password' => $this->regeneratePassword(),
+            'questions_per_session' => $this->questions_per_session,
             'slug' => $this->generateSlug(),
         ]);
 
