@@ -24,40 +24,34 @@ class ExamResultsExport implements FromCollection, WithHeadings
         return ExamSession::with([
             'student.user', 
             'exam.course', 
-            'responses.question',
-            'responses.option'
+            'scoredQuestions.question.options',
+            'scoredQuestions.response'
         ])
         ->where('exam_id', $this->exam_id)
         ->get()
         ->map(function ($session) use ($questions_per_session, $exam) {
-            // Get the total possible marks for this exam
-            $total_possible_marks = $exam->questions()
-                ->take($questions_per_session)
-                ->sum('mark');
-
-            // Get the first X responses where X is questions_per_session
-            $scored_responses = $session->responses()
-                ->with(['question', 'option'])
-                ->take($questions_per_session)
-                ->get();
-
-            // Calculate total marks obtained
-            $marks_obtained = $scored_responses
-                ->filter(function ($response) {
-                    return $response->option && $response->option->is_correct;
+            $correct_answers = $session->scoredQuestions
+                ->filter(function ($scoredQuestion) {
+                    $correct_option = $scoredQuestion->question->options
+                        ->where('is_correct', true)
+                        ->first();
+                    
+                    return $correct_option && 
+                        $scoredQuestion->response->selected_option == $correct_option->id;
                 })
-                ->sum(function ($response) {
-                    return $response->question->mark;
-                });
+                ->count();
+
+            $total_answered = $session->scoredQuestions->count();
 
             return [
                 'date' => $session->created_at->format('Y-m-d'),
                 'student_id' => $session->student->student_id ?? 'N/A',
                 'student_name' => $session->student->user->name ?? 'N/A',
                 'course' => $session->exam->course->name ?? 'N/A',
-                'score' => $marks_obtained . '/' . $total_possible_marks,
-                'percentage' => $total_possible_marks > 0 
-                    ? round(($marks_obtained / $total_possible_marks) * 100, 2) 
+                'score' => $correct_answers . '/' . $questions_per_session,
+                'answered' => $total_answered . ' questions',
+                'percentage' => $questions_per_session > 0 
+                    ? round(($correct_answers / $questions_per_session) * 100, 2)
                     : 0
             ];
         });
@@ -71,6 +65,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
             'Student Name',
             'Course',
             'Score',
+            'Answered',
             'Percentage'
         ];
     }

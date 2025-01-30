@@ -31,4 +31,9 @@ class ExamSession extends Model
     {
         return $this->hasMany(Response::class);
     }
+
+    public function scoredQuestions()
+    {
+        return $this->hasMany(ScoredQuestion::class);
+    }
 }
