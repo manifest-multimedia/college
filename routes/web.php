@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Request;
 use App\Models\Exam;
 
 use App\Http\Controllers\FileUploadController;
+use App\Livewire\ExamEdit;
 
 Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
@@ -85,6 +86,9 @@ Route::middleware([
 
     Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
+
+    Route::get('/edit-exam/{exam_slug}', ExamEdit::class)->name('exams.edit');
+
     Route::get('/exam-center', function () {
         return view('examcenter');
     })->name('examcenter');
@@ -136,4 +140,6 @@ Route::middleware([
         Mail::to('johnson@manifestghana.com')->send(new WelcomeEmail);
         return redirect()->route('dashboard');
     })->name('test-email');
+
+  
 });
