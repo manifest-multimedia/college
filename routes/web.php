@@ -31,12 +31,8 @@ Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
 
 
 Route::get('exam-results', function () {
-    return "Completed succeessfully.";
+    return view('exams.results');
 })->name('exam.results');
-
-Route::get('/correct-data', function () {
-    return view('exams.correct-data');
-})->name('correct-data');
 
 
 Route::get('/take-exam', function () {
@@ -128,6 +124,12 @@ Route::middleware([
     Route::get('/exam-clearance', function () {
         return view('exams.clearance');
     });
+
+
+    Route::get('/correct-data', function () {
+        return view('exams.correct-data');
+    })->name('correct-data');
+
 
     // Test Email route to send mail to johnson@pnmtc.edu.gh
     Route::get('/test-email', function () {
