@@ -78,7 +78,9 @@
                             </table>
                             
                             <div class="d-flex justify-content-between align-items-center mt-4">
-                                {{ $results->links() }}
+                                @if($examSessions)
+                                    {{ $examSessions->links() }}
+                                @endif
                                 <button wire:click="exportResults" class="btn btn-primary">
                                     Export Results
                                 </button>
@@ -86,7 +88,7 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <p class="text-muted">No results found for this exam.</p>
+                            <p class="text-muted">Unable to generate exam results for this exam. No existing sessions found.</p>
                         </div>
                     @endif
                 @endif

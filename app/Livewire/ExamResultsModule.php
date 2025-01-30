@@ -73,7 +73,7 @@ class ExamResultsModule extends Component
                         'student_name' => $session->student->user->name ?? 'N/A',
                         'course' => $session->exam->course->name ?? 'N/A',
                         'score' => $correct_answers . '/' . $questions_per_session,
-                        'answered' => $total_answered . ' questions',
+                        'answered' => $total_answered . '/' . $questions_per_session,
                         'percentage' => $questions_per_session > 0 
                             ? round(($correct_answers / $questions_per_session) * 100, 2)
                             : 0,
@@ -104,12 +104,14 @@ class ExamResultsModule extends Component
     public function render()
     {
         $results = collect();
+        $examSessions = null;
 
         if ($this->selected_exam_id) {
             try {
                 $exam = Exam::find($this->selected_exam_id);
                 $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
                 
+                // Get paginated results
                 $examSessions = ExamSession::with([
                     'student.user', 
                     'exam.course', 
@@ -119,6 +121,7 @@ class ExamResultsModule extends Component
                 ->where('exam_id', $this->selected_exam_id)
                 ->paginate(25);
 
+                // Process the current page of results
                 $results = $this->processExamSessions($examSessions, $questions_per_session, $exam);
                 
                 $this->isGeneratingResults = false;
@@ -134,7 +137,8 @@ class ExamResultsModule extends Component
 
         return view('livewire.exam-results-module', [
             'exams' => Exam::with('course')->get(),
-            'results' => $results
+            'results' => $results,
+            'examSessions' => $examSessions // Pass the paginator instance
         ]);
     }
 
