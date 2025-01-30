@@ -36,7 +36,7 @@ class ExamResultsModule extends Component
     {
         // Increase PHP limits for this process
         ini_set('max_execution_time', 600); // 10 minutes
-        ini_set('memory_limit', '512M');    // 512MB memory limit
+        ini_set('memory_limit', '1024M');    // 1024MB memory limit
         set_time_limit(600);                // Another way to set execution time
 
         try {
@@ -96,8 +96,8 @@ class ExamResultsModule extends Component
             throw $e;
         } finally {
             // Reset PHP limits to their default values
-            ini_set('max_execution_time', 120);    // Default 30 seconds
-            ini_set('memory_limit', '256M');      // Default memory limit
+            ini_set('max_execution_time', 600);    
+            ini_set('memory_limit', '512M');      
         }
     }
 
