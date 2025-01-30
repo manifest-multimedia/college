@@ -18,9 +18,26 @@ class Exam extends Model
         'slug'
     ];
 
+
+    // Add an attribute for $exam->description 
+    public function getDescriptionAttribute()
+    {
+        /**
+         * Description is the course class and semester
+         * CollegeClass->name
+         * Semester->name
+         */
+
+        return $this->course->collegeClass->name . ' ' . $this->course->year->name . ' (' . $this->course->semester->name . ')';
+    }
+
+
     /**
      * Course associated with this exam.
      */
+
+
+
     public function course()
     {
         return $this->belongsTo(Subject::class);

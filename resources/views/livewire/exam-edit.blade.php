@@ -3,6 +3,10 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Edit Exam</h3>
+                <!-- Total Questions -->
+                <h3 class="card-title text-muted">
+                   {{ $exam->questions->count() }} Questions
+                </h3>
             </div>
             
             <div class="card-body">
