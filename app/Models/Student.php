@@ -68,11 +68,5 @@ class Student extends Model
         ]);
     }
 
-    // public function examSessions()
-    // {
-    //     /* Student has many exam sessions 
-    //     through user model
-    //     */
-    //     return $this->hasMany(ExamSession::class);
-    // }
+    
 }

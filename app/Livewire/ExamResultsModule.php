@@ -35,7 +35,7 @@ class ExamResultsModule extends Component
     protected function processExamSessions($examSessions, $questions_per_session, $exam)
     {
         // Increase PHP limits for this process
-        ini_set('max_execution_time', 600); // 10 minutes
+        ini_set('max_execution_time', 0); // 0 means unlimited
         ini_set('memory_limit', '1024M');    // 1024MB memory limit
         set_time_limit(600);                // Another way to set execution time
 
@@ -94,11 +94,12 @@ class ExamResultsModule extends Component
                 'error' => $e->getMessage()
             ]);
             throw $e;
-        } finally {
-            // Reset PHP limits to their default values
-            ini_set('max_execution_time', 600);    
-            ini_set('memory_limit', '512M');      
-        }
+        } 
+        // finally {
+        //     // Reset PHP limits to their default values
+        //     ini_set('max_execution_time', 600);    
+        //     ini_set('memory_limit', '512M');      
+        // }
     }
 
     public function render()

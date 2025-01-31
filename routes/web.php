@@ -16,8 +16,6 @@ Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
 })->name('mcq');
 
-
-
 Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file.upload');
 
 
@@ -140,6 +138,13 @@ Route::middleware([
         Mail::to('johnson@manifestghana.com')->send(new WelcomeEmail);
         return redirect()->route('dashboard');
     })->name('test-email');
+
+
+// Student Data Validator
+Route::get('/data-validator', function () {
+    return view('exams.data-validator');
+})->name('data-validator');
+
 
   
 });
