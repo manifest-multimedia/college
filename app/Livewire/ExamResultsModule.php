@@ -192,14 +192,15 @@ class ExamResultsModule extends Component
 
     public function exportResults()
     {
-        if (!$this->selected_exam_id) {
+        if (!$this->selected_exam_id && !$this->selected_college_class_id) {
             return;
         }
         
         $exam = Exam::find($this->selected_exam_id);
-        $filename = Str::slug($exam->course->name) . '-results.xlsx';
+        $collegeClass = CollegeClass::find($this->selected_college_class_id);
+        $filename = Str::slug($exam->course->name) . '-' . $collegeClass->name . '-results.xlsx';
         
-        return Excel::download(new ExamResultsExport($this->selected_exam_id), $filename);
+        return Excel::download(new ExamResultsExport($this->selected_exam_id, $this->selected_college_class_id), $filename);
     }
 
     // public function exportResultsForRemoteSync()
