@@ -140,10 +140,6 @@ Route::middleware([
     })->name('test-email');
 
 
-// Student Data Validator
-Route::get('/data-validator', function () {
-    return view('exams.data-validator');
-})->name('data-validator');
 
 
   
