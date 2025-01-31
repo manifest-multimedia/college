@@ -36,27 +36,35 @@ class ExamResultsModule extends Component
     {
         $this->isGeneratingResults = true;
         $this->processingProgress = 0;
+        $this->results = collect(); // Reset results
         
         try {
             $exam = Exam::find($this->selected_exam_id);
             $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
             
-            // Get all exam sessions
-            $examSessions = ExamSession::with([
-                'student.user', 
-                'exam.course', 
-                'scoredQuestions.question.options',
-                'scoredQuestions.response'
-            ])
-            ->where('exam_id', $this->selected_exam_id)
-            ->get();
+            // Get total count for progress calculation
+            $totalSessions = ExamSession::where('exam_id', $this->selected_exam_id)->count();
+            $processed = 0;
 
-            // Process the results
-            $this->results = $this->processExamSessions($examSessions, $questions_per_session, $exam);
-            // dd($this->results);
+            // Process in chunks
+            ExamSession::with([
+                    'student.user', 
+                    'exam.course', 
+                    'scoredQuestions.question.options',
+                    'scoredQuestions.response'
+                ])
+                ->where('exam_id', $this->selected_exam_id)
+                ->chunk($this->chunkSize, function($examSessions) use ($questions_per_session, $exam, $totalSessions, &$processed) {
+                    $chunkResults = $this->processExamSessions($examSessions, $questions_per_session, $exam);
+                    $this->results = $this->results->merge($chunkResults);
+                    
+                    // Update progress
+                    $processed += $examSessions->count();
+                    $this->processingProgress = ($processed / $totalSessions) * 100;
+                });
+
             $this->isGeneratingResults = false;
         } catch (\Exception $e) {
-            // dd($e);
             \Log::error('Error generating results', [
                 'exam_id' => $this->selected_exam_id,
                 'error' => $e->getMessage()
@@ -68,72 +76,46 @@ class ExamResultsModule extends Component
 
     protected function processExamSessions($examSessions, $questions_per_session, $exam)
     {
-        // Increase PHP limits for this process
-        ini_set('max_execution_time', 0); // 0 means unlimited
-        ini_set('memory_limit', '1024M');    // 1024MB memory limit
-        set_time_limit(600);                // Another way to set execution time
+        return $examSessions->map(function ($session) use ($questions_per_session) {
+            try {
+                // First, ensure scored questions are stored for this session
+                $this->ensureScoredQuestionsExist($session, $questions_per_session);
 
-        try {
-            $total = $examSessions->count();
-            $processed = 0;
+                // Get number of correct answers from attempted questions
+                $correct_answers = $session->scoredQuestions
+                    ->filter(function ($scoredQuestion) {
+                        $correct_option = $scoredQuestion->question->options
+                            ->where('is_correct', true)
+                            ->first();
+                        
+                        return $correct_option && 
+                            $scoredQuestion->response->selected_option == $correct_option->id;
+                    })
+                    ->count();
 
-            return $examSessions->map(function ($session) use ($questions_per_session, $exam, $total, &$processed) {
-                try {
-                    // First, ensure scored questions are stored for this session
-                    $this->ensureScoredQuestionsExist($session, $questions_per_session);
+                // Calculate total questions answered
+                $total_answered = $session->scoredQuestions->count();
 
-                    // Get number of correct answers from attempted questions
-                    $correct_answers = $session->scoredQuestions
-                        ->filter(function ($scoredQuestion) {
-                            $correct_option = $scoredQuestion->question->options
-                                ->where('is_correct', true)
-                                ->first();
-                            
-                            return $correct_option && 
-                                $scoredQuestion->response->selected_option == $correct_option->id;
-                        })
-                        ->count();
-
-                    // Calculate total questions answered
-                    $total_answered = $session->scoredQuestions->count();
-
-                    // Update progress
-                    $processed++;
-                    $this->processingProgress = ($processed / $total) * 100;
-
-                    return [
-                        'date' => $session->created_at->format('Y-m-d'),
-                        'student_id' => $session->student->student_id ?? 'N/A',
-                        'student_name' => $session->student->user->name ?? 'N/A',
-                        'course' => $session->exam->course->name ?? 'N/A',
-                        'score' => $correct_answers . '/' . $questions_per_session,
-                        'answered' => $total_answered . '/' . $questions_per_session,
-                        'percentage' => $questions_per_session > 0 
-                            ? round(($correct_answers / $questions_per_session) * 100, 2)
-                            : 0,
-                        'session_id' => $session->id
-                    ];
-                } catch (\Exception $e) {
-                    \Log::error('Error processing exam session', [
-                        'session_id' => $session->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    return null;
-                }
-            })->filter();
-
-        } catch (\Exception $e) {
-            \Log::error('Error in processExamSessions', [
-                'exam_id' => $exam->id,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        } 
-        // finally {
-        //     // Reset PHP limits to their default values
-        //     ini_set('max_execution_time', 600);    
-        //     ini_set('memory_limit', '512M');      
-        // }
+                return [
+                    'date' => $session->created_at->format('Y-m-d'),
+                    'student_id' => $session->student->student_id ?? 'N/A',
+                    'student_name' => $session->student->user->name ?? 'N/A',
+                    'course' => $session->exam->course->name ?? 'N/A',
+                    'score' => $correct_answers . '/' . $questions_per_session,
+                    'answered' => $total_answered . '/' . $questions_per_session,
+                    'percentage' => $questions_per_session > 0 
+                        ? round(($correct_answers / $questions_per_session) * 100, 2)
+                        : 0,
+                    'session_id' => $session->id
+                ];
+            } catch (\Exception $e) {
+                \Log::error('Error processing exam session', [
+                    'session_id' => $session->id,
+                    'error' => $e->getMessage()
+                ]);
+                return null;
+            }
+        })->filter();
     }
 
     public function render()
