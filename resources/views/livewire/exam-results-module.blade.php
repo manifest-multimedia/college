@@ -6,8 +6,8 @@
 
             <!-- Filters -->
             <div class="mb-4">
-                <div class="row g-2">
-                    <div class="col-md-6">
+                <div class="row g-2 d-flex justify-content-between">
+                    <div class="col-md-4">
                         <label for="exam-select" class="form-label">Filter By Exam</label>
                         <select class="form-select" wire:model.live="selected_exam_id">
                             <option value="">Select Exam</option>
@@ -16,128 +16,96 @@
                             @endforeach
                         </select>
                     </div>
-                   
-
-                  
-                        <div class="col-md-6 d-flex align-items-end gap-2">
-                            <button class="btn {{ $selected_exam_id ? 'btn-primary' : 'btn-secondary' }}" wire:click="generateResults" @disabled(!$selected_exam_id)>
-                                Generate Results
-                            </button>
-
-                           
-                          
-                        </div>
-
+                    <div class="col-md-4">
+                        <label for="college-class-select" class="form-label">Filter By College Class</label>
+                        <select class="form-select" wire:model.live="selected_college_class_id">
+                            <option value="">Select College Class</option>
+                            @foreach ($collegeClasses as $collegeClass)
+                                <option value="{{ $collegeClass->id }}">{{ $collegeClass->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end gap-2">
+                        <button class="btn {{ $selected_exam_id && $selected_college_class_id ? 'btn-primary' : 'btn-secondary' }}" wire:click="generateResults" @disabled(!$selected_exam_id || !$selected_college_class_id)>
+                            Generate Results
+                        </button>
+                        <button class="btn {{ $selected_exam_id && $selected_college_class_id ? 'btn-primary' : 'btn-secondary' }}" wire:click="exportResults" @disabled(!$selected_exam_id || !$selected_college_class_id)>
+                            Download
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            @if($selected_exam_id)
-                
-                    @if($results->count() > 0)
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <h3>Results</h3>
-                                </div>
-                            </div>
-                            <div class="card-body">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <h3>Results</h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if($selected_exam_id && $selected_college_class_id)
+                        @if($results->count() > 0)
                             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Date</th>
-                                        <th>Student ID</th>
-                                        <th>Student Name</th>
-                                        <th>Course</th>
-                                        <th>Score</th>
-                                        <th>Answered</th>
-                                        <th>Percentage</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($results as $index => $result)
+                                <table class="table table-striped">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $index + 1 }}</td>
-                                            <td>{{ $result['date'] }}</td>
-                                            <td>{{ $result['student_id'] }}</td>
-                                            <td>{{ $result['student_name'] }}</td>
-                                            <td>{{ $result['course'] }}</td>
-                                            <td>{{ $result['score'] }}</td>
-                                            <td>{{ $result['answered'] }}</td>
-                                            <td>{{ $result['percentage'] }}%</td>
-                                            <td>
-                                                <!-- Export Button -->
-                                                <a href="javascript:void(0)" class="btn btn-primary export-button" wire:click="exportStudentResult('{{ $result['student_id'] }}')">
-                                                   Export
-                                                </a>
-                                            </td>
+                                            <th>#</th>
+                                            <th>Date</th>
+                                            <th>Student ID</th>
+                                            <th>Student Name</th>
+                                            <th>Course</th>
+                                            <th>Score</th>
+                                            <th>Answered</th>
+                                            <th>Percentage</th>
+                                            <th>Action</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
+                                    </thead>
+                                    <tbody>
+                                        @foreach($results as $index => $result)
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $result['date'] }}</td>
+                                                <td>{{ $result['student_id'] }}</td>
+                                                <td>{{ $result['student_name'] }}</td>
+                                                <td>{{ $result['course'] }}</td>
+                                                <td>{{ $result['score'] }}</td>
+                                                <td>{{ $result['answered'] }}</td>
+                                                <td>{{ $result['percentage'] }}%</td>
+                                                <td>
+                                                    <!-- Export Button -->
+                                                    <a href="javascript:void(0)" class="btn btn-primary export-button" wire:click="exportStudentResult('{{ $result['student_id'] }}')">
+                                                       Export
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="card-footer">
                             <div class="d-flex justify-content-between align-items-center mt-4">
-                            <div class="action-buttons">
-                                <button wire:click="exportResults" class="btn btn-primary">
-                                    Download Results
-                                </button>
-                                
-                                
-                            </div>
-                        </div>
-                            </div>
-                        </div>
-                        
-                     
-                    @else
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <h3>Results</h3>
+                                <div class="action-buttons">
+                                    <button wire:click="exportResults" class="btn btn-primary">
+                                        Download Results
+                                    </button>
                                 </div>
-                               
                             </div>
-                            <div class="card-body d-flex justify-content-center py-5 align-items-center gap-2">
+                        @else
+                            <div class="d-flex justify-content-center py-5 align-items-center gap-2">
                                 <button class="btn btn-primary" wire:click="generateResults">
-                                Generate Results
-                            </button>   
-                            <button class="btn btn-primary" wire:click="exportResults">Download Results</button>     
+                                    Generate Results
+                                </button>
+                                <button class="btn btn-primary" wire:click="exportResults">Download Results</button>
                             </div>
+                        @endif
+                    @else
+                        <div class="d-flex justify-content-center py-5 align-items-center">
+                            <p class="text-muted">Select an exam and college class to generate and view results.</p>
                         </div>
                     @endif
-                @endif
-            @else
-               
-                <div class="card">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <h3>Results</h3>
-                                </div>
-                               
-                            </div>
-                            <div class="card-body d-flex justify-content-center py-5 align-items-center">
-                            <p class="text-muted">Select an exam to generate and view results.</p>
-
-                            </div>
-                        </div>
-            @endif
-      
+                </div>
+            </div>
+        @endif
     </div>
-
-
-    <script>
-        $(document).ready(function() {
-            $('.export-button').click(function() {
-                alert('Exporting...');
-            });
-        });
-    </script>
-
 </div>
 
 

@@ -13,6 +13,7 @@ use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
 use App\Models\ScoredQuestion;
+use App\Models\CollegeClass;
 
 class ExamResultsModule extends Component
 {
@@ -26,10 +27,11 @@ class ExamResultsModule extends Component
     public $isGeneratingResults = false;
     public $processingProgress = 0; // Track progress
     public $results; // Add this line to store the results
-
+    public $selected_college_class_id;
 
     public function mount(){
         $this->results = collect();
+        $this->selected_college_class_id = null;
     }
 
     public function generateResults()
@@ -48,10 +50,29 @@ class ExamResultsModule extends Component
             ini_set('max_execution_time', 0);
 
             $exam = Exam::find($this->selected_exam_id);
+            if (!$exam) {
+                session()->flash('error', 'Exam not found.');
+                $this->isGeneratingResults = false;
+                return;
+            }
+
+            $collegeClass = CollegeClass::find($this->selected_college_class_id);
+            if (!$collegeClass) {
+                session()->flash('error', 'College class not found.');
+                $this->isGeneratingResults = false;
+                return;
+            }
+
             $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
             
             // Get total count for progress calculation
-            $totalSessions = ExamSession::where('exam_id', $this->selected_exam_id)->count();
+            $totalSessions = ExamSession::with('student')
+                ->where('exam_id', $this->selected_exam_id)
+                ->whereHas('student', function ($query) {
+                    $query->where('college_class_id', $this->selected_college_class_id);
+                })
+                ->count();
+
             $processed = 0;
 
             // Process in chunks
@@ -62,6 +83,9 @@ class ExamResultsModule extends Component
                     'scoredQuestions.response'
                 ])
                 ->where('exam_id', $this->selected_exam_id)
+                ->whereHas('student', function ($query) {
+                    $query->where('college_class_id', $this->selected_college_class_id);
+                })
                 ->chunk($this->chunkSize, function($examSessions) use ($questions_per_session, $exam, $totalSessions, &$processed) {
                     $chunkResults = $this->processExamSessions($examSessions, $questions_per_session, $exam);
                     $this->results = $this->results->merge($chunkResults);
@@ -75,6 +99,7 @@ class ExamResultsModule extends Component
         } catch (\Exception $e) {
             \Log::error('Error generating results', [
                 'exam_id' => $this->selected_exam_id,
+                'college_class_id' => $this->selected_college_class_id,
                 'error' => $e->getMessage()
             ]);
             session()->flash('error', 'An error occurred while generating results. Please try again.');
@@ -136,7 +161,7 @@ class ExamResultsModule extends Component
         return view('livewire.exam-results-module', [
             'exams' => Exam::with('course')->get(),
             'results' => $this->results ?? collect(),
-            'examSessions' => $this->examSessions ?? null
+            'collegeClasses' => CollegeClass::all(),
         ]);
     }
 
@@ -192,4 +217,6 @@ class ExamResultsModule extends Component
         $filename = Str::slug($exam->course->name) . '-' . $formatted_id . '-results-for-sync.xlsx';
         return Excel::download(new ExamResultExport($this->selected_exam_id, $student_id), $filename);
     }
+
+   
 }
