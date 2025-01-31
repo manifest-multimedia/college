@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Student extends Model
 {
+    // Get attribute name
+    public function getNameAttribute()
+    {
+        return $this->first_name . ' ' . $this->other_name . ' ' . $this->last_name;
+    }
+
     public function addresses()
     {
         return $this->morphMany(Address::class, 'addressable');

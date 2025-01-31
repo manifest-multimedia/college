@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Exam;
 use Livewire\WithPagination;
 use App\Exports\ExamResultsExport;
+use App\Exports\ExamResultExport;
 use App\Models\ExamSession;
 use App\Models\Student;
 use App\Models\User;
@@ -24,12 +25,45 @@ class ExamResultsModule extends Component
     public $selected_exam_id;
     public $isGeneratingResults = false;
     public $processingProgress = 0; // Track progress
+    public $results; // Add this line to store the results
 
-    public function updatedSelectedExamId()
+
+    public function mount(){
+        $this->results = collect();
+    }
+
+    public function generateResults()
     {
         $this->isGeneratingResults = true;
         $this->processingProgress = 0;
-        $this->resetPage();
+        
+        try {
+            $exam = Exam::find($this->selected_exam_id);
+            $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
+            
+            // Get all exam sessions
+            $examSessions = ExamSession::with([
+                'student.user', 
+                'exam.course', 
+                'scoredQuestions.question.options',
+                'scoredQuestions.response'
+            ])
+            ->where('exam_id', $this->selected_exam_id)
+            ->get();
+
+            // Process the results
+            $this->results = $this->processExamSessions($examSessions, $questions_per_session, $exam);
+            // dd($this->results);
+            $this->isGeneratingResults = false;
+        } catch (\Exception $e) {
+            // dd($e);
+            \Log::error('Error generating results', [
+                'exam_id' => $this->selected_exam_id,
+                'error' => $e->getMessage()
+            ]);
+            session()->flash('error', 'An error occurred while generating results. Please try again.');
+            $this->isGeneratingResults = false;
+        }
     }
 
     protected function processExamSessions($examSessions, $questions_per_session, $exam)
@@ -43,7 +77,7 @@ class ExamResultsModule extends Component
             $total = $examSessions->count();
             $processed = 0;
 
-            return $examSessions->through(function ($session) use ($questions_per_session, $exam, $total, &$processed) {
+            return $examSessions->map(function ($session) use ($questions_per_session, $exam, $total, &$processed) {
                 try {
                     // First, ensure scored questions are stored for this session
                     $this->ensureScoredQuestionsExist($session, $questions_per_session);
@@ -104,42 +138,10 @@ class ExamResultsModule extends Component
 
     public function render()
     {
-        $results = collect();
-        $examSessions = null;
-
-        if ($this->selected_exam_id) {
-            try {
-                $exam = Exam::find($this->selected_exam_id);
-                $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
-                
-                // Get paginated results
-                $examSessions = ExamSession::with([
-                    'student.user', 
-                    'exam.course', 
-                    'scoredQuestions.question.options',
-                    'scoredQuestions.response'
-                ])
-                ->where('exam_id', $this->selected_exam_id)
-                ->paginate(25);
-
-                // Process the current page of results
-                $results = $this->processExamSessions($examSessions, $questions_per_session, $exam);
-                
-                $this->isGeneratingResults = false;
-            } catch (\Exception $e) {
-                \Log::error('Error generating results', [
-                    'exam_id' => $this->selected_exam_id,
-                    'error' => $e->getMessage()
-                ]);
-                session()->flash('error', 'An error occurred while generating results. Please try again.');
-                $this->isGeneratingResults = false;
-            }
-        }
-
         return view('livewire.exam-results-module', [
             'exams' => Exam::with('course')->get(),
-            'results' => $results,
-            'examSessions' => $examSessions // Pass the paginator instance
+            'results' => $this->results ?? collect(),
+            'examSessions' => $this->examSessions ?? null
         ]);
     }
 
@@ -178,5 +180,21 @@ class ExamResultsModule extends Component
         $filename = Str::slug($exam->course->name) . '-results.xlsx';
         
         return Excel::download(new ExamResultsExport($this->selected_exam_id), $filename);
+    }
+
+    // public function exportResultsForRemoteSync()
+    // {
+    //     $exam = Exam::find($this->selected_exam_id);
+    //     $filename = Str::slug($exam->course->name) . '-results-for-sync.xlsx';
+    //     return Excel::download(new ExamResultExport($this->selected_exam_id), $filename);
+    // }
+
+    public function exportStudentResult($student_id)
+    {
+        $formatted_id = str_replace('/', '-', $student_id);
+
+        $exam = Exam::find($this->selected_exam_id);
+        $filename = Str::slug($exam->course->name) . '-' . $formatted_id . '-results-for-sync.xlsx';
+        return Excel::download(new ExamResultExport($this->selected_exam_id, $student_id), $filename);
     }
 }

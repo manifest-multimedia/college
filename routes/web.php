@@ -134,10 +134,10 @@ Route::middleware([
 
 
     // Test Email route to send mail to johnson@pnmtc.edu.gh
-    Route::get('/test-email', function () {
-        Mail::to('johnson@manifestghana.com')->send(new WelcomeEmail);
-        return redirect()->route('dashboard');
-    })->name('test-email');
+    // Route::get('/test-email', function () {
+    //     Mail::to('johnson@manifestghana.com')->send(new WelcomeEmail);
+    //     return redirect()->route('dashboard');
+    // })->name('test-email');
 
 
 
