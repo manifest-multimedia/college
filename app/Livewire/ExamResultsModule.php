@@ -39,6 +39,13 @@ class ExamResultsModule extends Component
         $this->results = collect(); // Reset results
         
         try {
+            // Set PHP Limit to Unlimited 
+            ini_set('memory_limit', '-1');
+            //Set PHP Time Limit to Unlimited
+            set_time_limit(0);
+            // Set max execution time to unlimited
+            ini_set('max_execution_time', 0);
+
             $exam = Exam::find($this->selected_exam_id);
             $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
             
@@ -65,6 +72,7 @@ class ExamResultsModule extends Component
 
             $this->isGeneratingResults = false;
         } catch (\Exception $e) {
+            dd($e);
             \Log::error('Error generating results', [
                 'exam_id' => $this->selected_exam_id,
                 'error' => $e->getMessage()
