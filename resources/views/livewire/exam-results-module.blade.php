@@ -23,6 +23,8 @@
                             <button class="btn {{ $selected_exam_id ? 'btn-primary' : 'btn-secondary' }}" wire:click="generateResults" @disabled(!$selected_exam_id)>
                                 Generate Results
                             </button>
+
+                           
                           
                         </div>
 
@@ -85,6 +87,7 @@
                                     Download Results
                                 </button>
                                 
+                                
                             </div>
                         </div>
                             </div>
@@ -99,10 +102,11 @@
                                 </div>
                                
                             </div>
-                            <div class="card-body d-flex justify-content-center py-5 align-items-center">
+                            <div class="card-body d-flex justify-content-center py-5 align-items-center gap-2">
                                 <button class="btn btn-primary" wire:click="generateResults">
                                 Generate Results
-                            </button>        
+                            </button>   
+                            <button class="btn btn-primary" wire:click="exportResults">Download Results</button>     
                             </div>
                         </div>
                     @endif
