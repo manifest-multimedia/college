@@ -34,7 +34,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </i>
                     </span>
                     <span class="menu-title">Dashboard</span>
-                    {{-- <span class="menu-arrow"></span> --}}
+                  
                 </a>
                 <!--end:Menu link-->
             

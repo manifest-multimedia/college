@@ -40,6 +40,8 @@
                             @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
                             <!-- Edit -->
                             <a href="{{ route('exams.edit', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Edit</a>
+                            {{-- Generate Results --}}
+                            <a href="{{ route('exam.results', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Generate Results</a>
                             <!-- Delete -->
                             <a href="javascript:void(0)" wire:click="deleteExam({{ $exam->id }})" class="btn btn-sm btn-light btn-active-light-danger">Delete</a>
                             @endif

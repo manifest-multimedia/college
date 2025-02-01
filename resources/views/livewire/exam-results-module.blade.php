@@ -63,7 +63,8 @@
                                     <tbody>
                                         @foreach($results as $index => $result)
                                             <tr>
-                                                <td>{{ $index + 1 }}</td>
+                                                <!-- Number Results from 1 to n keeping in mind that results have been sorted in ascending order -->
+                                                <td>{{$loop->iteration}}</td>
                                                 <td>{{ $result['date'] }}</td>
                                                 <td>{{ $result['student_id'] }}</td>
                                                 <td>{{ $result['student_name'] }}</td>

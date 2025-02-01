@@ -38,11 +38,16 @@ class ExamResultsModule extends Component
 
     public function updated($property){
         if($property == 'selected_exam_id'){
-        
-            // Return College Classes for the selected exam
-            $this->collegeClasses = Exam::find($this->selected_exam_id)->college_classes;
-
-            dd($this->collegeClasses);
+            // Fetch distinct college classes for students who took the selected exam
+            $this->collegeClasses = CollegeClass::distinct()->whereIn('id', function($query) {
+                $query->select('college_class_id')
+                      ->from('students')
+                      ->whereIn('id', function($subQuery) {
+                         $subQuery->select('student_id')
+                                  ->from('exam_sessions')
+                                  ->where('exam_id', $this->selected_exam_id);
+                      });
+            })->get();
         }
     }
 
@@ -50,78 +55,34 @@ class ExamResultsModule extends Component
     {
         $this->isGeneratingResults = true;
         $this->processingProgress = 0;
-        $this->results = collect(); // Reset results
-        
-        try {
-            // Set PHP limits for this process only
-            $originalMemoryLimit = ini_get('memory_limit');
-            $originalTimeLimit = ini_get('max_execution_time');
-            
-            ini_set('memory_limit', '-1');
-            set_time_limit(0);
-            ini_set('max_execution_time', 0);
 
-            $exam = Exam::find($this->selected_exam_id);
-            if (!$exam) {
-                session()->flash('error', 'Exam not found.');
-                $this->isGeneratingResults = false;
-                return;
-            }
+        $exam = Exam::find($this->selected_exam_id);
+        $questions_per_session = $exam->questions_per_session ?? $exam->number_of_questions;
 
-            $collegeClass = CollegeClass::find($this->selected_college_class_id);
-            if (!$collegeClass) {
-                session()->flash('error', 'College class not found.');
-                $this->isGeneratingResults = false;
-                return;
-            }
-
-            $questions_per_session = $exam->questions_per_session ?? $exam->questions->count();
-            
-            // Get total count for progress calculation
-            $totalSessions = ExamSession::with('student')
-                ->where('exam_id', $this->selected_exam_id)
-                ->whereHas('student', function ($query) {
-                    $query->where('college_class_id', $this->selected_college_class_id);
-                })
-                ->count();
-
-            $processed = 0;
-
-            // Process in chunks
-            ExamSession::with([
-                    'student.user', 
-                    'exam.course', 
-                    'scoredQuestions.question.options',
-                    'scoredQuestions.response'
-                ])
-                ->where('exam_id', $this->selected_exam_id)
-                ->whereHas('student', function ($query) {
-                    $query->where('college_class_id', $this->selected_college_class_id);
-                })
-                ->chunk($this->chunkSize, function($examSessions) use ($questions_per_session, $exam, $totalSessions, &$processed) {
-                    $chunkResults = $this->processExamSessions($examSessions, $questions_per_session, $exam);
-                    $this->results = $this->results->merge($chunkResults);
-                    
-                    // Update progress
-                    $processed += $examSessions->count();
-                    $this->processingProgress = ($processed / $totalSessions) * 100;
+        $examSessions = ExamSession::where('exam_id', $this->selected_exam_id)
+            ->when($this->selected_college_class_id, function ($query) {
+                $query->whereHas('student', function ($subQuery) {
+                    $subQuery->where('college_class_id', $this->selected_college_class_id);
                 });
+            })
+            ->with([
+                'student.user',
+                'exam.course',
+                'scoredQuestions' => function ($query) {
+                    $query->with(['question.options', 'response']);
+                }
+            ])
+            ->get();
 
-            $this->isGeneratingResults = false;
-        } catch (\Exception $e) {
-            \Log::error('Error generating results', [
-                'exam_id' => $this->selected_exam_id,
-                'college_class_id' => $this->selected_college_class_id,
-                'error' => $e->getMessage()
-            ]);
-            session()->flash('error', 'An error occurred while generating results. Please try again.');
-            $this->isGeneratingResults = false;
-        } finally {
-            // Restore original PHP limits
-            ini_set('memory_limit', $originalMemoryLimit);
-            set_time_limit($originalTimeLimit);
-            ini_set('max_execution_time', $originalTimeLimit);
-        }
+        $this->results = $this->processExamSessions($examSessions, $questions_per_session, $exam);
+        $this->results = $this->results->sortBy(function ($session) {
+            // Extract the numeric part of student_id
+            preg_match('/\d+$/', $session['student_id'], $matches);
+            return (int)($matches[0] ?? 0);
+        });
+
+        $this->isGeneratingResults = false;
+        $this->processingProgress = 100;
     }
 
     protected function processExamSessions($examSessions, $questions_per_session, $exam)
@@ -170,6 +131,7 @@ class ExamResultsModule extends Component
 
     public function render()
     {
+       
         return view('livewire.exam-results-module', [
             'exams' => Exam::with('course')->get(),
             'results' => $this->results ?? collect(),
@@ -215,13 +177,7 @@ class ExamResultsModule extends Component
         return Excel::download(new ExamResultsExport($this->selected_exam_id, $this->selected_college_class_id), $filename);
     }
 
-    // public function exportResultsForRemoteSync()
-    // {
-    //     $exam = Exam::find($this->selected_exam_id);
-    //     $filename = Str::slug($exam->course->name) . '-results-for-sync.xlsx';
-    //     return Excel::download(new ExamResultExport($this->selected_exam_id), $filename);
-    // }
-
+  
     public function exportStudentResult($student_id)
     {
         $formatted_id = str_replace('/', '-', $student_id);
