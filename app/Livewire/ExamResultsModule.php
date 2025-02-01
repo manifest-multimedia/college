@@ -28,10 +28,22 @@ class ExamResultsModule extends Component
     public $processingProgress = 0; // Track progress
     public $results; // Add this line to store the results
     public $selected_college_class_id;
+    public $collegeClasses; 
 
     public function mount(){
         $this->results = collect();
         $this->selected_college_class_id = null;
+        $this->collegeClasses = CollegeClass::all();
+    }
+
+    public function updated($property){
+        if($property == 'selected_exam_id'){
+        
+            // Return College Classes for the selected exam
+            $this->collegeClasses = Exam::find($this->selected_exam_id)->college_classes;
+
+            dd($this->collegeClasses);
+        }
     }
 
     public function generateResults()
@@ -161,7 +173,7 @@ class ExamResultsModule extends Component
         return view('livewire.exam-results-module', [
             'exams' => Exam::with('course')->get(),
             'results' => $this->results ?? collect(),
-            'collegeClasses' => CollegeClass::all(),
+         
         ]);
     }
 

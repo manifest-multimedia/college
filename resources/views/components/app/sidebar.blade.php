@@ -159,7 +159,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                 </div>
                 <!--end::Menu item-->
-                   {{-- 
+                {{-- 
                 <!--begin::Menu separator-->
                 <div class="my-2 separator"></div>
                 <!--end::Menu separator-->
@@ -168,6 +168,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <a href="account/overview.html" class="px-5 menu-link">My Profile</a>
                 </div>
                 <!--end::Menu item-->
+       
                 <!--begin::Menu item-->
                 <div class="px-5 menu-item">
                     <a href="apps/projects/list.html" class="px-5 menu-link">

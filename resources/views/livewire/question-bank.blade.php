@@ -1,4 +1,4 @@
-<div class="container mt-4">
+<div class="container mt-4" x-data="{ isConfirmModalOpen: false, questionId: null }">
     <!-- Exam Selection Dropdown -->
    
 
@@ -60,7 +60,6 @@
                 <div class="p-10 mb-4 rounded border bg-light">
                     <div class="mb-3">
                         <label for="question{{ $index }}" class="form-label">Question Text:</label>
-                        {{-- <input type="text" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question"> --}}
                         <textarea rows="7" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question"></textarea>
                     </div>
 
@@ -71,7 +70,7 @@
                         </div>
                         <div class="mb-3 col-md-6">
                             <label for="marks{{ $index }}" class="form-label">Marks:</label>
-                            <input type="number" id="marks{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.mark" placeholder="Marks">
+                            <input type="number" id="marks{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.marks" placeholder="Marks">
                         </div>
                     </div>
 
@@ -97,7 +96,8 @@
 
                     <!-- Delete Question Button -->
                     <div class="mt-3 text-end">
-                        <button class="btn btn-dark btn-sm" wire:click.prevent="deleteQuestion({{ $question['id'] }})">Delete Question</button>
+                        <button class="btn btn-primary btn-sm" wire:click.prevent="saveQuestion({{ $index }})">Save Question</button>
+                        <button class="btn btn-dark btn-sm" onclick="openConfirmModal({{ $question['id'] }})">Delete Question</button>
                     </div>
                 </div>
                 </div>
@@ -106,46 +106,11 @@
                </div>
             @empty
             @if($exam_id)    
-            {{-- <form enctype="multipart/form-data" wire:submit.prevent="importQuestions"> --}}
                 <div class="container py-4 rounded border bg-light">
                     <p class="mt-3 text-center text-muted">
                         No questions available for the selected exam. Start by creating a new question, or importing questions.
                     </p>
                     
-                    {{-- <div class="gap-2 mb-4 input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Upload Question Bank Excel</span>
-                        </div>
-            
-                        <!-- File Input -->
-                        <input type="file" wire:model="bulk_file" class="form-control" accept=".xlsx,.csv">
-            
-                        <!-- Upload Progress -->
-                        <div class="mt-2 w-100" wire:loading wire:target="bulk_file">
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-                                     role="progressbar" 
-                                     style="width: 100%;" 
-                                     aria-valuenow="100" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100">
-                                    Uploading...
-                                </div>
-                            </div>
-                        </div>
-            
-                        <!-- Validation Errors -->
-                        @error('bulk_file') 
-                            <span class="mt-1 text-danger">{{ $message }}</span> 
-                        @enderror
-            
-                        <div class="input-group-append">
-                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="bulk_file">
-                                Bulk Import Questions
-                            </button>
-                        </div>
-                    </div> --}}
-               
                     <x-bulk-upload :examId="$exam_id" />
                     <!-- Loading Spinner -->
                     <div wire:loading wire:target="importQuestions" class="text-center">
@@ -155,24 +120,59 @@
                         <p class="mt-2 text-muted">Importing questions. Please wait...</p>
                     </div>
                 </div>
-            {{-- </form> --}}
-            
             @else
             <p class="text-center text-muted">Please select an exam to view questions.</p>
             @endif
                  <!-- Bulk Import and Save Buttons -->
    
     
-    
     @endforelse
     @if(count($questions)>0)
     <div class="d-flex justify-content-center">
 
         <button class="btn btn-success" wire:click.prevent="saveQuestions">Save Questions</button>
+
     </div>
     @endif
         </div>
     </div>
 
-   
+    <!-- Confirmation Modal -->
+     <!-- Use backdrop: static -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this question?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+    let questionIdToDelete = null;
+
+    function openConfirmModal(id) {
+        questionIdToDelete = id;
+        var myModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        myModal.show();
+    }
+
+    function confirmDelete() {
+        if (questionIdToDelete !== null) {
+            Livewire.emit('deleteQuestion', questionIdToDelete);
+            questionIdToDelete = null;
+            var myModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+            myModal.hide();
+        }
+    }
+</script>

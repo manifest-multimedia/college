@@ -7,6 +7,7 @@ use App\Models\Exam;
 use App\Models\Question;
 use App\Models\Option;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Arr;
 
 
 class QuestionBank extends Component
@@ -127,16 +128,53 @@ class QuestionBank extends Component
         $this->loadQuestions();
     }
 
-    public function saveQuestion($questionId)
+    public function saveQuestion($questionIndex)
     {
+      
+        // Find the question by ID
+        $questionData = $this->questions[$questionIndex];
+       
+        $question = Question::find($questionData['id']);
+    
+        if (!$question) {
+            session()->flash('error', 'Question not found.');
+            return;
+        }
 
-        $question = Question::find($questionId);
-        $question->question_text = $this->questions[$questionId]['question_text'];
-        $question->marks = $this->questions[$questionId]['marks'];
-        $question->explanation = $this->questions[$questionId]['explanation'];
-        $question->save();
+        // Update the question data
+        $question->update([
+            'question_text' => $questionData['question_text'],
+            'exam_section' => $questionData['exam_section'],
+            'mark' => $questionData['mark'],
+            'explanation' => $questionData['explanation'],
+        ]);
+
+        // Get the existing options for the question
+        $existingOptions = $question->options->keyBy('id')->toArray();
+       
+        // Iterate through the updated options
+        foreach ($questionData['options'] as $optionIndex => $optionData) {
+            $optionId = Arr::get($optionData, 'id');
+
+            // Update or create the option
+            Option::updateOrCreate(
+                ['id' => $optionId],
+                [
+                    'question_id' => $question->id,
+                    'option_text' => $optionData['option_text'],
+                    'is_correct' => $optionData['is_correct'],
+                ]
+            );
+
+            // Remove the option from the existing options array if it was updated
+            if ($optionId) {
+                unset($existingOptions[$optionId]);
+            }
+        }
+
+        
+
         session()->flash('message', 'Question saved successfully.');
-        $this->loadQuestions();
     }
 
 

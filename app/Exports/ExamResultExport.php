@@ -64,7 +64,8 @@ class ExamResultExport implements FromCollection, WithHeadings
                     'correct_option_text' => $correctOption ? $correctOption->option_text : 'N/A',
                     'is_correct' => $selectedOption ? ($selectedOption->is_correct ? 'Yes' : 'No') : 'N/A',
                     'response_time' => $response->created_at->format('Y-m-d H:i:s'),
-                    'exam_mode' => config('app.url') === 'http://college.local.test' ? 'Offline' : 'Online'
+                    'exam_mode' => config('app.url') === 'http://college.local.test' ? 'Offline' : 'Online',
+                    'college_class_id' => $session->student->college_class_id,
                 ];
             });
         });
@@ -88,7 +89,8 @@ class ExamResultExport implements FromCollection, WithHeadings
             'Correct Option Text',
             'Is Correct',
             'Response Time',
-            'Exam Mode'
+            'Exam Mode',
+            'College Class ID'
         ];
     }
 } 
