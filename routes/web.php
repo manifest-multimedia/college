@@ -29,10 +29,6 @@ Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
 })->name('exams');
 
 
-Route::get('exam-results', function () {
-    return view('exams.results');
-})->name('exam.results');
-
 
 Route::get('/take-exam', function () {
     return view('frontend.take-exam');
@@ -70,6 +66,13 @@ Route::get('/', function () {
 Route::middleware([
     'auth:sanctum',
 ])->group(function () {
+
+
+
+Route::get('exam-results', function () {
+    return view('exams.results');
+})->name('exam.results');
+
     Route::get('/portal', function () {
         return view('dashboard');
     })->name('dashboard');
