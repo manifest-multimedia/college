@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\Question;
 use App\Models\Response;
 use App\Models\ScoredQuestion;
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Carbon\Carbon;
@@ -69,7 +70,8 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
 
     private function findStudent($row)
     {
-        return Student::where('email', $row['student_email'])
+        return Student::with('user')
+            ->where('email', $row['student_email'])
             ->orWhere('student_id', $row['student_id'] ?? '')
             ->first();
     }
@@ -79,11 +81,11 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
         return ExamSession::firstOrCreate(
             [
                 'exam_id' => $this->exam_id,
-                'student_id' => $student->id,
+                'student_id' => $student->user->id,
             ],
             [
-                'started_at' => Carbon::parse($row['started_at'] ?? now()),
-                'completed_at' => Carbon::parse($row['completed_at'] ?? now()),
+                'started_at' => Carbon::parse($row['session_started_at'] ?? now()),
+                'completed_at' => Carbon::parse($row['session_completed_at'] ?? now()),
                 'score' => $row['score'] ?? 0,
             ]
         );
@@ -92,6 +94,7 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
     private function processQuestions($row, $session)
     {
         $question = Question::where('question_text', $row['question_text'])
+            ->orWhere('question_text', 'like', '%'.$row['question_text'].'%')
             ->where('exam_id', $this->exam_id)
             ->first();
 
@@ -102,6 +105,7 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
 
         $option = $question->options()
             ->where('option_text', $row['selected_option'])
+            ->orWhere('option_text', 'like', '%'.$row['selected_option'].'%')
             ->first();
 
         if (!$option) {

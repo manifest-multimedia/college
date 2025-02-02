@@ -73,6 +73,10 @@ Route::get('exam-results', function () {
     return view('exams.results');
 })->name('exam.results');
 
+Route::get('/exam-result-import', function () {
+    return view('exams.result-import');
+})->name('exam.result.import');
+
     Route::get('/portal', function () {
         return view('dashboard');
     })->name('dashboard');

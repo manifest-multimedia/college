@@ -52,6 +52,8 @@ class ExamResultExport implements FromCollection, WithHeadings
                 return [
                     'number' => $index + 1,
                     'exam_session_id' => $session->id,
+                    'session_started_at' => $session->started_at,
+                    'session_completed_at' => $session->completed_at,
                     'student_id' => $session->student->student_id,
                     'student_name' => $session->student->name,
                     'student_email' => $session->student->email,
@@ -76,21 +78,23 @@ class ExamResultExport implements FromCollection, WithHeadings
         return [
            
             '#',
-            'Exam Session ID',
-            'Student ID',
-            'Student Name',
-            'Student Email',
-            'Course',
-            'Question ID',
-            'Question Text',
-            'Selected Option ID',
-            'Selected Option Text',
-            'Correct Option ID',
-            'Correct Option Text',
-            'Is Correct',
-            'Response Time',
-            'Exam Mode',
-            'College Class ID'
+            'exam_session_id',
+            'session_started_at',
+            'session_completed_at',
+            'student_id',
+            'student_name',
+            'student_email',
+            'course_name',
+            'question_id',
+            'question_text',
+            'selected_option_id',
+            'selected_option_text',
+            'correct_option_id',
+            'correct_option_text',
+            'is_correct',
+            'response_time',
+            'exam_mode',
+            'college_class_id'
         ];
     }
 } 
