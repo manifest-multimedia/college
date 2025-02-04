@@ -15,16 +15,18 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 
-class ExamResultsImport implements ToCollection, WithHeadingRow
+class ResultImport implements ToCollection, WithHeadingRow
 {
     protected $exam_id;
-    protected $matchedStudents = 0;
+    protected $importedRecords = 0;
     protected $totalRecords = 0;
+    protected $skippedRecords = 0;
     protected $failedRecords = 0;
-
     public function __construct($exam_id)
     {
         $this->exam_id = $exam_id;
+
+       
     }
 
     public function collection(Collection $rows)
@@ -33,7 +35,6 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
         
         foreach ($rows as $row) {
             try {
-                // Validate required fields
                 if (!$this->validateRow($row)) {
                     $this->failedRecords++;
                     continue;
@@ -46,13 +47,19 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
+                // Check if the exam session already exists
+                if ($this->examSessionExists($student)) {
+                    $this->skippedRecords++;
+                    continue;
+                }
+
                 // Process exam session
                 $session = $this->processExamSession($row, $student);
                 
                 // Process questions and responses
                 $this->processQuestions($row, $session);
 
-                $this->matchedStudents++;
+                $this->importedRecords++;
 
             } catch (\Exception $e) {
                 Log::error('Import Error: '.$e->getMessage());
@@ -63,32 +70,56 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
 
     private function validateRow($row)
     {
-        return isset($row['student_email']) && 
-               isset($row['question_text']) && 
-               isset($row['selected_option']);
+
+        $validated=isset($row['student_email']) && isset($row['question_text']) && isset($row['selected_option_text']);
+
+       
+
+        return $validated;
+              
+
     }
 
     private function findStudent($row)
     {
-        return Student::with('user')
+
+        // dd($row['student_email']);
+
+        $student=Student::with('user')
             ->where('email', $row['student_email'])
             ->orWhere('student_id', $row['student_id'] ?? '')
             ->first();
+
+          
+
+            if($student){
+                return $student;
+            }else{
+                return null;
+            }
+    }
+
+    private function examSessionExists($student)
+    {
+        return ExamSession::where('exam_id', $this->exam_id)
+                           ->where('student_id', $student->user->id)
+                           ->exists();
     }
 
     private function processExamSession($row, $student)
     {
-        return ExamSession::firstOrCreate(
-            [
-                'exam_id' => $this->exam_id,
-                'student_id' => $student->user->id,
-            ],
-            [
-                'started_at' => Carbon::parse($row['session_started_at'] ?? now()),
-                'completed_at' => Carbon::parse($row['session_completed_at'] ?? now()),
-                'score' => $row['score'] ?? 0,
-            ]
-        );
+        if($student->name!=$row['student_name'] || $row['student_email']=="N/A" || $row['student_name']==null){
+            return null;
+           
+        }
+
+        return ExamSession::create([
+            'exam_id' => $this->exam_id,
+            'student_id' => $student->user->id,
+            'started_at' => Carbon::parse($row['session_started_at'] ?? now()),
+            'completed_at' => Carbon::parse($row['session_completed_at'] ?? now()),
+            'score' => $row['score'] ?? 0,
+        ]);
     }
 
     private function processQuestions($row, $session)
@@ -104,36 +135,40 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
         }
 
         $option = $question->options()
-            ->where('option_text', $row['selected_option'])
-            ->orWhere('option_text', 'like', '%'.$row['selected_option'].'%')
+            ->where('option_text', $row['selected_option_text'])
+            ->orWhere('option_text', 'like', '%'.$row['selected_option_text'].'%')
             ->first();
 
         if (!$option) {
-            Log::warning('Option not found: '.$row['selected_option']);
+            Log::warning('Option not found: '.$row['selected_option_text']);
             return;
         }
 
-        // Create or update response
-        $response = Response::updateOrCreate(
-            [
+        // Check if the response already exists
+        $response = Response::where([
+            'exam_session_id' => $session->id,
+            'question_id' => $question->id,
+            'option_id' => $option->id,
+        ])->first();
+
+        if (!$response) {
+            // Create a new response if it doesn't exist
+            $response = Response::create([
                 'exam_session_id' => $session->id,
                 'question_id' => $question->id,
-            ],
-            [
                 'option_id' => $option->id,
                 'is_correct' => $option->is_correct,
                 'selected_option' => $option->id,
-            ]
-        );
+            ]);
+        }
 
-        // Create scored question relationship
+        // Ensure the scored question record exists
         ScoredQuestion::firstOrCreate([
             'exam_session_id' => $session->id,
             'question_id' => $question->id,
             'response_id' => $response->id,
         ]);
 
-        // Update session score if needed
         if ($option->is_correct) {
             $session->increment('score');
         }
@@ -143,8 +178,9 @@ class ExamResultsImport implements ToCollection, WithHeadingRow
     {
         return [
             'total' => $this->totalRecords,
-            'success' => $this->matchedStudents,
-            'failed' => $this->failedRecords
+            'success' => $this->importedRecords,
+            'failed' => $this->failedRecords,
+            'skipped' => $this->skippedRecords
         ];
     }
 }

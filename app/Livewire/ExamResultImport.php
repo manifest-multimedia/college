@@ -37,6 +37,14 @@ class ExamResultImport extends Component
         $import = new ResultImport($this->examId);
         Excel::import($import, $this->file);
 
-        session()->flash('message', 'Results imported successfully.');
+        $response = $import->getImportResults();
+
+        if ($response['failed'] > 0) {
+            session()->flash('message', 'Import Process Completed. Import Outcome: ' . $response['success'] . ' responses imported and ' . $response['failed'] . ' responses failed to import as Exam Session already exists for the selected student(s).');
+        } else {
+            session()->flash('message', 'Import Process Completed. 
+            Import Outcome: ' . $response['success'] . ' responses imported and ' . $response['failed'] . ' responses failed to import due to errors.
+            ' . $response['skipped'] . ' responses skipped as Exam Session already exists for the selected student(s).');
+        }
     }
 }

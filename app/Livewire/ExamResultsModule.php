@@ -7,6 +7,7 @@ use App\Models\Exam;
 use Livewire\WithPagination;
 use App\Exports\ExamResultsExport;
 use App\Exports\ExamResultExport;
+use App\Exports\BulkExportResults;
 use App\Models\ExamSession;
 use App\Models\Student;
 use App\Models\User;
@@ -89,10 +90,10 @@ class ExamResultsModule extends Component
     {
         return $examSessions->map(function ($session) use ($questions_per_session) {
             try {
-                // First, ensure scored questions are stored for this session
+                // Ensure scored questions are stored for this session
                 $this->ensureScoredQuestionsExist($session, $questions_per_session);
 
-                // Get number of correct answers from attempted questions
+                // Get number of correct answers from stored scored questions
                 $correct_answers = $session->scoredQuestions
                     ->filter(function ($scoredQuestion) {
                         $correct_option = $scoredQuestion->question->options
@@ -161,6 +162,9 @@ class ExamResultsModule extends Component
 
             // Refresh the session to get the new scored questions
             $session->load('scoredQuestions.question.options', 'scoredQuestions.response');
+        } else {
+            // Refresh the session to get the existing scored questions
+            $session->load('scoredQuestions.question.options', 'scoredQuestions.response');
         }
     }
 
@@ -185,6 +189,13 @@ class ExamResultsModule extends Component
         $exam = Exam::find($this->selected_exam_id);
         $filename = Str::slug($exam->course->name) . '-' . $formatted_id . '-results-for-sync.xlsx';
         return Excel::download(new ExamResultExport($this->selected_exam_id, $student_id), $filename);
+    }
+
+    public function exportBulkResults()
+    {
+        $exam = Exam::find($this->selected_exam_id);
+        $filename = Str::slug($exam->course->name) . '-bulk-results.xlsx';
+        return Excel::download(new BulkExportResults($this->selected_exam_id), $filename);
     }
 
    

@@ -73,7 +73,7 @@ Route::get('exam-results', function () {
     return view('exams.results');
 })->name('exam.results');
 
-Route::get('/exam-result-import', function () {
+Route::get('/import-results', function () {
     return view('exams.result-import');
 })->name('exam.result.import');
 

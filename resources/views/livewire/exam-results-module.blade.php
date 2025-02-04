@@ -32,6 +32,9 @@
                         <button class="btn {{ $selected_exam_id && $selected_college_class_id ? 'btn-primary' : 'btn-secondary' }}" wire:click="exportResults" @disabled(!$selected_exam_id || !$selected_college_class_id)>
                             Download
                         </button>
+                        <button class="btn btn-primary" wire:click="exportBulkResults">
+                            Bulk Export
+                        </button>
                     </div>
                 </div>
             </div>
