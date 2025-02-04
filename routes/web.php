@@ -68,6 +68,10 @@ Route::middleware([
 ])->group(function () {
 
 
+    Route::get('/student-information', function () {
+        return view('students.information');
+    })->name('student.information');
+
 
 Route::get('exam-results', function () {
     return view('exams.results');

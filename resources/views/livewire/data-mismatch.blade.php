@@ -19,12 +19,13 @@
 
 
         <!-- Table -->
-        <div class="table-responsive">
+        <div class="table-responsive overflow-auto">
             <table class="table align-middle table-bordered table-hover">
                 <thead class="table-dark">
                     <tr>
                         <th>#</th>
                         <th>Student ID</th>
+                        <th>Student User ID </th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Sessions & Responses</th>
@@ -41,6 +42,7 @@
                                 ($students->currentPage() - 1) * $students->perPage() + $loop->iteration
                                 }}</td>
                             <td>{{ $student->student_id }}</td>
+                            <td>{{ $student->user->id ?? 'Not Found' }}</td>
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                             <td>{{ $student->email }}</td>
                             <td>
@@ -65,8 +67,10 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
                                     <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
                                     @foreach ($examSessions as $session )
                                         <div class="p-2 rounded border border-1 border-success">
-                                            Course Name: {{ optional($session->exam->course)->name }}<br>    
+                                            Course Name: {{ optional($session->exam->course)->name }} ({{ $session->id }})<br>    
                                             <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
+                                            <button class="btn btn-danger btn-sm" wire:click="removeSession({{ $session->id }})">Delete</button>
+
                                         </div>        
                                     @endforeach
                                 @else

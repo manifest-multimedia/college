@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 
 class Student extends Model
 {
     // Get attribute name
     public function getNameAttribute()
     {
-        return $this->first_name . ' ' . $this->other_name . ' ' . $this->last_name;
+        return $this->first_name ?? 'N/A' . ' ' . $this->other_name ?? 'N/A' . ' ' . $this->last_name ?? 'N/A';
     }
 
     public function addresses()
@@ -67,11 +69,14 @@ class Student extends Model
 
     public function createUser()
     {
-        $user = User::create([
-            'name' => $this->first_name . ' ' . $this->last_name,
-            'email' => $this->email,
-            'password' => bcrypt('password'),
-        ]);
+        // Only create a user if a valid email exists and there is no existing user with the same email
+        if ($this->email && !User::where('email', $this->email)->exists()) {
+            $user = User::create([
+                'name' => ($this->first_name ?? 'N/A') . ' ' . ($this->other_name ?? 'N/A') . ' ' . ($this->last_name ?? 'N/A'),
+                'email' => $this->email,
+                'password' => Hash::make('password'),
+            ]);
+        }
     }
 
     

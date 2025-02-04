@@ -87,4 +87,11 @@ class DataMismatch extends Component
 
         $this->mode = 'index';
     }
+
+    public function removeSession($sessionId)
+    {
+        $this->examSession = ExamSession::find($sessionId);
+        $this->examSession->delete();
+        session()->flash('message', 'ExamSession deleted successfully.');
+    }
 }
