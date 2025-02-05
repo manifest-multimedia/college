@@ -1,22 +1,52 @@
 <div class="container">
-    @if ($mode === 'index')
-        <h2 class="my-4">Data Mismatch Dashboard</h2>
-   
-        <!-- Filters -->
-        <div class="mb-4">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <input type="text" class="form-control" wire:model.live="filter_student_id" placeholder="Search by Student ID">
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control" wire:model.live="filter_email" placeholder="Search by Email">
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control" wire:model.live="filter_exam_id" placeholder="Search by Exam ID">
-                </div>
-            </div>
-        </div>
 
+<style>
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .pagination-container p{
+        margin: 0;
+    }
+</style>
+
+    @if ($mode === 'index')
+
+
+        <div class="card border-">
+          
+
+                <div class="card-header d-flex align-items-center">
+                    <div class="card-title">
+                        <h2 class="my-4">Exam Sessions Management</h2>
+                    </div>
+                    <div class="card-toolbar d-flex justify-content-between align-items-center flex-grow-1 gap-2">
+                        <!-- Filters -->
+                        <div class="d-flex flex-row g-2 justify-content-between align-items-center gap-2">
+
+                            <div>
+                                <input type="text" class="form-control" wire:model.live="filter_student_id"
+                                    placeholder="Search by Student ID">
+                            </div>
+                            <div>
+                                <input type="text" class="form-control" wire:model.live="filter_email"
+                                    placeholder="Search by Email">
+                            </div>
+                            <div>
+                                <input type="text" class="form-control" wire:model.live="filter_exam_id"
+                                    placeholder="Search by Exam ID">
+                            </div>
+
+                            <div>
+                                <button class="btn btn-primary" wire:click="refresh">Refresh</button>
+                                <button class="btn btn-success" wire:click="refresh">Download Results</button>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                  <div class="card-body">
 
         <!-- Table -->
         <div class="table-responsive overflow-auto">
@@ -33,14 +63,13 @@
                     </tr>
                 </thead>
 
-               
+
                 <tbody>
                     @foreach ($students as $student)
                         <tr>
-                            <td>{{ 
-                                // Loop iteration for paginated data
-                                ($students->currentPage() - 1) * $students->perPage() + $loop->iteration
-                                }}</td>
+                            <td>{{ // Loop iteration for paginated data
+                                ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}
+                            </td>
                             <td>{{ $student->student_id }}</td>
                             <td>{{ $student->user->id ?? 'Not Found' }}</td>
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
@@ -51,47 +80,52 @@
 
                                 @endphp --}}
                                 @php
-$examSessions = \App\Models\ExamSession::where('student_id', optional($student->user)->id)
-    ->with('exam.course', 'responses')
-    ->get();
+                                    $examSessions = \App\Models\ExamSession::where(
+                                        'student_id',
+                                        optional($student->user)->id,
+                                    )
+                                        ->with('exam.course', 'responses')
+                                        ->get();
 
-
-
-@endphp
-                                @if($examSessions->isNotEmpty()
-                              
-
-                           
-                              
-                                )
+                                @endphp
+                                @if ($examSessions->isNotEmpty())
                                     <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
-                                    @foreach ($examSessions as $session )
+                                    @foreach ($examSessions as $session)
                                         <div class="p-2 rounded border border-1 border-success">
-                                            Course Name: {{ optional($session->exam->course)->name }} ({{ $session->id }})<br>    
-                                            <span class="badge bg-success">Responses: {{ $session->responses->count() }}</span>
-                                            <button class="btn btn-danger btn-sm" wire:click="removeSession({{ $session->id }})">Delete</button>
+                                            Course Name: {{ optional($session->exam->course)->name }}
+                                            ({{ $session->id }})<br>
+                                            <span class="badge bg-success">Responses:
+                                                {{ $session->responses->count() }}</span>
 
-                                        </div>        
+                                                <!-- Insert Separtor --> 
+                                                {{ computeResults($session->id) }}
+
+                                            <button class="btn btn-danger btn-sm"
+                                                wire:click="removeSession({{ $session->id }})">Delete</button>
+
+                                        </div>
                                     @endforeach
                                 @else
                                     <span class="badge bg-danger">No sessions or responses found</span>
                                 @endif
-                                
+
                             </td>
                             <td>
-                                <button class="btn btn-primary btn-sm" wire:click="viewDetails({{ $student->id }})">View</button>
+                                <button class="btn btn-primary btn-sm"
+                                    wire:click="viewDetails({{ $student->id }})">View</button>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-        <div class="d-flex justify-content-center">
+        <div class="pagination-container">
             {{ $students->links() }}
         </div>
     @elseif ($mode === 'view')
-        <h2 class="my-4">Details for Student: {{ $student->first_name }} {{ $student->last_name }}{{ $student->other_name }}</h2>
-        
+        <h2 class="my-4">Details for Student: {{ $student->first_name }}
+            {{ $student->last_name }}{{ $student->other_name }}</h2>
+
         <!-- User Account -->
         <div class="mb-4">
             <h3>User Account</h3>
@@ -109,20 +143,19 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
         </div>
 
         <!-- Exam Session -->
-       
-        @if($examSessions->count() > 0)
-        @foreach ($examSessions as $examSession)
-            
-        <div class="mb-4">
-            <h3>Exam Session</h3>
-            <p><strong>Course Name:</strong> {{ optional($examSession->exam->course)->name }}</p>
-            <p><strong>Started At:</strong> {{ $examSession->started_at }}</p>
-            <p><strong>Completed At:</strong> {{ $examSession->completed_at }}</p>
-            <p><strong>Duration:</strong> {{ $examSession->duration }} minutes</p>
-            <p>Total Responses Received: {{ $examSession->responses->count() }}</p>
-            <button class="btn btn-secondary" wire:click="editDetails('examSession')">Edit ExamSession</button>
-        </div>
-        @endforeach
+
+        @if ($examSessions->count() > 0)
+            @foreach ($examSessions as $examSession)
+                <div class="mb-4">
+                    <h3>Exam Session</h3>
+                    <p><strong>Course Name:</strong> {{ optional($examSession->exam->course)->name }}</p>
+                    <p><strong>Started At:</strong> {{ $examSession->started_at }}</p>
+                    <p><strong>Completed At:</strong> {{ $examSession->completed_at }}</p>
+                    <p><strong>Duration:</strong> {{ $examSession->duration }} minutes</p>
+                    <p>Total Responses Received: {{ $examSession->responses->count() }}</p>
+                    <button class="btn btn-secondary" wire:click="editDetails('examSession')">Edit ExamSession</button>
+                </div>
+            @endforeach
         @endif
 
         <button class="btn btn-primary" wire:click="back">Back</button>
@@ -164,12 +197,19 @@ $examSessions = \App\Models\ExamSession::where('student_id', optional($student->
                 </div>
                 <div class="mb-3">
                     <label for="completedAt" class="form-label">Completed At</label>
-                    <input type="text" id="completedAt" class="form-control" wire:model="examSession.completed_at">
+                    <input type="text" id="completedAt" class="form-control"
+                        wire:model="examSession.completed_at">
                 </div>
                 <button class="btn btn-success" wire:click="updateExamSession">Save</button>
                 <button class="btn btn-primary" wire:click="back">Back</button>
             @endif
         </div>
     @endif
-    
+            </div>
+
+        </div>
+
+
+
+
 </div>

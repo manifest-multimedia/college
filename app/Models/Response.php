@@ -32,6 +32,18 @@ class Response extends Model
         return $this->belongsTo(Option::class);
     }
 
+    public function markCorrect()
+    {
+        // Get the correct option for this question
+        $correctOption = $this->question->options()->where('is_correct', true)->first();
+        if($correctOption){
+
+            return $this->selected_option === $correctOption->id;
+        }else{
+            return false;
+        }
+        // Check if the selected option is the correct option
+    }
     /**
      * The student who submitted this response.
      */

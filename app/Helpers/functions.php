@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Student;
+use App\Models\ExamSession;
 
 use Illuminate\Support\Str;
 
@@ -153,5 +154,35 @@ if (!function_exists('getAcademicYear')) {
     {
 
         return date('Y');
+    }
+}
+
+
+if (!function_exists('computeResults')) {
+    function computeResults($examSession) {
+        // Retrieve the ExamSession using the provided ID
+        $session = ExamSession::find($examSession);
+
+        // Check if the ExamSession exists
+        if (!$session) {
+            return 0;
+        }
+
+        // Get all responses associated with this ExamSession
+        $responses = $session->responses;
+
+        // Initialize the result
+        $result = 0;
+
+        // Calculate the score
+        foreach ($responses as $response) {
+            // Check if the response is correct using the markCorrect method
+            if ($response->markCorrect()) {
+                // Add the mark of the question to the result
+                $result += $response->question->mark;
+            }
+        }
+
+        return $result;
     }
 }
