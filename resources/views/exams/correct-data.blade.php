@@ -1,4 +1,4 @@
-<x-dashboard.default title="Data Mistmatch" >
+<x-dashboard.default title="Exam Results" >
   
     
     <livewire:data-mismatch  />

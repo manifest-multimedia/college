@@ -90,7 +90,7 @@
 
 
                 <tbody>
-                    @foreach ($students as $student)
+                    @forelse($students as $student)
                         <tr>
                             <td>{{ // Loop iteration for paginated data
                                 ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}
@@ -144,7 +144,13 @@
                                     wire:click="downloadResults({{ $student->id }})">Download Result</button>
                             </td>
                         </tr>
-                    @endforeach
+                        
+                       
+                    @empty
+                       <tr>
+                           <td colspan="6" class="text-center">No records found</td>   
+                       </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

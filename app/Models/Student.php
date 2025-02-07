@@ -78,6 +78,15 @@ class Student extends Model
             ]);
         }
     }
-
-    
+    public function examSessions()
+    {
+        return $this->hasManyThrough(
+            ExamSession::class, // Related model
+            User::class,        // Intermediate model
+            'email',            // Foreign key on the intermediate model (users.email)
+            'student_id',       // Foreign key on the related model (exam_sessions.student_id)
+            'email',            // Local key on the parent model (students.email)
+            'id'                // Local key on the intermediate model (users.id)
+        );
+    }
 }

@@ -73,13 +73,13 @@ Route::middleware([
     })->name('student.information');
 
 
-Route::get('exam-results', function () {
-    return view('exams.results');
-})->name('exam.results');
+    Route::get('exam-results', function () {
+        return view('exams.correct-data');
+    })->name('exam.results');
 
-Route::get('/import-results', function () {
-    return view('exams.result-import');
-})->name('exam.result.import');
+    Route::get('/import-results', function () {
+        return view('exams.result-import');
+    })->name('exam.result.import');
 
     Route::get('/portal', function () {
         return view('dashboard');
@@ -139,9 +139,6 @@ Route::get('/import-results', function () {
     });
 
 
-    Route::get('/correct-data', function () {
-        return view('exams.correct-data');
-    })->name('correct-data');
 
 
     // Test Email route to send mail to johnson@pnmtc.edu.gh
@@ -153,5 +150,5 @@ Route::get('/import-results', function () {
 
 
 
-  
+
 });
