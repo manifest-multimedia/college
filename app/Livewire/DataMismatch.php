@@ -13,6 +13,8 @@ use App\Models\Response;
 use App\Exports\ResultsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+
 
 class DataMismatch extends Component
 {
@@ -99,7 +101,9 @@ class DataMismatch extends Component
                 $query->where('exam_id', $this->filter_by_exam); // Filter exam sessions by exam_id
             }
             $query->with('exam.course', 'responses');
-        }])
+        }])->orderByRaw("
+          CAST(SUBSTRING_INDEX(student_id, '/', -1) AS UNSIGNED) ASC
+        ")
         ->paginate(15);
 
     $exams = Exam::all();
@@ -162,46 +166,7 @@ class DataMismatch extends Component
     }
 
 
-    // public function downloadResults()
-    // {
-    //     return response()->streamDownload(function () {
-    //         // Fetch all students
-    //         $students = Student::all();
-
-    //         // Define the CSV header
-    //         echo "Index,Date,Student ID,Name,Course,Score,Answered,Percentage\n";
-
-    //         // Loop through each student
-    //         foreach ($students as $index => $student) {
-    //             // Fetch user details for the student
-    //             $user = User::where('email', $student->email)->first();
-
-    //             // Fetch exam sessions for the student
-    //             $examSessions = ExamSession::where('student_id', optional($user)->id)
-    //                 ->with('exam.course', 'responses')
-    //                 ->get();
-
-    //             // Loop through each exam session
-    //             foreach ($examSessions as $examSession) {
-    //                 // Extract relevant data
-    //                 $courseName = optional($examSession->exam)->course->name ?? 'N/A';
-    //                 $score = computeResults($examSession->id, 'score') ?? 0;
-    //                 $answered = computeResults($examSession->id, 'total_answered');
-    //                 $percentage = computeResults($examSession->id, 'percentage') ?? 0;
-
-    //                 // Write the row to the CSV
-    //                 echo "$index," .           // Index
-    //                     "$examSession->created_at," .   // Date
-    //                     "$student->student_id," .       // Student ID
-    //                     "\"$student->first_name $student->last_name\"," . // Name (escaped quotes for names with commas)
-    //                     "\"$courseName\"," .           // Course (escaped quotes for course names with commas)
-    //                     "$score," .                   // Score
-    //                     "$answered," .                // Answered
-    //                     "$percentage\n";              // Percentage
-    //             }
-    //         }
-    //     }, 'results.csv'); // Filename for the downloaded file
-    // }
+    
 
     public function updated($property)
     {

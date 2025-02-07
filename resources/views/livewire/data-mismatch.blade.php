@@ -114,8 +114,8 @@
                 Percentage: {{ computeResults($session->id) }}
             </div>
         </div>
-        <button class="gap-2 m-2 d-flex btn btn-danger btn-sm"
-                wire:click="removeSession({{ $session->id }})">Delete Session Data</button>
+        {{-- <button class="gap-2 m-2 d-flex btn btn-danger btn-sm"
+                wire:click="removeSession({{ $session->id }})">Delete Session Data</button> --}}
     @endforeach
 @else
     <span class="badge bg-danger">No sessions or responses found</span>
