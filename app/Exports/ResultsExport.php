@@ -65,8 +65,15 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             });
         }
 
+     
+        $studentsQuery->orderByRaw("
+        CAST(SUBSTRING_INDEX(student_id, '/', -1) AS UNSIGNED) ASC
+    ");
+
         // Eager load only relevant exam sessions
         $examId = $this->filters['filter_by_exam'] ?? null;
+
+
         return $studentsQuery->with(['examSessions' => function ($query) use ($examId) {
             if ($examId) {
                 $query->where('exam_id', $examId); // Filter exam sessions by exam_id

@@ -1,89 +1,186 @@
-<?php 
+<?php
 
-namespace App\Exports;
+namespace App\Imports;
 
+use App\Models\ExamSession;
 use App\Models\Student;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Models\Question;
+use App\Models\Response;
+use App\Models\ScoredQuestion;
+use App\Models\User;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\ToCollection;
 
-class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, WithMapping
+class ResultImport implements ToCollection, WithHeadingRow
 {
-    protected $filters;
-
-    public function __construct($filters)
+    protected $exam_id;
+    protected $importedRecords = 0;
+    protected $totalRecords = 0;
+    protected $skippedRecords = 0;
+    protected $failedRecords = 0;
+    public function __construct($exam_id)
     {
-        $this->filters = $filters;
+        $this->exam_id = $exam_id;
+
+       
     }
 
-    public function collection()
+    public function collection(Collection $rows)
     {
-        $studentsQuery = Student::query();
+        $this->totalRecords = $rows->count();
+        
+        foreach ($rows as $row) {
+            try {
+                if (!$this->validateRow($row)) {
+                    $this->failedRecords++;
+                    continue;
+                }
 
-        if (isset($this->filters['filter_student_id'])) {
-            $studentsQuery->where('student_id', 'like', '%' . $this->filters['filter_student_id'] . '%');
-        }
+                // Find or create student
+                $student = $this->findStudent($row);
+                if (!$student) {
+                    $this->failedRecords++;
+                    continue;
+                }
 
-        if (isset($this->filters['filter_email'])) {
-            $studentsQuery->where('email', 'like', '%' . $this->filters['filter_email'] . '%');
-        }
+                // Check if the exam session already exists
+                if ($this->examSessionExists($student)) {
+                    $this->skippedRecords++;
+                    continue;
+                }
 
-        if (isset($this->filters['filter_by_exam'])) {
-            $examId = $this->filters['filter_by_exam'];
-            $userIds = \App\Models\ExamSession::where('exam_id', $examId)->pluck('student_id')->toArray();
-            $studentsQuery->whereIn('user_id', $userIds);
-        }
+                // Process exam session
+                $session = $this->processExamSession($row, $student);
+                
+                // Process questions and responses
+                $this->processQuestions($row, $session);
 
-        if (isset($this->filters['filter_by_class'])) {
-            $classId = $this->filters['filter_by_class'];
-            $studentsQuery->whereHas('collegeClass', function ($query) use ($classId) {
-                $query->where('id', $classId);
-            });
-        }
+                $this->importedRecords++;
 
-        return $studentsQuery->with(['examSessions' => function ($query) {
-            if (isset($this->filters['filter_by_exam'])) {
-                $query->where('exam_id', $this->filters['filter_by_exam']);
+            } catch (\Exception $e) {
+                Log::error('Import Error: '.$e->getMessage());
+                $this->failedRecords++;
             }
-            $query->with('exam.course', 'responses');
-        }])->get();
+        }
     }
 
-    public function map($student): array
+    private function validateRow($row)
     {
-        $rows = [];
 
-        foreach ($student->examSessions as $examSession) {
-            $courseName = optional($examSession->exam->course)->name ?? 'N/A';
-            $score = computeResults($examSession->id, 'score') ?? '0/0';
-            $answered = computeResults($examSession->id, 'total_answered') ?? 0;
-            $percentage = computeResults($examSession->id, 'percentage') ?? '0%';
+        $validated=isset($row['student_email']) && isset($row['question_text']) && isset($row['selected_option_text']);
 
-            $rows[] = [
-                $student->student_id,
-                $examSession->created_at->format('Y-m-d H:i:s'),
-                $student->first_name . ' ' . $student->last_name,
-                $courseName,
-                $score,
-                $answered,
-                $percentage,
-            ];
+       
+
+        return $validated;
+              
+
+    }
+
+    private function findStudent($row)
+    {
+
+        // dd($row['student_email']);
+
+        $student=Student::with('user')
+            ->where('email', $row['student_email'])
+            ->orWhere('student_id', $row['student_id'] ?? '')
+            ->first();
+
+          
+
+            if($student){
+                return $student;
+            }else{
+                return null;
+            }
+    }
+
+    private function examSessionExists($student)
+    {
+        return ExamSession::where('exam_id', $this->exam_id)
+                           ->where('student_id', $student->user->id)
+                           ->exists();
+    }
+
+    private function processExamSession($row, $student)
+    {
+        if($student->name!=$row['student_name'] || $row['student_email']=="N/A" || $row['student_name']==null){
+            return null;
+           
         }
 
-        return $rows;
+        return ExamSession::create([
+            'exam_id' => $this->exam_id,
+            'student_id' => $student->user->id,
+            'started_at' => Carbon::parse($row['session_started_at'] ?? now()),
+            'completed_at' => Carbon::parse($row['session_completed_at'] ?? now()),
+            'score' => $row['score'] ?? 0,
+        ]);
     }
 
-    public function headings(): array
+    private function processQuestions($row, $session)
+    {
+        $question = Question::where('question_text', $row['question_text'])
+            ->orWhere('question_text', 'like', '%'.$row['question_text'].'%')
+            ->where('exam_id', $this->exam_id)
+            ->first();
+
+        if (!$question) {
+            Log::warning('Question not found: '.$row['question_text']);
+            return;
+        }
+
+        $option = $question->options()
+            ->where('option_text', $row['selected_option_text'])
+            ->orWhere('option_text', 'like', '%'.$row['selected_option_text'].'%')
+            ->first();
+
+        if (!$option) {
+            Log::warning('Option not found: '.$row['selected_option_text']);
+            return;
+        }
+
+        // Check if the response already exists
+        $response = Response::where([
+            'exam_session_id' => $session->id,
+            'question_id' => $question->id,
+            'option_id' => $option->id,
+        ])->first();
+
+        if (!$response) {
+            // Create a new response if it doesn't exist
+            $response = Response::create([
+                'exam_session_id' => $session->id,
+                'question_id' => $question->id,
+                'option_id' => $option->id,
+                'is_correct' => $option->is_correct,
+                'selected_option' => $option->id,
+            ]);
+        }
+
+        // Ensure the scored question record exists
+        ScoredQuestion::firstOrCreate([
+            'exam_session_id' => $session->id,
+            'question_id' => $question->id,
+            'response_id' => $response->id,
+        ]);
+
+        if ($option->is_correct) {
+            $session->increment('score');
+        }
+    }
+
+    public function getImportResults(): array
     {
         return [
-            'Student ID',
-            'Date',
-            'Name',
-            'Course',
-            'Score',
-            'Answered',
-            'Percentage',
+            'total' => $this->totalRecords,
+            'success' => $this->importedRecords,
+            'failed' => $this->failedRecords,
+            'skipped' => $this->skippedRecords
         ];
     }
 }

@@ -12,6 +12,7 @@ use App\Models\CollegeClass;
 use App\Models\Response;
 use App\Exports\ResultsExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
 
 class DataMismatch extends Component
 {
@@ -219,7 +220,19 @@ class DataMismatch extends Component
             'filter_by_class' => $this->filter_by_class,
         ];
 
+        $fileName = 'results.csv';
+        if ($this->filter_by_exam || $this->filter_by_class) {
+            $examName = Exam::find($this->filter_by_exam)->course->name ?? 'Results';
+            if($this->filter_by_class){
+
+                $className = CollegeClass::find($this->filter_by_class)->name ?? 'Results';
+            }else{
+                $className='Results';
+            }
+            $fileName = Str::slug("{$examName}-{$className}") . '.csv';
+        }
+    
         // Return the export
-        return Excel::download(new ResultsExport($filters), 'results.csv');
+        return Excel::download(new ResultsExport($filters), $fileName);
     }
 }
