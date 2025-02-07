@@ -25,6 +25,8 @@ class DataMismatch extends Component
     public $student;  // Holds student details for editing
     public $examSessions; // Holds ExamSession details
 
+    public $examSession;
+
     // Filters
     public $filter_student_id;
     public $filter_email;

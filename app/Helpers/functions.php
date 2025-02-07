@@ -2,6 +2,7 @@
 
 use App\Models\Student;
 use App\Models\ExamSession;
+use App\Models\Option;
 
 use Illuminate\Support\Str;
 
@@ -159,7 +160,8 @@ if (!function_exists('getAcademicYear')) {
 
 
 if (!function_exists('computeResults')) {
-    function computeResults($examSession) {
+    function computeResults($examSession)
+    {
         // Retrieve the ExamSession using the provided ID
         $session = ExamSession::find($examSession);
 
@@ -170,18 +172,25 @@ if (!function_exists('computeResults')) {
 
         // Get all responses associated with this ExamSession
         $responses = $session->responses;
-
-        // Initialize the result
         $result = 0;
-
-        // Calculate the score
         foreach ($responses as $response) {
-            // Check if the response is correct using the markCorrect method
-            if ($response->markCorrect()) {
-                // Add the mark of the question to the result
-                $result += $response->question->mark;
+
+            if ($response->selected_option == Option::where('id', $response->selected_option)->exists()) {
+
+                $correct_option = Option::where('id', $response->selected_option)->where('is_correct', true);
+
+                if ($correct_option->exists() && $correct_option->first()->id == $response->selected_option) {
+                    $result++;
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
             }
         }
+
+        // // Initialize the result
+
 
         return $result;
     }

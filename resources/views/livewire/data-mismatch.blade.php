@@ -21,9 +21,9 @@
                     <div class="card-title">
                         <h2 class="my-4">Exam Sessions Management</h2>
                     </div>
-                    <div class="card-toolbar d-flex justify-content-between align-items-center flex-grow-1 gap-2">
+                    <div class="gap-2 card-toolbar d-flex justify-content-between align-items-center flex-grow-1">
                         <!-- Filters -->
-                        <div class="d-flex flex-row g-2 justify-content-between align-items-center gap-2">
+                        <div class="flex-row gap-2 d-flex g-2 justify-content-between align-items-center">
 
                             <div>
                                 <input type="text" class="form-control" wire:model.live="filter_student_id"
@@ -49,7 +49,7 @@
                   <div class="card-body">
 
         <!-- Table -->
-        <div class="table-responsive overflow-auto">
+        <div class="overflow-auto table-responsive">
             <table class="table align-middle table-bordered table-hover">
                 <thead class="table-dark">
                     <tr>

@@ -32,24 +32,15 @@ class Response extends Model
         return $this->belongsTo(Option::class);
     }
 
-    public function markCorrect()
+    // public function markCorrect()
 
-    {
-        $return_option=Option::where('id',$this->selected_option)->first();
-        dd($this->question->id,$this->selected_option,$return_option,$this->question->options);
+    // {
+    //     $return_option = Option::where('id', $this->selected_option)->first();
+    //     dd($this->question->id, $this->selected_option_text, $return_option, $this->question->options);
 
-        // dd($this->question->options(),$this->selected_option);
 
-        // // Get the correct option for this question
-        // $correctOption = $this->question->options()->where('is_correct', true)->first();
-        // if($correctOption){
-
-        //     return $this->selected_option === $correctOption->id;
-        // }else{
-        //     return false;
-        // }
-        // // Check if the selected option is the correct option
-    }
+    //     // // Check if the selected option is the correct option
+    // }
     /**
      * The student who submitted this response.
      */
