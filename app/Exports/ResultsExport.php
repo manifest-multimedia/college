@@ -20,35 +20,6 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
         $this->filters = $filters; // Pass filters from the controller
     }
 
-    // public function collection()
-    // {
-    //     // Apply filters to fetch students
-    //     $studentsQuery = Student::query();
-
-    //     if (isset($this->filters['filter_student_id'])) {
-    //         $studentsQuery->where('student_id', 'like', '%' . $this->filters['filter_student_id'] . '%');
-    //     }
-
-    //     if (isset($this->filters['filter_email'])) {
-    //         $studentsQuery->where('email', 'like', '%' . $this->filters['filter_email'] . '%');
-    //     }
-
-    //     if (isset($this->filters['filter_by_exam'])) {
-    //         $examId = $this->filters['filter_by_exam'];
-    //         $userIds = ExamSession::where('exam_id', $examId)->pluck('student_id')->toArray();
-    //         $studentsQuery->whereIn('user_id', $userIds); // Assuming user_id links to users
-    //     }
-
-    //     if (isset($this->filters['filter_by_class'])) {
-    //         $classId = $this->filters['filter_by_class'];
-    //         $studentsQuery->whereHas('collegeClass', function ($query) use ($classId) {
-    //             $query->where('id', $classId);
-    //         });
-    //     }
-
-    //     return $studentsQuery->with('user', 'examSessions.exam.course', 'examSessions.responses')->get();
-    // }
-
     public function collection()
     {
         // Apply filters to fetch students
@@ -94,7 +65,14 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             });
         }
 
-        return $studentsQuery->with('examSessions.exam.course', 'examSessions.responses')->get();
+        // Eager load only relevant exam sessions
+        $examId = $this->filters['filter_by_exam'] ?? null;
+        return $studentsQuery->with(['examSessions' => function ($query) use ($examId) {
+            if ($examId) {
+                $query->where('exam_id', $examId); // Filter exam sessions by exam_id
+            }
+            $query->with('exam.course', 'responses');
+        }])->get();
     }
 
     public function map($student): array
@@ -120,6 +98,7 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
 
         return $rows;
     }
+
 
     public function headings(): array
     {
