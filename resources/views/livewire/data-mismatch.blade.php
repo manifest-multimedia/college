@@ -1,3 +1,4 @@
+<div>
 <div class="container">
 
 <style>
@@ -34,13 +35,37 @@
                                     placeholder="Search by Email">
                             </div>
                             <div>
-                                <input type="text" class="form-control" wire:model.live="filter_exam_id"
-                                    placeholder="Search by Exam ID">
+                                {{-- <input type="text" class="form-control" wire:model.live="filter_exam_id"
+                                    placeholder="Search by Exam ID"> --}}
+                                    <select name="filter_by_exam" id="exam_id" class="form-select form-control"
+                                    wire:model.live="filter_by_exam"
+                                    >
+                                        <option value="">Select Exam</option>
+                                        @forelse ($exams as $exam)
+                                            <option value="{{ $exam->id }}">{{ $exam->course->name }}</option>
+                                            @empty
+                                            <option value="">No Exams Found</option>
+                                        @endforelse
+                                    </select>
+
+                                
+                            </div>
+                            <div>
+                                    {{-- Filter By Class --}}
+                                    <select name="filter_by_class" id="class_id"
+                                    wire:model.live="filter_by_class" class="form-select form-control"
+                                    >
+                                        <option value="">Select Class</option>
+                                        @forelse ($classes as $class)
+                                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                                            @empty
+                                            <option value="">No Classes Found</option>
+                                        @endforelse
+                                </select>
                             </div>
 
                             <div>
-                                <button class="btn btn-primary" wire:click="refresh">Refresh</button>
-                                <button class="btn btn-success" wire:click="refresh">Download Results</button>
+                                <button class="btn btn-success" wire:click="downloadResults">Download</button>
 
                             </div>
                         </div>
@@ -55,7 +80,7 @@
                     <tr>
                         <th>#</th>
                         <th>Student ID</th>
-                        <th>Student User ID </th>
+                        {{-- <th>Student User ID </th> --}}
                         <th>Name</th>
                         <th>Email</th>
                         <th>Sessions & Responses</th>
@@ -71,7 +96,7 @@
                                 ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}
                             </td>
                             <td>{{ $student->student_id }}</td>
-                            <td>{{ $student->user->id ?? 'Not Found' }}</td>
+                            {{-- <td>{{ $student->user->id ?? 'Not Found' }}</td> --}}
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                             <td>{{ $student->email }}</td>
                             <td>
@@ -92,18 +117,22 @@
                                     <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
                                     @foreach ($examSessions as $session)
                                         <div class="p-2 rounded border border-1 border-success">
-                                            Course Name: {{ optional($session->exam->course)->name }}
-                                            ({{ $session->id }})<br>
-                                            <span class="badge bg-success">Responses:
-                                                {{ $session->responses->count() }}</span>
+                                            Course Name: {{ optional($session->exam->course)->name }}<br>
+                                            <span class="badge bg-success">Attempted
+                                                {{ computeResults($session->id, 'total_answered') }} Questions</span>
 
-                                                <!-- Insert Separtor --> 
-                                                {{ computeResults($session->id) }}
+                                            {{-- Output Score --}}
+                                            <div class="border d-flex badge border-success">
+                                                Score: {{ computeResults($session->id, 'score') }}
 
-                                            <button class="btn btn-danger btn-sm"
-                                                wire:click="removeSession({{ $session->id }})">Delete</button>
+                                                Percentage: {{ computeResults($session->id) }}
+                                            </div>
+
+                                            
 
                                         </div>
+                                        <button class="gap-2 m-2 d-flex btn btn-danger btn-sm"
+                                                wire:click="removeSession({{ $session->id }})">Delete Session Data</button>
                                     @endforeach
                                 @else
                                     <span class="badge bg-danger">No sessions or responses found</span>
@@ -112,7 +141,7 @@
                             </td>
                             <td>
                                 <button class="btn btn-primary btn-sm"
-                                    wire:click="viewDetails({{ $student->id }})">View</button>
+                                    wire:click="downloadResults({{ $student->id }})">Download Result</button>
                             </td>
                         </tr>
                     @endforeach
@@ -212,4 +241,5 @@
 
 
 
+</div>
 </div>

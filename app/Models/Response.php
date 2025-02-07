@@ -32,18 +32,7 @@ class Response extends Model
         return $this->belongsTo(Option::class);
     }
 
-    // public function markCorrect()
 
-    // {
-    //     $return_option = Option::where('id', $this->selected_option)->first();
-    //     dd($this->question->id, $this->selected_option_text, $return_option, $this->question->options);
-
-
-    //     // // Check if the selected option is the correct option
-    // }
-    /**
-     * The student who submitted this response.
-     */
     public function student()
     {
         return $this->belongsTo(User::class);
