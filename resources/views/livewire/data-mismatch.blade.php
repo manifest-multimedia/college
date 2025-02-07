@@ -84,7 +84,6 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Sessions & Responses</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -100,49 +99,30 @@
                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                             <td>{{ $student->email }}</td>
                             <td>
-                                {{-- @php
-                                $examSessions = \App\Models\ExamSession::where('student_id', $student->id)->with('exam.course', 'responses')->get();
-
-                                @endphp --}}
-                                @php
-                                    $examSessions = \App\Models\ExamSession::where(
-                                        'student_id',
-                                        optional($student->user)->id,
-                                    )
-                                        ->with('exam.course', 'responses')
-                                        ->get();
-
-                                @endphp
-                                @if ($examSessions->isNotEmpty())
-                                    <span class="text-white badge bg-dark">Sessions: {{ $examSessions->count() }}</span>
-                                    @foreach ($examSessions as $session)
-                                        <div class="p-2 rounded border border-1 border-success">
-                                            Course Name: {{ optional($session->exam->course)->name }}<br>
-                                            <span class="badge bg-success">Attempted
-                                                {{ computeResults($session->id, 'total_answered') }} Questions</span>
-
-                                            {{-- Output Score --}}
-                                            <div class="border d-flex badge border-success">
-                                                Score: {{ computeResults($session->id, 'score') }}
-
-                                                Percentage: {{ computeResults($session->id) }}
-                                            </div>
-
-                                            
-
-                                        </div>
-                                        <button class="gap-2 m-2 d-flex btn btn-danger btn-sm"
-                                                wire:click="removeSession({{ $session->id }})">Delete Session Data</button>
-                                    @endforeach
-                                @else
-                                    <span class="badge bg-danger">No sessions or responses found</span>
-                                @endif
+                                
+                   
+                               @if ($student->examSessions->isNotEmpty())
+    <span class="text-white badge bg-dark">Sessions: {{ $student->examSessions->count() }}</span>
+    @foreach ($student->examSessions as $session)
+        <div class="p-2 rounded border border-1 border-success">
+            Course Name: {{ optional($session->exam->course)->name }}<br>
+            <span class="badge bg-success">Attempted
+                {{ computeResults($session->id, 'total_answered') }} Questions</span>
+            {{-- Output Score --}}
+            <div class="border d-flex badge border-success">
+                Score: {{ computeResults($session->id, 'score') }}
+                Percentage: {{ computeResults($session->id) }}
+            </div>
+        </div>
+        <button class="gap-2 m-2 d-flex btn btn-danger btn-sm"
+                wire:click="removeSession({{ $session->id }})">Delete Session Data</button>
+    @endforeach
+@else
+    <span class="badge bg-danger">No sessions or responses found</span>
+@endif
 
                             </td>
-                            <td>
-                                <button class="btn btn-primary btn-sm"
-                                    wire:click="downloadResults({{ $student->id }})">Download Result</button>
-                            </td>
+                           
                         </tr>
                         
                        

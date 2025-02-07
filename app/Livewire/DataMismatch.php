@@ -38,59 +38,47 @@ class DataMismatch extends Component
     public $filter_by_exam;
     public $filter_by_class;
 
+
     public function render()
-    {
-        // Apply filters for students
-        // $students = Student::query()
-        //     ->when($this->filter_student_id, fn($q) => $q->where('student_id', 'like', '%' . $this->filter_student_id . '%'))
-        //     ->when($this->filter_email, fn($q) => $q->where('email', 'like', '%' . $this->filter_email . '%'))
-        //     ->when($this->filter_exam_id, fn($q) => $q->where('exam_id', 'like', '%' . $this->filter_exam_id . '%'))
-        //     ->with('user')
-        //     ->paginate(15);
-        $students = Student::query()
-            ->when($this->filter_by_exam, function ($query) {
-                // Get User IDs from ExamSessions where exam_id matches
-                $examId = $this->filter_by_exam;
-                $userIds = ExamSession::where('exam_id', $examId)
-                    ->pluck('student_id') // student_id here is actually the User ID
+{
+    $students = Student::query()
+        ->when($this->filter_by_exam, function ($query) {
+            // Get User IDs from ExamSessions where exam_id matches
+            $examId = $this->filter_by_exam;
+            $userIds = ExamSession::where('exam_id', $examId)
+                ->pluck('student_id') // student_id here is actually the User ID
+                ->toArray();
+            if (!empty($userIds)) {
+                // Use the email field to find corresponding students
+                $emails = User::whereIn('id', $userIds)
+                    ->pluck('email')
                     ->toArray();
-
-                if (!empty($userIds)) {
-                    // Use the email field to find corresponding students
-                    $emails = User::whereIn('id', $userIds)
-                        ->pluck('email')
-                        ->toArray();
-
-                    if (!empty($emails)) {
-                        $query->whereIn('email', $emails); // Filter students by email
-                    } else {
-                        $query->whereNull('id'); // No matching students, return an empty result
-                    }
+                if (!empty($emails)) {
+                    $query->whereIn('email', $emails); // Filter students by email
                 } else {
-                    $query->whereNull('id'); // No matching users, return an empty result
+                    $query->whereNull('id'); // No matching students, return an empty result
                 }
-            });
-        $students = $students->when($this->filter_by_class, function ($query) {
+            } else {
+                $query->whereNull('id'); // No matching users, return an empty result
+            }
+        })
+        ->when($this->filter_by_class, function ($query) {
             $classId = $this->filter_by_class;
-
             // Get User IDs for students in the specified class
             $userIds = Student::where('college_class_id', $classId) // Replace 'college_class_id' with the actual column name
                 ->join('users', 'students.email', '=', 'users.email') // Join with users
                 ->pluck('users.id')
                 ->toArray();
-
             if (!empty($userIds)) {
                 // Ensure these users have taken exams
                 $examSessionUserIds = ExamSession::whereIn('student_id', $userIds) // student_id is the User ID
                     ->pluck('student_id')
                     ->toArray();
-
                 if (!empty($examSessionUserIds)) {
                     // Use the email field to find corresponding students
                     $emails = User::whereIn('id', $examSessionUserIds)
                         ->pluck('email')
                         ->toArray();
-
                     if (!empty($emails)) {
                         $query->whereIn('email', $emails); // Filter students by email
                     } else {
@@ -102,23 +90,26 @@ class DataMismatch extends Component
             } else {
                 $query->whereNull('id'); // No students in the specified class, return an empty result
             }
-        });
+        })
+        ->when($this->filter_student_id, fn($q) => $q->where('student_id', 'like', '%' . $this->filter_student_id . '%'))
+        ->when($this->filter_email, fn($q) => $q->where('email', 'like', '%' . $this->filter_email . '%'))
+        ->with(['user', 'examSessions' => function ($query) { // Eager load filtered exam sessions
+            if ($this->filter_by_exam) {
+                $query->where('exam_id', $this->filter_by_exam); // Filter exam sessions by exam_id
+            }
+            $query->with('exam.course', 'responses');
+        }])
+        ->paginate(15);
 
-        $students = $students->when($this->filter_student_id, fn($q) => $q->where('student_id', 'like', '%' . $this->filter_student_id . '%'))
-            ->when($this->filter_email, fn($q) => $q->where('email', 'like', '%' . $this->filter_email . '%'))
-            ->with('user') // Eager load user details
-            ->paginate(15);
+    $exams = Exam::all();
+    $classes = CollegeClass::all();
 
-        $exams = Exam::all();
-        $classes = CollegeClass::all();
-
-        return view('livewire.data-mismatch', [
-            'students' => $students,
-            'exams' => $exams,
-            'classes' => $classes
-
-        ]);
-    }
+    return view('livewire.data-mismatch', [
+        'students' => $students,
+        'exams' => $exams,
+        'classes' => $classes,
+    ]);
+}
 
     public function viewDetails($studentId)
     {
