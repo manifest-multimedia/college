@@ -40,7 +40,7 @@ class DataMismatch extends Component
 
     public $filter_by_exam;
     public $filter_by_class;
-
+    public $classes;
 
     public function render()
 {
@@ -107,12 +107,21 @@ class DataMismatch extends Component
         ->paginate(15);
 
     $exams = Exam::all();
-    $classes = CollegeClass::all();
+    
+
+    $this->classes = CollegeClass::distinct()->whereIn('id', function($query) {
+        $query->select('college_class_id')
+              ->from('students')
+              ->whereIn('id', function($subQuery) {
+                 $subQuery->select('student_id')
+                          ->from('exam_sessions');
+              });
+    })->get();
 
     return view('livewire.data-mismatch', [
         'students' => $students,
         'exams' => $exams,
-        'classes' => $classes,
+        
     ]);
 }
 
@@ -171,6 +180,19 @@ class DataMismatch extends Component
     public function updated($property)
     {
         $this->resetPage();
+
+        if($property == 'filter_by_exam'){
+            // Fetch distinct college classes for students who took the selected exam
+            $this->classes = CollegeClass::distinct()->whereIn('id', function($query) {
+                $query->select('college_class_id')
+                      ->from('students')
+                      ->whereIn('id', function($subQuery) {
+                         $subQuery->select('student_id')
+                                  ->from('exam_sessions')
+                                  ->where('exam_id', $this->filter_by_exam);
+                      });
+            })->get();
+        }
     }
 
 

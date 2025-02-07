@@ -59,7 +59,7 @@
                                         @forelse ($classes as $class)
                                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                                             @empty
-                                            <option value="">No Classes Found</option>
+                                            <option value="">Select an Exam with Valid Sessions to Load Classes</option>
                                         @endforelse
                                 </select>
                             </div>
@@ -83,7 +83,7 @@
                         {{-- <th>Student User ID </th> --}}
                         <th>Name</th>
                         <th>Email</th>
-                        <th>Sessions & Responses</th>
+                        <th>Performance</th>
                     </tr>
                 </thead>
 
