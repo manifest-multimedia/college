@@ -52,7 +52,9 @@
                 </div>
               </div>
                   <!-- Button -->
-                  <a href="{{ route('exams.create') }}" class="btn btn-sm btn-success">Create a New Exam</a>
+                  <a href="{{ route('exams.create') }}" class="btn btn-sm btn-success">
+                  
+                  Create a New Exam</a>
                 </div>
               </div>
               

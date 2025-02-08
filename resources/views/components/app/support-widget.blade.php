@@ -27,7 +27,7 @@
                 <!--end::Link-->
                 <!--begin::Link-->
                 <a class="bg-white bg-opacity-20 btn btn-sm btn-color-white"
-                    data-bs-target="#featureModal"
+                    data-bs-target="#kt_modal_feature_request"
                     data-bs-toggle="modal"
                     href="javascript:void(0);">Feature Request</a>
                 <!--end::Link-->

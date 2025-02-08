@@ -1,5 +1,5 @@
 <div>
-<div class="container">
+
 
 <style>
     .pagination-container {
@@ -65,7 +65,9 @@
                             </div>
 
                             <div>
-                                <button class="btn btn-success" wire:click="downloadResults">Download</button>
+                                <button class="btn btn-success" wire:click="downloadResults" style="width:150px">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                                Download</button>
 
                             </div>
                         </div>
@@ -227,5 +229,4 @@
 
 
 
-</div>
 </div>

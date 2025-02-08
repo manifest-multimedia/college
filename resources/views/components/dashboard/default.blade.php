@@ -58,17 +58,16 @@
                         <!--end::Container-->
                     </div>
                     <!--end::Toolbar-->
-                    <!--begin::Post-->
-                    <div class="post d-flex flex-column-fluid" id="kt_post">
+                  
+                  
                         <!--begin::Container-->
                         <div id="kt_content_container" class="container-xxl">
                          
                           {{ $slot }}
-                           {{-- <x-partials.content-one /> --}}
+                     
                         </div>
                         <!--end::Container-->
-                    </div>
-                    <!--end::Post-->
+                  
                 </div>
                 <!--end::Content-->
                 <!--begin::Footer-->
@@ -113,6 +112,12 @@
 {{-- Load Systemwide Drawers Here --}}
  
     <!--end::Drawers-->
+
+
+{{-- Load Systemwide Modals --}}
+
+<livewire:feature-request-modal />
+
     <!--end::Main-->
     <!--begin::Scrolltop-->
     <div id="kt_scrolltop" class="scrolltop" data-kt-scrolltop="true">
