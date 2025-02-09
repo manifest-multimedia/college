@@ -21,7 +21,7 @@
             <div class="text-center">
                 <!--begin::Link-->
                 <a class="btn btn-sm btn-success btn-color-white me-2"
-                    data-bs-target="#supportModal"
+                    data-bs-target="#kt_modal_support_request"
                     data-bs-toggle="modal"
                     href="javascript:void(0);">Request Support</a>
                 <!--end::Link-->

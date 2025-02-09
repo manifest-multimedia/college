@@ -117,6 +117,7 @@
 {{-- Load Systemwide Modals --}}
 
 <livewire:feature-request-modal />
+<livewire:support-request-modal />
 
     <!--end::Main-->
     <!--begin::Scrolltop-->

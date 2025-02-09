@@ -15,7 +15,12 @@ class FeatureRequestModal extends Component
     #[On('showFeatureRequestModal')]
     public function showModal()
     {
-        dd('Working');
+        $this->reset(['feature_title', 'feature_description']);
+    }
+
+    #[On('closeFeatureRequestModal')]
+    public function hideModal(){
+        $this->reset(['feature_title', 'feature_description']);
     }
 
     public function render()
@@ -48,6 +53,8 @@ class FeatureRequestModal extends Component
             $message->to('johnson@pnmtc.edu.gh')
                     ->subject('New Feature Request: ' . $validatedData['feature_title']);
         });
+
+        session()->flash('success', 'Congratulations! Your new feature request has been successfully sent.');
 
         // Optionally, reset the form fields after submission
         $this->reset(['feature_title', 'feature_description']);

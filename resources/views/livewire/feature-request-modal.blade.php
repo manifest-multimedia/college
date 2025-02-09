@@ -1,7 +1,8 @@
 <div>
     {{-- Do your work, then step back. --}}
 
-    <div class="modal fade" id="kt_modal_feature_request" tabindex="-1" aria-hidden="true" wire:ignore.self  data-bs-backdrop="static">
+    <div class="modal fade" id="kt_modal_feature_request" tabindex="-1" aria-hidden="true" wire:ignore.self
+        data-bs-backdrop="static">
         <!--begin::Modal dialog-->
         <div class="modal-dialog">
             <!--begin::Modal content-->
@@ -27,16 +28,25 @@
                 <!--begin::Modal body-->
                 <div class="modal-body">
 
-                  	@if($errors->any())
-							<div class="alert alert-danger alert-dismissible fade show" role="alert">
-								<ul>
-									@foreach ($errors->all() as $error)
-										<li>{{ $error }}</li>
-									@endforeach
-								</ul>
-								<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-							</div>
-						@endif
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                aria-label="Close"></button>
+                        </div>
+                    @endif
 
                     <p>Got an idea? We'd love to hear it! Let us know what features you'd like to see in the app—just
                         drop your request in the form below!
@@ -60,8 +70,8 @@
                             <label class="required fs-6 fw-semibold mb-2">Feature Description</label>
                             <!--end::Label-->
                             <!--begin::Input-->
-                            <textarea class="form-control form-control-solid" rows="5" name="feature_description" wire:model="feature_description"
-                                placeholder="Enter Feature Description"></textarea>
+                            <textarea class="form-control form-control-solid" rows="5" name="feature_description"
+                                wire:model="feature_description" placeholder="Enter Feature Description"></textarea>
                             <!--end::Input-->
                         </div>
                         <!--end::Input group-->
