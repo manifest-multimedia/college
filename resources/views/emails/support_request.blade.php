@@ -6,7 +6,7 @@
 <body>
     <h1>New Support Request Received from: {{ $user_name ?? 'N/A' }}</h1>
     <p><strong>Message:</strong></p>
-    <p>{{ $message }}</p>
+    <p>{{ $support_message }}</p>
     <p><strong>User Name:</strong> {{ $user_name ?? 'N/A' }}</p>
     <p><strong>User Email:</strong> {{ $user_email ?? 'N/A' }}</p>
 </body>

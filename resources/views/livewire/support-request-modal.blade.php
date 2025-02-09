@@ -61,8 +61,8 @@
                             <label class="required fs-6 fw-semibold mb-2">Message</label>
                             <!--end::Label-->
                             <!--begin::Input-->
-                            <textarea class="form-control form-control-solid" rows="7" name="feature_description"
-                                wire:model="feature_description" placeholder="Tell us about your challenge."></textarea>
+                            <textarea class="form-control form-control-solid" rows="7" name="message"
+                                wire:model="support_message" placeholder="Tell us about your challenge."></textarea>
                             <!--end::Input-->
                         </div>
                         <!--end::Input group-->

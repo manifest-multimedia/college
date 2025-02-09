@@ -4,19 +4,22 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+
 
 class SupportRequestModal extends Component
 {
-    public $message; 
+    public $support_message; 
 
     #[On('closeSupportModal')]
     public function hideModal(){
-        $this->reset(['message']);
+        $this->reset(['support_message']);
     }
 
     #[On('showRequestSupportModal')]
     public function showModal(){
-        $this->reset(['message']);
+        $this->reset(['support_message']);
     }
 
 
@@ -32,7 +35,7 @@ class SupportRequestModal extends Component
     public function submitRequest(){
         // Validate Request
         $validatedData = $this->validate([
-            'message' => 'required|string',
+            'support_message' => 'required|string',
         ]);
 
         // Get the logged-in user's name and email
@@ -51,7 +54,7 @@ class SupportRequestModal extends Component
         session()->flash('success', 'Congratulations! Your support request has been sent successfully.');
 
         // Optionally, reset the form fields after submission
-        $this->reset(['feature_title', 'feature_description']);
+        $this->reset(['support_message']);
 
         // Dispatch an event to close the modal
         $this->dispatch('closeFeatureRequestModal');
