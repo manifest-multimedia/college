@@ -75,7 +75,7 @@ class ExamManagement extends Component
 
         // Flash success message and redirect
         session()->flash('message', 'Exam created successfully!');
-        return redirect()->route('examcenter'); // Redirect to the list of exams
+        return redirect()->route('e'); // Redirect to the list of exams
     }
 
     public function render()
