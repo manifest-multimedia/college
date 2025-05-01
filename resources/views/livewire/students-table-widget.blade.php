@@ -1,7 +1,9 @@
 <div>
     <!-- Heading outside the card -->
-    <div class="mb-3">
-        <h3 class="text-gray-900 fw-bold">Student Information <span class="badge bg-primary rounded-pill ms-2">{{ $studentsTotal }}</span></h3>
+    <div class="mb-3 mt-20 mb-10">
+        <h1 class="text-gray-900 fw-bold">Student Information 
+            <span class="badge bg-primary rounded-pill ms-2 text-white px-3 py-2 fs-6">{{ $studentsTotal }}</span>
+        </h1>
     </div>
 
     <div class="card mb-xl-10">
@@ -18,7 +20,31 @@
                 </form>
             </div>
             
-            <div class="d-flex flex-wrap justify-content-end">
+            <!-- Program Filter -->
+            <div class="me-3 mb-3 mb-md-0">
+                <select class="form-select form-select-solid" 
+                    wire:model.live="programFilter"
+                    aria-label="Program Filter">
+                    <option value="">All Programs</option>
+                    @foreach ($programs as $program)
+                        <option value="{{ $program->id }}">{{ $program->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <!-- Cohort Filter -->
+            <div class="me-3 mb-3 mb-md-0">
+                <select class="form-select form-select-solid" 
+                    wire:model.live="cohortFilter"
+                    aria-label="Cohort Filter">
+                    <option value="">All Cohorts</option>
+                    @foreach ($cohorts as $cohort)
+                        <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="d-flex flex-wrap justify-content-end flex-grow-1">
                 <button class="btn btn-sm btn-primary me-2 mb-3 mb-md-0" wire:click="importStudents">
                 <i class="fas fa-file-import me-2"></i>Import Students
                 </button>
@@ -41,7 +67,7 @@
                         <th class="min-w-100px">Program</th>
                         <th class="min-w-100px">Cohort</th>
                         <th class="min-w-100px">Status</th>
-                        <th class="text-end min-w-100px pe-4">Actions</th>
+                        <th class="text-center min-w-100px pe-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -18,9 +18,7 @@
                   
             </div>
             <!--end::Content-->
-            <!--begin::Link-->
-            {{-- <a href="https://1.envato.market/EA4JP" class="flex-shrink-0 my-2 border-2 btn btn-lg btn-outline btn-outline-white">Purchase on Themeforest</a> --}}
-            <!--end::Link-->
+          
         </div>
     </div>
     
