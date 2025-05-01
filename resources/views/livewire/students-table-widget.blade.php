@@ -1,5 +1,5 @@
 <div>
-    <!-- Heading outside the card -->
+    <!-- Heading outside the card with badge -->
     <div class="mb-3 mt-20 mb-10">
         <h1 class="text-gray-900 fw-bold">Student Information 
             <span class="badge bg-primary rounded-pill ms-2 text-white px-3 py-2 fs-6">{{ $studentsTotal }}</span>
@@ -7,54 +7,56 @@
     </div>
 
     <div class="card mb-xl-10">
-        <div class="border-0 card-header d-flex align-items-center justify-content-between w-100">
-            
-            <!-- Toolbar (right aligned) -->
-            <div class="card-toolbar d-flex align-items-center flex-wrap w-100">
-            <!-- Search -->
-            <div class="position-relative me-3 mb-3 mb-md-0 flex-grow-1">
-                <form class="w-100 position-relative" autocomplete="off">
-                <i class="fas fa-search fs-4 position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" class="form-control form-control-solid ps-8" placeholder="Search students..." 
-                       wire:model.debounce.500ms="search" style="min-width: 250px;">
-                </form>
-            </div>
-            
-            <!-- Program Filter -->
-            <div class="me-3 mb-3 mb-md-0">
-                <select class="form-select form-select-solid" 
-                    wire:model.live="programFilter"
-                    aria-label="Program Filter">
-                    <option value="">All Programs</option>
-                    @foreach ($programs as $program)
-                        <option value="{{ $program->id }}">{{ $program->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <!-- Cohort Filter -->
-            <div class="me-3 mb-3 mb-md-0">
-                <select class="form-select form-select-solid" 
-                    wire:model.live="cohortFilter"
-                    aria-label="Cohort Filter">
-                    <option value="">All Cohorts</option>
-                    @foreach ($cohorts as $cohort)
-                        <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <div class="d-flex flex-wrap justify-content-end flex-grow-1">
-                <button class="btn btn-sm btn-primary me-2 mb-3 mb-md-0" wire:click="importStudents">
-                <i class="fas fa-file-import me-2"></i>Import Students
-                </button>
-                <button class="btn btn-sm btn-light-primary me-2 mb-3 mb-md-0" wire:click="exportStudents">
-                <i class="fas fa-file-export me-2"></i>Export Students
-                </button>
-                <a href="/generate" class="btn btn-sm btn-light-primary mb-3 mb-md-0">
-                <i class="fas fa-id-card me-2"></i>Generate IDs
-                </a>
-            </div>
+        <!-- Filter toolbar -->
+        <div class="card-header border-0 py-3">
+            <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+                <!-- Search box -->
+                <div class="position-relative me-md-3 flex-grow-1" style="max-width: 300px;">
+                    <span class="position-absolute top-50 translate-middle-y ms-3 text-muted">
+                        <i class="fas fa-search fs-5"></i>
+                    </span>
+                    <input type="text" class="form-control form-control-sm form-control-solid ps-8" 
+                           placeholder="Search students..." 
+                           wire:model.debounce.500ms="search">
+                </div>
+                
+                <!-- Program Filter -->
+                <div class="me-md-3" style="min-width: 170px;">
+                    <select class="form-select form-select-sm form-select-solid" 
+                        wire:model.live="programFilter">
+                        <option value="">All Programs</option>
+                        @foreach ($programs as $program)
+                            <option value="{{ $program->id }}">{{ $program->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <!-- Cohort Filter -->
+                <div class="me-md-3" style="min-width: 170px;">
+                    <select class="form-select form-select-sm form-select-solid" 
+                        wire:model.live="cohortFilter">
+                        <option value="">All Cohorts</option>
+                        @foreach ($cohorts as $cohort)
+                            <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <!-- Action buttons - using flex-fill on mobile to space them out -->
+                <div class="d-flex gap-2 flex-md-nowrap ms-auto">
+                    <button class="btn btn-sm btn-primary px-3 d-flex align-items-center" wire:click="importStudents">
+                        <i class="fas fa-file-import me-2"></i>
+                        Import
+                    </button>
+                    <button class="btn btn-sm btn-light-primary px-3 d-flex align-items-center" wire:click="exportStudents">
+                        <i class="fas fa-file-export me-2"></i>
+                        Export
+                    </button>
+                    <a href="/generate" class="btn btn-sm btn-light-primary px-3 d-flex align-items-center">
+                        <i class="fas fa-id-card me-2"></i>
+                        Generate IDs
+                    </a>
+                </div>
             </div>
         </div>
 
