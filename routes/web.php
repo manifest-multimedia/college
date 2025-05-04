@@ -158,6 +158,7 @@ Route::middleware([
         Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('election.verify');
         Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('election.vote');
         Route::get('/{election}/thank-you/{sessionId?}', \App\Livewire\ElectionThankYou::class)->name('election.thank-you');
+        Route::get('/{election}/expired', \App\Livewire\ElectionExpired::class)->name('election.expired');
     });
 
     // Public Election Status Route (accessible to all authenticated users)

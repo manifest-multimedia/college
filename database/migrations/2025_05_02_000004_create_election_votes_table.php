@@ -19,6 +19,8 @@ return new class extends Migration
                 $table->foreignId('election_candidate_id')->constrained()->onDelete('cascade');
                 $table->string('student_id'); // Student ID from the existing system
                 $table->string('session_id')->nullable(); // For vote verification
+                $table->string('ip_address')->nullable(); // IP address of the voter
+                $table->text('user_agent')->nullable(); // Browser/device information
                 $table->timestamp('verified_at')->nullable();
                 $table->timestamps();
 
