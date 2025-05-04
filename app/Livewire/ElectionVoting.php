@@ -26,10 +26,10 @@ class ElectionVoting extends Component
     
     protected $listeners = ['timeExpired' => 'handleTimeExpired'];
     
-    public function mount(Election $election, $session)
+    public function mount(Election $election, $sessionId = null)
     {
         $this->election = $election;
-        $this->sessionId = $session;
+        $this->sessionId = $sessionId;
         
         // Validate session
         $votingSession = ElectionVotingSession::where('session_id', $this->sessionId)
@@ -37,7 +37,7 @@ class ElectionVoting extends Component
             ->first();
             
         if (!$votingSession || $votingSession->vote_submitted || $votingSession->hasExpired()) {
-            return redirect()->route('election.verification', ['election' => $this->election->id])
+            return redirect()->route('election.verify', ['election' => $this->election->id])
                 ->with('error', 'Your voting session has expired or is invalid. Please verify again.');
         }
         

@@ -24,6 +24,7 @@ class ElectionCandidateManager extends Component
     public $manifesto;
     public $is_active = true;
     public $display_order = 0;
+    public $showForm = false; // Add this property to track form visibility
 
     public $existingImage = null;
     public $existingManifesto = null;
@@ -59,6 +60,7 @@ class ElectionCandidateManager extends Component
         $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto']);
         $this->is_active = true;
         $this->display_order = $this->candidates->count();
+        $this->showForm = true; // Show the form modal
     }
 
     public function edit(ElectionCandidate $candidate)
@@ -72,6 +74,7 @@ class ElectionCandidateManager extends Component
         $this->display_order = $candidate->display_order;
         $this->existingImage = $candidate->image_path;
         $this->existingManifesto = $candidate->manifesto_path;
+        $this->showForm = true; // Show the form modal
     }
 
     public function save()
@@ -146,7 +149,7 @@ class ElectionCandidateManager extends Component
             }
             
             DB::commit();
-            $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto']);
+            $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto', 'showForm']);
             $this->loadCandidates();
             
             $this->dispatch('alert', [
@@ -238,7 +241,7 @@ class ElectionCandidateManager extends Component
 
     public function cancelEdit()
     {
-        $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto']);
+        $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto', 'showForm']);
     }
 
     public function toggleActiveStatus(ElectionCandidate $candidate)

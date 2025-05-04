@@ -22,6 +22,8 @@ return new class extends Migration
                 $table->text('manifesto')->nullable();
                 $table->string('photo')->nullable();
                 $table->boolean('is_approved')->default(false);
+                $table->boolean('is_active')->default(true); // Added is_active column
+                $table->integer('display_order')->default(0); // Added display_order column for sorting
                 $table->timestamps();
                 
                 // Ensure a student can only be a candidate once per position

@@ -34,7 +34,7 @@
                         </div>
                     @endif
                     
-                    <form wire:submit="verify">
+                    <form wire:submit.prevent="verify">
                         <div class="mb-4">
                             <label for="student_id" class="form-label">Student ID</label>
                             <div class="input-group">
@@ -103,4 +103,18 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            @this.on('redirect', (event) => {
+                window.location.href = event.url;
+            });
+
+            @this.on('redirectToUrl', (event) => {
+                setTimeout(() => {
+                    window.location.href = event.url;
+                }, 100);
+            });
+        });
+    </script>
 </div>

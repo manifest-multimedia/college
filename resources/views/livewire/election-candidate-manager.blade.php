@@ -13,8 +13,10 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
+                            <h1 class="card-title">
                             <i class="fas fa-info-circle me-1"></i>
                             Position Details
+                            </h1>
                         </div>
                         <a href="{{ route('election.positions', $position->election) }}" class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-arrow-left"></i> Back to Positions
@@ -31,8 +33,10 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
+                        <h1 class="card-title">
                         <i class="fas fa-plus-circle me-1"></i>
                         Add New Candidate
+                        </h1>
                     </div>
                     <div class="card-body">
                         <button wire:click="create" class="btn btn-success">
@@ -45,8 +49,10 @@
         
         <div class="card mb-4">
             <div class="card-header">
-                <i class="fas fa-users me-1"></i>
-                Candidates
+                <h1 class="card-title">
+                    <i class="fas fa-users me-1"></i>
+                    Candidates
+                </h1>
             </div>
             <div class="card-body">
                 @if(count($candidates) > 0)
@@ -105,7 +111,7 @@
     </div>
     
     <!-- Create/Edit Candidate Modal -->
-    @if($isEditing !== false)
+    @if($showForm)
         <div class="modal fade show" tabindex="-1" style="display: block;">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
