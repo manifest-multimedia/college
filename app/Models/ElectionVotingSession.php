@@ -79,6 +79,12 @@ class ElectionVotingSession extends Model
             return 0;
         }
 
-        return max(0, $this->expires_at->diffInSeconds(now()));
+        // Calculate the time remaining by getting the difference from now to the expiry time
+        // Use timestamp comparison to ensure correct direction
+        $now = now();
+        $secondsRemaining = $this->expires_at->timestamp - $now->timestamp;
+        
+        // Ensure we don't return negative values
+        return max(0, $secondsRemaining);
     }
 }
