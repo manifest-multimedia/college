@@ -19,11 +19,15 @@ return new class extends Migration
                 // Create foreign key to students table the student's table id uses increments
                 $table->unsignedInteger('student_id')->nullable();
                 $table->foreign('student_id')->references('id')->on('students')->onDelete('cascade');
-                $table->text('manifesto')->nullable();
-                $table->string('photo')->nullable();
+                $table->string('name')->nullable(); // Candidate name (will be derived from student if linked)
+                $table->text('bio')->nullable(); // Candidate biography/description
+                $table->text('manifesto')->nullable(); // Text version of the manifesto
+                $table->string('manifesto_path')->nullable(); // File path for uploaded manifesto PDF
+                $table->string('photo')->nullable(); // Legacy field for backward compatibility
+                $table->string('image_path')->nullable(); // File path for uploaded image
                 $table->boolean('is_approved')->default(false);
-                $table->boolean('is_active')->default(true); // Added is_active column
-                $table->integer('display_order')->default(0); // Added display_order column for sorting
+                $table->boolean('is_active')->default(true);
+                $table->integer('display_order')->default(0);
                 $table->timestamps();
                 
                 // Ensure a student can only be a candidate once per position

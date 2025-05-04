@@ -206,14 +206,8 @@ class ElectionVoterVerification extends Component
             'url' => $url
         ]);
 
-        // Try multiple redirect approaches to ensure one works
-        $this->dispatch('redirect', ['url' => $url]);
-        
-        // Also set a JavaScript redirect as a fallback
-        $this->dispatch('redirectToUrl', ['url' => $url]);
-        
-        // Return a native redirect as well
-        return $this->redirect($url, navigate: true);
+        // Use the simpler direct redirect for better reliability
+        return redirect()->to($url);
     }
     
     public function render()

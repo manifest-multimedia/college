@@ -120,7 +120,7 @@
                         <button wire:click="cancelEdit" type="button" class="btn-close"></button>
                     </div>
                     <div class="modal-body">
-                        <form wire:submit="save">
+                        <form wire:submit.prevent="save">
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="name" class="form-label">Name</label>

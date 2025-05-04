@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class ElectionCandidateManager extends Component
 {
@@ -79,85 +80,158 @@ class ElectionCandidateManager extends Component
 
     public function save()
     {
-        $this->validate();
+        Log::info('Starting candidate save process', [
+            'isEditing' => $this->isEditing,
+            'position_id' => $this->position->id, 
+            'candidateId' => $this->candidateId ?? 'new',
+            'name' => $this->name,
+            'has_image' => !empty($this->image),
+            'has_manifesto' => !empty($this->manifesto)
+        ]);
         
-        DB::beginTransaction();
         try {
-            $data = [
-                'name' => $this->name,
-                'bio' => $this->bio,
-                'is_active' => $this->is_active,
-                'display_order' => $this->display_order,
-            ];
+            Log::info('Validating candidate data');
+            $validated = $this->validate();
+            Log::info('Validation passed', ['rules' => $this->rules]);
             
-            // Handle image upload
-            if ($this->image) {
-                $imagePath = $this->image->store('election-candidates', 'public');
-                $data['image_path'] = $imagePath;
+            DB::beginTransaction();
+            Log::info('Database transaction started');
+            
+            try {
+                $data = [
+                    'name' => $this->name,
+                    'bio' => $this->bio,
+                    'is_active' => $this->is_active,
+                    'display_order' => $this->display_order,
+                ];
+                Log::info('Prepared base candidate data', $data);
                 
-                // Remove old image if it exists and we're editing
-                if ($this->isEditing && $this->existingImage) {
-                    Storage::disk('public')->delete($this->existingImage);
+                // Handle image upload
+                if ($this->image) {
+                    Log::info('Processing image upload', [
+                        'originalName' => $this->image->getClientOriginalName(),
+                        'size' => $this->image->getSize(),
+                        'mimeType' => $this->image->getMimeType()
+                    ]);
+                    
+                    try {
+                        $imagePath = $this->image->store('election-candidates', 'public');
+                        Log::info('Image uploaded successfully', ['path' => $imagePath]);
+                        $data['image_path'] = $imagePath;
+                        
+                        // Remove old image if it exists and we're editing
+                        if ($this->isEditing && $this->existingImage) {
+                            Log::info('Removing old image', ['path' => $this->existingImage]);
+                            Storage::disk('public')->delete($this->existingImage);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error uploading image', ['error' => $e->getMessage()]);
+                        throw $e;
+                    }
                 }
-            }
-            
-            // Handle manifesto upload
-            if ($this->manifesto) {
-                $manifestoPath = $this->manifesto->store('election-manifestos', 'public');
-                $data['manifesto_path'] = $manifestoPath;
                 
-                // Remove old manifesto if it exists and we're editing
-                if ($this->isEditing && $this->existingManifesto) {
-                    Storage::disk('public')->delete($this->existingManifesto);
+                // Handle manifesto upload
+                if ($this->manifesto) {
+                    Log::info('Processing manifesto upload', [
+                        'originalName' => $this->manifesto->getClientOriginalName(),
+                        'size' => $this->manifesto->getSize(),
+                        'mimeType' => $this->manifesto->getMimeType()
+                    ]);
+                    
+                    try {
+                        $manifestoPath = $this->manifesto->store('election-manifestos', 'public');
+                        Log::info('Manifesto uploaded successfully', ['path' => $manifestoPath]);
+                        $data['manifesto_path'] = $manifestoPath;
+                        
+                        // Remove old manifesto if it exists and we're editing
+                        if ($this->isEditing && $this->existingManifesto) {
+                            Log::info('Removing old manifesto', ['path' => $this->existingManifesto]);
+                            Storage::disk('public')->delete($this->existingManifesto);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Error uploading manifesto', ['error' => $e->getMessage()]);
+                        throw $e;
+                    }
                 }
+                
+                if ($this->isEditing) {
+                    Log::info('Updating existing candidate', ['id' => $this->candidateId]);
+                    $candidate = ElectionCandidate::findOrFail($this->candidateId);
+                    $candidate->update($data);
+                    
+                    \App\Models\ElectionAuditLog::log(
+                        $this->position->election,
+                        'admin',
+                        auth()->id(),
+                        'candidate_updated',
+                        'Updated candidate: ' . $candidate->name,
+                        [
+                            'position_id' => $this->position->id,
+                            'candidate_id' => $candidate->id
+                        ]
+                    );
+                    
+                    $message = 'Candidate updated successfully!';
+                    Log::info('Candidate updated successfully', ['id' => $candidate->id]);
+                } else {
+                    Log::info('Creating new candidate for position', ['position_id' => $this->position->id]);
+                    $data['election_id'] = $this->position->election_id; // Add election_id
+                    $data['election_position_id'] = $this->position->id;
+                    
+                    Log::info('Final candidate data before creation', $data);
+                    $candidate = ElectionCandidate::create($data);
+                    
+                    \App\Models\ElectionAuditLog::log(
+                        $this->position->election,
+                        'admin',
+                        auth()->id(),
+                        'candidate_created',
+                        'Created candidate: ' . $candidate->name,
+                        [
+                            'position_id' => $this->position->id,
+                            'candidate_id' => $candidate->id
+                        ]
+                    );
+                    
+                    $message = 'Candidate created successfully!';
+                    Log::info('New candidate created successfully', ['id' => $candidate->id]);
+                }
+                
+                DB::commit();
+                Log::info('Database transaction committed');
+                
+                $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto', 'showForm']);
+                $this->loadCandidates();
+                
+                $this->dispatch('alert', [
+                    'type' => 'success',
+                    'message' => $message
+                ]);
+                
+                Log::info('Candidate save process completed successfully');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Error during candidate save/update transaction', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                $this->dispatch('alert', [
+                    'type' => 'error',
+                    'message' => 'An error occurred: ' . $e->getMessage()
+                ]);
             }
-            
-            if ($this->isEditing) {
-                $candidate = ElectionCandidate::findOrFail($this->candidateId);
-                $candidate->update($data);
-                
-                \App\Models\ElectionAuditLog::log(
-                    $this->position->election,
-                    'admin',
-                    auth()->id(),
-                    'candidate_updated',
-                    'Updated candidate: ' . $candidate->name,
-                    [
-                        'position_id' => $this->position->id,
-                        'candidate_id' => $candidate->id
-                    ]
-                );
-                
-                $message = 'Candidate updated successfully!';
-            } else {
-                $data['election_position_id'] = $this->position->id;
-                $candidate = ElectionCandidate::create($data);
-                
-                \App\Models\ElectionAuditLog::log(
-                    $this->position->election,
-                    'admin',
-                    auth()->id(),
-                    'candidate_created',
-                    'Created candidate: ' . $candidate->name,
-                    [
-                        'position_id' => $this->position->id,
-                        'candidate_id' => $candidate->id
-                    ]
-                );
-                
-                $message = 'Candidate created successfully!';
-            }
-            
-            DB::commit();
-            $this->reset(['name', 'bio', 'image', 'manifesto', 'isEditing', 'candidateId', 'existingImage', 'existingManifesto', 'showForm']);
-            $this->loadCandidates();
-            
-            $this->dispatch('alert', [
-                'type' => 'success',
-                'message' => $message
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Candidate validation failed', [
+                'errors' => $e->errors(),
             ]);
+            throw $e; // Re-throw to let Livewire handle displaying validation errors
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('Unexpected error during candidate save process', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             $this->dispatch('alert', [
                 'type' => 'error',
                 'message' => 'An error occurred: ' . $e->getMessage()

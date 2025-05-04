@@ -13,13 +13,18 @@ class ElectionCandidate extends Model
     use HasFactory;
 
     protected $fillable = [
+        'election_id',
         'election_position_id',
         'student_id',
         'name',
         'photo',
         'bio',
         'manifesto',
+        'manifesto_path',
+        'image_path',
+        'is_approved',
         'is_active',
+        'display_order',
     ];
 
     protected $casts = [
