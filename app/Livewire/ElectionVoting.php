@@ -136,8 +136,11 @@ class ElectionVoting extends Component
             $this->voteSubmitted = true;
             $this->confirmingSubmission = false;
             
-            // After short delay, redirect to thank you page
+            // Show thank you message briefly, then redirect
             $this->dispatch('voteSubmitted');
+            
+            // Queue a redirect after a short delay to allow the thank you message to be displayed
+            return $this->redirect(route('election.thank-you', ['election' => $this->election->id, 'sessionId' => $this->sessionId]), navigate: true);
             
         } catch (\Exception $e) {
             DB::rollBack();

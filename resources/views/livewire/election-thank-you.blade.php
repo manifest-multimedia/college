@@ -3,9 +3,9 @@
         <div class="col-md-8">
             <div class="card border-0 shadow-lg">
                 <div class="card-body p-5 text-center">
-                    <div class="mb-4">
-                        <div class="d-inline-block rounded-circle bg-success d-flex align-items-center justify-content-center text-white mb-4" style="width: 100px; height: 100px;">
-                            <i class="fas fa-check-circle fa-4x"></i>
+                    <div class="mb-4 d-flex justify-content-center">
+                        <div class="d-inline-block rounded-circle bg-success d-flex align-items-center justify-content-center text-white" style="width: 100px; height: 100px;">
+                            <i class="fas fa-check-circle fa-5x text-white" style="font-size:50px"></i>
                         </div>
                     </div>
                     
@@ -39,9 +39,9 @@
             
             <div class="text-center mt-4">
                 <p>Have feedback about the voting experience?</p>
-                <a href="{{ route('contact') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-comment me-1"></i>
-                    Contact Us
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-home me-1"></i>
+                    Return to Dashboard
                 </a>
             </div>
         </div>
