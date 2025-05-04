@@ -12,19 +12,12 @@ class Semester extends Model
         'name',
         'slug',
         'academic_year_id',
-        'start_date',
-        'end_date',
-        'registration_start',
-        'registration_end',
-        'status',
+        'is_current',
         'description'
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'registration_start' => 'date',
-        'registration_end' => 'date',
+        'is_current' => 'boolean',
     ];
 
     /**
@@ -44,20 +37,11 @@ class Semester extends Model
     }
 
     /**
-     * Check if registration is currently open
-     */
-    public function isRegistrationOpen(): bool
-    {
-        $now = now();
-        return $now->between($this->registration_start, $this->registration_end) && $this->status === 'active';
-    }
-
-    /**
      * Check if this semester is active
      */
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->is_current;
     }
 
     /**
@@ -65,8 +49,7 @@ class Semester extends Model
      */
     public function isCurrent(): bool
     {
-        $now = now();
-        return $now->between($this->start_date, $this->end_date) && $this->isActive();
+        return $this->is_current;
     }
 
     /**
@@ -74,7 +57,7 @@ class Semester extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('is_current', true);
     }
 
     /**
@@ -82,20 +65,6 @@ class Semester extends Model
      */
     public function scopeCurrent($query)
     {
-        $now = now();
-        return $query->where('status', 'active')
-            ->where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now);
-    }
-
-    /**
-     * Scope for semesters with open registration
-     */
-    public function scopeOpenRegistration($query)
-    {
-        $now = now();
-        return $query->where('status', 'active')
-            ->where('registration_start', '<=', $now)
-            ->where('registration_end', '>=', $now);
+        return $query->where('is_current', true);
     }
 }

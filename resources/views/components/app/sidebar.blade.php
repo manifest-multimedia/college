@@ -80,37 +80,38 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <div class="menu-sub menu-sub-accordion">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academic.programs') }}">
+                        <a class="menu-link" href="{{ route('academics.dashboard') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Programs</span>
+                            <span class="menu-title">Academics Dashboard</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academic.courses') }}">
+                        <a class="menu-link" href="{{ route('academics.settings.index') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Courses</span>
+                            <span class="menu-title">Set Current Academic Year</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('academics.academic-years.create') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Create New Academic Year</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academic.departments') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Departments</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academic.faculties') }}">
+                        <a class="menu-link" href="{{ url('academic.faculties') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>

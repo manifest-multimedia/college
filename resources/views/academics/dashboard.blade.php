@@ -22,10 +22,14 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h5 class="mb-1">Current Academic Settings</h5>
-                                            @if(App\Models\AcademicYear::getCurrent() && App\Models\Semester::getCurrent())
+                                            @php
+                                                $currentYear = App\Models\AcademicYear::where('is_current', true)->first();
+                                                $currentSemester = App\Models\Semester::current()->first();
+                                            @endphp
+                                            @if($currentYear && $currentSemester)
                                                 <p class="mb-0">
-                                                    <strong>Academic Year:</strong> {{ App\Models\AcademicYear::getCurrent()->name }} | 
-                                                    <strong>Semester:</strong> {{ App\Models\Semester::getCurrent()->name }}
+                                                    <strong>Academic Year:</strong> {{ $currentYear->name }} | 
+                                                    <strong>Semester:</strong> {{ $currentSemester->name }}
                                                 </p>
                                             @else
                                                 <p class="mb-0">No current academic year or semester set. Please update settings.</p>

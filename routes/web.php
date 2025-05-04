@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeEmail;
 use Illuminate\Support\Facades\Request;
 use App\Models\Exam;
-
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\FileUploadController;
 use App\Livewire\ExamEdit;
 
@@ -236,28 +236,7 @@ Route::middleware([
         })->name('finance.exam.ticket.print');
     });
     
-    /*
-    |--------------------------------------------------------------------------
-    | Academic Module Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware(['auth:sanctum'])->prefix('academic')->group(function () {
-        Route::get('/programs', function () {
-            return view('academic.programs');
-        })->name('academic.programs');
-        
-        Route::get('/courses', function () {
-            return view('academic.courses');
-        })->name('academic.courses');
-        
-        Route::get('/departments', function () {
-            return view('academic.departments');
-        })->name('academic.departments');
-        
-        Route::get('/faculties', function () {
-            return view('academic.faculties');
-        })->name('academic.faculties');
-    });
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -318,17 +297,21 @@ Route::middleware([
 
     /*
     |--------------------------------------------------------------------------
-    | Academics Module Routes
+    | Academics Module Routes 'permission:manage-academics'
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'permission:manage-academics'])->prefix('academics')->name('academics.')->group(function () {
+    Route::middleware(['auth:sanctum'])->prefix('academics')->name('academics.')
+    ->group(function () {
+
         // Dashboard
         Route::get('/', function () {
             return view('academics.dashboard');
         })->name('dashboard');
+
         
         // Settings
         Route::get('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'index'])->name('settings.index');
+
         Route::post('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'update'])->name('settings.update');
         
         // Academic Years
@@ -363,39 +346,6 @@ Route::middleware([
         })->name('migrate-year-data');
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Academic Module Routes (for sidebar navigation)
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware(['auth'])->prefix('academic')->name('academic.')->group(function () {
-        // Programs
-        Route::get('/programs', function () {
-            return view('components.dashboard.default', [
-                'content' => 'academic.programs'
-            ]);
-        })->name('programs');
-
-        // Courses
-        Route::get('/courses', function () {
-            return view('components.dashboard.default', [
-                'content' => 'academic.courses'
-            ]);
-        })->name('courses');
-
-        // Departments
-        Route::get('/departments', function () {
-            return view('components.dashboard.default', [
-                'content' => 'academic.departments'
-            ]);
-        })->name('departments');
-
-        // Faculties
-        Route::get('/faculties', function () {
-            return view('components.dashboard.default', [
-                'content' => 'academic.faculties'
-            ]);
-        })->name('faculties');
-    });
+   
 
 });
