@@ -189,11 +189,13 @@ Route::middleware([
         })->name('bill.print');
         
         // Exam Clearance Routes
-        Route::get('/exam-clearance', App\Livewire\Finance\ExamClearanceManager::class)
-            ->name('finance.exam.clearance');
+        Route::get('/exam-clearance', function () {
+            return view('finance.exam-clearance');
+        })->name('finance.exam.clearance');
         
-        Route::get('/exam-tickets/{clearanceId}', App\Livewire\Finance\ExamEntryTicketManager::class)
-            ->name('finance.exam.tickets');
+        Route::get('/exam-tickets/{clearanceId}', function ($clearanceId) {
+            return view('finance.exam-tickets', ['clearanceId' => $clearanceId]);
+        })->name('finance.exam.tickets');
         
         Route::get('/ticket/print/{ticketId}', function ($ticketId) {
             return view('finance.ticket-print', ['ticketId' => $ticketId]);
@@ -205,8 +207,9 @@ Route::middleware([
         })->name('finance.exam.scanner');
         
         // Course Registration
-        Route::get('/course-registration/{studentId?}', App\Livewire\Finance\CourseRegistrationManager::class)
-            ->name('finance.course.registration');
+        Route::get('/course-registration/{studentId?}', function ($studentId = null) {
+            return view('finance.course-registration', ['studentId' => $studentId]);
+        })->name('finance.course.registration');
     });
 
 });

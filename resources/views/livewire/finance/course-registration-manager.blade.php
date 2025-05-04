@@ -16,7 +16,7 @@
                         <select wire:model.live="studentId" class="form-control @error('studentId') is-invalid @enderror">
                             <option value="">-- Select Student --</option>
                             <!-- Admin can select a student, students will see their own ID pre-selected -->
-                            @if(auth()->user()->hasRole('admin'))
+                            {{-- @if(auth()->user()->hasRole('admin'))
                                 @foreach(\App\Models\Student::orderBy('last_name')->get() as $s)
                                     <option value="{{ $s->id }}">{{ $s->student_id }} - {{ $s->full_name }}</option>
                                 @endforeach
@@ -24,7 +24,7 @@
                                 <option value="{{ auth()->user()->student->id }}">
                                     {{ auth()->user()->student->student_id }} - {{ auth()->user()->student->full_name }}
                                 </option>
-                            @endif
+                            @endif --}}
                         </select>
                         @error('studentId')
                             <div class="invalid-feedback">{{ $message }}</div>

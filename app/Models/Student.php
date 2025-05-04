@@ -61,11 +61,15 @@ class Student extends Model
         // Add your eligibility criteria here
     }
 
+    /**
+     * Get the user associated with this student
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function user()
     {
-        return $this->hasOne(User::class, 'email', 'email');
+        return $this->belongsTo(User::class);
     }
-
 
     public function createUser()
     {

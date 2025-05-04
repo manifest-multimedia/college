@@ -146,8 +146,18 @@ class ExamClearanceManager extends Component
     
     public function getClearedStudentsProperty()
     {
-        $clearanceManager = new ExamClearanceService();
-        return $clearanceManager->getClearedStudents($this->academicYearId, $this->semesterId, $this->examTypeId);
+        // Only attempt to get cleared students if all required IDs are valid
+        if ($this->academicYearId && $this->semesterId && $this->examTypeId) {
+            $clearanceManager = new ExamClearanceService();
+            return $clearanceManager->getClearedStudents(
+                (int)$this->academicYearId, 
+                (int)$this->semesterId, 
+                (int)$this->examTypeId
+            );
+        }
+        
+        // Return an empty collection if any required ID is missing
+        return collect();
     }
     
     public function render()
@@ -158,8 +168,6 @@ class ExamClearanceManager extends Component
             'semesters' => $this->semesters,
             'examTypes' => $this->examTypes,
             'clearedStudents' => $this->clearedStudents
-        ])
-        ->extends('components.dashboard.default')
-        ->section('content');
+        ]);
     }
 }

@@ -39,11 +39,21 @@ class CourseRegistrationManager extends Component
     
     public function mount($studentId = null)
     {
-        $this->studentId = $studentId ?? Auth::user()->student->id ?? null;
+        // Get student ID either from parameter, or try to find from authenticated user
+        if (!$studentId && Auth::check()) {
+            // Find student associated with current user, if any
+            $student = Student::where('user_id', Auth::id())->first();
+            if ($student) {
+                $studentId = $student->id;
+            }
+        }
+        
+        $this->studentId = $studentId;
         
         // Set defaults for academic year and semester
         $this->academicYearId = AcademicYear::orderBy('year', 'desc')->first()?->id;
-        $this->semesterId = Semester::orderBy('id', 'desc')->first()?->id;
+        $this->semesterId = Semester::where('is_current', true)->first()?->id ?? 
+                           Semester::orderBy('id', 'desc')->first()?->id;
         
         if ($this->studentId) {
             $this->loadStudent();
@@ -204,8 +214,6 @@ class CourseRegistrationManager extends Component
             'registeredCourses' => $this->registeredCourses,
             'academicYears' => $this->academicYears,
             'semesters' => $this->semesters,
-        ])
-        ->extends('components.dashboard.default')
-        ->section('content');
+        ]);
     }
 }
