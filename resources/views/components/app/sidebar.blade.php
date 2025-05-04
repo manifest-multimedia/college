@@ -88,27 +88,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academics.settings.index') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Set Current Academic Year</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
+                   
                     
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academics.academic-years.create') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Create New Academic Year</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
+                    
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link" href="{{ url('academic.faculties') }}">
