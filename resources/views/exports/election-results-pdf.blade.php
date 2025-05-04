@@ -6,228 +6,173 @@
     <title>{{ $election->name }} - Results</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             line-height: 1.6;
             color: #333;
             margin: 0;
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
             padding: 20px;
         }
-        
         .header {
             text-align: center;
             margin-bottom: 30px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #ddd;
-            padding-bottom: 20px;
         }
-        
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
+        .election-info {
+            margin-bottom: 20px;
         }
-        
-        .subtitle {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 10px;
+        .election-info table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        
-        .date {
-            font-size: 14px;
-            color: #888;
+        .election-info td {
+            padding: 5px;
         }
-        
         .summary {
-            margin-bottom: 30px;
-            background-color: #f9f9f9;
+            margin: 20px 0;
             padding: 15px;
+            background-color: #f8f9fa;
             border-radius: 5px;
         }
-        
-        .summary-grid {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-        
-        .summary-box {
-            width: 22%;
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #fff;
-        }
-        
-        .summary-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .summary-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-        
         .position {
             margin-bottom: 30px;
+            page-break-inside: avoid;
         }
-        
-        .position-title {
-            font-size: 18px;
-            font-weight: bold;
+        .position-header {
+            background-color: #f0f0f0;
+            padding: 8px;
             margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ddd;
-            color: #333;
         }
-        
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        
-        table th, table td {
-            padding: 10px;
+        th, td {
+            padding: 8px;
             text-align: left;
-            border: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
         }
-        
-        table th {
+        th {
             background-color: #f5f5f5;
-            font-weight: bold;
         }
-        
-        .footer {
-            text-align: center;
-            margin-top: 50px;
+        .votes-bar {
+            height: 20px;
+            background-color: #007bff;
+            display: inline-block;
+        }
+        .winner {
+            background-color: #28a745;
+            color: white;
+            padding: 3px 6px;
+            border-radius: 3px;
             font-size: 12px;
-            color: #888;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
         }
-        
-        .progress {
-            width: 80%;
-            height: 10px;
-            background-color: #eee;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background-color: #4285f4;
-        }
-        
-        .progress-winner {
-            background-color: #0f9d58;
-        }
-        
-        .percentage {
-            float: right;
-            width: 15%;
-            text-align: right;
-        }
-        
-        .rank-1 {
-            color: #f1c40f;
-            font-weight: bold;
+        .page-footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="title">{{ $election->name }} - Election Results</div>
-            <div class="subtitle">{{ $election->description }}</div>
-            <div class="date">
-                Election Period: {{ $election->start_time->format('M d, Y h:i A') }} to {{ $election->end_time->format('M d, Y h:i A') }}<br>
-                Report Generated: {{ now()->format('M d, Y h:i A') }}
-            </div>
-        </div>
-        
-        <div class="summary">
-            <div class="summary-grid">
-                <div class="summary-box">
-                    <div class="summary-label">Total Voters</div>
-                    <div class="summary-value">{{ $totalVoters }}</div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-label">Voter Turnout</div>
-                    <div class="summary-value">{{ $voterTurnout }}%</div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-label">Total Votes</div>
-                    <div class="summary-value">{{ $totalVotes }}</div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-label">Positions</div>
-                    <div class="summary-value">{{ count($positions) }}</div>
-                </div>
-            </div>
-        </div>
-        
-        @foreach($positions as $position)
-            <div class="position">
-                <div class="position-title">{{ $position->name }}</div>
+    <div class="header">
+        <h1>Election Results</h1>
+        <h2>{{ $election->name }}</h2>
+    </div>
+    
+    <div class="election-info">
+        <table>
+            <tr>
+                <td width="25%"><strong>Description:</strong></td>
+                <td width="75%">{{ $election->description }}</td>
+            </tr>
+            <tr>
+                <td><strong>Election Period:</strong></td>
+                <td>{{ $election->start_time->format('M d, Y h:i A') }} to {{ $election->end_time->format('M d, Y h:i A') }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="summary">
+        <table>
+            <tr>
+                <td width="50%"><strong>Total Votes Cast:</strong> {{ $totalVotes }}</td>
+                <td width="50%"><strong>Total Voters:</strong> {{ $totalVoters }}</td>
+            </tr>
+            <tr>
+                <td><strong>Voter Turnout:</strong> {{ round(($totalVoters / max(1, \App\Models\Student::count()) * 100), 1) }}%</td>
+                <td><strong>Report Generated:</strong> {{ $exportDate }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    @foreach($positions as $position)
+        <div class="position">
+            <div class="position-header">
+                <h3>{{ $position->name }}</h3>
                 <p>{{ $position->description }}</p>
-                
-                @php
-                    $totalPositionVotes = $position->candidates->sum('votes_count');
-                    $rank = 1;
-                @endphp
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th width="5%">#</th>
-                            <th width="40%">Candidate</th>
-                            <th width="10%">Votes</th>
-                            <th width="45%">Percentage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($position->candidates->sortByDesc('votes_count') as $candidate)
-                            <tr>
-                                <td class="{{ $rank === 1 ? 'rank-1' : '' }}">{{ $rank }}</td>
-                                <td>{{ $candidate->name }}</td>
-                                <td>{{ $candidate->votes_count }}</td>
-                                <td>
-                                    @php
-                                        $percentage = $totalPositionVotes > 0 
-                                            ? round(($candidate->votes_count / $totalPositionVotes) * 100, 1) 
-                                            : 0;
-                                    @endphp
-                                    
-                                    <div class="progress">
-                                        <div class="progress-bar {{ $rank === 1 ? 'progress-winner' : '' }}" style="width: {{ $percentage }}%"></div>
-                                    </div>
-                                    <div class="percentage">{{ $percentage }}%</div>
-                                </td>
-                            </tr>
-                            @php $rank++; @endphp
-                        @endforeach
-                    </tbody>
-                </table>
+                <p><strong>Maximum Selections:</strong> {{ $position->max_votes_allowed }}</p>
             </div>
-        @endforeach
-        
-        <div class="footer">
-            This is an official election results report. Results are final as of the report generation date.
-            <br>
-            &copy; {{ now()->format('Y') }} {{ config('app.name') }} - College Election System
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th width="10%">Rank</th>
+                        <th width="40%">Candidate</th>
+                        <th width="15%">Votes</th>
+                        <th width="35%">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $totalPositionVotes = $position->candidates->sum('votes_count');
+                        $rank = 1;
+                    @endphp
+                    
+                    @foreach($position->candidates as $candidate)
+                        @php
+                            $percentage = $totalPositionVotes > 0 
+                                ? round(($candidate->votes_count / $totalPositionVotes) * 100, 1) 
+                                : 0;
+                        @endphp
+                        <tr>
+                            <td>
+                                @if($rank === 1)
+                                    <span class="winner">Winner</span>
+                                @else
+                                    {{ $rank }}
+                                @endif
+                            </td>
+                            <td>
+                                {{ $candidate->name }}
+                                @if(!$candidate->is_active)
+                                    (Inactive)
+                                @endif
+                            </td>
+                            <td>{{ $candidate->votes_count }}</td>
+                            <td>
+                                {{ $percentage }}%
+                            </td>
+                        </tr>
+                        @php $rank++; @endphp
+                    @endforeach
+                    
+                    @if($totalPositionVotes === 0)
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 15px;">
+                                No votes recorded for this position.
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
         </div>
+    @endforeach
+    
+    <div class="page-footer">
+        <p>This is an official record of the election results. Generated on {{ $exportDate }}.</p>
     </div>
 </body>
 </html>

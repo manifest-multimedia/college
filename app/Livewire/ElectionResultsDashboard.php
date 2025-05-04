@@ -64,6 +64,9 @@ class ElectionResultsDashboard extends Component
                 'exportDate' => Carbon::now()->format('F j, Y g:i A')
             ]);
             
+            // Set paper size to A4 and landscape orientation for better readability
+            $pdf->setPaper('a4', 'portrait');
+            
             return response()->streamDownload(function() use ($pdf) {
                 echo $pdf->output();
             }, $fileName . '.pdf');

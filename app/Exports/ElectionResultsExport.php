@@ -22,18 +22,17 @@ class ElectionResultsExport implements FromCollection, WithHeadings, WithMapping
     /**
      * Create a new export instance.
      *
-     * @param  \App\Models\Election  $election
-     * @param  int  $totalVoters
+     * @param  int  $electionId
      * @return void
      */
-    public function __construct(Election $election, int $totalVoters)
+    public function __construct($electionId)
     {
-        $this->election = $election;
+        $this->election = Election::findOrFail($electionId);
         // Eager load the position with their candidates and vote counts
-        $this->positions = $election->positions()->with(['candidates' => function($query) {
+        $this->positions = $this->election->positions()->with(['candidates' => function($query) {
             $query->withCount('votes')->orderByDesc('votes_count');
         }])->orderBy('display_order')->get();
-        $this->totalVoters = $totalVoters;
+        $this->totalVoters = \App\Models\Student::count();
     }
 
     /**
