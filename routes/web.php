@@ -60,7 +60,7 @@ Route::get('/sign-up', function () {
 // Root route handling
 Route::get('/', function () {
     return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login'); // Prefer named routes
-})->middleware('guest');
+})->middleware('guest')->name('home');
 
 // Authenticated Routes
 Route::middleware([
@@ -138,8 +138,31 @@ Route::middleware([
         return view('exams.clearance');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Election System Routes
+    |--------------------------------------------------------------------------
+    */
 
+    // Admin Election Management Routes
+    Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+        // Election Management
+        Route::get('/elections', \App\Livewire\ElectionManager::class)->name('elections');
+        Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
+        Route::get('/elections/{election}/candidates/{position}', \App\Livewire\ElectionCandidateManager::class)->name('election.candidates');
+        Route::get('/elections/{election}/results', \App\Livewire\ElectionResultsDashboard::class)->name('election.results');
+    });
 
+    // Student Voting Routes
+    Route::prefix('voting')->group(function () {
+        Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('election.verify');
+        Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('election.vote');
+        Route::get('/{election}/thank-you/{sessionId?}', \App\Livewire\ElectionThankYou::class)->name('election.thank-you');
+    });
 
+    // Public Election Status Route (accessible to all authenticated users)
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('/elections/active', \App\Livewire\ActiveElections::class)->name('elections.active');
+    });
 
 });
