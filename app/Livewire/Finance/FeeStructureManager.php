@@ -77,7 +77,7 @@ class FeeStructureManager extends Component
             'academicYears' => $academicYears,
             'semesters' => $semesters,
         ])
-            ->layout('components.default.layout');
+            ->layout('components.dashboard.default');
     }
 
     public function resetFilters()

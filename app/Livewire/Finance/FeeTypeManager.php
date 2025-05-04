@@ -175,6 +175,6 @@ class FeeTypeManager extends Component
             
         return view('livewire.finance.fee-type-manager', [
             'feeTypes' => $feeTypes
-        ])->layout('components.dashboard.layout');
+        ])->layout('components.dashboard.default');
     }
 }

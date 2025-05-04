@@ -16,6 +16,8 @@ use Carbon\Carbon;
 class ExamClearanceManager extends Component
 {
     use WithPagination;
+    
+    protected $paginationTheme = 'bootstrap';
 
     public $academicYearId;
     public $semesterId;

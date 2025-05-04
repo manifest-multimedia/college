@@ -6,6 +6,9 @@
                     <i class="fas fa-money-bill-wave me-2"></i>Student Billing Management
                 </h1>
                 <div>
+                    <button wire:click="openBatchBillsModal" class="btn btn-success me-2">
+                        <i class="fas fa-users me-2"></i>Batch Bills
+                    </button>
                     <button wire:click="openNewBillModal" class="btn btn-primary">
                         <i class="fas fa-plus-circle me-2"></i>New Bill
                     </button>
@@ -112,45 +115,46 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Create New Bill</h5>
+                    <h5 class="modal-title">Create New Student Bill</h5>
                     <button type="button" class="btn-close" wire:click="closeNewBillModal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form wire:submit.prevent="createNewBill">
-                        <div class="mb-3">
-                            <label for="newBillStudentId" class="form-label">Student</label>
-                            <select id="newBillStudentId" wire:model="newBillStudentId" class="form-select @error('newBillStudentId') is-invalid @enderror">
-                                <option value="">Select Student</option>
-                                @foreach($students as $student)
-                                    <option value="{{ $student->id }}">{{ $student->full_name ?? $student->first_name . ' ' . $student->last_name }} ({{ $student->student_id }})</option>
-                                @endforeach
-                            </select>
-                            @error('newBillStudentId') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="newBillAcademicYearId" class="form-label">Academic Year</label>
-                            <select id="newBillAcademicYearId" wire:model="newBillAcademicYearId" class="form-select @error('newBillAcademicYearId') is-invalid @enderror">
-                                <option value="">Select Academic Year</option>
-                                @foreach($academicYears as $academicYear)
-                                    <option value="{{ $academicYear->id }}">{{ $academicYear->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('newBillAcademicYearId') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="newBillSemesterId" class="form-label">Semester</label>
-                            <select id="newBillSemesterId" wire:model="newBillSemesterId" class="form-select @error('newBillSemesterId') is-invalid @enderror">
-                                <option value="">Select Semester</option>
-                                @foreach($semesters as $semester)
-                                    <option value="{{ $semester->id }}">{{ $semester->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('newBillSemesterId') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Generate Bill</button>
-                        </div>
-                    </form>
+                    <div class="mb-3">
+                        <label for="studentSelect" class="form-label">Select Student</label>
+                        <select id="studentSelect" wire:model="newBillStudentId" class="form-select">
+                            <option value="">-- Select Student --</option>
+                            @foreach($students as $student)
+                                <option value="{{ $student->id }}">{{ $student->full_name }} ({{ $student->student_id }})</option>
+                            @endforeach
+                        </select>
+                        @error('newBillStudentId') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="academicYearSelect" class="form-label">Academic Year</label>
+                        <select id="academicYearSelect" wire:model="newBillAcademicYearId" class="form-select">
+                            <option value="">-- Select Academic Year --</option>
+                            @foreach($academicYears as $year)
+                                <option value="{{ $year->id }}">{{ $year->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('newBillAcademicYearId') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="semesterSelect" class="form-label">Semester</label>
+                        <select id="semesterSelect" wire:model="newBillSemesterId" class="form-select">
+                            <option value="">-- Select Semester --</option>
+                            @foreach($semesters as $semester)
+                                <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('newBillSemesterId') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" wire:click="closeNewBillModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" wire:click="createNewBill">Generate Bill</button>
                 </div>
             </div>
         </div>
@@ -165,60 +169,46 @@
                     <button type="button" class="btn-close" wire:click="closeBatchBillsModal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form wire:submit.prevent="generateBatchBills">
-                        <div class="mb-3">
-                            <label for="batchAcademicYearId" class="form-label">Academic Year</label>
-                            <select id="batchAcademicYearId" wire:model="batchAcademicYearId" class="form-select @error('batchAcademicYearId') is-invalid @enderror">
-                                <option value="">Select Academic Year</option>
-                                @foreach($academicYears as $academicYear)
-                                    <option value="{{ $academicYear->id }}">{{ $academicYear->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('batchAcademicYearId') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="batchSemesterId" class="form-label">Semester</label>
-                            <select id="batchSemesterId" wire:model="batchSemesterId" class="form-select @error('batchSemesterId') is-invalid @enderror">
-                                <option value="">Select Semester</option>
-                                @foreach($semesters as $semester)
-                                    <option value="{{ $semester->id }}">{{ $semester->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('batchSemesterId') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="batchClassId" class="form-label">Class</label>
-                            <select id="batchClassId" wire:model="batchClassId" class="form-select @error('batchClassId') is-invalid @enderror">
-                                <option value="">Select Class</option>
-                                @foreach($classes as $class)
-                                    <option value="{{ $class->id }}">{{ $class->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('batchClassId') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>This will generate fee bills for all active students in the selected class.
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Generate Bills</button>
-                        </div>
-                    </form>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>This will generate bills for all active students in the selected class.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="batchAcademicYear" class="form-label">Academic Year</label>
+                        <select id="batchAcademicYear" wire:model="batchAcademicYearId" class="form-select">
+                            <option value="">-- Select Academic Year --</option>
+                            @foreach($academicYears as $year)
+                                <option value="{{ $year->id }}">{{ $year->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('batchAcademicYearId') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="batchSemester" class="form-label">Semester</label>
+                        <select id="batchSemester" wire:model="batchSemesterId" class="form-select">
+                            <option value="">-- Select Semester --</option>
+                            @foreach($semesters as $semester)
+                                <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('batchSemesterId') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="batchClass" class="form-label">Class</label>
+                        <select id="batchClass" wire:model="batchClassId" class="form-select">
+                            <option value="">-- Select Class --</option>
+                            @foreach($classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('batchClassId') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Batch Bills Button -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="card-title">
-                    <i class="fas fa-file-invoice-dollar me-2"></i>Student Fee Billing
-                </h1>
-                <div>
-                    <button class="btn btn-primary" wire:click="openBatchBillsModal">
-                        <i class="fas fa-layer-group me-2"></i>Generate Batch Bills
-                    </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" wire:click="closeBatchBillsModal">Cancel</button>
+                    <button type="button" class="btn btn-success" wire:click="generateBatchBills">Generate Bills</button>
                 </div>
             </div>
         </div>

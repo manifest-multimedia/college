@@ -41,6 +41,7 @@ class StudentBillingManager extends Component
         'newBillSemesterId' => 'required|exists:semesters,id',
     ];
     
+    // Updated listeners to match Livewire v3 syntax
     protected $listeners = ['refreshBillingList' => '$refresh'];
     
     public function updatingSearch()
@@ -98,8 +99,11 @@ class StudentBillingManager extends Component
             $bill = $billingService->generateBill($student, $this->newBillAcademicYearId, $this->newBillSemesterId);
             
             $this->closeNewBillModal();
+            session()->flash('success', 'Student bill created successfully!');
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Student bill created successfully!']);
+            $this->dispatch('refreshBillingList');
         } catch (\Exception $e) {
+            session()->flash('error', 'Error: ' . $e->getMessage());
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()]);
         }
     }
@@ -111,17 +115,24 @@ class StudentBillingManager extends Component
             'batchSemesterId' => 'required|exists:semesters,id',
             'batchClassId' => 'required|exists:college_classes,id',
         ]);
+
+       
+
         
         try {
             $billingService = new StudentBillingService();
             $students = Student::where('college_class_id', $this->batchClassId)
-                              ->where('status', 'active')
+                         
                               ->get();
                               
             if ($students->isEmpty()) {
+              
+                session()->flash('warning', 'No active students found in the selected class!');
                 $this->dispatch('notify', ['type' => 'warning', 'message' => 'No active students found in the selected class!']);
                 return;
             }
+
+            
             
             $billCount = 0;
             foreach ($students as $student) {
@@ -129,10 +140,13 @@ class StudentBillingManager extends Component
                 $billCount++;
             }
             
-            $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId']);
+            $this->closeBatchBillsModal();
+            session()->flash('success', $billCount . ' student bills generated successfully!');
             $this->dispatch('notify', ['type' => 'success', 'message' => $billCount . ' student bills generated successfully!']);
+            $this->dispatch('refreshBillingList');
             
         } catch (\Exception $e) {
+            session()->flash('error', 'Error generating batch bills: ' . $e->getMessage());
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Error generating batch bills: ' . $e->getMessage()]);
         }
     }

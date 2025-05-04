@@ -42,6 +42,9 @@ class ExamTicketScanner extends Component
     
     public function render()
     {
-        return view('livewire.finance.exam-ticket-scanner');
+        return view('livewire.finance.exam-ticket-scanner')->layout('components.dashboard.default', [
+            'title' => 'Exam Ticket Scanner',
+            'description' => 'Scan and verify exam entry tickets.',
+        ]);
     }
 }

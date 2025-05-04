@@ -94,6 +94,12 @@ Route::middleware([
             return view('examcenter');
         })->name('examcenter');
 
+        Route::get('/exam-sessions', function () {
+            return view('components.dashboard.default', [
+                'content' => 'exams.sessions'
+            ]);
+        })->name('examsessions');
+
         Route::get('/create-exam', function () {
             return view('exams.create');
         })->name('exams.create');
@@ -177,11 +183,38 @@ Route::middleware([
     | Finance Management & Fee Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Manager'])->prefix('finance')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Officer'])->prefix('finance')->group(function () {
         Route::get('/billing', function () {
             return view('finance.billing');
         })->name('finance.billing');
         
+        Route::get('/exam-clearance', function () {
+            return view('finance.exam-clearance');
+        })->name('finance.exam.clearance');
+        
+        Route::get('/qr-scanner', \App\Livewire\Finance\ExamTicketScanner::class)->name('finance.exam.scanner');
+        
+        Route::get('/course-registration/{studentId?}', function ($studentId = null) {
+            return view('finance.course-registration', ['studentId' => $studentId]);
+        })->name('finance.course.registration');
+        
+        Route::get('/payments', \App\Livewire\Finance\FeePaymentManager::class)->name('finance.payments');
+        
+        Route::get('/reports', \App\Livewire\Finance\FinancialReportsManager::class)->name('finance.reports');
+        
+        Route::get('/fee-types', \App\Livewire\Finance\FeeTypesManager::class)->name('finance.fee.types');
+        
+        Route::get('/fee-structure', \App\Livewire\Finance\FeeStructureManager::class)->name('finance.fee.structure');
+        
+        Route::get('/exam-tickets-manager',function(){
+            return view('finance.exam-tickets-manager');
+        })->name('finance.exam.tickets.manager');
+        
+        Route::get('/exam-tickets/{clearanceId}', function ($clearanceId) {
+            return view('finance.exam-tickets', ['clearanceId' => $clearanceId]);
+        })->name('finance.exam.tickets');
+        
+        // Legacy payment routes
         Route::get('/payment/record/{billId}', function ($billId) {
             return view('finance.payment-record', ['billId' => $billId]);
         })->name('payment.record');
@@ -194,11 +227,6 @@ Route::middleware([
             return view('finance.bill-print', ['billId' => $billId]);
         })->name('bill.print');
         
-        // Exam Clearance Routes
-        Route::get('/exam-clearance', function () {
-            return view('finance.exam-clearance');
-        })->name('finance.exam.clearance');
-        
         Route::get('/exam-tickets/{clearanceId}', function ($clearanceId) {
             return view('finance.exam-tickets', ['clearanceId' => $clearanceId]);
         })->name('finance.exam.tickets');
@@ -206,16 +234,168 @@ Route::middleware([
         Route::get('/ticket/print/{ticketId}', function ($ticketId) {
             return view('finance.ticket-print', ['ticketId' => $ticketId]);
         })->name('finance.exam.ticket.print');
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Academic Module Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum'])->prefix('academic')->group(function () {
+        Route::get('/programs', function () {
+            return view('academic.programs');
+        })->name('academic.programs');
         
-        // Scanner Interface
-        Route::get('/exam-scanner', function () {
-            return view('finance.scanner');
-        })->name('finance.exam.scanner');
+        Route::get('/courses', function () {
+            return view('academic.courses');
+        })->name('academic.courses');
         
-        // Course Registration
-        Route::get('/course-registration/{studentId?}', function ($studentId = null) {
-            return view('finance.course-registration', ['studentId' => $studentId]);
-        })->name('finance.course.registration');
+        Route::get('/departments', function () {
+            return view('academic.departments');
+        })->name('academic.departments');
+        
+        Route::get('/faculties', function () {
+            return view('academic.faculties');
+        })->name('academic.faculties');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Course Registration Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/course-registration', function () {
+            return view('course.registration');
+        })->name('courseregistration');
+        
+        Route::get('/course-registration/history', function () {
+            return view('course.registration-history');
+        })->name('courseregistration.history');
+        
+        Route::get('/course-registration/approvals', function () {
+            return view('course.registration-approvals');
+        })->name('courseregistration.approvals');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support Center Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum'])->prefix('support')->group(function () {
+        Route::get('/tickets', function () {
+            return view('support.tickets');
+        })->name('support.tickets');
+        
+        Route::get('/knowledgebase', function () {
+            return view('support.knowledgebase');
+        })->name('support.knowledgebase');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Settings Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('settings')->group(function () {
+        Route::get('/general', function () {
+            return view('settings.general');
+        })->name('settings.general');
+        
+        Route::get('/users', function () {
+            return view('settings.users');
+        })->name('settings.users');
+        
+        Route::get('/roles', function () {
+            return view('settings.roles');
+        })->name('settings.roles');
+        
+        Route::get('/backup', function () {
+            return view('settings.backup');
+        })->name('settings.backup');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Academics Module Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth', 'permission:manage-academics'])->prefix('academics')->name('academics.')->group(function () {
+        // Dashboard
+        Route::get('/', function () {
+            return view('academics.dashboard');
+        })->name('dashboard');
+        
+        // Settings
+        Route::get('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'update'])->name('settings.update');
+        
+        // Academic Years
+        Route::resource('academic-years', App\Http\Controllers\AcademicYearController::class);
+        
+        // Semesters
+        Route::resource('semesters', App\Http\Controllers\SemesterController::class);
+        
+        // College Classes
+        Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
+        Route::post('/classes/filter', [App\Http\Controllers\CollegeClassController::class, 'filter'])->name('classes.filter');
+        
+        // Cohorts
+        Route::resource('cohorts', App\Http\Controllers\CohortController::class);
+        
+        // Grade Types
+        Route::resource('grades', App\Http\Controllers\GradeController::class);
+        
+        // Student Grades
+        Route::resource('student-grades', App\Http\Controllers\StudentGradeController::class);
+        Route::post('/student-grades/filter', [App\Http\Controllers\StudentGradeController::class, 'filter'])->name('student-grades.filter');
+        Route::get('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchCreate'])->name('classes.batch-grades');
+        Route::post('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchStore'])->name('classes.batch-grades.store');
+
+        // Year migration command (for admins only)
+        Route::post('/migrate-year-data', function () {
+            if (auth()->user()->hasRole('admin')) {
+                Artisan::call('academics:migrate-year-data');
+                return back()->with('success', 'Year data migration completed.');
+            }
+            return back()->with('error', 'Unauthorized operation.');
+        })->name('migrate-year-data');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Academic Module Routes (for sidebar navigation)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth'])->prefix('academic')->name('academic.')->group(function () {
+        // Programs
+        Route::get('/programs', function () {
+            return view('components.dashboard.default', [
+                'content' => 'academic.programs'
+            ]);
+        })->name('programs');
+
+        // Courses
+        Route::get('/courses', function () {
+            return view('components.dashboard.default', [
+                'content' => 'academic.courses'
+            ]);
+        })->name('courses');
+
+        // Departments
+        Route::get('/departments', function () {
+            return view('components.dashboard.default', [
+                'content' => 'academic.departments'
+            ]);
+        })->name('departments');
+
+        // Faculties
+        Route::get('/faculties', function () {
+            return view('components.dashboard.default', [
+                'content' => 'academic.faculties'
+            ]);
+        })->name('faculties');
     });
 
 });

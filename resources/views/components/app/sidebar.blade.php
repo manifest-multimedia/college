@@ -62,11 +62,72 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endcan
             <!--end:Menu item-->
             
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-book fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Academic Module</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('academic.programs') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Programs</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('academic.courses') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Courses</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('academic.departments') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Departments</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('academic.faculties') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Faculties</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            
             @canany(['view exams', 'create exams', 'edit exams', 'grade exams'])
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
-                <a href={{ route('examcenter') }} class="menu-link">
+                <span class="menu-link">
                     <span class="menu-icon">
                         <i class="ki-duotone ki-address-book fs-2">
                             <span class="path1"></span>
@@ -75,9 +136,53 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </i>
                     </span>
                     <span class="menu-title">Exam Center</span>
-                </a>
+                    <span class="menu-arrow"></span>
+                </span>
                 <!--end:Menu link-->
-             
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('examcenter') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Dashboard</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('examsessions') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Sessions</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('questionbank') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Question Bank</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('exam.results') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Results Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
             @endcanany
@@ -112,11 +217,51 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.fee.types') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Fee Types</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.fee.structure') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Fee Structure</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.payments') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Fee Payments</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
                         <a class="menu-link" href="{{ route('finance.exam.clearance') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Exam Clearance</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.exam.tickets.manager') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Tickets</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -140,12 +285,73 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.reports') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Financial Reports</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
                 </div>
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
             @endcanany
             
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-book-open fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Course Registration</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('courseregistration') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Register Courses</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('courseregistration.history') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Registration History</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('courseregistration.approvals') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Registration Approvals</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+
             @hasanyrole('Super Admin|Administrator')
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
@@ -181,6 +387,122 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Active Elections</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('election.results', ['election' => 1]) }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Election Results</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            @endhasanyrole
+            
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-question fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Support Center</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('support.tickets') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Support Tickets</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('support.knowledgebase') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Knowledge Base</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            
+            @hasanyrole('Super Admin|Administrator')
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-setting-2 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">System Settings</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.general') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">General Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.users') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">User Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.roles') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Roles & Permissions</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.backup') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Backup & Restore</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -281,159 +603,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                 </div>
                 <!--end::Menu item-->
-                {{-- 
                 <!--begin::Menu separator-->
                 <div class="my-2 separator"></div>
                 <!--end::Menu separator-->
-                <!--begin::Menu item-->
-                <div class="px-5 menu-item">
-                    <a href="account/overview.html" class="px-5 menu-link">My Profile</a>
-                </div>
-                <!--end::Menu item-->
-       
-                <!--begin::Menu item-->
-                <div class="px-5 menu-item">
-                    <a href="apps/projects/list.html" class="px-5 menu-link">
-                        <span class="menu-text">My Projects</span>
-                        <span class="menu-badge">
-                            <span class="badge badge-light-danger badge-circle fw-bold fs-7">3</span>
-                        </span>
-                    </a>
-                </div>
-                <!--end::Menu item-->
-                <!--begin::Menu item-->
-             <div class="px-5 menu-item" data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
-                    data-kt-menu-placement="right-end" data-kt-menu-offset="-15px, 0">
-                    <a href="#" class="px-5 menu-link">
-                        <span class="menu-title">My Subscription</span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <!--begin::Menu sub-->
-                    <div class="py-4 menu-sub menu-sub-dropdown w-175px">
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/referrals.html" class="px-5 menu-link">Referrals</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/billing.html" class="px-5 menu-link">Billing</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/statements.html" class="px-5 menu-link">Payments</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/statements.html"
-                                class="px-5 menu-link d-flex flex-stack">Statements
-                                <span class="ms-2 lh-0" data-bs-toggle="tooltip"
-                                    title="View your statements">
-                                    <i class="ki-duotone ki-information-5 fs-5">
-                                        <span class="path1"></span>
-                                        <span class="path2"></span>
-                                        <span class="path3"></span>
-                                    </i>
-                                </span></a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu separator-->
-                        <div class="my-2 separator"></div>
-                        <!--end::Menu separator-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <div class="px-3 menu-content">
-                                <label
-                                    class="form-check form-switch form-check-custom form-check-solid">
-                                    <input class="form-check-input w-30px h-20px" type="checkbox"
-                                        value="1" checked="checked" name="notifications" />
-                                    <span
-                                        class="form-check-label text-muted fs-7">Notifications</span>
-                                </label>
-                            </div>
-                        </div>
-                        <!--end::Menu item-->
-                    </div>
-                    <!--end::Menu sub-->
-                </div>
-                <!--end::Menu item-->
-                <!--begin::Menu item-->
-                <div class="px-5 menu-item">
-                    <a href="account/statements.html" class="px-5 menu-link">My Statements</a>
-                </div> --}}
-                <!--end::Menu item-->
-                <!--begin::Menu separator-->
-                <div class="my-2 separator"></div>
-                <!--end::Menu separator-->
-                <!--begin::Menu item-->
-                {{-- <div class="px-5 menu-item" data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
-                    data-kt-menu-placement="right-end" data-kt-menu-offset="-15px, 0">
-                    <a href="#" class="px-5 menu-link">
-                        <span class="menu-title position-relative">Language
-                            <span
-                                class="px-3 py-2 rounded fs-8 bg-light position-absolute translate-middle-y top-50 end-0">English
-                                <img class="w-15px h-15px rounded-1 ms-2"
-                                    src="assets/media/flags/united-states.svg"
-                                    alt="" /></span></span>
-                    </a>
-                    <!--begin::Menu sub-->
-                    <div class="py-4 menu-sub menu-sub-dropdown w-175px">
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/settings.html" class="px-5 menu-link d-flex active">
-                                <span class="symbol symbol-20px me-4">
-                                    <img class="rounded-1"
-                                        src="assets/media/flags/united-states.svg" alt="" />
-                                </span>English</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/settings.html" class="px-5 menu-link d-flex">
-                                <span class="symbol symbol-20px me-4">
-                                    <img class="rounded-1" src="assets/media/flags/spain.svg"
-                                        alt="" />
-                                </span>Spanish</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/settings.html" class="px-5 menu-link d-flex">
-                                <span class="symbol symbol-20px me-4">
-                                    <img class="rounded-1" src="assets/media/flags/germany.svg"
-                                        alt="" />
-                                </span>German</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/settings.html" class="px-5 menu-link d-flex">
-                                <span class="symbol symbol-20px me-4">
-                                    <img class="rounded-1" src="assets/media/flags/japan.svg"
-                                        alt="" />
-                                </span>Japanese</a>
-                        </div>
-                        <!--end::Menu item-->
-                        <!--begin::Menu item-->
-                        <div class="px-3 menu-item">
-                            <a href="account/settings.html" class="px-5 menu-link d-flex">
-                                <span class="symbol symbol-20px me-4">
-                                    <img class="rounded-1" src="assets/media/flags/france.svg"
-                                        alt="" />
-                                </span>French</a>
-                        </div>
-                        <!--end::Menu item-->
-                    </div>
-                    <!--end::Menu sub-->
-                </div> --}}
-                <!--end::Menu item-->
-                <!--begin::Menu item-->
-                {{-- <div class="px-5 my-1 menu-item">
-                    <a href="account/settings.html" class="px-5 menu-link">Account Settings</a>
-                </div> --}}
-                <!--end::Menu item-->
                 <!--begin::Menu item-->
                 <div class="px-5 menu-item">
                     {{-- Logout Form --}}
