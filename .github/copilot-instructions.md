@@ -69,30 +69,6 @@ When features are complete, update the sidebar navigation:
 File: components.app.sidebar
 
 ✅ Tasks Completed
-✅ Migrations & Models
-Created migrations and models for:
-
-Finance Management Module
-
-Exam Clearance Module
-
-✅ Livewire Components
-FeeStructureManager
-
-FeeTypesManager
-
-StudentBillingManager
-
-✅ Routes
-Defined routes for the Finance Management Module
-
-🚧 Incomplete Tasks
-🔨 Development
- Create StudentBillingManagerService
-
-🎨 Views
- Build views for the Finance Module
-
-Refer to defined web routes for required view paths and structure.
+We completed the impementation of the Finance Management and Course Registration Modules but their still in development and testing stage.
 
 Since the Exam Management and Fee Clearance Module is under development we can fully modify existing migrations for this until it's ready for production.

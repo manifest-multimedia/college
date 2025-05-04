@@ -4,57 +4,44 @@ namespace App\Livewire\Finance;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use App\Models\Student;
 use App\Models\StudentFeeBill;
+use App\Models\Student;
 use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\CollegeClass;
-use App\Services\StudentBillingManager as BillingService;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Services\StudentBillingService;
 
 class StudentBillingManager extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination;
     
-    // Filters
-    public $search = '';
+    protected $paginationTheme = 'bootstrap';
+    
+    // Filter properties
     public $academicYearId = '';
     public $semesterId = '';
     public $collegeClassId = '';
-    public $statusFilter = '';
+    public $search = '';
+    
+    // New Bill Modal Properties
+    public $showNewBillModal = false;
+    public $newBillStudentId = null;
+    public $newBillAcademicYearId = null;
+    public $newBillSemesterId = null;
     
     // Batch Billing Properties
-    public $selectedAcademicYearId = '';
-    public $selectedSemesterId = '';
-    public $selectedCollegeClassId = '';
-    public $showBatchBillingConfirmation = false;
+    public $batchAcademicYearId = null;
+    public $batchSemesterId = null;
+    public $batchClassId = null;
+    public $showBatchBillsModal = false;
     
-    // General Properties
-    public $studentId = '';
-    public $showBillingResult = false;
-    public $billingResult = [];
+    protected $rules = [
+        'newBillStudentId' => 'required|exists:students,id',
+        'newBillAcademicYearId' => 'required|exists:academic_years,id',
+        'newBillSemesterId' => 'required|exists:semesters,id',
+    ];
     
-    protected $billingService;
-    
-    public function boot(BillingService $billingService)
-    {
-        $this->billingService = $billingService;
-    }
-    
-    public function mount()
-    {
-        // Set defaults to current academic year and semester if any exists
-        $currentYear = AcademicYear::where('is_current', true)->first();
-        $currentSemester = Semester::where('is_current', true)->first();
-        
-        $this->academicYearId = $currentYear ? $currentYear->id : '';
-        $this->semesterId = $currentSemester ? $currentSemester->id : '';
-        
-        $this->selectedAcademicYearId = $this->academicYearId;
-        $this->selectedSemesterId = $this->semesterId;
-    }
+    protected $listeners = ['refreshBillingList' => '$refresh'];
     
     public function updatingSearch()
     {
@@ -76,92 +63,78 @@ class StudentBillingManager extends Component
         $this->resetPage();
     }
     
-    public function updatingStatusFilter()
+    public function openNewBillModal()
     {
-        $this->resetPage();
+        $this->showNewBillModal = true;
     }
     
-    public function generateBillForStudent($studentId)
+    public function closeNewBillModal()
     {
-        try {
-            $student = Student::findOrFail($studentId);
-            $academicYear = AcademicYear::findOrFail($this->academicYearId);
-            $semester = Semester::findOrFail($this->semesterId);
-            
-            $bill = $this->billingService->generateBill($student, $academicYear->id, $semester->id);
-            
-            $this->dispatchBrowserEvent('notify', [
-                'message' => "Fee bill generated successfully for {$student->full_name}!",
-                'type' => 'success'
-            ]);
-            
-            return $bill;
-            
-        } catch (\Exception $e) {
-            $this->dispatchBrowserEvent('notify', [
-                'message' => "Failed to generate bill: {$e->getMessage()}",
-                'type' => 'error'
-            ]);
-            
-            return null;
-        }
+        $this->showNewBillModal = false;
+        $this->reset(['newBillStudentId', 'newBillAcademicYearId', 'newBillSemesterId']);
+        $this->resetValidation();
     }
     
-    public function confirmBatchBilling()
+    public function openBatchBillsModal()
     {
-        $this->validate([
-            'selectedAcademicYearId' => 'required|exists:academic_years,id',
-            'selectedSemesterId' => 'required|exists:semesters,id',
-            'selectedCollegeClassId' => 'required|exists:college_classes,id',
-        ]);
+        $this->showBatchBillsModal = true;
+    }
+    
+    public function closeBatchBillsModal()
+    {
+        $this->showBatchBillsModal = false;
+        $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId']);
+        $this->resetValidation();
+    }
+    
+    public function createNewBill()
+    {
+        $this->validate();
         
-        $this->showBatchBillingConfirmation = true;
+        try {
+            $billingService = new StudentBillingService();
+            $student = Student::findOrFail($this->newBillStudentId);
+            
+            $bill = $billingService->generateBill($student, $this->newBillAcademicYearId, $this->newBillSemesterId);
+            
+            $this->closeNewBillModal();
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'Student bill created successfully!']);
+        } catch (\Exception $e) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()]);
+        }
     }
     
     public function generateBatchBills()
     {
+        $this->validate([
+            'batchAcademicYearId' => 'required|exists:academic_years,id',
+            'batchSemesterId' => 'required|exists:semesters,id',
+            'batchClassId' => 'required|exists:college_classes,id',
+        ]);
+        
         try {
-            $generatedBills = $this->billingService->generateBillsForClass(
-                $this->selectedCollegeClassId,
-                $this->selectedAcademicYearId,
-                $this->selectedSemesterId
-            );
+            $billingService = new StudentBillingService();
+            $students = Student::where('college_class_id', $this->batchClassId)
+                              ->where('status', 'active')
+                              ->get();
+                              
+            if ($students->isEmpty()) {
+                $this->dispatch('notify', ['type' => 'warning', 'message' => 'No active students found in the selected class!']);
+                return;
+            }
             
-            $this->billingResult = [
-                'success' => true,
-                'totalStudents' => count($generatedBills),
-                'academicYear' => AcademicYear::find($this->selectedAcademicYearId)->name,
-                'semester' => Semester::find($this->selectedSemesterId)->name,
-                'class' => CollegeClass::find($this->selectedCollegeClassId)->name
-            ];
+            $billCount = 0;
+            foreach ($students as $student) {
+                $billingService->generateBill($student, $this->batchAcademicYearId, $this->batchSemesterId);
+                $billCount++;
+            }
             
-            $this->showBillingResult = true;
-            $this->showBatchBillingConfirmation = false;
-            
-            $this->dispatchBrowserEvent('notify', [
-                'message' => "Generated bills for {$this->billingResult['totalStudents']} students successfully!",
-                'type' => 'success'
-            ]);
+            $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId']);
+            $this->dispatch('notify', ['type' => 'success', 'message' => $billCount . ' student bills generated successfully!']);
             
         } catch (\Exception $e) {
-            $this->dispatchBrowserEvent('notify', [
-                'message' => "Failed to generate batch bills: {$e->getMessage()}",
-                'type' => 'error'
-            ]);
-            
-            $this->showBatchBillingConfirmation = false;
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Error generating batch bills: ' . $e->getMessage()]);
         }
-    }
-    
-    public function cancelBatchBilling()
-    {
-        $this->showBatchBillingConfirmation = false;
-    }
-    
-    public function closeBillingResult()
-    {
-        $this->showBillingResult = false;
-        $this->billingResult = [];
     }
     
     public function viewBill($billId)
@@ -171,62 +144,39 @@ class StudentBillingManager extends Component
     
     public function render()
     {
-        $query = StudentFeeBill::query();
+        $bills = StudentFeeBill::with(['student', 'academicYear', 'semester'])
+            ->when($this->academicYearId !== '', function ($query) {
+                return $query->where('academic_year_id', $this->academicYearId);
+            })
+            ->when($this->semesterId !== '', function ($query) {
+                return $query->where('semester_id', $this->semesterId);
+            })
+            ->when($this->collegeClassId !== '', function ($query) {
+                return $query->whereHas('student', function ($q) {
+                    $q->where('college_class_id', $this->collegeClassId);
+                });
+            })
+            ->when($this->search !== '', function ($query) {
+                return $query->whereHas('student', function ($q) {
+                    $q->where('first_name', 'like', '%' . $this->search . '%')
+                      ->orWhere('last_name', 'like', '%' . $this->search . '%')
+                      ->orWhere('student_id', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->latest()
+            ->paginate(10);
         
-        // Apply filters
-        if ($this->academicYearId) {
-            $query->where('academic_year_id', $this->academicYearId);
-        }
-        
-        if ($this->semesterId) {
-            $query->where('semester_id', $this->semesterId);
-        }
-        
-        if ($this->search) {
-            $query->whereHas('student', function ($studentQuery) {
-                $studentQuery->where('first_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('last_name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%')
-                    ->orWhere('student_id', 'like', '%' . $this->search . '%');
-            });
-        }
-        
-        if ($this->collegeClassId) {
-            $query->whereHas('student', function ($studentQuery) {
-                $studentQuery->where('college_class_id', $this->collegeClassId);
-            });
-        }
-        
-        if ($this->statusFilter) {
-            $query->where('status', $this->statusFilter);
-        }
-        
-        $bills = $query->with(['student', 'academicYear', 'semester'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        
-        $academicYears = AcademicYear::orderBy('year', 'desc')->get();
-        $semesters = Semester::all();
-        $classes = CollegeClass::all();
-        
-        $studentsWithoutBills = collect();
-        
-        // Get students without bills if filters are set
-        if ($this->academicYearId && $this->semesterId && $this->collegeClassId) {
-            $studentsWithoutBills = Student::where('college_class_id', $this->collegeClassId)
-                ->whereDoesntHave('feeBills', function ($query) {
-                    $query->where('academic_year_id', $this->academicYearId)
-                        ->where('semester_id', $this->semesterId);
-                })
-                ->get();
-        }
+        $academicYears = AcademicYear::orderBy('name', 'desc')->get();
+        $semesters = Semester::orderBy('name')->get();
+        $classes = CollegeClass::orderBy('name')->get();
+        $students = Student::orderBy('first_name')->get();
         
         return view('livewire.finance.student-billing-manager', [
             'bills' => $bills,
             'academicYears' => $academicYears,
             'semesters' => $semesters,
             'classes' => $classes,
-            'studentsWithoutBills' => $studentsWithoutBills,
-        ])->layout('components.dashboard.layout');
+            'students' => $students,
+        ])->layout('components.dashboard.default');
     }
 }
