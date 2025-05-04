@@ -1,4 +1,4 @@
-<x-partials.dash-head :title="$title" description="Dashboard" />
+<x-partials.dash-head :title="isset($title) ? $title : 'Dashboard'" description="Dashboard" />
 <!--end::Head-->
 <!--begin::Body-->
 <x-partials.dash-header />
@@ -27,7 +27,11 @@
                     </li>
                     <!--end::Item-->
                     <!--begin::Item-->
-                    <li class="text-gray-900 breadcrumb-item">{{ $title }}</li>
+                    @if(isset($title) && $title)
+                        <li class="text-gray-900 breadcrumb-item">{{ $title }}</li>
+                    @else 
+                        <li class="text-gray-900 breadcrumb-item">Untitled</li>
+                    @endif
                     <!--end::Item-->
                 </ul>
                 <!--end::Breadcrumb-->

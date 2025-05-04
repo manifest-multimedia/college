@@ -1,34 +1,98 @@
 🛠️ Laravel Development Standards — Refined Instructions
-📦 Framework Version
+📦 Framework & Tools
 Laravel Version: 12.11.1
 
-Livewire: Uses tag-based notation (e.g., <livewire:component-name />)
+Livewire: Uses tag-based syntax — e.g., <livewire:component-name />
 
 🖼️ View Layout Standards
 Use Laravel Blade Components for all views:
 
-Backend Views:
-Use components.backend.layout.blade.php
+✅ Layouts
+Backend Views: Use components.backend.layout.blade.php
 
-Dashboard Views:
-Use components.default.layout.blade.php
+Dashboard Views: Use components.default.layout.blade.php
 
-Apply these layouts to all new feature implementations to maintain consistency across the application.
+📌 Note: Use components.dashboard.default for all dashboard-related views.
 
+✅ UI Guidelines
+Use Bootstrap for frontend styling.
+
+For card headers, wrap content using the card-title class for consistency:
+
+html
+Copy
+Edit
+<div class="card-header">
+    <div class="something-else">
+        <h1 class="card-title">
+            <i>some icon</i>
+        </h1>
+    </div>
+</div>
 🗃️ Database Migration Policy
-✅ You may modify migration files directly, only if they belong to new features currently under development and have not yet been deployed to production.
+✅ Allowed
+You may modify migration files only for new features under development and not deployed to production.
 
-❌ You must not alter existing migrations for features that are already in production.
+Use php artisan migrate:rollback (not migrate:fresh) during active development to fix migration-related issues.
 
-🆕 For any schema changes to existing, deployed features (e.g., adding/modifying columns or constraints), you must create a new migration file.
+❌ Not Allowed
+Never alter migration files for features already in production.
 
-This ensures stability and backward compatibility in the production environment while preserving clean migrations during development.
+📌 For Existing Deployed Features
+If you need to update the schema for production features (e.g., add/modify columns):
 
-🗳️ Election System Implementation
-Use the existing student data to verify and authorize students for voting.
+Create a new migration file.
 
-Do not create duplicate student models or tables.
+This maintains backward compatibility and production stability.
 
-If any structural extensions are needed (e.g., new relations or pivot tables), implement them using new migration files only.
+⚠️ Migration Cautions
+Before creating a new migration:
 
-The Election System is still in development hence we can modify it's migrations where needed until everything is working correctly. 
+Ensure no existing migration causes conflicts.
+
+When building relationships:
+
+Be mindful of how ID fields are defined (increments('id') vs id()).
+
+Always confirm ID type compatibility between related tables.
+
+🔧 New Feature Development Instructions (Finance & Exam Clearance Modules)
+New feature development is documented in exam-prd.md.
+
+Layouts: Use components.dashboard.default for all related views.
+
+Migrations can still be revised until final production deployment.
+
+🧩 Navigation Updates
+When features are complete, update the sidebar navigation:
+
+File: components.app.sidebar
+
+✅ Tasks Completed
+✅ Migrations & Models
+Created migrations and models for:
+
+Finance Management Module
+
+Exam Clearance Module
+
+✅ Livewire Components
+FeeStructureManager
+
+FeeTypesManager
+
+StudentBillingManager
+
+✅ Routes
+Defined routes for the Finance Management Module
+
+🚧 Incomplete Tasks
+🔨 Development
+ Create StudentBillingManagerService
+
+🎨 Views
+ Build views for the Finance Module
+
+Refer to defined web routes for required view paths and structure.
+
+Since the Exam Management and Fee Clearance Module is under development we can fully modify existing migrations for this until it's ready for production.

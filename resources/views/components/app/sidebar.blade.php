@@ -78,6 +78,110 @@ data-kt-drawer-toggle="#kt_aside_toggle">
              
             </div>
             <!--end:Menu item-->
+            
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-dollar fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Finance Module</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.billing') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Student Billing</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.exam.clearance') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Clearance</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.exam.scanner') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">QR Scanner</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('finance.course.registration') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Course Registration</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-pie-3 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Election System</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('elections') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Manage Elections</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('elections.active') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Active Elections</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
           
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">

@@ -209,6 +209,28 @@ class ElectionManager extends Component
 
     public function toggleActiveStatus(Election $election)
     {
+        $wasActive = $election->is_active;
+        $nowActive = !$wasActive;
+        
+        // If we're activating the election and its start time is in the future,
+        // ask the user if they want to start it now
+        if ($nowActive && $election->start_time->isFuture()) {
+            $this->dispatch('confirm', [
+                'title' => 'Start election now?',
+                'message' => 'This election\'s start time is in the future. Would you like to set the start time to now to allow immediate voting?',
+                'onConfirm' => 'startElectionNow',
+                'onCancel' => 'justToggleStatus',
+                'data' => ['id' => $election->id]
+            ]);
+            return;
+        }
+        
+        $this->justToggleStatus($election->id);
+    }
+    
+    public function justToggleStatus($electionId)
+    {
+        $election = Election::findOrFail($electionId);
         $election->update(['is_active' => !$election->is_active]);
         
         \App\Models\ElectionAuditLog::log(
@@ -223,6 +245,28 @@ class ElectionManager extends Component
         $this->dispatch('alert', [
             'type' => 'success',
             'message' => $message
+        ]);
+    }
+    
+    public function startElectionNow($electionId)
+    {
+        $election = Election::findOrFail($electionId);
+        $election->update([
+            'is_active' => true,
+            'start_time' => now()
+        ]);
+        
+        \App\Models\ElectionAuditLog::log(
+            $election,
+            'admin',
+            auth()->id(),
+            'election_started_now',
+            'Activated election and set start time to now'
+        );
+        
+        $this->dispatch('alert', [
+            'type' => 'success',
+            'message' => 'Election activated and set to start immediately'
         ]);
     }
     

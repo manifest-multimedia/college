@@ -89,4 +89,122 @@ class Student extends Model
             'id'                // Local key on the intermediate model (users.id)
         );
     }
+
+    /**
+     * Get fee bills associated with this student
+     */
+    public function feeBills()
+    {
+        return $this->hasMany(StudentFeeBill::class);
+    }
+
+    /**
+     * Get fee payments made by this student
+     */
+    public function feePayments()
+    {
+        return $this->hasMany(FeePayment::class);
+    }
+
+    /**
+     * Get exam clearances for this student
+     */
+    public function examClearances()
+    {
+        return $this->hasMany(ExamClearance::class);
+    }
+
+    /**
+     * Get course registrations for this student
+     */
+    public function courseRegistrations()
+    {
+        return $this->hasMany(CourseRegistration::class);
+    }
+
+    /**
+     * Get exam entry tickets for this student
+     */
+    public function examEntryTickets()
+    {
+        return $this->hasMany(ExamEntryTicket::class);
+    }
+
+    /**
+     * Get current fee bill for student in specified academic year and semester
+     * 
+     * @param int $academicYearId
+     * @param int $semesterId
+     * @return StudentFeeBill|null
+     */
+    public function getCurrentFeeBill($academicYearId, $semesterId)
+    {
+        return $this->feeBills()
+            ->where('academic_year_id', $academicYearId)
+            ->where('semester_id', $semesterId)
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Check if student is eligible for course registration (at least 60% fee payment)
+     * 
+     * @param int $academicYearId
+     * @param int $semesterId
+     * @return bool
+     */
+    public function isEligibleForCourseRegistration($academicYearId, $semesterId)
+    {
+        $feeBill = $this->getCurrentFeeBill($academicYearId, $semesterId);
+        
+        if (!$feeBill) {
+            return false;
+        }
+        
+        return $feeBill->payment_percentage >= 60.0;
+    }
+
+    /**
+     * Check if student is eligible for exam clearance based on exam type
+     * 
+     * @param int $academicYearId
+     * @param int $semesterId
+     * @param int $examTypeId
+     * @return bool
+     */
+    public function isEligibleForExamClearance($academicYearId, $semesterId, $examTypeId)
+    {
+        $feeBill = $this->getCurrentFeeBill($academicYearId, $semesterId);
+        
+        if (!$feeBill) {
+            return false;
+        }
+        
+        // Get the exam type and its required payment threshold
+        $examType = ExamType::find($examTypeId);
+        
+        if (!$examType) {
+            return false;
+        }
+        
+        return $feeBill->payment_percentage >= $examType->payment_threshold;
+    }
+
+    /**
+     * Check if student has active exam clearance for an exam type
+     * 
+     * @param int $academicYearId
+     * @param int $semesterId
+     * @param int $examTypeId
+     * @return ExamClearance|null
+     */
+    public function getActiveExamClearance($academicYearId, $semesterId, $examTypeId)
+    {
+        return $this->examClearances()
+            ->where('academic_year_id', $academicYearId)
+            ->where('semester_id', $semesterId)
+            ->where('exam_type_id', $examTypeId)
+            ->where('is_cleared', true)
+            ->first();
+    }
 }

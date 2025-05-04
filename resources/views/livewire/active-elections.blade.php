@@ -1,4 +1,4 @@
-<x-default-layout>
+
     <div class="container-fluid px-4">
         <h1 class="mt-4">Student Elections</h1>
         <ol class="breadcrumb mb-4">
@@ -66,12 +66,12 @@
                                                             You have already voted in this election
                                                         </div>
                                                         
-                                                        @if(auth()->user()->hasRole('admin'))
+                                                        {{-- @if(auth()->user()->hasRole('admin')) --}}
                                                             <a href="{{ route('election.results', $election) }}" class="btn btn-info btn-sm d-block">
                                                                 <i class="fas fa-chart-bar me-1"></i>
                                                                 View Results
                                                             </a>
-                                                        @endif
+                                                        {{-- @endif --}}
                                                     @else
                                                         <a href="{{ route('election.verify', $election) }}" class="btn btn-primary d-block">
                                                             <i class="fas fa-vote-yea me-2"></i>
@@ -161,12 +161,12 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if(auth()->user()->hasRole('admin'))
+                                                    {{-- @if(auth()->user()->hasRole('admin')) --}}
                                                         <a href="{{ route('election.results', $election) }}" class="btn btn-outline-info btn-sm">
                                                             <i class="fas fa-chart-bar me-1"></i>
                                                             View Results
                                                         </a>
-                                                    @endif
+                                                    {{-- @endif --}}
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -179,7 +179,7 @@
             </div>
         @endif
         
-        @if(auth()->user()->hasRole('admin'))
+        {{-- @if(auth()->user()->hasRole('admin')) --}}
             <div class="row mt-2 mb-4">
                 <div class="col-12">
                     <div class="card bg-light border-0">
@@ -201,6 +201,5 @@
                     </div>
                 </div>
             </div>
-        @endif
+        {{-- @endif --}}
     </div>
-</x-default-layout>

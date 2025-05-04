@@ -166,4 +166,47 @@ Route::middleware([
         Route::get('/elections/active', \App\Livewire\ActiveElections::class)->name('elections.active');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Finance Management & Fee Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum'])->prefix('finance')->group(function () {
+        Route::get('/billing', function () {
+            return view('finance.billing');
+        })->name('finance.billing');
+        
+        Route::get('/payment/record/{billId}', function ($billId) {
+            return view('finance.payment-record', ['billId' => $billId]);
+        })->name('payment.record');
+        
+        Route::get('/bill/details/{billId}', function ($billId) {
+            return view('finance.bill-details', ['billId' => $billId]);
+        })->name('bill.details');
+        
+        Route::get('/bill/print/{billId}', function ($billId) {
+            return view('finance.bill-print', ['billId' => $billId]);
+        })->name('bill.print');
+        
+        // Exam Clearance Routes
+        Route::get('/exam-clearance', App\Livewire\Finance\ExamClearanceManager::class)
+            ->name('finance.exam.clearance');
+        
+        Route::get('/exam-tickets/{clearanceId}', App\Livewire\Finance\ExamEntryTicketManager::class)
+            ->name('finance.exam.tickets');
+        
+        Route::get('/ticket/print/{ticketId}', function ($ticketId) {
+            return view('finance.ticket-print', ['ticketId' => $ticketId]);
+        })->name('finance.exam.ticket.print');
+        
+        // Scanner Interface
+        Route::get('/exam-scanner', function () {
+            return view('finance.scanner');
+        })->name('finance.exam.scanner');
+        
+        // Course Registration
+        Route::get('/course-registration/{studentId?}', App\Livewire\Finance\CourseRegistrationManager::class)
+            ->name('finance.course.registration');
+    });
+
 });
