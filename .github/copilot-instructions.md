@@ -71,4 +71,6 @@ File: components.app.sidebar
 ✅ Tasks Completed
 We completed the impementation of the Finance Management and Course Registration Modules but their still in development and testing stage.
 
-Since the Exam Management and Fee Clearance Module is under development we can fully modify existing migrations for this until it's ready for production.
+While testing we've shipped it to production now.
+
+In Laravel 12  Kernel is no longer present we use bootstrap/app.php isntead.

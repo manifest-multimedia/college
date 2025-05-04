@@ -41,7 +41,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
            
-                
+            @can('view students')    
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
             data-kt-menu-placement="right-start"
@@ -58,9 +58,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                
             </a>
             <!--end:Menu link-->
-        </div>
-      
+            </div>
+            @endcan
             <!--end:Menu item-->
+            
+            @canany(['view exams', 'create exams', 'edit exams', 'grade exams'])
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
@@ -78,7 +80,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
              
             </div>
             <!--end:Menu item-->
+            @endcanany
             
+            @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports'])
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
@@ -140,7 +144,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
+            @endcanany
             
+            @hasanyrole('Super Admin|Administrator')
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
@@ -182,6 +188,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
+            @endhasanyrole
           
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
@@ -222,9 +229,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--begin::Name-->
                 <a href="#" class="text-gray-800 text-hover-primary fs-6 fw-bold lh-1">{{Auth::user()->name}}</a>
                 <!--end::Name-->
-                <!--begin::Major-->
-                <span class="text-muted fw-semibold d-block fs-7 lh-1">{{ Auth::user()->role }}</span>
-                <!--end::Major-->
+                <!--begin::Roles-->
+                <span class="text-muted fw-semibold d-block fs-7 lh-1">
+                    @if(Auth::user()->roles->count() > 0)
+                        {{ Auth::user()->roles->pluck('name')->first() }}
+                    @else
+                        {{ Auth::user()->role }}
+                    @endif
+                </span>
+                <!--end::Roles-->
             </div>
             <!--end::User info-->
         </div>
@@ -253,8 +266,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         <!--begin::Username-->
                         <div class="d-flex flex-column">
                             <div class="fw-bold d-flex align-items-center fs-5">{{ Auth::user()->name }}
-                                <span
-                                    class="px-2 py-1 badge badge-light-success fw-bold fs-8 ms-2">{{ Auth::user()->role }}</span>
+                                <span class="px-2 py-1 badge badge-light-success fw-bold fs-8 ms-2">
+                                    @if(Auth::user()->roles->count() > 0)
+                                        {{ Auth::user()->roles->pluck('name')->first() }}
+                                    @else
+                                        {{ Auth::user()->role }}
+                                    @endif
+                                </span>
                             </div>
                             <a href="#"
                                 class="fw-semibold text-muted text-hover-primary fs-7">{{ Auth::user()->email }}</a>

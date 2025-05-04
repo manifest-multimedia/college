@@ -67,57 +67,67 @@ Route::middleware([
     'auth:sanctum',
 ])->group(function () {
 
-
-    Route::get('/student-information', function () {
-        return view('students.information');
-    })->name('student.information');
-
-
-    Route::get('exam-results', function () {
-        return view('exams.correct-data');
-    })->name('exam.results');
-
-    Route::get('/import-results', function () {
-        return view('exams.result-import');
-    })->name('exam.result.import');
-
     Route::get('/portal', function () {
         return view('dashboard');
     })->name('dashboard');
 
-    Route::get('/students', function () {
-        return view('students');
-    })->name('students');
+    // Student-only routes
+    Route::middleware(['role:Student'])->group(function() {
+        Route::get('/student-information', function () {
+            return view('students.information');
+        })->name('student.information');
+    });
 
-    Route::get('/course-import', function () {
-        return view('courses.import');
-    })->name('courses.import');
+    // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin)
+    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin'])->group(function() {
+        Route::get('exam-results', function () {
+            return view('exams.correct-data');
+        })->name('exam.results');
 
-    Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
+        Route::get('/import-results', function () {
+            return view('exams.result-import');
+        })->name('exam.result.import');
+        
+        Route::get('/edit-exam/{exam_slug}', ExamEdit::class)->name('exams.edit');
 
+        Route::get('/exam-center', function () {
+            return view('examcenter');
+        })->name('examcenter');
 
-    Route::get('/edit-exam/{exam_slug}', ExamEdit::class)->name('exams.edit');
+        Route::get('/create-exam', function () {
+            return view('exams.create');
+        })->name('exams.create');
 
-    Route::get('/exam-center', function () {
-        return view('examcenter');
-    })->name('examcenter');
+        Route::get('/question-bank', function () {
+            return view('questionbank');
+        })->name('questionbank');
 
-    Route::get('/create-exam', function () {
-        return view('exams.create');
-    })->name('exams.create');
+        Route::get('/question-bank/{slug}', function ($slug) {
+            // Get Id passed int via route('questionbank, $exam->id);
+            $exam_id = Exam::where('slug', $slug)->first()->id;
 
+            return view('questionbank', compact('exam_id'));
+        })->name('questionbank.with.slug');
+        
+        Route::get('track-responses', function () {
+            return view('exams.track-responses');
+        })->name('track-responses');
 
-    Route::get('/question-bank', function () {
-        return view('questionbank');
-    })->name('questionbank');
+        Route::get('/course-import', function () {
+            return view('courses.import');
+        })->name('courses.import');
+    });
+    
+    // Administrator routes
+    Route::middleware(['role:Administrator|Super Admin|Academic Officer'])->group(function() {
+        Route::get('/students', function () {
+            return view('students');
+        })->name('students');
 
-    Route::get('/question-bank/{slug}', function ($slug) {
-        // Get Id passed int via route('questionbank, $exam->id);
-        $exam_id = Exam::where('slug', $slug)->first()->id;
+        Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
+    });
 
-        return view('questionbank', compact('exam_id'));
-    })->name('questionbank.with.slug');
-
+    // Routes available to all authenticated users
     Route::get('/support-center', function () {
         return redirect()->away('https://desk.zoho.eu/support/pnmtc');
     })->name('supportcenter');
@@ -130,10 +140,6 @@ Route::middleware([
         return view('users.password-reset');
     })->name('reset-pass');
 
-    Route::get('track-responses', function () {
-        return view('exams.track-responses');
-    })->name('track-responses');
-
     Route::get('/exam-clearance', function () {
         return view('exams.clearance');
     });
@@ -145,7 +151,7 @@ Route::middleware([
     */
 
     // Admin Election Management Routes
-    Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('admin')->group(function () {
         // Election Management
         Route::get('/elections', \App\Livewire\ElectionManager::class)->name('elections');
         Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
@@ -171,7 +177,7 @@ Route::middleware([
     | Finance Management & Fee Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum'])->prefix('finance')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Manager'])->prefix('finance')->group(function () {
         Route::get('/billing', function () {
             return view('finance.billing');
         })->name('finance.billing');

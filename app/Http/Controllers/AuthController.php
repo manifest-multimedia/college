@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -31,8 +32,6 @@ class AuthController extends Controller
                 ]
             ]);
 
-
-
             // Check if the response is successful and in JSON format
             if ($response->getStatusCode() === 200) {
                 $authUser = json_decode($response->getBody(), true);
@@ -41,15 +40,21 @@ class AuthController extends Controller
                     // Set a random password if the user doesn't exist in App1
                     $password = Hash::make(Str::random(10));
 
+                    // Get role from AuthCentral response or default to 'Staff'
+                    $authCentralRole = $authUser['role'] ?? 'Staff';
+
                     // Find or create the user in App1's local database using email
                     $user = User::updateOrCreate(
                         ['email' => $authUser['email']],
                         [
                             'name' => $authUser['name'],
                             'password' => $password,
-                            'role' => $authUser['role'] ?? 'user',
+                            'role' => $authCentralRole, // Keep this for backward compatibility
                         ]
                     );
+
+                    // Sync Spatie roles based on AuthCentral role
+                    $this->syncUserRole($user, $authCentralRole);
 
                     //Authenticate User Access
                     Auth::login($user);
@@ -74,6 +79,33 @@ class AuthController extends Controller
 
             // Redirect back to login with an error message
             return redirect()->route('login')->withErrors(['login' => 'Authentication failed. Please try again.']);
+        }
+    }
+
+    /**
+     * Sync user roles based on the role provided by AuthCentral.
+     *
+     * @param User $user
+     * @param string $authCentralRole
+     * @return void
+     */
+    protected function syncUserRole(User $user, string $authCentralRole): void
+    {
+        // Remove any existing roles first
+        $user->syncRoles([]);
+        
+        // Check if the role exists in our Spatie roles
+        $role = Role::where('name', $authCentralRole)->first();
+        
+        if ($role) {
+            // Assign the matching role
+            $user->assignRole($role);
+            Log::info("User {$user->email} assigned role: {$authCentralRole}");
+        } else {
+            // If no matching role found, assign a default role (e.g., Staff)
+            $defaultRole = 'Staff';
+            $user->assignRole($defaultRole);
+            Log::warning("Role {$authCentralRole} not found in system. User {$user->email} assigned default role: {$defaultRole}");
         }
     }
 }
