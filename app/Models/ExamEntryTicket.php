@@ -13,7 +13,7 @@ class ExamEntryTicket extends Model
     protected $fillable = [
         'exam_clearance_id',
         'student_id',
-        'exam_id',
+        'exam_type_id',
         'qr_code',
         'ticket_number',
         'is_verified',
@@ -66,11 +66,11 @@ class ExamEntryTicket extends Model
     }
 
     /**
-     * Get the exam associated with this entry ticket
+     * Get the exam type associated with this entry ticket
      */
-    public function exam()
+    public function examType()
     {
-        return $this->belongsTo(Exam::class);
+        return $this->belongsTo(ExamType::class, 'exam_type_id');
     }
 
     /**

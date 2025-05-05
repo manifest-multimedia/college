@@ -55,8 +55,15 @@ class ExamClearanceManager extends Component
     public function openClearanceModal($studentId)
     {
         Log::info('openClearanceModal called', [
-            'studentId' => $studentId
+            'studentId' => $studentId,
+            'examTypeId' => $this->examTypeId
         ]);
+        
+        // Check if examTypeId is set, if not get the first active exam type
+        if (!$this->examTypeId) {
+            $this->examTypeId = ExamType::where('is_active', true)->first()?->id;
+            Log::info('Setting default examTypeId', ['examTypeId' => $this->examTypeId]);
+        }
         
         $this->selectedStudentId = $studentId;
         $this->manualOverride = false;
@@ -71,8 +78,15 @@ class ExamClearanceManager extends Component
     public function openOverrideModal($studentId)
     {
         Log::info('openOverrideModal called', [
-            'studentId' => $studentId
+            'studentId' => $studentId,
+            'examTypeId' => $this->examTypeId
         ]);
+        
+        // Check if examTypeId is set, if not get the first active exam type
+        if (!$this->examTypeId) {
+            $this->examTypeId = ExamType::where('is_active', true)->first()?->id;
+            Log::info('Setting default examTypeId', ['examTypeId' => $this->examTypeId]);
+        }
         
         $this->selectedStudentId = $studentId;
         $this->manualOverride = true;
@@ -94,7 +108,20 @@ class ExamClearanceManager extends Component
             'manualOverride' => $this->manualOverride
         ]);
         
+        // Add additional debug info
+        Log::info('Current component state', [
+            'showClearanceModal' => $this->showClearanceModal,
+            'showOverrideModal' => $this->showOverrideModal
+        ]);
+        
         try {
+            // Validate required fields
+            $this->validate([
+                'academicYearId' => 'required',
+                'semesterId' => 'required',
+                'examTypeId' => 'required',
+            ]);
+            
             // Validate override reason if manual override
             if ($this->manualOverride) {
                 Log::info('Validating override reason');

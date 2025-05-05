@@ -194,16 +194,25 @@
                     <h5 class="modal-title" id="clearanceModalLabel">Confirm Exam Clearance</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    @if($selectedStudentId)
-                        <p>Are you sure you want to clear this student for the exam?</p>
-                        <p>Student has met the payment requirement of {{ $examTypes->where('id', $examTypeId)->first()->payment_threshold ?? '0' }}%.</p>
-                    @endif
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" wire:click="clearStudent" class="btn btn-primary">Clear Student</button>
-                </div>
+                <form wire:submit.prevent="clearStudent">
+                    <div class="modal-body">
+                        @if($selectedStudentId && $examTypeId)
+                            <p>Are you sure you want to clear this student for the exam?</p>
+                            <p>Selected exam: <strong>{{ $examTypes->where('id', $examTypeId)->first()->name ?? 'Unknown' }}</strong></p>
+                            <p>Student has met the payment requirement of {{ $examTypes->where('id', $examTypeId)->first()->payment_threshold ?? '0' }}%.</p>
+                            
+                            <input type="hidden" wire:model="examTypeId">
+                        @else
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> Please select an exam type before continuing.
+                            </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" @if(!$examTypeId) disabled @endif>Clear Student</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -216,23 +225,35 @@
                     <h5 class="modal-title" id="overrideModalLabel">Manual Clearance Override</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> Warning: This student has not met the required payment threshold.
+                <form wire:submit.prevent="clearStudent">
+                    <div class="modal-body">
+                        @if($examTypeId)
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Warning: This student has not met the required payment threshold.
+                            </div>
+                            
+                            <p>Selected exam: <strong>{{ $examTypes->where('id', $examTypeId)->first()->name ?? 'Unknown' }}</strong></p>
+                            
+                            <div class="form-group">
+                                <label for="overrideReason">Reason for Override (Required)</label>
+                                <textarea wire:model="overrideReason" class="form-control @error('overrideReason') is-invalid @enderror" rows="3"></textarea>
+                                @error('overrideReason')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            
+                            <input type="hidden" wire:model="examTypeId">
+                        @else
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> Please select an exam type before continuing.
+                            </div>
+                        @endif
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="overrideReason">Reason for Override (Required)</label>
-                        <textarea wire:model="overrideReason" class="form-control @error('overrideReason') is-invalid @enderror" rows="3"></textarea>
-                        @error('overrideReason')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning" @if(!$examTypeId) disabled @endif>Override & Clear</button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" wire:click="clearStudent" class="btn btn-warning">Override & Clear</button>
-                </div>
+                </form>
             </div>
         </div>
     </div>

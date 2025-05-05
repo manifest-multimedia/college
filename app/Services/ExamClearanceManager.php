@@ -56,6 +56,11 @@ class ExamClearanceManager
             'examTypeId' => $examTypeId,
             'manualOverride' => $manualOverride
         ]);
+        
+        // Validate that examTypeId is a positive integer
+        if (empty($examTypeId) || $examTypeId <= 0) {
+            throw new \InvalidArgumentException('A valid exam type ID must be provided.');
+        }
 
         return DB::transaction(function () use (
             $student,
@@ -168,19 +173,19 @@ class ExamClearanceManager
      * Generate exam entry ticket for a cleared student
      * 
      * @param ExamClearance $clearance
-     * @param Exam $exam
+     * @param ExamType $examType
      * @param Carbon|null $expiresAt
      * @return ExamEntryTicket
      */
-    public function generateExamEntryTicket(ExamClearance $clearance, Exam $exam, ?Carbon $expiresAt = null): ExamEntryTicket
+    public function generateExamEntryTicket(ExamClearance $clearance, ExamType $examType, ?Carbon $expiresAt = null): ExamEntryTicket
     {
         if (!$clearance->is_cleared) {
             throw new \Exception('Cannot generate exam entry ticket for a student who is not cleared for exams.');
         }
         
-        // Check for any existing active tickets for this exam
+        // Check for any existing active tickets for this exam type
         $existingTicket = ExamEntryTicket::where('exam_clearance_id', $clearance->id)
-            ->where('exam_id', $exam->id)
+            ->where('exam_type_id', $examType->id)
             ->where('is_active', true)
             ->first();
             
@@ -189,14 +194,14 @@ class ExamClearanceManager
         }
         
         // Generate QR code and ticket number
-        $qrCode = 'QR-' . $clearance->student->student_id . '-' . $exam->id . '-' . Str::random(8);
+        $qrCode = 'QR-' . $clearance->student->student_id . '-' . $examType->id . '-' . Str::random(8);
         $ticketNumber = 'TKT-' . strtoupper(Str::random(8));
         
         // Create the entry ticket
         $ticket = ExamEntryTicket::create([
             'exam_clearance_id' => $clearance->id,
             'student_id' => $clearance->student_id,
-            'exam_id' => $exam->id,
+            'exam_type_id' => $examType->id,
             'qr_code' => $qrCode,
             'ticket_number' => $ticketNumber,
             'is_verified' => false,
@@ -234,7 +239,7 @@ class ExamClearanceManager
                 'message' => 'This ticket is no longer active.',
                 'data' => [
                     'student' => $ticket->student,
-                    'exam' => $ticket->exam,
+                    'examType' => $ticket->examType,
                     'status' => 'inactive'
                 ]
             ];
@@ -246,7 +251,7 @@ class ExamClearanceManager
                 'message' => 'This ticket has already been used for entry.',
                 'data' => [
                     'student' => $ticket->student,
-                    'exam' => $ticket->exam,
+                    'examType' => $ticket->examType,
                     'status' => 'already_used',
                     'verified_at' => $ticket->verified_at
                 ]
@@ -259,7 +264,7 @@ class ExamClearanceManager
                 'message' => 'This ticket has expired.',
                 'data' => [
                     'student' => $ticket->student,
-                    'exam' => $ticket->exam,
+                    'examType' => $ticket->examType,
                     'status' => 'expired',
                     'expired_at' => $ticket->expires_at
                 ]
@@ -280,7 +285,7 @@ class ExamClearanceManager
             'message' => 'Ticket verified successfully. Student is cleared for the exam.',
             'data' => [
                 'student' => $ticket->student,
-                'exam' => $ticket->exam,
+                'examType' => $ticket->examType,
                 'status' => 'cleared',
                 'verified_at' => $ticket->verified_at
             ]

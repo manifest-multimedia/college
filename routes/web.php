@@ -337,6 +337,9 @@ Route::middleware([
         Route::get('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchCreate'])->name('classes.batch-grades');
         Route::post('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchStore'])->name('classes.batch-grades.store');
 
+        // Exam Types
+        Route::get('/exam-types', App\Livewire\Academics\ExamTypeManager::class)->name('exam-types');
+
         // Year migration command (for admins only)
         Route::post('/migrate-year-data', function () {
             if (auth()->user()->hasRole('admin')) {

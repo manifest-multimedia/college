@@ -110,7 +110,7 @@
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>Exam</th>
+                                            <th>Exam Type</th>
                                             <th>Generated</th>
                                             <th>Expires</th>
                                             <th>Status</th>
@@ -121,7 +121,7 @@
                                         @foreach($tickets as $ticket)
                                             <tr>
                                                 <td>{{ $ticket->id }}</td>
-                                                <td>{{ $ticket->exam->title }}</td>
+                                                <td>{{ $ticket->examType->name }}</td>
                                                 <td>{{ $ticket->created_at->format('d M Y, H:i') }}</td>
                                                 <td>{{ $ticket->expires_at ? $ticket->expires_at->format('d M Y, H:i') : 'No Expiry' }}</td>
                                                 <td>
@@ -201,14 +201,14 @@
                     <div class="modal-body">
                         <form>
                             <div class="mb-3">
-                                <label for="examId" class="form-label">Select Exam</label>
-                                <select id="examId" class="form-select @error('examId') is-invalid @enderror" wire:model="examId">
-                                    <option value="">-- Select Exam --</option>
-                                    @foreach($exams as $exam)
-                                        <option value="{{ $exam->id }}">{{ $exam->title }}</option>
+                                <label for="examTypeId" class="form-label">Select Exam Type</label>
+                                <select id="examTypeId" class="form-select @error('examTypeId') is-invalid @enderror" wire:model="examTypeId">
+                                    <option value="">-- Select Exam Type --</option>
+                                    @foreach($examTypes as $examType)
+                                        <option value="{{ $examType->id }}">{{ $examType->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('examId')
+                                @error('examTypeId')
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
@@ -253,4 +253,23 @@
             </div>
         </div>
     @endif
+    
+    @push('scripts')
+    <script>
+        document.addEventListener('livewire:init', function () {
+            Livewire.on('show-generate-modal', () => {
+                new bootstrap.Modal(document.getElementById('generateTicketModal')).show();
+            });
+            
+            Livewire.on('close-modal', () => {
+                // Hide any bootstrap modals
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modalEl => {
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                });
+            });
+        });
+    </script>
+    @endpush
 </div>

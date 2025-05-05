@@ -3,11 +3,12 @@
 namespace App\Livewire\Finance;
 
 use App\Models\ExamClearance;
-use App\Models\Exam;
+use App\Models\ExamType;
 use App\Models\ExamEntryTicket;
 use App\Services\ExamClearanceManager;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ExamEntryTicketManager extends Component
@@ -15,13 +16,13 @@ class ExamEntryTicketManager extends Component
     use WithPagination;
     
     public $clearanceId;
-    public $examId;
+    public $examTypeId;
     public $expiryDate;
     public $expiryTime;
     public $showGenerateModal = false;
     
     protected $rules = [
-        'examId' => 'required|exists:exams,id',
+        'examTypeId' => 'required|exists:exam_types,id',
         'expiryDate' => 'nullable|date',
         'expiryTime' => 'nullable'
     ];
@@ -37,6 +38,7 @@ class ExamEntryTicketManager extends Component
     {
         $this->clearanceId = $clearanceId;
         $this->showGenerateModal = true;
+        $this->dispatch('show-generate-modal');
     }
     
     public function generateTicket()
@@ -44,7 +46,7 @@ class ExamEntryTicketManager extends Component
         $this->validate();
         
         $clearance = ExamClearance::findOrFail($this->clearanceId);
-        $exam = Exam::findOrFail($this->examId);
+        $examType = ExamType::findOrFail($this->examTypeId);
         
         $expiresAt = null;
         if ($this->expiryDate && $this->expiryTime) {
@@ -56,11 +58,25 @@ class ExamEntryTicketManager extends Component
         
         try {
             $clearanceManager = new ExamClearanceManager();
-            $ticket = $clearanceManager->generateExamEntryTicket($clearance, $exam, $expiresAt);
+            $ticket = $clearanceManager->generateExamEntryTicket($clearance, $examType, $expiresAt);
+            
+            Log::info('Exam ticket generated successfully', [
+                'ticketId' => $ticket->id,
+                'studentId' => $clearance->student_id,
+                'examTypeId' => $examType->id
+            ]);
             
             session()->flash('message', 'Exam entry ticket generated successfully.');
             $this->showGenerateModal = false;
+            $this->dispatch('close-modal');
         } catch (\Exception $e) {
+            Log::error('Failed to generate ticket', [
+                'error' => $e->getMessage(),
+                'studentId' => $clearance->student_id,
+                'examTypeId' => $examType->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             session()->flash('error', 'Failed to generate ticket: ' . $e->getMessage());
         }
     }
@@ -69,14 +85,27 @@ class ExamEntryTicketManager extends Component
     {
         $ticket = ExamEntryTicket::findOrFail($ticketId);
         
-        $ticket->update([
-            'is_active' => false
-        ]);
-        
-        session()->flash('message', 'Ticket has been deactivated.');
+        try {
+            $ticket->update([
+                'is_active' => false
+            ]);
+            
+            Log::info('Ticket deactivated', [
+                'ticketId' => $ticket->id
+            ]);
+            
+            session()->flash('message', 'Ticket has been deactivated.');
+        } catch (\Exception $e) {
+            Log::error('Failed to deactivate ticket', [
+                'error' => $e->getMessage(),
+                'ticketId' => $ticket->id
+            ]);
+            
+            session()->flash('error', 'Failed to deactivate ticket: ' . $e->getMessage());
+        }
     }
     
-    public function getExamsProperty()
+    public function getExamTypesProperty()
     {
         if (!$this->clearanceId) {
             return collect();
@@ -84,8 +113,9 @@ class ExamEntryTicketManager extends Component
         
         $clearance = ExamClearance::findOrFail($this->clearanceId);
         
-        return Exam::where('semester_id', $clearance->semester_id)
-            ->where('active', true)
+        // Get all active exam types, prioritizing the one from the clearance
+        return ExamType::where('is_active', true)
+            ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [$clearance->exam_type_id])
             ->get();
     }
     
@@ -106,7 +136,7 @@ class ExamEntryTicketManager extends Component
         }
         
         return ExamEntryTicket::where('exam_clearance_id', $this->clearanceId)
-            ->with(['exam'])
+            ->with(['examType'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
     }
@@ -116,7 +146,7 @@ class ExamEntryTicketManager extends Component
         return view('livewire.finance.exam-entry-ticket-manager', [
             'clearance' => $this->clearance,
             'tickets' => $this->tickets,
-            'exams' => $this->exams
+            'examTypes' => $this->examTypes
         ])
         ->layout('components.dashboard.default');
     }
