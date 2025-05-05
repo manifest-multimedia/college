@@ -1,3 +1,5 @@
+@stack('scripts')
+
 <script>
     var hostUrl = "{{ asset('dashboard/assets/') }}";
 </script>

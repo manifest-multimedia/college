@@ -33,9 +33,14 @@ class ExamSessions extends Component
     public function render()
     {
         return view('livewire.exam-sessions', [
-            'examSessions' => Exam::where('title', 'like', '%'.$this->search.'%')
+            'examSessions' => Exam::whereHas('course', function($query) {
+                    $query->where('name', 'like', '%'.$this->search.'%');
+                })
                 ->orderBy($this->sortField, $this->sortDirection)
                 ->paginate($this->perPage)
+        ])->layout('components.dashboard.default', [
+            'title' => 'Exam Sessions',
+            'description' => 'Manage exam sessions and their details.',
         ]);
     }
 }

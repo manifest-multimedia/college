@@ -8,6 +8,7 @@ use App\Models\ExamClearance;
 use App\Models\ExamEntryTicket;
 use App\Models\Exam;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -48,6 +49,14 @@ class ExamClearanceManager
         ?string $overrideReason = null,
         ?int $clearedBy = null
     ): ExamClearance {
+        Log::info('ExamClearanceService processClearance called', [
+            'studentId' => $student->id,
+            'academicYearId' => $academicYearId,
+            'semesterId' => $semesterId,
+            'examTypeId' => $examTypeId,
+            'manualOverride' => $manualOverride
+        ]);
+
         return DB::transaction(function () use (
             $student,
             $academicYearId,
@@ -57,44 +66,79 @@ class ExamClearanceManager
             $overrideReason,
             $clearedBy
         ) {
-            // Check if a clearance record already exists for this student
-            $existingClearance = $student->examClearances()
-                ->where('academic_year_id', $academicYearId)
-                ->where('semester_id', $semesterId)
-                ->where('exam_type_id', $examTypeId)
-                ->first();
+            try {
+                // Check if a clearance record already exists for this student
+                $existingClearance = $student->examClearances()
+                    ->where('academic_year_id', $academicYearId)
+                    ->where('semester_id', $semesterId)
+                    ->where('exam_type_id', $examTypeId)
+                    ->first();
                 
-            if ($existingClearance) {
-                // If a record exists, update its status
-                $existingClearance->update([
+                Log::info('Checking existing clearance', [
+                    'exists' => !is_null($existingClearance),
+                    'clearanceId' => $existingClearance->id ?? 'none'
+                ]);
+                    
+                if ($existingClearance) {
+                    // If a record exists, update its status
+                    Log::info('Updating existing clearance', [
+                        'clearanceId' => $existingClearance->id,
+                        'previousStatus' => $existingClearance->is_cleared
+                    ]);
+                    
+                    $existingClearance->update([
+                        'is_cleared' => true,
+                        'is_manual_override' => $manualOverride,
+                        'override_reason' => $overrideReason,
+                        'cleared_by' => $clearedBy,
+                        'cleared_at' => Carbon::now(),
+                    ]);
+                    
+                    Log::info('Existing clearance updated', [
+                        'clearanceId' => $existingClearance->id,
+                        'newStatus' => true
+                    ]);
+                    
+                    return $existingClearance->fresh();
+                }
+                
+                // Generate a unique clearance code
+                $clearanceCode = 'CLR-' . $student->student_id . '-' . strtoupper(Str::random(6));
+                
+                Log::info('Creating new clearance record', [
+                    'studentId' => $student->id,
+                    'clearanceCode' => $clearanceCode
+                ]);
+                
+                // Create a new clearance record
+                $clearance = ExamClearance::create([
+                    'student_id' => $student->id,
+                    'academic_year_id' => $academicYearId,
+                    'semester_id' => $semesterId,
+                    'exam_type_id' => $examTypeId,
                     'is_cleared' => true,
                     'is_manual_override' => $manualOverride,
                     'override_reason' => $overrideReason,
                     'cleared_by' => $clearedBy,
                     'cleared_at' => Carbon::now(),
+                    'clearance_code' => $clearanceCode,
                 ]);
                 
-                return $existingClearance->fresh();
+                Log::info('New clearance created', [
+                    'clearanceId' => $clearance->id,
+                    'clearanceCode' => $clearance->clearance_code,
+                    'isCleared' => $clearance->is_cleared
+                ]);
+                
+                return $clearance;
+            } catch (\Exception $e) {
+                Log::error('Error in processClearance transaction', [
+                    'error' => $e->getMessage(),
+                    'studentId' => $student->id,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
             }
-            
-            // Generate a unique clearance code
-            $clearanceCode = 'CLR-' . $student->student_id . '-' . strtoupper(Str::random(6));
-            
-            // Create a new clearance record
-            $clearance = ExamClearance::create([
-                'student_id' => $student->id,
-                'academic_year_id' => $academicYearId,
-                'semester_id' => $semesterId,
-                'exam_type_id' => $examTypeId,
-                'is_cleared' => true,
-                'is_manual_override' => $manualOverride,
-                'override_reason' => $overrideReason,
-                'cleared_by' => $clearedBy,
-                'cleared_at' => Carbon::now(),
-                'clearance_code' => $clearanceCode,
-            ]);
-            
-            return $clearance;
         });
     }
     

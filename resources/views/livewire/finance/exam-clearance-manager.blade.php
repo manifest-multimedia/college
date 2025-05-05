@@ -187,11 +187,11 @@
     </div>
 
     <!-- Clearance Modal -->
-    <div class="modal fade" id="clearanceModal" tabindex="-1" wire:ignore.self>
+    <div wire:ignore.self class="modal fade" id="clearanceModal" tabindex="-1" aria-labelledby="clearanceModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Confirm Exam Clearance</h5>
+                    <h5 class="modal-title" id="clearanceModalLabel">Confirm Exam Clearance</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -209,11 +209,11 @@
     </div>
 
     <!-- Manual Override Modal -->
-    <div class="modal fade" id="overrideModal" tabindex="-1" wire:ignore.self>
+    <div wire:ignore.self class="modal fade" id="overrideModal" tabindex="-1" aria-labelledby="overrideModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Manual Clearance Override</h5>
+                    <h5 class="modal-title" id="overrideModalLabel">Manual Clearance Override</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -239,13 +239,34 @@
 
     @push('scripts')
     <script>
-        document.addEventListener('livewire:init', () => {
-            Livewire.on('showClearanceModal', () => {
-                new bootstrap.Modal(document.getElementById('clearanceModal')).show();
+        document.addEventListener('livewire:init', function () {
+            // Modal handling for Laravel 12 and Livewire v3
+            Livewire.on('show-clearance-modal', () => {
+                let modal = new bootstrap.Modal(document.getElementById('clearanceModal'));
+                modal.show();
+                console.log('Showing clearance modal');
             });
             
-            Livewire.on('showOverrideModal', () => {
-                new bootstrap.Modal(document.getElementById('overrideModal')).show();
+            Livewire.on('show-override-modal', () => {
+                let modal = new bootstrap.Modal(document.getElementById('overrideModal'));
+                modal.show();
+                console.log('Showing override modal');
+            });
+            
+            Livewire.on('close-modal', () => {
+                // Close any open modals
+                let clearanceModal = bootstrap.Modal.getInstance(document.getElementById('clearanceModal'));
+                let overrideModal = bootstrap.Modal.getInstance(document.getElementById('overrideModal'));
+                
+                if (clearanceModal) {
+                    clearanceModal.hide();
+                    console.log('Hiding clearance modal');
+                }
+                
+                if (overrideModal) {
+                    overrideModal.hide();
+                    console.log('Hiding override modal');
+                }
             });
         });
     </script>

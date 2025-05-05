@@ -13,7 +13,7 @@
                     <a href="{{ route('finance.billing') }}" class="btn btn-secondary">
                         <i class="ki-duotone ki-arrow-left fs-2"></i> Back to Bills
                     </a>
-                    <a href="{{ route('finance.bill.print', $billId) }}" class="btn btn-info ms-2">
+                    <a href="{{ url('finance.bill.print', $billId) }}" class="btn btn-info ms-2">
                         <i class="ki-duotone ki-printer fs-2"></i> Print Bill
                     </a>
                 </div>

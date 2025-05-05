@@ -30,7 +30,7 @@
                     @if(isset($title) && $title)
                         <li class="text-gray-900 breadcrumb-item">{{ $title }}</li>
                     @else 
-                        <li class="text-gray-900 breadcrumb-item">Untitled</li>
+                        <li class="text-gray-900 breadcrumb-item">Dashboard</li>
                     @endif
                     <!--end::Item-->
                 </ul>

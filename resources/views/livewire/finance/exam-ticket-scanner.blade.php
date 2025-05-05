@@ -2,8 +2,9 @@
     <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
+                    
                 <h1 class="card-title">
-                    <i class="fas fa-qrcode"></i> Exam Entry Ticket Scanner
+                    <i class="fas fa-qrcode mx-2"></i> Exam Entry Ticket Scanner
                 </h1>
             </div>
         </div>
@@ -54,7 +55,7 @@
                         <div class="card">
                             <div class="card-header bg-light">
                                 <h5 class="card-title mb-0">
-                                    <i class="fas fa-camera"></i> Scan QR Code
+                                    <i class="fas fa-camera mx-2"></i> Scan QR Code
                                 </h5>
                             </div>
                             <div class="card-body">
@@ -77,9 +78,9 @@
                                 <div class="card-header bg-{{ $verificationResult['success'] ? 'success' : 'danger' }}">
                                     <h5 class="card-title mb-0 text-white">
                                         @if($verificationResult['success'])
-                                            <i class="fas fa-check-circle"></i> Verification Successful
+                                            <i class="fas fa-check-circle mx-2"></i> Verification Successful
                                         @else
-                                            <i class="fas fa-times-circle"></i> Verification Failed
+                                            <i class="fas fa-times-circle mx-2"></i> Verification Failed
                                         @endif
                                     </h5>
                                 </div>
@@ -167,7 +168,7 @@
                     <div class="card">
                         <div class="card-header bg-light">
                             <h5 class="card-title mb-0">
-                                <i class="fas fa-info-circle"></i> Scanner Instructions
+                                <i class="fas fa-info-circle mx-2"></i> Scanner Instructions
                             </h5>
                         </div>
                         <div class="card-body">
@@ -188,7 +189,7 @@
                     <div class="card mt-3">
                         <div class="card-header bg-light">
                             <h5 class="card-title mb-0">
-                                <i class="fas fa-key"></i> Manual Verification
+                                <i class="fas fa-key mx-2"></i> Manual Verification
                             </h5>
                         </div>
                         <div class="card-body">

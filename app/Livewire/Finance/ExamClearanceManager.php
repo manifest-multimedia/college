@@ -11,6 +11,7 @@ use App\Services\ExamClearanceManager as ExamClearanceService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ExamClearanceManager extends Component
@@ -53,46 +54,111 @@ class ExamClearanceManager extends Component
     
     public function openClearanceModal($studentId)
     {
+        Log::info('openClearanceModal called', [
+            'studentId' => $studentId
+        ]);
+        
         $this->selectedStudentId = $studentId;
         $this->manualOverride = false;
         $this->overrideReason = '';
         $this->showClearanceModal = true;
+        
+        $this->dispatch('show-clearance-modal');
+        
+        Log::info('Dispatched show-clearance-modal event');
     }
     
     public function openOverrideModal($studentId)
     {
+        Log::info('openOverrideModal called', [
+            'studentId' => $studentId
+        ]);
+        
         $this->selectedStudentId = $studentId;
         $this->manualOverride = true;
         $this->overrideReason = '';
         $this->showOverrideModal = true;
+        
+        $this->dispatch('show-override-modal');
+        
+        Log::info('Dispatched show-override-modal event');
     }
     
     public function clearStudent()
     {
-        if ($this->manualOverride) {
-            $this->validate([
-                'overrideReason' => 'required|min:10'
-            ]);
-        }
-        
-        $student = Student::findOrFail($this->selectedStudentId);
-        $clearanceManager = new ExamClearanceService();
+        Log::info('clearStudent method entered', [
+            'studentId' => $this->selectedStudentId,
+            'academicYearId' => $this->academicYearId,
+            'semesterId' => $this->semesterId,
+            'examTypeId' => $this->examTypeId,
+            'manualOverride' => $this->manualOverride
+        ]);
         
         try {
+            // Validate override reason if manual override
+            if ($this->manualOverride) {
+                Log::info('Validating override reason');
+                $this->validate([
+                    'overrideReason' => 'required|min:10'
+                ]);
+                Log::info('Manual override validated successfully', [
+                    'overrideReason' => $this->overrideReason
+                ]);
+            }
+            
+            // Find student
+            Log::info('Finding student with ID: ' . $this->selectedStudentId);
+            $student = Student::findOrFail($this->selectedStudentId);
+            Log::info('Student found', [
+                'studentId' => $student->id,
+                'studentName' => $student->first_name . ' ' . $student->last_name
+            ]);
+            
+            // Initialize clearance manager
+            $clearanceManager = new ExamClearanceService();
+            
+            Log::info('About to process clearance', [
+                'student' => $student->id,
+                'academicYearId' => $this->academicYearId, 
+                'semesterId' => $this->semesterId,
+                'examTypeId' => $this->examTypeId
+            ]);
+            
+            // Process the clearance
             $clearance = $clearanceManager->processClearance(
                 $student, 
-                $this->academicYearId,
-                $this->semesterId,
-                $this->examTypeId,
+                (int) $this->academicYearId, // Ensure integers are passed
+                (int) $this->semesterId,
+                (int) $this->examTypeId,
                 $this->manualOverride,
                 $this->overrideReason,
                 Auth::id()
             );
             
-            session()->flash('message', 'Student has been cleared for the exam.');
+            Log::info('Clearance processed successfully', [
+                'clearanceId' => $clearance->id,
+                'clearanceCode' => $clearance->clearance_code,
+                'isCleared' => $clearance->is_cleared
+            ]);
+            
+            // Reset modal states
             $this->showClearanceModal = false;
             $this->showOverrideModal = false;
+            
+            // Close modals using dispatch for Laravel 12
+            $this->dispatch('close-modal');
+            
+            session()->flash('message', 'Student has been cleared for the exam.');
+            Log::info('Method complete - success message flashed');
+            
         } catch (\Exception $e) {
+            Log::error('Failed to clear student', [
+                'studentId' => $this->selectedStudentId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             session()->flash('error', 'Failed to clear student: ' . $e->getMessage());
         }
     }

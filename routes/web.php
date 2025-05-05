@@ -94,11 +94,7 @@ Route::middleware([
             return view('examcenter');
         })->name('examcenter');
 
-        Route::get('/exam-sessions', function () {
-            return view('components.dashboard.default', [
-                'content' => 'exams.sessions'
-            ]);
-        })->name('examsessions');
+        Route::get('/exam-sessions', \App\Livewire\ExamSessions::class)->name('examsessions');
 
         Route::get('/create-exam', function () {
             return view('exams.create');
@@ -222,6 +218,10 @@ Route::middleware([
         Route::get('/bill/details/{billId}', function ($billId) {
             return view('finance.bill-details', ['billId' => $billId]);
         })->name('bill.details');
+        
+        Route::get('/bill/view/{id}', function ($id) {
+            return view('finance.bill-details', ['billId' => $id]);
+        })->name('finance.bill.view');
         
         Route::get('/bill/print/{billId}', function ($billId) {
             return view('finance.bill-print', ['billId' => $billId]);
