@@ -7,7 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Student;
 use App\Models\FeeType;
 use App\Models\FeeStructure;
-use App\Models\StudentBill;
+use App\Models\StudentFeeBill;
 use App\Models\Payment;
 use App\Models\CollegeClass;
 use App\Models\AcademicYear;
@@ -15,7 +15,7 @@ use App\Models\Semester;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 
-class StudentBillingManager extends Component
+class StudentFeeBillingManager extends Component
 {
     use WithPagination;
 
@@ -114,7 +114,7 @@ class StudentBillingManager extends Component
 
     private function getBills()
     {
-        return StudentBill::with(['student.collegeClass', 'academicYear', 'semester'])
+        return StudentFeeBill::with(['student.collegeClass', 'academicYear', 'semester'])
             ->when($this->search, function ($query) {
                 return $query->whereHas('student', function ($q) {
                     $q->where('first_name', 'like', '%' . $this->search . '%')
@@ -141,7 +141,7 @@ class StudentBillingManager extends Component
             ->paginate(15);
     }
 
-    public function loadStudentBills()
+    public function loadStudentFeeBills()
     {
         if (empty($this->selectedStudentId)) {
             $this->selectedStudent = null;
@@ -151,7 +151,7 @@ class StudentBillingManager extends Component
 
         $this->selectedStudent = Student::find($this->selectedStudentId);
         if ($this->selectedStudent) {
-            $this->studentFeeBills = StudentBill::where('student_id', $this->selectedStudentId)
+            $this->studentFeeBills = StudentFeeBill::where('student_id', $this->selectedStudentId)
                 ->with(['academicYear', 'semester', 'payments'])
                 ->orderBy('academic_year_id', 'desc')
                 ->orderBy('semester_id', 'desc')
@@ -251,7 +251,7 @@ class StudentBillingManager extends Component
         try {
             foreach ($students as $student) {
                 // Check if a bill already exists
-                $existingBill = StudentBill::where('student_id', $student->id)
+                $existingBill = StudentFeeBill::where('student_id', $student->id)
                     ->where('academic_year_id', $this->bulkBillingAcademicYear)
                     ->where('semester_id', $this->bulkBillingSemester)
                     ->first();
@@ -265,7 +265,7 @@ class StudentBillingManager extends Component
                 $totalAmount = $feeStructures->sum('amount');
 
                 // Create a new bill
-                $bill = new StudentBill();
+                $bill = new StudentFeeBill();
                 $bill->student_id = $student->id;
                 $bill->academic_year_id = $this->bulkBillingAcademicYear;
                 $bill->semester_id = $this->bulkBillingSemester;

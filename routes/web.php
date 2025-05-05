@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ReportGenerator;
 use Illuminate\Support\Facades\Mail;
@@ -126,7 +127,44 @@ Route::middleware([
             return view('students');
         })->name('students');
 
+        // Student individual routes
+        Route::get('/students/{student}', function ($student) {
+            return view('students.show', ['studentId' => $student]);
+        })->name('students.show');
+
+        Route::get('/students/{student}/edit', function ($student) {
+            return view('students.edit', ['studentId' => $student]);
+        })->name('students.edit');
+        
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
+
+        // Settings Routes
+        Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('settings')->group(function () {
+            Route::get('/general', function () {
+                return view('settings.general');
+            })->name('settings.general');
+
+            Route::get('/users', function () {
+                return view('settings.users');
+            })->name('settings.users');
+
+            Route::get('/roles', function () {
+                return view('settings.roles');
+            })->name('settings.roles');
+
+            Route::get('/backup', function () {
+                return view('settings.backup');
+            })->name('settings.backup');
+            
+            // Backup download route
+            Route::get('/backup/download/{path}', function ($path) {
+                $fullPath = Storage::disk('local')->path($path);
+                if (Storage::disk('local')->exists($path)) {
+                    return response()->download($fullPath, basename($path));
+                }
+                return back()->with('error', 'Backup file not found.');
+            })->name('settings.backup.download')->where('path', '.*');
+        });
     });
 
     // Routes available to all authenticated users
@@ -183,7 +221,11 @@ Route::middleware([
         Route::get('/billing', function () {
             return view('finance.billing');
         })->name('finance.billing');
-        
+
+        Route::get('/manager', function(){
+            return view('test-view');
+        })->name('manafter');
+
         Route::get('/exam-clearance', function () {
             return view('finance.exam-clearance');
         })->name('finance.exam.clearance');

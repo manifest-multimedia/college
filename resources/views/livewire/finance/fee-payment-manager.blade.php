@@ -71,7 +71,7 @@
                             <table class="table table-hover table-striped mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Student ID</th>
+                                        <th class="px-3">Student ID</th>
                                         <th>Name</th>
                                         <th>Actions</th>
                                     </tr>
@@ -79,7 +79,7 @@
                                 <tbody>
                                     @forelse($students as $student)
                                         <tr class="{{ $loadedStudent && $loadedStudent->id === $student->id ? 'table-primary' : '' }}">
-                                            <td>{{ $student->student_id }}</td>
+                                            <td class="px-3">{{ $student->student_id }}</td>
                                             <td>{{ $student->first_name }} {{ $student->last_name }}</td>
                                             <td>
                                                 <button class="btn btn-sm btn-primary" wire:click="loadStudent({{ $student->id }})">
@@ -219,7 +219,7 @@
                             <table class="table table-sm table-hover mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
+                                        <th class="px-3">Date</th>
                                         <th>Student</th>
                                         <th>Receipt #</th>
                                         <th>Amount</th>
@@ -228,8 +228,8 @@
                                 </thead>
                                 <tbody>
                                     @forelse($recentPayments as $payment)
-                                        <tr>
-                                            <td>{{ $payment->payment_date->format('M d, Y') }}</td>
+                                        <tr class="align-middle">
+                                            <td class="px-3">{{ $payment->payment_date->format('M d, Y') }}</td>
                                             <td>{{ $payment->student->first_name }} {{ $payment->student->last_name }}</td>
                                             <td>{{ $payment->receipt_number }}</td>
                                             <td class="text-end">{{ number_format($payment->amount, 2) }}</td>

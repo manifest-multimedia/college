@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\CollegeClass;
 use App\Models\Cohort;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
 
 class StudentsTableWidget extends Component
 {
@@ -32,6 +33,40 @@ class StudentsTableWidget extends Component
     protected function updatingCohortFilter()
     {
         $this->resetPage();
+    }
+    
+    /**
+     * Redirect to the student edit page
+     *
+     * @param int $studentId
+     * @return void
+     */
+    public function editStudent($studentId)
+    {
+        try {
+            $student = Student::findOrFail($studentId);
+            return redirect()->route('students.edit', $student);
+        } catch (\Exception $e) {
+            Log::error('Error editing student: ' . $e->getMessage());
+            session()->flash('error', 'Unable to edit student. Please try again.');
+        }
+    }
+    
+    /**
+     * Redirect to the student view page
+     *
+     * @param int $studentId
+     * @return void
+     */
+    public function viewStudent($studentId)
+    {
+        try {
+            $student = Student::findOrFail($studentId);
+            return redirect()->route('students.show', $student);
+        } catch (\Exception $e) {
+            Log::error('Error viewing student: ' . $e->getMessage());
+            session()->flash('error', 'Unable to view student. Please try again.');
+        }
     }
     
     public function render()

@@ -16,6 +16,9 @@ use Illuminate\Support\Str;
 class FeePaymentManager extends Component
 {
     use WithPagination;
+
+    // Pagination properties
+    protected $paginationTheme = 'simple-bootstrap';
     
     // Search and filter properties
     public $search = '';

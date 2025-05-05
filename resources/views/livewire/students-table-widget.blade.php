@@ -6,9 +6,36 @@
         </h1>
     </div>
 
+    <!-- Success message -->
+    @if(session()->has('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Error message -->
+    @if(session()->has('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Info message -->
+    @if(session()->has('info'))
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ session('info') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card mb-xl-10">
         <!-- Filter toolbar -->
         <div class="card-header border-0 py-3">
+            <div class="card-title">
+                <h3 class="card-title fw-bold text-gray-800">Students List</h3>
+            </div>
             <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
                 <!-- Search box -->
                 <div class="position-relative me-md-3 flex-grow-1" style="max-width: 300px;">
@@ -111,8 +138,8 @@
                                         <i class="fas fa-chevron-down ms-2 fs-7"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ $student->id }}">
-                                        <li><a class="dropdown-item" href="/students/{{ $student->id }}/edit"><i class="fas fa-edit me-2 text-primary"></i>Edit</a></li>
-                                        <li><a class="dropdown-item" href="/students/{{ $student->id }}"><i class="fas fa-eye me-2 text-info"></i>View</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary"></i>Edit</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('students.show', $student->id) }}"><i class="fas fa-eye me-2 text-info"></i>View</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item text-danger" href="#" 

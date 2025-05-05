@@ -26,6 +26,13 @@
         </div>
 
       <div class="pt-12 mt-12 row">
+        {{-- Welcome Component End --}}
+        
+        <!-- Dashboard Counters -->
+        <livewire:dashboard-counters />
+        <!-- End Dashboard Counters -->
+
+
         <div class="col-6">
             <!--begin::Card-->
             <a class="p-10 text-gray-800 card flex-column justfiy-content-start align-items-center text-start w-100 text-hover-primary" href="{{ route('examcenter') }}">
