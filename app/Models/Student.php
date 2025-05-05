@@ -11,7 +11,24 @@ class Student extends Model
     // Get attribute name
     public function getNameAttribute()
     {
-        return $this->first_name ?? 'N/A' . ' ' . $this->other_name ?? 'N/A' . ' ' . $this->last_name ?? 'N/A';
+        $firstName = $this->first_name ?? 'N/A';
+        $otherName = $this->other_name ?? '';
+        $lastName = $this->last_name ?? 'N/A';
+        
+        return trim("$firstName $otherName $lastName");
+    }
+    
+    /**
+     * Get the full name of the student
+     */
+    public function getFullNameAttribute()
+    {
+        $firstName = $this->first_name ?? '';
+        $otherName = $this->other_name ?? '';
+        $lastName = $this->last_name ?? '';
+        
+        // Filter out empty values and join with space
+        return trim(implode(' ', array_filter([$firstName, $otherName, $lastName])));
     }
 
     public function addresses()
