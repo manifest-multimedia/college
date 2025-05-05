@@ -24,7 +24,40 @@ class SyncUserRoles
             // If user has no Spatie roles yet, assign them based on the legacy 'role' field
             $authCentralRole = $user->role ?? 'Staff';
             
-            // Check if the role exists in our Spatie roles
+            // Handle if role is stored as an array or JSON string
+            if (is_string($authCentralRole) && (str_starts_with($authCentralRole, '[') || str_starts_with($authCentralRole, '{'))) {
+                try {
+                    $roleData = json_decode($authCentralRole, true);
+                    if (is_array($roleData)) {
+                        // Extract role names from complex objects if needed
+                        $authCentralRoles = [];
+                        foreach ($roleData as $role) {
+                            if (is_array($role) && isset($role['name'])) {
+                                $authCentralRoles[] = $role['name'];
+                            } elseif (is_string($role)) {
+                                $authCentralRoles[] = $role;
+                            }
+                        }
+                        
+                        // If we got valid roles, assign them
+                        if (!empty($authCentralRoles)) {
+                            foreach ($authCentralRoles as $roleName) {
+                                $role = Role::where('name', $roleName)->first();
+                                if ($role) {
+                                    $user->assignRole($role);
+                                    Log::info("Middleware: User {$user->email} assigned role: {$roleName}");
+                                }
+                            }
+                            return $next($request);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error parsing role data: " . $e->getMessage());
+                    // Continue with normal role assignment below
+                }
+            }
+            
+            // Check if the role exists in our Spatie roles - simple string case
             $role = Role::where('name', $authCentralRole)->first();
             
             if ($role) {

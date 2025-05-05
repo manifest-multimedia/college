@@ -34,39 +34,66 @@ class AuthController extends Controller
 
             // Check if the response is successful and in JSON format
             if ($response->getStatusCode() === 200) {
-                $authUser = json_decode($response->getBody(), true);
-
-                if ($authUser !== null && isset($authUser['email']) && isset($authUser['name'])) {
-                    // Set a random password if the user doesn't exist in App1
+                $responseData = json_decode($response->getBody(), true);
+                
+                // Log the complete response for debugging
+                Log::info('Response from AuthCentral:', $responseData);
+                
+                // Extract user data from the new response structure
+                $userData = null;
+                $roles = [];
+                
+                // Handle the new response format where user is inside response.user
+                if (isset($responseData['response']) && isset($responseData['response']['user'])) {
+                    $userData = $responseData['response']['user'];
+                    
+                    // Get roles either from response.roles or response.user.role_names
+                    if (isset($responseData['response']['roles'])) {
+                        $roles = $responseData['response']['roles'];
+                    } elseif (isset($userData['role_names'])) {
+                        $roles = $userData['role_names'];
+                    } elseif (isset($userData['roles'])) {
+                        // For complex role objects, extract just the names
+                        $roles = array_map(function($role) {
+                            return is_array($role) ? $role['name'] : $role;
+                        }, $userData['roles']);
+                    }
+                } else {
+                    // Fall back to old format or direct structure
+                    $userData = $responseData['user'] ?? $responseData;
+                    $roles = $responseData['roles'] ?? [];
+                }
+                
+                // Log extracted data
+                Log::info('Extracted user data:', ['userData' => $userData, 'roles' => $roles]);
+                
+                // Validate user data has required fields
+                if ($userData && isset($userData['email']) && isset($userData['name'])) {
+                    // Set a random password if the user doesn't exist in College
                     $password = Hash::make(Str::random(10));
 
-                    // Get role from AuthCentral response or default to 'Staff'
-                    $authCentralRole = $authUser['role'] ?? 'Staff';
-
-                    // Find or create the user in App1's local database using email
+                    // Find or create the user in College's local database using email
                     $user = User::updateOrCreate(
-                        ['email' => $authUser['email']],
+                        ['email' => $userData['email']],
                         [
-                            'name' => $authUser['name'],
+                            'name' => $userData['name'],
                             'password' => $password,
-                            'role' => $authCentralRole, // Keep this for backward compatibility
                         ]
                     );
 
-                    // Sync Spatie roles based on AuthCentral role
-                    $this->syncUserRole($user, $authCentralRole);
+                    // Sync Spatie roles
+                    $this->syncUserRoles($user, is_array($roles) ? $roles : [$roles]);
 
-                    //Authenticate User Access
+                    // Authenticate user access
                     Auth::login($user);
 
                     // Redirect to the intended page or dashboard if no redirect URI is provided
                     return redirect($request->input('redirect_uri') ?? route('dashboard'));
                 } else {
-                    // Redirect back to login if the response format is unexpected
-                    return redirect()->route('login')->withErrors(['login' => 'Unexpected response format.']);
+                    Log::error('Required user fields missing in response:', ['userData' => $userData]);
+                    return redirect()->route('login')->withErrors(['login' => 'Authentication failed: Missing required user information.']);
                 }
             } else {
-                // Handle non-200 responses
                 return redirect()->route('login')->withErrors(['login' => 'Authentication server error.']);
             }
         } catch (RequestException $e) {
@@ -77,35 +104,38 @@ class AuthController extends Controller
                 'body' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : 'No response body'
             ]);
 
-            // Redirect back to login with an error message
             return redirect()->route('login')->withErrors(['login' => 'Authentication failed. Please try again.']);
         }
     }
 
     /**
-     * Sync user roles based on the role provided by AuthCentral.
+     * Sync user roles based on the roles provided by AuthCentral.
      *
      * @param User $user
-     * @param string $authCentralRole
+     * @param array $authCentralRoles
      * @return void
      */
-    protected function syncUserRole(User $user, string $authCentralRole): void
+    protected function syncUserRoles(User $user, array $authCentralRoles): void
     {
-        // Remove any existing roles first
+        // Remove any existing roles
         $user->syncRoles([]);
-        
-        // Check if the role exists in our Spatie roles
-        $role = Role::where('name', $authCentralRole)->first();
-        
-        if ($role) {
-            // Assign the matching role
-            $user->assignRole($role);
-            Log::info("User {$user->email} assigned role: {$authCentralRole}");
-        } else {
-            // If no matching role found, assign a default role (e.g., Staff)
+
+        // Assign new roles
+        foreach ($authCentralRoles as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                $user->assignRole($role);
+                Log::info("User {$user->email} assigned role: {$roleName}");
+            } else {
+                Log::warning("Role {$roleName} not found in system for user {$user->email}.");
+            }
+        }
+
+        // If no roles were assigned, assign a default role
+        if (empty($user->getRoleNames())) {
             $defaultRole = 'Staff';
             $user->assignRole($defaultRole);
-            Log::warning("Role {$authCentralRole} not found in system. User {$user->email} assigned default role: {$defaultRole}");
+            Log::warning("No valid roles found for user {$user->email}. Assigned default role: {$defaultRole}");
         }
     }
 }
