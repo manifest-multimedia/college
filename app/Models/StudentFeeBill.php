@@ -13,6 +13,7 @@ class StudentFeeBill extends Model
         'student_id',
         'academic_year_id',
         'semester_id',
+        'fee_type_id',
         'total_amount',
         'amount_paid',
         'balance',
@@ -52,6 +53,14 @@ class StudentFeeBill extends Model
     public function semester()
     {
         return $this->belongsTo(Semester::class);
+    }
+
+    /**
+     * Get the fee type associated with this fee bill
+     */
+    public function feeType()
+    {
+        return $this->belongsTo(FeeType::class);
     }
 
     /**

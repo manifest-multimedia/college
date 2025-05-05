@@ -153,7 +153,7 @@ class FinancialReportsManager extends Component
     public function getFeeCollectionsProperty()
     {
         return FeePayment::query()
-            ->with(['student', 'studentFeeBill.feeType', 'recordedBy'])
+            ->with(['student', 'studentFeeBill', 'recordedBy'])
             ->when($this->academicYearId, function($query) {
                 $query->whereHas('studentFeeBill', function($q) {
                     $q->where('academic_year_id', $this->academicYearId);
@@ -170,7 +170,7 @@ class FinancialReportsManager extends Component
                 });
             })
             ->when($this->feeTypeId, function($query) {
-                $query->whereHas('studentFeeBill', function($q) {
+                $query->whereHas('studentFeeBill.billItems', function($q) {
                     $q->where('fee_type_id', $this->feeTypeId);
                 });
             })
