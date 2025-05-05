@@ -83,6 +83,15 @@
                                                     <a href="{{ route('academics.semesters.edit', $semester) }}" class="btn btn-warning" title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                    <!-- Toggle Active Status Button -->
+                                                    <form action="{{ route('academics.semesters.toggle-active', $semester) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" class="btn {{ $semester->is_current ? 'btn-secondary' : 'btn-success' }}" 
+                                                                title="{{ $semester->is_current ? 'Deactivate' : 'Set as Current' }}">
+                                                            <i class="fas {{ $semester->is_current ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                        </button>
+                                                    </form>
                                                     <button type="button" class="btn btn-danger" title="Delete" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#deleteModal{{ $semester->id }}">

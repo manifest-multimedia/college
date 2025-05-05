@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Semester extends Model
 {
@@ -25,7 +27,7 @@ class Semester extends Model
      */
     public function academicYear(): BelongsTo
     {
-        return $this->belongsTo(Year::class, 'academic_year_id');
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
     /**
@@ -66,5 +68,30 @@ class Semester extends Model
     public function scopeCurrent($query)
     {
         return $query->where('is_current', true);
+    }
+
+    /**
+     * Set this semester as current and unset others
+     */
+    public function setAsCurrent()
+    {
+        // Begin transaction
+        DB::beginTransaction();
+        
+        try {
+            // Unset all current semesters
+            self::where('is_current', true)->update(['is_current' => false]);
+            
+            // Set this semester as current
+            $this->is_current = true;
+            $this->save();
+            
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error setting current semester: ' . $e->getMessage());
+            return false;
+        }
     }
 }

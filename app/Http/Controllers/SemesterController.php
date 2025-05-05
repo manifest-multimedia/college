@@ -138,4 +138,33 @@ class SemesterController extends Controller
         return redirect()->route('academics.semesters.index')
             ->with('success', 'Semester deleted successfully.');
     }
+
+    /**
+     * Toggle the active status of the semester.
+     */
+    public function toggleActive(Semester $semester)
+    {
+        try {
+            if ($semester->is_current) {
+                // If already active, just deactivate it
+                $semester->is_current = false;
+                $semester->save();
+                $message = 'Semester deactivated successfully.';
+            } else {
+                // If not active, set it as current (which deactivates all others)
+                $result = $semester->setAsCurrent();
+                if (!$result) {
+                    throw new \Exception('Failed to set semester as active');
+                }
+                $message = 'Semester activated successfully.';
+            }
+            
+            return redirect()->route('academics.semesters.index')
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error toggling semester active status: ' . $e->getMessage());
+            return redirect()->route('academics.semesters.index')
+                ->with('error', 'An error occurred while updating semester status: ' . $e->getMessage());
+        }
+    }
 }

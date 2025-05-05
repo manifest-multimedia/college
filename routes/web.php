@@ -319,6 +319,7 @@ Route::middleware([
         
         // Semesters
         Route::resource('semesters', App\Http\Controllers\SemesterController::class);
+        Route::patch('/semesters/{semester}/toggle-active', [App\Http\Controllers\SemesterController::class, 'toggleActive'])->name('semesters.toggle-active');
         
         // College Classes
         Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
