@@ -392,6 +392,15 @@ Route::middleware([
         })->name('migrate-year-data');
     });
 
-   
+    /*
+    |--------------------------------------------------------------------------
+    | Communication Module Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->prefix('communication')->group(function () {
+        Route::get('/sms', \App\Livewire\Communication\SendSms::class)->name('communication.sms');
+        Route::get('/email', \App\Livewire\Communication\SendEmail::class)->name('communication.email');
+        Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
+    });
 
 });

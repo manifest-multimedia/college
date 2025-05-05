@@ -7,6 +7,7 @@ use App\Http\Middleware\SyncUserRoles;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use App\Providers\CommunicationServiceProvider;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withProviders([
+        CommunicationServiceProvider::class,
+    ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             SyncUserRoles::class,

@@ -79,10 +79,10 @@
                         <i class="fas fa-file-export me-2"></i>
                         Export
                     </button>
-                    <a href="/generate" class="btn btn-sm btn-light-primary px-3 d-flex align-items-center">
+                    {{-- <a href="/generate" class="btn btn-sm btn-light-primary px-3 d-flex align-items-center">
                         <i class="fas fa-id-card me-2"></i>
                         Generate IDs
-                    </a>
+                    </a> --}}
                 </div>
             </div>
         </div>

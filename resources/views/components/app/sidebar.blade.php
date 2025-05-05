@@ -62,6 +62,70 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endcan
             <!--end:Menu item-->
             
+            <!-- Communication Module Navigation -->
+            @hasrole(['System', 'Super Admin'])
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-message-text-2 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Communication</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion">
+                    {{-- @can('send sms') --}}
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('communication.sms') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Send SMS</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    {{-- @endcan --}}
+                    
+                    {{-- @can('send email') --}}
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('communication.email') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Send Email</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    {{-- @endcan --}}
+                    
+                    {{-- @can('use ai chat') --}}
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('communication.chat') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">AI Assistant</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    {{-- @endcan --}}
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            @endhasrole
+            
+            @hasrole('Super Admin|Administrator|Academic Officer')
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
@@ -104,7 +168,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
-            
+            @endhasrole
             @canany(['view exams', 'create exams', 'edit exams', 'grade exams'])
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
