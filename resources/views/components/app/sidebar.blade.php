@@ -84,23 +84,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Academics Dashboard</span>
+                            <span class="menu-title">Manage Academics</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
-                   
-                    
-                    
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link" href="{{ url('academic.faculties') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Faculties</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
+                
                 </div>
                 <!--end:Menu sub-->
             </div>
