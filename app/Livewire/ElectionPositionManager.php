@@ -63,8 +63,8 @@ class ElectionPositionManager extends Component
 
     public function saveNewPositions()
     {
-        \Log::info('saveNewPositions method called');
-        \Log::debug('New positions data:', $this->newPositions);
+        Log::info('saveNewPositions method called');
+        Log::debug('New positions data:', $this->newPositions);
         
         try {
             $this->validate([
@@ -74,13 +74,13 @@ class ElectionPositionManager extends Component
                 'newPositions.*.display_order' => 'required|integer|min:0',
             ]);
             
-            \Log::info('Validation passed successfully');
+            Log::info('Validation passed successfully');
 
             DB::beginTransaction();
             
             $positionCount = 0;
             foreach ($this->newPositions as $position) {
-                \Log::info('Creating position:', ['name' => $position['name']]);
+                Log::info('Creating position:', ['name' => $position['name']]);
                 
                 $newPosition = ElectionPosition::create([
                     'election_id' => $this->election->id,
@@ -91,7 +91,7 @@ class ElectionPositionManager extends Component
                     'is_active' => true,
                 ]);
                 
-                \Log::info('Position created successfully', ['id' => $newPosition->id]);
+                Log::info('Position created successfully', ['id' => $newPosition->id]);
                 $positionCount++;
 
                 \App\Models\ElectionAuditLog::log(
@@ -105,7 +105,7 @@ class ElectionPositionManager extends Component
             }
 
             DB::commit();
-            \Log::info('Transaction committed successfully', ['positions_created' => $positionCount]);
+            Log::info('Transaction committed successfully', ['positions_created' => $positionCount]);
             
             $this->newPositions = [];
             $this->loadPositions();
@@ -114,16 +114,16 @@ class ElectionPositionManager extends Component
                 'message' => 'Positions created successfully!'
             ]);
             
-            \Log::info('Alert dispatched and component state reset');
+            Log::info('Alert dispatched and component state reset');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation failed', [
+            Log::error('Validation failed', [
                 'errors' => $e->errors(),
                 'message' => $e->getMessage()
             ]);
             throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error while creating positions', [
+            Log::error('Error while creating positions', [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -136,7 +136,7 @@ class ElectionPositionManager extends Component
             ]);
         }
         
-        \Log::info('saveNewPositions method completed');
+        Log::info('saveNewPositions method completed');
     }
 
     public function edit(ElectionPosition $position)
@@ -159,8 +159,8 @@ class ElectionPositionManager extends Component
     {
         $validated = $this->validate();
         
-        \Log::info('Updating position ID: ' . $this->positionId);
-        \Log::debug('Position update data:', $validated);
+        Log::info('Updating position ID: ' . $this->positionId);
+        Log::debug('Position update data:', $validated);
         
         DB::beginTransaction();
         try {
@@ -192,10 +192,10 @@ class ElectionPositionManager extends Component
                 'message' => 'Position updated successfully!'
             ]);
             
-            \Log::info('Position updated successfully', ['id' => $position->id]);
+            Log::info('Position updated successfully', ['id' => $position->id]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error updating position', [
+            Log::error('Error updating position', [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
