@@ -19,7 +19,7 @@
                 <span class="position-absolute top-50 translate-middle-y ms-3">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" class="form-control ps-8" wire:model.debounce.300ms="search" placeholder="Search users...">
+                <input type="text" class="form-control ps-8" wire:model.live="search" placeholder="Search users...">
             </div>
             <div>
                 <select class="form-select" wire:model.live="roleFilter">
