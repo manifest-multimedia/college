@@ -627,7 +627,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
-                <a href="{{ url('https://pnmtc.edu.gh/webmail') }}" class="menu-link">
+                <a href="{{ url('https://pnmtc.edu.gh/webmail') }}" class="menu-link" target="_blank">
                     <span class="menu-icon">
                         <i class="ki-duotone ki-sms fs-2">
                             <span class="path1"></span>

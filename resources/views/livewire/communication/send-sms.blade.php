@@ -31,19 +31,19 @@
                     <label class="form-label fw-semibold">SMS Type</label>
                     <div class="d-flex flex-wrap gap-3">
                         <div class="form-check form-check-custom form-check-solid">
-                            <input class="form-check-input" type="radio" value="single" id="single" wire:model="sendType">
+                            <input class="form-check-input" type="radio" value="single" id="single" wire:model.live="sendType">
                             <label class="form-check-label" for="single">
                                 Single Recipient
                             </label>
                         </div>
                         <div class="form-check form-check-custom form-check-solid">
-                            <input class="form-check-input" type="radio" value="bulk" id="bulk" wire:model="sendType">
+                            <input class="form-check-input" type="radio" value="bulk" id="bulk" wire:model.live="sendType">
                             <label class="form-check-label" for="bulk">
                                 Multiple Recipients
                             </label>
                         </div>
                         <div class="form-check form-check-custom form-check-solid">
-                            <input class="form-check-input" type="radio" value="group" id="group" wire:model="sendType">
+                            <input class="form-check-input" type="radio" value="group" id="group" wire:model.live="sendType">
                             <label class="form-check-label" for="group">
                                 Recipient Group
                             </label>
