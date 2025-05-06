@@ -44,6 +44,45 @@ class ElectionCandidateManager extends Component
         'display_order' => 'required|integer|min:0',
     ];
 
+    // Add preview handling for image uploads
+    protected function getImagePreviewUrl()
+    {
+        try {
+            if ($this->image && method_exists($this->image, 'temporaryUrl')) {
+                Log::info('Generating temporary URL for image preview', [
+                    'mime' => $this->image->getMimeType(),
+                    'extension' => $this->image->getClientOriginalExtension()
+                ]);
+                return $this->image->temporaryUrl();
+            } elseif ($this->existingImage) {
+                return Storage::disk('public')->url($this->existingImage);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error generating image preview URL', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+        
+        return null;
+    }
+    
+    // Add preview handling for manifesto uploads
+    protected function getManifestoPreviewUrl()
+    {
+        try {
+            if ($this->manifesto && method_exists($this->manifesto, 'temporaryUrl')) {
+                return null; // PDF doesn't need preview
+            } elseif ($this->existingManifesto) {
+                return Storage::disk('public')->url($this->existingManifesto);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error with manifesto preview', ['error' => $e->getMessage()]);
+        }
+        
+        return null;
+    }
+
     public function mount(ElectionPosition $position)
     {
         $this->position = $position;
@@ -106,16 +145,46 @@ class ElectionCandidateManager extends Component
                 ];
                 Log::info('Prepared base candidate data', $data);
                 
-                // Handle image upload
+                // Handle image upload with enhanced error logging
                 if ($this->image) {
                     Log::info('Processing image upload', [
                         'originalName' => $this->image->getClientOriginalName(),
                         'size' => $this->image->getSize(),
-                        'mimeType' => $this->image->getMimeType()
+                        'mimeType' => $this->image->getMimeType(),
+                        'extension' => $this->image->getClientOriginalExtension()
                     ]);
                     
                     try {
-                        $imagePath = $this->image->store('election-candidates', 'public');
+                        // Ensure filename has a valid extension
+                        $originalName = $this->image->getClientOriginalName();
+                        $extension = $this->image->getClientOriginalExtension() ?: 'jpg';
+                        
+                        if (empty($extension)) {
+                            $mimeType = $this->image->getMimeType();
+                            switch ($mimeType) {
+                                case 'image/jpeg':
+                                    $extension = 'jpg';
+                                    break;
+                                case 'image/png':
+                                    $extension = 'png';
+                                    break;
+                                case 'image/gif':
+                                    $extension = 'gif';
+                                    break;
+                                default:
+                                    $extension = 'jpg';
+                            }
+                            
+                            Log::info('Detected MIME type, assigned extension', [
+                                'mime' => $mimeType,
+                                'extension' => $extension
+                            ]);
+                        }
+                        
+                        $filename = pathinfo($originalName, PATHINFO_FILENAME);
+                        $newFilename = Str::slug($filename) . '.' . $extension;
+                        
+                        $imagePath = $this->image->storeAs('election-candidates', $newFilename, 'public');
                         Log::info('Image uploaded successfully', ['path' => $imagePath]);
                         $data['image_path'] = $imagePath;
                         
@@ -135,11 +204,23 @@ class ElectionCandidateManager extends Component
                     Log::info('Processing manifesto upload', [
                         'originalName' => $this->manifesto->getClientOriginalName(),
                         'size' => $this->manifesto->getSize(),
-                        'mimeType' => $this->manifesto->getMimeType()
+                        'mimeType' => $this->manifesto->getMimeType(),
+                        'extension' => $this->manifesto->getClientOriginalExtension()
                     ]);
                     
                     try {
-                        $manifestoPath = $this->manifesto->store('election-manifestos', 'public');
+                        // Ensure filename has a valid extension
+                        $originalName = $this->manifesto->getClientOriginalName();
+                        $extension = $this->manifesto->getClientOriginalExtension() ?: 'pdf';
+                        
+                        if (empty($extension)) {
+                            $extension = 'pdf';
+                        }
+                        
+                        $filename = pathinfo($originalName, PATHINFO_FILENAME);
+                        $newFilename = Str::slug($filename) . '.' . $extension;
+                        
+                        $manifestoPath = $this->manifesto->storeAs('election-manifestos', $newFilename, 'public');
                         Log::info('Manifesto uploaded successfully', ['path' => $manifestoPath]);
                         $data['manifesto_path'] = $manifestoPath;
                         
@@ -345,6 +426,9 @@ class ElectionCandidateManager extends Component
 
     public function render()
     {
-        return view('livewire.election-candidate-manager')->layout('components.dashboard.default', ['title' => 'Manage Election Candidates']);
+        return view('livewire.election-candidate-manager', [
+            'imagePreview' => $this->getImagePreviewUrl(),
+            'manifestoPreview' => $this->getManifestoPreviewUrl(),
+        ])->layout('components.dashboard.default', ['title' => 'Manage Election Candidates']);
     }
 }

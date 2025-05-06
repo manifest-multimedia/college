@@ -76,3 +76,5 @@ While testing we've shipped it to production now.
 In Laravel 12  Kernel is no longer present we use bootstrap/app.php isntead.
 
 When impletting logging to track issues use the laravel logs facade by important the class and referencing the Log;
+
+When working with Uploads and Image Photos in Livewire: Reference the documentation https://livewire.laravel.com/docs/uploads#temporary-preview-urls

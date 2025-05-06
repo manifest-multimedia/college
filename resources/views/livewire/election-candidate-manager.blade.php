@@ -142,9 +142,9 @@
                                     @error('image') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                     <div class="form-text">Maximum file size: 1MB</div>
                                     
-                                    @if($image)
+                                    @if($imagePreview)
                                         <div class="mt-2">
-                                            <img src="{{ $image->temporaryUrl() }}" alt="Candidate Preview" class="img-thumbnail" style="max-height: 150px">
+                                            <img src="{{ $imagePreview }}" alt="Candidate Preview" class="img-thumbnail" style="max-height: 150px">
                                         </div>
                                     @elseif($existingImage)
                                         <div class="mt-2">
@@ -165,9 +165,9 @@
                                                 <i class="fas fa-file-pdf"></i> New PDF file selected
                                             </div>
                                         </div>
-                                    @elseif($existingManifesto)
+                                    @elseif($manifestoPreview)
                                         <div class="mt-2">
-                                            <a href="{{ Storage::url($existingManifesto) }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                            <a href="{{ $manifestoPreview }}" target="_blank" class="btn btn-sm btn-outline-info">
                                                 <i class="fas fa-file-pdf"></i> View Current Manifesto
                                             </a>
                                             <div class="form-text">Current PDF (upload a new one to replace it)</div>
