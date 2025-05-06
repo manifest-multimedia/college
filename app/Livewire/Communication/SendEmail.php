@@ -26,11 +26,16 @@ class SendEmail extends Component
     public array $recipientLists = [];
     public array $templates = ['emails.generic' => 'Default Template'];
     
-    protected EmailServiceInterface $emailService;
+    // Initialize with null to prevent "must not be accessed before initialization" error
+    protected ?EmailServiceInterface $emailService = null;
     
-    public function mount(EmailServiceInterface $emailService)
+    public function boot(EmailServiceInterface $emailService)
     {
         $this->emailService = $emailService;
+    }
+    
+    public function mount()
+    {
         $this->loadRecipientLists();
     }
     

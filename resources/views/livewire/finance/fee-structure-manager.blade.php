@@ -129,5 +129,116 @@
         </div>
     </div>
 
-    <!-- Modals remain unchanged -->
+    <!-- Fee Structure Form Modal -->
+    <div class="modal fade" id="feeStructureFormModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">{{ $editingFeeStructureId ? 'Edit' : 'Add New' }} Fee Structure</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="fee_type_id" class="form-label">Fee Type</label>
+                            <select wire:model="fee_type_id" id="fee_type_id" class="form-select @error('fee_type_id') is-invalid @enderror">
+                                <option value="">Select Fee Type</option>
+                                @foreach($feeTypes as $feeType)
+                                    <option value="{{ $feeType->id }}">{{ $feeType->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('fee_type_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="college_class_id" class="form-label">Class</label>
+                            <select wire:model="college_class_id" id="college_class_id" class="form-select @error('college_class_id') is-invalid @enderror">
+                                <option value="">Select Class</option>
+                                @foreach($collegeClasses as $class)
+                                    <option value="{{ $class->id }}">{{ $class->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('college_class_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="academic_year_id" class="form-label">Academic Year</label>
+                            <select wire:model="academic_year_id" id="academic_year_id" class="form-select @error('academic_year_id') is-invalid @enderror">
+                                <option value="">Select Academic Year</option>
+                                @foreach($academicYears as $year)
+                                    <option value="{{ $year->id }}">{{ $year->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('academic_year_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="semester_id" class="form-label">Semester</label>
+                            <select wire:model="semester_id" id="semester_id" class="form-select @error('semester_id') is-invalid @enderror">
+                                <option value="">Select Semester</option>
+                                @foreach($semesters as $semester)
+                                    <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('semester_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" wire:model="amount" id="amount" class="form-control @error('amount') is-invalid @enderror" step="0.01" min="0">
+                            </div>
+                            @error('amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" wire:model="is_mandatory" id="is_mandatory" class="form-check-input">
+                            <label for="is_mandatory" class="form-check-label">Mandatory Fee</label>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" wire:model="is_active" id="is_active" class="form-check-input">
+                            <label for="is_active" class="form-check-label">Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="cancelEdit">Cancel</button>
+                    <button type="button" class="btn btn-primary" wire:click="saveFeeStructure">
+                        {{ $editingFeeStructureId ? 'Update' : 'Save' }} Fee Structure
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this fee structure? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" wire:click="deleteFeeStructure">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

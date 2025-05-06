@@ -17,11 +17,16 @@ class SendSms extends Component
     
     public array $recipientLists = [];
     
-    protected SmsServiceInterface $smsService;
+    // Initialize with null to prevent "must not be accessed before initialization" error
+    protected ?SmsServiceInterface $smsService = null;
     
-    public function mount(SmsServiceInterface $smsService)
+    public function boot(SmsServiceInterface $smsService)
     {
         $this->smsService = $smsService;
+    }
+    
+    public function mount()
+    {
         $this->loadRecipientLists();
     }
     

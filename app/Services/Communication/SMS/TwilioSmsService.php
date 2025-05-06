@@ -15,6 +15,7 @@ class TwilioSmsService extends AbstractSmsService
     protected $authToken;
     protected $fromNumber;
     protected $apiUrl;
+    protected $isConfigured = false;
 
     /**
      * Constructor
@@ -24,7 +25,14 @@ class TwilioSmsService extends AbstractSmsService
         $this->accountSid = Config::get('services.twilio.sid');
         $this->authToken = Config::get('services.twilio.token');
         $this->fromNumber = Config::get('services.twilio.from');
-        $this->apiUrl = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json";
+        
+        // Check if credentials are properly set
+        if (!empty($this->accountSid) && !empty($this->authToken)) {
+            $this->isConfigured = true;
+            $this->apiUrl = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json";
+        } else {
+            Log::error('Twilio SMS service not properly configured. Missing credentials.');
+        }
     }
 
     /**
@@ -37,6 +45,18 @@ class TwilioSmsService extends AbstractSmsService
      */
     protected function send(string $recipient, string $message, array $options = []): array
     {
+        // Check if service is properly configured
+        if (!$this->isConfigured) {
+            Log::error('Twilio SMS service not configured properly. Message not sent.', [
+                'recipient' => $recipient
+            ]);
+            
+            return [
+                'success' => false,
+                'error_message' => 'SMS service not properly configured',
+            ];
+        }
+        
         try {
             $response = Http::asForm()
                 ->withBasicAuth($this->accountSid, $this->authToken)

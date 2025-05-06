@@ -20,7 +20,8 @@ class Chat extends Component
     public bool $isCreatingSession = false;
     public string $newSessionTitle = '';
     
-    protected ChatServiceInterface $chatService;
+    // Initialize with null to prevent "must not be accessed before initialization" error
+    protected ?ChatServiceInterface $chatService = null;
     
     protected $listeners = [
         'createNewSession',
@@ -31,9 +32,13 @@ class Chat extends Component
         'deleteSession',
     ];
     
-    public function mount(ChatServiceInterface $chatService)
+    public function boot(ChatServiceInterface $chatService)
     {
         $this->chatService = $chatService;
+    }
+    
+    public function mount()
+    {
         $this->loadSessions();
     }
     
