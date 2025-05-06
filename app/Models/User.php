@@ -77,4 +77,34 @@ class User extends Authenticatable
     {
         return $this->hasMany(ExamSession::class, 'id');
     }
+
+    /**
+     * The departments that the user belongs to.
+     */
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class)->withPivot('is_head')->withTimestamps();
+    }
+
+    /**
+     * Check if user is head of any department.
+     */
+    public function departmentHeadOf()
+    {
+        return $this->belongsToMany(Department::class)
+            ->withPivot('is_head')
+            ->wherePivot('is_head', true);
+    }
+
+    /**
+     * Check if user is head of a specific department.
+     */
+    public function isDepartmentHead(Department $department = null)
+    {
+        if (is_null($department)) {
+            return $this->departmentHeadOf()->exists();
+        }
+
+        return $this->departmentHeadOf()->where('departments.id', $department->id)->exists();
+    }
 }

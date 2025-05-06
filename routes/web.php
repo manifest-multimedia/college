@@ -168,6 +168,15 @@ Route::middleware([
                 }
                 return back()->with('error', 'Backup file not found.');
             })->name('settings.backup.download')->where('path', '.*');
+
+            // Department Management Routes
+            Route::get('/departments', function () {
+                return view('settings.departments');
+            })->name('settings.departments');
+            
+            Route::get('/user-departments', function () {
+                return view('settings.user-departments');
+            })->name('settings.user-departments');
         });
     });
 
@@ -343,6 +352,15 @@ Route::middleware([
         Route::get('/backup', function () {
             return view('settings.backup');
         })->name('settings.backup');
+        
+        // Department Management Routes
+        Route::get('/departments', function () {
+            return view('settings.departments');
+        })->name('settings.departments');
+        
+        Route::get('/user-departments', function () {
+            return view('settings.user-departments');
+        })->name('settings.user-departments');
     });
 
     /*

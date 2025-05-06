@@ -618,6 +618,28 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.departments') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Department Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.user-departments') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">User Departments</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
                 </div>
                 <!--end:Menu sub-->
             </div>
