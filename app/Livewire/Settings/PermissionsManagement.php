@@ -81,8 +81,15 @@ class PermissionsManagement extends Component
         $this->viewMode = $mode === 'view';
         $this->isOpen = true;
         
-        // Dispatch event to notify JavaScript to open modal
+        // Dispatch events to notify JavaScript to open modal
         $this->dispatch('permissionModalStateChanged', ['isOpen' => true]);
+        
+        // Also dispatch permissionDataLoaded event to ensure modal is shown
+        // This is needed for consistency with edit and view operations
+        $this->dispatch('permissionDataLoaded');
+        
+        // Log the action for debugging
+        Log::info('Permission modal opened in mode: ' . $mode);
     }
     
     public function closeModal()
@@ -284,8 +291,8 @@ class PermissionsManagement extends Component
         // Get permissions with optional filtering
         $permissions = Permission::query()
             ->when($this->search, function ($query) {
-                return $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
+                // Only search in the name field since description may not exist
+                return $query->where('name', 'like', '%' . $this->search . '%');
             })
             ->when($this->categoryFilter, function ($query) {
                 $categoryPattern = $this->categoryFilter . '%';

@@ -544,6 +544,16 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
+                        <a class="menu-link" href="{{ route('settings.permissions') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Permissions Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
                         <a class="menu-link" href="{{ route('settings.backup') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>

@@ -152,6 +152,10 @@ Route::middleware([
                 return view('settings.roles');
             })->name('settings.roles');
 
+            Route::get('/permissions', function () {
+                return view('settings.permissions');
+            })->name('settings.permissions');
+
             Route::get('/backup', function () {
                 return view('settings.backup');
             })->name('settings.backup');
@@ -331,6 +335,10 @@ Route::middleware([
         Route::get('/roles', function () {
             return view('settings.roles');
         })->name('settings.roles');
+        
+        Route::get('/permissions', function () {
+            return view('settings.permissions');
+        })->name('settings.permissions');
         
         Route::get('/backup', function () {
             return view('settings.backup');
