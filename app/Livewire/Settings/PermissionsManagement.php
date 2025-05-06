@@ -195,6 +195,22 @@ class PermissionsManagement extends Component
         }
         
         try {
+            // Format permission name to include category (e.g., users.create)
+            if (!empty($this->category) && !$this->editMode) {
+                // Only format name for new permissions or if specifically requested
+                // For new permissions, we want to ensure proper formatting
+                if (strpos($this->name, '.') === false && strpos($this->name, '-') === false) {
+                    $categorySlug = strtolower(trim($this->category));
+                    $nameSlug = strtolower(trim($this->name));
+                    $this->name = "{$categorySlug}.{$nameSlug}";
+                }
+                
+                Log::info('Permission name formatted with category', [
+                    'category' => $this->category,
+                    'formatted_name' => $this->name
+                ]);
+            }
+            
             $permissionData = [
                 'name' => $this->name,
                 'description' => $this->description,
