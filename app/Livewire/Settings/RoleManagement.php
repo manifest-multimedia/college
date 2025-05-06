@@ -28,7 +28,12 @@ class RoleManagement extends Component
     public $editMode = false;
     public $viewMode = false;
     
-    protected $listeners = ['deleteConfirmed' => 'deleteRole'];
+    protected $listeners = [
+        'deleteConfirmed' => 'deleteRole',
+        'editRole' => 'editRole',
+        'viewRole' => 'viewRole',
+        'closeModalAction' => 'closeModal'
+    ];
     
     protected $rules = [
         'name' => 'required|string|max:100',
@@ -64,15 +69,23 @@ class RoleManagement extends Component
         $this->editMode = $mode === 'edit';
         $this->viewMode = $mode === 'view';
         $this->isOpen = true;
+        
+        // Dispatch event to notify JavaScript to open modal
+        $this->dispatch('modalStateChanged', ['isOpen' => true]);
     }
     
     public function closeModal()
     {
         $this->isOpen = false;
+        $this->reset(['roleId', 'name', 'description', 'selectedPermissions', 'editMode', 'viewMode']);
+        
+        // Dispatch event to notify JavaScript to close modal
+        $this->dispatch('closeModal');
     }
     
     public function editRole($id)
     {
+       
         try {
             $role = Role::findOrFail($id);
             
@@ -80,8 +93,11 @@ class RoleManagement extends Component
             $this->name = $role->name;
             $this->description = $role->description ?? '';
             $this->selectedPermissions = $role->permissions->pluck('id')->toArray();
-            
+           
             $this->openModal('edit');
+            
+            // Dispatch an event to notify JavaScript that data is loaded
+            $this->dispatch('roleDataLoaded');
         } catch (\Exception $e) {
             Log::error('Error editing role: ' . $e->getMessage());
             session()->flash('error', 'Failed to load role for editing.');
@@ -99,6 +115,9 @@ class RoleManagement extends Component
             $this->selectedPermissions = $role->permissions->pluck('id')->toArray();
             
             $this->openModal('view');
+            
+            // Dispatch an event to notify JavaScript that data is loaded
+            $this->dispatch('roleDataLoaded');
         } catch (\Exception $e) {
             Log::error('Error viewing role: ' . $e->getMessage());
             session()->flash('error', 'Failed to load role details.');
@@ -107,7 +126,10 @@ class RoleManagement extends Component
     
     public function saveRole()
     {
-        $this->validate();
+        // Skip validation in view mode
+        if (!$this->viewMode) {
+            $this->validate();
+        }
         
         try {
             if ($this->editMode) {

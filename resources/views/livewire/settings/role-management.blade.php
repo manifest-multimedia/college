@@ -223,24 +223,119 @@
 
     @push('scripts')
     <script>
-        document.addEventListener('livewire:initialized', () => {
-            const roleFormModal = new bootstrap.Modal(document.getElementById('roleFormModal'));
-            const deleteConfirmationModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+        document.addEventListener('DOMContentLoaded', function() {
+            // Direct initialization of modals
+            const roleFormModalEl = document.getElementById('roleFormModal');
+            const deleteConfirmationModalEl = document.getElementById('deleteConfirmationModal');
             
-            @this.on('showDeleteConfirmation', () => {
+            let roleFormModal = new bootstrap.Modal(roleFormModalEl);
+            let deleteConfirmationModal = new bootstrap.Modal(deleteConfirmationModalEl);
+            
+            // Create a specific event for data loaded state
+            Livewire.on('roleDataLoaded', () => {
+                // Show the modal only after data is confirmed to be loaded
+                roleFormModal.show();
+            });
+            
+            // Handle view role button clicks - add direct click listeners
+            const viewButtons = document.querySelectorAll('button[wire\\:click^="viewRole"]');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // The roleDataLoaded event will trigger the modal
+                });
+            });
+            
+            // Handle edit role button clicks - add direct click listeners  
+            const editButtons = document.querySelectorAll('button[wire\\:click^="editRole"]');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // The roleDataLoaded event will trigger the modal
+                });
+            });
+            
+            // Handle delete confirmation button clicks
+            const deleteButtons = document.querySelectorAll('button[wire\\:click^="confirmDelete"]');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    setTimeout(() => deleteConfirmationModal.show(), 250);
+                });
+            });
+            
+            // Handle create role button clicks
+            const createButton = document.querySelector('button[wire\\:click="openModal"]');
+            if (createButton) {
+                createButton.addEventListener('click', function(e) {
+                    // For creating new roles, we don't need to wait for data loading
+                    setTimeout(() => roleFormModal.show(), 250);
+                });
+            }
+
+            // Listen for Livewire events
+            // When modal needs to be closed
+            Livewire.on('closeModal', () => {
+                roleFormModal.hide();
+            });
+            
+            // When delete modal needs to be shown
+            Livewire.on('showDeleteConfirmation', () => {
                 deleteConfirmationModal.show();
             });
             
-            Livewire.hook('element.updated', () => {
-                if (@this.isOpen) {
-                    roleFormModal.show();
-                } else {
+            // Close modal on ESC key or when clicking the backdrop
+            roleFormModalEl.addEventListener('hidden.bs.modal', () => {
+                Livewire.dispatch('closeModalAction');
+            });
+            
+            // Fix for checkbox selection in permissions
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.matches('[wire\\:model="selectedPermissions"]')) {
+                    e.stopPropagation();
+                }
+            }, true);
+
+            // Listen for modalStateChanged event
+            Livewire.on('modalStateChanged', (state) => {
+                if (!state.isOpen) {
                     roleFormModal.hide();
+                }
+                // We now let the roleDataLoaded event handle showing the modal
+            });
+
+            // Re-attach event listeners after Livewire updates
+            Livewire.hook('element.updated', (message, component) => {
+                if (component.fingerprint.name === 'settings.role-management') {
+                    // Re-attach listeners to any new buttons added after Livewire updates
+                    document.querySelectorAll('button[wire\\:click^="viewRole"]').forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            // The roleDataLoaded event will trigger the modal
+                        });
+                    });
+                    
+                    document.querySelectorAll('button[wire\\:click^="editRole"]').forEach(button => {
+                        button.addEventListener('click', function(e) {
+                            // The roleDataLoaded event will trigger the modal
+                        });
+                    });
                 }
             });
             
-            document.getElementById('roleFormModal').addEventListener('hidden.bs.modal', () => {
-                @this.isOpen = false;
+            // When the modal is shown, ensure form elements are populated
+            roleFormModalEl.addEventListener('shown.bs.modal', () => {
+                console.log('Role modal shown, selected permissions:', @this.selectedPermissions);
+                
+                // Ensure form elements are properly populated
+                if (@this.editMode || @this.viewMode) {
+                    // Explicitly set form field values from component properties
+                    document.getElementById('name').value = @this.name || '';
+                    document.getElementById('description').value = @this.description || '';
+                    
+                    // Check the appropriate permission checkboxes
+                    const permissionIds = @this.selectedPermissions || [];
+                    permissionIds.forEach(id => {
+                        const checkbox = document.getElementById(`perm_${id}`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
             });
         });
     </script>

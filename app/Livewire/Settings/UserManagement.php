@@ -8,6 +8,7 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class UserManagement extends Component
 {
@@ -28,11 +29,16 @@ class UserManagement extends Component
     public $password;
     public $passwordConfirmation;
     public $selectedRoles = [];
+    public $selectedPermissions = []; // New property for direct permissions
     
     public $isOpen = false;
     public $editMode = false;
     
-    protected $listeners = ['deleteConfirmed' => 'deleteUser'];
+    protected $listeners = [
+        'deleteConfirmed' => 'deleteUser',
+        'editUser' => 'editUser',
+        'closeModalAction' => 'closeModal'
+    ];
     
     protected function rules()
     {
@@ -41,10 +47,17 @@ class UserManagement extends Component
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
             'selectedRoles' => 'required|array|min:1',
+            'selectedPermissions' => 'nullable|array',
         ];
         
-        if (!$this->editMode || $this->password) {
-            $rules['password'] = 'required|min:8|confirmed';
+        if (!$this->editMode) {
+            // Only require password for new users
+            $rules['password'] = 'required|min:8';
+            $rules['passwordConfirmation'] = 'required|same:password';
+        } else if ($this->password) {
+            // If editing and password is provided (optional)
+            $rules['password'] = 'nullable|min:8';
+            $rules['passwordConfirmation'] = 'nullable|same:password';
         }
         
         return $rules;
@@ -78,33 +91,63 @@ class UserManagement extends Component
     public function openModal($mode = 'add')
     {
         $this->resetValidation();
-        $this->reset(['name', 'email', 'phone', 'password', 'passwordConfirmation', 'selectedRoles']);
+        $this->reset(['name', 'email', 'phone', 'password', 'passwordConfirmation', 'selectedRoles', 'selectedPermissions']);
         
         $this->editMode = $mode === 'edit';
         $this->isOpen = true;
+        
+        // Dispatch event to notify JavaScript to open modal
+        $this->dispatch('userModalStateChanged', ['isOpen' => true]);
     }
     
     public function closeModal()
     {
         $this->isOpen = false;
+        $this->reset(['userId', 'name', 'email', 'phone', 'password', 'passwordConfirmation', 'selectedRoles', 'selectedPermissions', 'editMode']);
+        
+        // Dispatch event to notify JavaScript to close modal
+        $this->dispatch('closeModal');
     }
     
     public function editUser($id)
     {
         try {
-            $user = User::findOrFail($id);
+            // Get user with both roles and permissions
+            $user = User::with(['roles', 'permissions'])->findOrFail($id);
             
+            // Set user form data
             $this->userId = $user->id;
             $this->name = $user->name;
             $this->email = $user->email;
             $this->phone = $user->phone ?? '';
             $this->password = '';
             $this->passwordConfirmation = '';
-            $this->selectedRoles = $user->roles->pluck('id')->toArray();
             
-            $this->openModal('edit');
+            // Get role and permission IDs
+            $this->selectedRoles = $user->roles->pluck('id')->toArray();
+            $this->selectedPermissions = $user->permissions->pluck('id')->toArray();
+            
+            // Log loading process for debugging
+            Log::info('Loading user data for editing', [
+                'user_id' => $id,
+                'name' => $this->name,
+                'roles_count' => count($this->selectedRoles),
+                'permissions_count' => count($this->selectedPermissions)
+            ]);
+            
+            // Set modal state
+            $this->editMode = true;
+            $this->isOpen = true;
+            
+            // Dispatch events to signal data is loaded and modal should open
+            $this->dispatch('modalStateChanged', ['isOpen' => true]);
+            $this->dispatch('userDataLoaded');
+            
         } catch (\Exception $e) {
-            Log::error('Error editing user: ' . $e->getMessage());
+            Log::error('Error editing user: ' . $e->getMessage(), [
+                'user_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Failed to load user information for editing.');
         }
     }
@@ -127,8 +170,19 @@ class UserManagement extends Component
                 
                 $user->save();
                 
-                // Sync roles
-                $user->syncRoles($this->selectedRoles);
+                // Use the Role class to ensure we're assigning by ID correctly
+                $roles = Role::whereIn('id', $this->selectedRoles)->get();
+                $user->syncRoles($roles);
+                
+                // Sync direct permissions - only get valid permission objects
+                $permissions = Permission::whereIn('id', $this->selectedPermissions)->get();
+                $user->syncPermissions($permissions);
+                
+                // Log successful update using proper Laravel 12 logging
+                \Illuminate\Support\Facades\Log::info('User updated successfully', [
+                    'user_id' => $user->id,
+                    'name' => $user->name
+                ]);
                 
                 session()->flash('success', 'User updated successfully.');
             } else {
@@ -139,15 +193,31 @@ class UserManagement extends Component
                     'password' => Hash::make($this->password),
                 ]);
                 
-                // Assign roles
-                $user->syncRoles($this->selectedRoles);
+                // Use the Role class to ensure we're assigning by ID correctly
+                $roles = Role::whereIn('id', $this->selectedRoles)->get();
+                $user->syncRoles($roles);
+                
+                // Sync direct permissions - only get valid permission objects
+                if (!empty($this->selectedPermissions)) {
+                    $permissions = Permission::whereIn('id', $this->selectedPermissions)->get();
+                    $user->syncPermissions($permissions);
+                }
+                
+                // Log successful creation using proper Laravel 12 logging
+                \Illuminate\Support\Facades\Log::info('User created successfully', [
+                    'user_id' => $user->id,
+                    'name' => $user->name
+                ]);
                 
                 session()->flash('success', 'User added successfully.');
             }
             
             $this->closeModal();
         } catch (\Exception $e) {
-            Log::error('Error saving user: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error saving user: ' . $e->getMessage(), [
+                'user_id' => $this->userId ?? 'new',
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Failed to save user. Please try again later.');
         }
     }
@@ -180,6 +250,19 @@ class UserManagement extends Component
     public function render()
     {
         $roles = Role::all();
+        $permissions = Permission::all()->groupBy(function ($permission) {
+            // Group permissions by category (similar to RoleManagement)
+            $name = $permission->name;
+            
+            if (strpos($name, '-') !== false) {
+                return ucwords(strtolower(explode('-', $name)[0]));
+            } elseif (strpos($name, '.') !== false) {
+                return ucwords(strtolower(explode('.', $name)[0]));
+            } else {
+                $words = preg_split('/(?=[A-Z])/', $name);
+                return ucwords(strtolower($words[0]));
+            }
+        });
         
         $users = User::query()
             ->when($this->search, function ($query) {
@@ -199,6 +282,7 @@ class UserManagement extends Component
         return view('livewire.settings.user-management', [
             'users' => $users,
             'roles' => $roles,
+            'permissionGroups' => $permissions,
         ]);
     }
 }

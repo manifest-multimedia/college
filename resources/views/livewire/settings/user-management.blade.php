@@ -55,6 +55,7 @@
                     </th>
                     <th class="min-w-125px">Phone</th>
                     <th class="min-w-150px">Role(s)</th>
+                    <th class="min-w-150px">Direct Permissions</th>
                     <th class="text-end min-w-100px">Actions</th>
                 </tr>
             </thead>
@@ -80,6 +81,9 @@
                                 <span class="badge badge-light-primary">{{ $role->name }}</span>
                             @endforeach
                         </td>
+                        <td class="align-middle">
+                            <span class="badge badge-light-info">{{ $user->permissions->count() }} direct permissions</span>
+                        </td>
                         <td class="align-middle text-end">
                             <div class="d-inline-flex">
                                 <button type="button" class="btn btn-sm btn-icon btn-light-primary me-2" wire:click="editUser({{ $user->id }})">
@@ -94,7 +98,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="text-center py-4">No users found</td>
+                        <td colspan="6" class="text-center py-4">No users found</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -107,7 +111,7 @@
 
     <!-- Modal for Adding/Editing User -->
     <div class="modal fade" id="userFormModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ $editMode ? 'Edit User' : 'Add New User' }}</h5>
@@ -186,6 +190,52 @@
                                 @endforeach
                             </div>
                         </div>
+                        
+                        <!-- Direct Permissions -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-block">Direct Permissions (Optional)</label>
+                            <p class="text-muted">These permissions will be assigned directly to the user, in addition to any permissions from their roles</p>
+                            @error('selectedPermissions')
+                                <div class="text-danger mb-2">{{ $message }}</div>
+                            @enderror
+                            
+                            <div class="accordion" id="permissionsAccordion">
+                                @foreach($permissionGroups as $groupName => $permissions)
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading{{ \Str::slug($groupName) }}">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse{{ \Str::slug($groupName) }}" aria-expanded="false" 
+                                                aria-controls="collapse{{ \Str::slug($groupName) }}">
+                                                <div class="d-flex justify-content-between w-100 align-items-center">
+                                                    <span>{{ $groupName }} Permissions</span>
+                                                    <span class="badge bg-primary rounded-pill ms-2">{{ count($permissions) }}</span>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ \Str::slug($groupName) }}" class="accordion-collapse collapse" 
+                                            aria-labelledby="heading{{ \Str::slug($groupName) }}" data-bs-parent="#permissionsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row">
+                                                    @foreach($permissions as $permission)
+                                                        <div class="col-lg-3 col-md-4 col-sm-6 mb-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" 
+                                                                    wire:model="selectedPermissions" 
+                                                                    value="{{ $permission->id }}" 
+                                                                    id="perm_{{ $permission->id }}">
+                                                                <label class="form-check-label" for="perm_{{ $permission->id }}">
+                                                                    {{ ucfirst(str_replace(['-', '.', '_'], ' ', $permission->name)) }}
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -223,24 +273,97 @@
 
     @push('scripts')
     <script>
-        document.addEventListener('livewire:initialized', () => {
-            const userFormModal = new bootstrap.Modal(document.getElementById('userFormModal'));
-            const deleteConfirmationModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the Bootstrap modal elements
+            const userFormModalEl = document.getElementById('userFormModal');
+            const deleteConfirmationModalEl = document.getElementById('deleteConfirmationModal');
             
-            @this.on('showDeleteConfirmation', () => {
-                deleteConfirmationModal.show();
-            });
+            // Create modal instances
+            const userFormModal = new bootstrap.Modal(userFormModalEl);
+            const deleteConfirmationModal = new bootstrap.Modal(deleteConfirmationModalEl);
             
-            Livewire.hook('element.updated', () => {
-                if (@this.isOpen) {
-                    userFormModal.show();
-                } else {
-                    userFormModal.hide();
+            // Fix for permissions and roles checkboxes - stop propagation to prevent accordion issues
+            document.addEventListener('click', function(e) {
+                if (e.target && (e.target.matches('[wire\\:model="selectedPermissions"]') || 
+                                e.target.matches('[wire\\:model="selectedRoles"]'))) {
+                    e.stopPropagation();
                 }
+            }, true);
+            
+            // Wait for Livewire to be fully initialized
+            document.addEventListener('livewire:initialized', () => {
+                // Handle userDataLoaded event - show modal when data is ready
+                Livewire.on('userDataLoaded', () => {
+                    console.log('User data loaded event received');
+                    setTimeout(() => {
+                        userFormModal.show();
+                    }, 100);
+                });
+                
+                // Create button click handler
+                const createButton = document.querySelector('button[wire\\:click="openModal"]');
+                if (createButton) {
+                    createButton.addEventListener('click', () => {
+                        setTimeout(() => {
+                            userFormModal.show();
+                        }, 100);
+                    });
+                }
+                
+                // Close modal event handler
+                Livewire.on('closeModal', () => {
+                    userFormModal.hide();
+                });
+                
+                // Delete confirmation modal handler
+                Livewire.on('showDeleteConfirmation', () => {
+                    deleteConfirmationModal.show();
+                });
+                
+                // Modal hidden event - reset component state
+                userFormModalEl.addEventListener('hidden.bs.modal', () => {
+                    Livewire.dispatch('closeModalAction');
+                });
+                
+                // Handle modal state changes triggered by Livewire
+                Livewire.on('userModalStateChanged', (state) => {
+                    if (state.isOpen && !userFormModalEl.classList.contains('show')) {
+                        // Only show if not already shown
+                        setTimeout(() => userFormModal.show(), 100);
+                    } else if (!state.isOpen && userFormModalEl.classList.contains('show')) {
+                        userFormModal.hide();
+                    }
+                });
             });
             
-            document.getElementById('userFormModal').addEventListener('hidden.bs.modal', () => {
-                @this.isOpen = false;
+            // Debug modal content when shown
+            userFormModalEl.addEventListener('shown.bs.modal', () => {
+                console.log('Modal shown, roles selected:', @this.selectedRoles);
+                console.log('Modal shown, permissions selected:', @this.selectedPermissions);
+                
+                // Ensure form elements are properly populated
+                if (@this.editMode) {
+                    // Explicitly set form field values from component properties
+                    document.getElementById('name').value = @this.name;
+                    document.getElementById('email').value = @this.email;
+                    if (document.getElementById('phone')) {
+                        document.getElementById('phone').value = @this.phone || '';
+                    }
+                    
+                    // Check the appropriate role checkboxes
+                    const roleIds = @this.selectedRoles || [];
+                    roleIds.forEach(id => {
+                        const checkbox = document.getElementById(`role_${id}`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                    
+                    // Check the appropriate permission checkboxes
+                    const permissionIds = @this.selectedPermissions || [];
+                    permissionIds.forEach(id => {
+                        const checkbox = document.getElementById(`perm_${id}`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
             });
         });
     </script>
