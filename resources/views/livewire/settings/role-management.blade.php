@@ -228,63 +228,66 @@
             const roleFormModalEl = document.getElementById('roleFormModal');
             const deleteConfirmationModalEl = document.getElementById('deleteConfirmationModal');
             
-            let roleFormModal = new bootstrap.Modal(roleFormModalEl);
-            let deleteConfirmationModal = new bootstrap.Modal(deleteConfirmationModalEl);
+            // Initialize Bootstrap modals
+            const roleFormModal = new bootstrap.Modal(roleFormModalEl);
+            const deleteConfirmationModal = new bootstrap.Modal(deleteConfirmationModalEl);
             
-            // Create a specific event for data loaded state
-            Livewire.on('roleDataLoaded', () => {
-                // Show the modal only after data is confirmed to be loaded
-                roleFormModal.show();
-            });
-            
-            // Handle view role button clicks - add direct click listeners
-            const viewButtons = document.querySelectorAll('button[wire\\:click^="viewRole"]');
-            viewButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    // The roleDataLoaded event will trigger the modal
+            // Wait for Livewire to be fully initialized
+            document.addEventListener('livewire:initialized', () => {
+                // When role data is loaded, show the modal
+                Livewire.on('roleDataLoaded', () => {
+                    console.log('Role data loaded event received, showing modal');
+                    setTimeout(() => roleFormModal.show(), 100);
+                    
+                    // Force input field values to match Livewire state
+                    setTimeout(() => {
+                        console.log('Setting form values from Livewire state');
+                        console.log('Name:', @this.name);
+                        console.log('Description:', @this.description);
+                        console.log('Permissions:', @this.selectedPermissions);
+                        
+                        if (document.getElementById('name')) {
+                            document.getElementById('name').value = @this.name || '';
+                        }
+                        
+                        if (document.getElementById('description')) {
+                            document.getElementById('description').value = @this.description || '';
+                        }
+                        
+                        // Check permission checkboxes
+                        const permissionIds = @this.selectedPermissions || [];
+                        permissionIds.forEach(id => {
+                            const checkbox = document.getElementById(`perm_${id}`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+                    }, 150);
+                });
+                
+                // Modal state change events
+                Livewire.on('modalStateChanged', (state) => {
+                    if (!state.isOpen) {
+                        roleFormModal.hide();
+                    }
+                });
+                
+                // Close modal event
+                Livewire.on('closeModal', () => {
+                    roleFormModal.hide();
+                });
+                
+                // Show delete confirmation event
+                Livewire.on('showDeleteConfirmation', () => {
+                    deleteConfirmationModal.show();
                 });
             });
             
-            // Handle edit role button clicks - add direct click listeners  
-            const editButtons = document.querySelectorAll('button[wire\\:click^="editRole"]');
-            editButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    // The roleDataLoaded event will trigger the modal
-                });
-            });
-            
-            // Handle delete confirmation button clicks
-            const deleteButtons = document.querySelectorAll('button[wire\\:click^="confirmDelete"]');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    setTimeout(() => deleteConfirmationModal.show(), 250);
-                });
-            });
-            
-            // Handle create role button clicks
+            // Create role button (Add New)
             const createButton = document.querySelector('button[wire\\:click="openModal"]');
             if (createButton) {
-                createButton.addEventListener('click', function(e) {
-                    // For creating new roles, we don't need to wait for data loading
+                createButton.addEventListener('click', function() {
                     setTimeout(() => roleFormModal.show(), 250);
                 });
             }
-
-            // Listen for Livewire events
-            // When modal needs to be closed
-            Livewire.on('closeModal', () => {
-                roleFormModal.hide();
-            });
-            
-            // When delete modal needs to be shown
-            Livewire.on('showDeleteConfirmation', () => {
-                deleteConfirmationModal.show();
-            });
-            
-            // Close modal on ESC key or when clicking the backdrop
-            roleFormModalEl.addEventListener('hidden.bs.modal', () => {
-                Livewire.dispatch('closeModalAction');
-            });
             
             // Fix for checkbox selection in permissions
             document.addEventListener('click', function(e) {
@@ -292,48 +295,51 @@
                     e.stopPropagation();
                 }
             }, true);
-
-            // Listen for modalStateChanged event
-            Livewire.on('modalStateChanged', (state) => {
-                if (!state.isOpen) {
-                    roleFormModal.hide();
-                }
-                // We now let the roleDataLoaded event handle showing the modal
-            });
-
-            // Re-attach event listeners after Livewire updates
-            Livewire.hook('element.updated', (message, component) => {
-                if (component.fingerprint.name === 'settings.role-management') {
-                    // Re-attach listeners to any new buttons added after Livewire updates
-                    document.querySelectorAll('button[wire\\:click^="viewRole"]').forEach(button => {
-                        button.addEventListener('click', function(e) {
-                            // The roleDataLoaded event will trigger the modal
-                        });
-                    });
-                    
-                    document.querySelectorAll('button[wire\\:click^="editRole"]').forEach(button => {
-                        button.addEventListener('click', function(e) {
-                            // The roleDataLoaded event will trigger the modal
-                        });
-                    });
-                }
+            
+            // Close modal on ESC key or when clicking the backdrop
+            roleFormModalEl.addEventListener('hidden.bs.modal', () => {
+                Livewire.dispatch('closeModalAction');
             });
             
-            // When the modal is shown, ensure form elements are populated
+            // Direct data population when modal is shown
             roleFormModalEl.addEventListener('shown.bs.modal', () => {
-                console.log('Role modal shown, selected permissions:', @this.selectedPermissions);
+                console.log('Role modal shown, checking if data needs to be loaded');
+                console.log('Edit mode:', @this.editMode, 'View mode:', @this.viewMode);
+                console.log('Role name:', @this.name);
+                console.log('Role description:', @this.description);
+                console.log('Selected permissions:', @this.selectedPermissions);
                 
-                // Ensure form elements are properly populated
+                // Double check form elements are properly populated
                 if (@this.editMode || @this.viewMode) {
-                    // Explicitly set form field values from component properties
-                    document.getElementById('name').value = @this.name || '';
-                    document.getElementById('description').value = @this.description || '';
+                    // Name field
+                    const nameInput = document.getElementById('name');
+                    if (nameInput && (!nameInput.value || nameInput.value !== @this.name)) {
+                        nameInput.value = @this.name || '';
+                    }
                     
-                    // Check the appropriate permission checkboxes
+                    // Description field
+                    const descInput = document.getElementById('description');
+                    if (descInput && (!descInput.value || descInput.value !== @this.description)) {
+                        descInput.value = @this.description || '';
+                    }
+                    
+                    // Permission checkboxes
                     const permissionIds = @this.selectedPermissions || [];
                     permissionIds.forEach(id => {
                         const checkbox = document.getElementById(`perm_${id}`);
-                        if (checkbox) checkbox.checked = true;
+                        if (checkbox && !checkbox.checked) {
+                            checkbox.checked = true;
+                        }
+                    });
+                    
+                    // Manually trigger checkbox input changes to ensure Livewire knows about them
+                    document.querySelectorAll('input[type="checkbox"][wire\\:model="selectedPermissions"]').forEach(checkbox => {
+                        if (permissionIds.includes(parseInt(checkbox.value))) {
+                            if (!checkbox.checked) {
+                                checkbox.checked = true;
+                                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
                     });
                 }
             });

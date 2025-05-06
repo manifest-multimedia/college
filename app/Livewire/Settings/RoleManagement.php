@@ -85,21 +85,42 @@ class RoleManagement extends Component
     
     public function editRole($id)
     {
-       
         try {
-            $role = Role::findOrFail($id);
+            // Load the role with all its permissions
+            $role = Role::with('permissions')->findOrFail($id);
             
+            // Reset form values first
+            $this->reset(['name', 'description', 'selectedPermissions']);
+            
+            // Set component properties
             $this->roleId = $role->id;
             $this->name = $role->name;
             $this->description = $role->description ?? '';
             $this->selectedPermissions = $role->permissions->pluck('id')->toArray();
-           
-            $this->openModal('edit');
             
-            // Dispatch an event to notify JavaScript that data is loaded
+            // Log the data loading process according to Laravel 12 standards
+            \Illuminate\Support\Facades\Log::info('Role data loaded for editing', [
+                'role_id' => $role->id,
+                'name' => $role->name,
+                'permissions_count' => count($this->selectedPermissions)
+            ]);
+            
+            // Set modal state
+            $this->editMode = true;
+            $this->viewMode = false;
+            $this->isOpen = true;
+            
+            // Dispatch events
+            $this->dispatch('modalStateChanged', ['isOpen' => true]);
+            
+            // Add a small delay to ensure Livewire state is updated before showing modal
             $this->dispatch('roleDataLoaded');
+            
         } catch (\Exception $e) {
-            Log::error('Error editing role: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error editing role: ' . $e->getMessage(), [
+                'role_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Failed to load role for editing.');
         }
     }
@@ -107,19 +128,41 @@ class RoleManagement extends Component
     public function viewRole($id)
     {
         try {
+            // Load the role with all its permissions
             $role = Role::with('permissions')->findOrFail($id);
             
+            // Reset form values first
+            $this->reset(['name', 'description', 'selectedPermissions']);
+            
+            // Set component properties
             $this->roleId = $role->id;
             $this->name = $role->name;
             $this->description = $role->description ?? '';
             $this->selectedPermissions = $role->permissions->pluck('id')->toArray();
             
-            $this->openModal('view');
+            // Log the data loading process according to Laravel 12 standards
+            \Illuminate\Support\Facades\Log::info('Role data loaded for viewing', [
+                'role_id' => $role->id,
+                'name' => $role->name,
+                'permissions_count' => count($this->selectedPermissions)
+            ]);
             
-            // Dispatch an event to notify JavaScript that data is loaded
+            // Set modal state
+            $this->editMode = false;
+            $this->viewMode = true;
+            $this->isOpen = true;
+            
+            // Dispatch events
+            $this->dispatch('modalStateChanged', ['isOpen' => true]);
+            
+            // Add a small delay to ensure Livewire state is updated before showing modal
             $this->dispatch('roleDataLoaded');
+            
         } catch (\Exception $e) {
-            Log::error('Error viewing role: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error viewing role: ' . $e->getMessage(), [
+                'role_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
             session()->flash('error', 'Failed to load role details.');
         }
     }
