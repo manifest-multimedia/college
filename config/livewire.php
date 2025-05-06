@@ -58,7 +58,7 @@ return [
         | is writable in production (e.g., storage/app/livewire-tmp).
         |
         */
-        'disk' => 'local',
+        'disk' => env('LIVEWIRE_TEMP_DISK', 'local'),
 
         /*
         |----------------------------------------------------------------------
@@ -68,7 +68,7 @@ return [
         | The directory within the disk to store temporary files.
         |
         */
-        'directory' => 'livewire-tmp',
+        'directory' => env('LIVEWIRE_TEMP_DIRECTORY', 'livewire-tmp'),
 
         /*
         |----------------------------------------------------------------------
@@ -80,27 +80,9 @@ return [
         |
         */
         'preview_mimes' => [
-            'png',
-            'gif',
-            'bmp',
-            'svg',
-            'jpg',
-            'jpeg',
-            'tiff',
-            'webp',
-            'pdf',
-            'doc',
-            'docx',
-            'txt',
-            'mp3',
-            'wav',
-            'ogg',
-            'm4a',
-            'mp4',
-            'mov',
-            'mkv',
-            'webm',
-            'flv',
+            'png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp', 
+            'tiff', 'pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx',
+            'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mov', 'webm', 'mkv', 'flv'
         ],
 
         /*
@@ -114,8 +96,8 @@ return [
         */
         'rules' => [
             'file',
-            'mimes:png,gif,bmp,svg,jpg,jpeg,tiff,webp,pdf,doc,docx,txt,mp3,wav,ogg,m4a,mp4,mov,mkv,webm,flv',
-            'max:10240', // 10MB max file size
+            'mimes:png,gif,bmp,svg,jpg,jpeg,tiff,webp,pdf,doc,docx,txt,xls,xlsx,mp3,wav,ogg,m4a,mp4,mov,mkv,webm,flv',
+            'max:20480', // Increased to 20MB max file size
         ],
 
         /*
@@ -137,7 +119,7 @@ return [
         | it is deleted.
         |
         */
-        'max_upload_time' => 5 * 60, // 5 minutes
+        'max_upload_time' => 30 * 60, // 30 minutes (increased from 5 minutes)
     ],
 
     /*
