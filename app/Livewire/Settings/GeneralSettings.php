@@ -6,6 +6,8 @@ use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class GeneralSettings extends Component
 {
@@ -21,10 +23,24 @@ class GeneralSettings extends Component
     public $systemTimeZone;
     public $academicYear;
     public $currentLogo;
+    public $isFirstTimeSetup = false;
     
     public function mount()
     {
+        $this->loadSettings();
+    }
+    
+    private function loadSettings()
+    {
         try {
+            // Check if settings table exists
+            if (!Schema::hasTable('settings')) {
+                $this->isFirstTimeSetup = true;
+                $this->initializeDefaultSettings();
+                session()->flash('info', 'Welcome to the system settings page. Please configure your school information.');
+                return;
+            }
+            
             // Load settings from database
             $dbSettings = DB::table('settings')
                 ->whereIn('key', [
@@ -37,8 +53,18 @@ class GeneralSettings extends Component
                     'system_timezone',
                     'current_academic_year',
                 ])
-                ->get()
-                ->keyBy('key')
+                ->get();
+                
+            // If no settings exist yet, this is first time setup
+            if ($dbSettings->isEmpty()) {
+                $this->isFirstTimeSetup = true;
+                $this->initializeDefaultSettings();
+                session()->flash('info', 'Welcome to the system settings page. Please configure your school information.');
+                return;
+            }
+            
+            // Convert collection to key-value array
+            $dbSettings = $dbSettings->keyBy('key')
                 ->map(function ($item) {
                     return $item->value;
                 })
@@ -55,9 +81,29 @@ class GeneralSettings extends Component
             $this->academicYear = $dbSettings['current_academic_year'] ?? '';
             
         } catch (\Exception $e) {
-            Log::error('Error loading general settings: ' . $e->getMessage());
-            session()->flash('error', 'Failed to load settings. Please try again later.');
+            Log::error('Error loading general settings', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Initialize default values instead of showing error
+            $this->initializeDefaultSettings();
+            $this->isFirstTimeSetup = true;
+            session()->flash('warning', 'Unable to load existing settings. Starting with default values.');
         }
+    }
+    
+    private function initializeDefaultSettings()
+    {
+        // Set default values for first-time setup
+        $this->schoolName = config('app.name');
+        $this->schoolEmail = '';
+        $this->schoolPhone = '';
+        $this->schoolAddress = '';
+        $this->currentLogo = '';
+        $this->schoolWebsite = '';
+        $this->systemTimeZone = config('app.timezone');
+        $this->academicYear = date('Y').'-'.((int)date('Y')+1);
     }
     
     public function save()
@@ -74,6 +120,18 @@ class GeneralSettings extends Component
         ]);
         
         try {
+            // Ensure settings table exists
+            if (!Schema::hasTable('settings')) {
+                Schema::create('settings', function ($table) {
+                    $table->id();
+                    $table->string('key')->unique();
+                    $table->text('value')->nullable();
+                    $table->timestamps();
+                });
+                
+                Log::info('Settings table created automatically');
+            }
+            
             DB::beginTransaction();
             
             // Update or create settings
@@ -87,6 +145,11 @@ class GeneralSettings extends Component
             
             // Handle logo upload if provided
             if ($this->schoolLogo) {
+                // Delete old logo if exists
+                if ($this->currentLogo && Storage::exists(str_replace('storage/', 'public/', $this->currentLogo))) {
+                    Storage::delete(str_replace('storage/', 'public/', $this->currentLogo));
+                }
+                
                 $path = $this->schoolLogo->store('public/logos');
                 $publicPath = str_replace('public/', 'storage/', $path);
                 $this->updateSetting('school_logo', $publicPath);
@@ -95,11 +158,26 @@ class GeneralSettings extends Component
             }
             
             DB::commit();
+            
+            // Apply timezone setting immediately
+            config(['app.timezone' => $this->systemTimeZone]);
+            
+            Log::info('General settings updated successfully', [
+                'user_id' => auth()->id(),
+                'school_name' => $this->schoolName,
+                'timezone' => $this->systemTimeZone
+            ]);
+            
+            $this->isFirstTimeSetup = false;
             session()->flash('success', 'Settings saved successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error saving general settings: ' . $e->getMessage());
-            session()->flash('error', 'Failed to save settings. Please try again later.');
+            Log::error('Error saving general settings', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id()
+            ]);
+            session()->flash('error', 'Failed to save settings: ' . $e->getMessage());
         }
     }
     
@@ -117,6 +195,7 @@ class GeneralSettings extends Component
         
         return view('livewire.settings.general-settings', [
             'timezones' => $timezones,
-        ]);
+            'isFirstTimeSetup' => $this->isFirstTimeSetup,
+        ])->layout('components.dashboard.default');
     }
 }
