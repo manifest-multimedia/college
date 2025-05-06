@@ -204,7 +204,7 @@ Route::middleware([
     */
 
     // Admin Election Management Routes
-    Route::middleware(['auth:sanctum', 'role_or_permission:Super Admin|Administrator|manage-elections'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'role_or_permission:Super Admin|Administrator|election management.manage elections'])->prefix('admin')->group(function () {
         // Election Management
         Route::get('/elections', \App\Livewire\ElectionManager::class)->name('elections');
         Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
