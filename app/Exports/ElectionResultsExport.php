@@ -105,31 +105,78 @@ class ElectionResultsExport implements FromCollection, WithHeadings, WithMapping
                 '',
             ]);
             
-            $results->push([
-                'Rank',
-                'Candidate Name',
-                'Votes',
-                'Percentage',
-                'Status',
-            ]);
-            
-            $totalPositionVotes = $position->candidates->sum('votes_count');
-            $rank = 1;
-            
-            foreach ($position->candidates as $candidate) {
-                $percentage = $totalPositionVotes > 0 
-                    ? round(($candidate->votes_count / $totalPositionVotes) * 100, 1) 
-                    : 0;
+            // Check if this is a single-candidate position
+            if ($position->hasSingleCandidate()) {
+                $yesNoResults = $position->getYesNoVotes();
                 
+                if ($yesNoResults) {
+                    $candidate = $yesNoResults['candidate'];
+                    
+                    // Add YES/NO vote information
+                    $results->push([
+                        'Candidate',
+                        $candidate->name,
+                        '',
+                        'Status',
+                        $yesNoResults['has_won'] ? 'APPROVED' : 'REJECTED',
+                    ]);
+                    
+                    $results->push([
+                        'YES Votes',
+                        $yesNoResults['yes_votes'],
+                        $yesNoResults['yes_percent'] . '%',
+                        'NO Votes',
+                        $yesNoResults['no_votes'],
+                        $yesNoResults['no_percent'] . '%',
+                    ]);
+                    
+                    $results->push([
+                        'Total Votes',
+                        $yesNoResults['total_votes'],
+                        '',
+                        'Result',
+                        $yesNoResults['has_won'] 
+                            ? 'Approved with ' . $yesNoResults['yes_percent'] . '% YES votes' 
+                            : 'Rejected with ' . $yesNoResults['no_percent'] . '% NO votes',
+                    ]);
+                } else {
+                    // No votes yet for this single-candidate position
+                    $results->push([
+                        'Note',
+                        'No votes recorded for this position yet.',
+                        '',
+                        '',
+                        '',
+                    ]);
+                }
+            } else {
+                // Standard multiple-candidate position
                 $results->push([
-                    $rank,
-                    $candidate->name,
-                    $candidate->votes_count,
-                    $percentage . '%',
-                    $candidate->is_active ? 'Active' : 'Inactive',
+                    'Rank',
+                    'Candidate Name',
+                    'Votes',
+                    'Percentage',
+                    'Status',
                 ]);
                 
-                $rank++;
+                $totalPositionVotes = $position->candidates->sum('votes_count');
+                $rank = 1;
+                
+                foreach ($position->candidates as $candidate) {
+                    $percentage = $totalPositionVotes > 0 
+                        ? round(($candidate->votes_count / $totalPositionVotes) * 100, 1) 
+                        : 0;
+                    
+                    $results->push([
+                        $rank,
+                        $candidate->name,
+                        $candidate->votes_count,
+                        $percentage . '%',
+                        $candidate->is_active ? 'Active' : 'Inactive',
+                    ]);
+                    
+                    $rank++;
+                }
             }
             
             // Add empty row for separation

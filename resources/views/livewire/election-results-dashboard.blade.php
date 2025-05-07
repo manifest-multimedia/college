@@ -1,9 +1,66 @@
 <div 
     x-data="{
         refreshing: false,
+        openAccordions: {},
+        
+        initAccordions() {
+            // Try to load saved state from localStorage
+            const savedState = localStorage.getItem('electionAccordionState_{{ $election->id }}');
+            if (savedState) {
+                this.openAccordions = JSON.parse(savedState);
+            }
+            
+            // Set up event listeners after a short delay to ensure DOM is ready
+            this.$nextTick(() => {
+                document.querySelectorAll('.accordion-collapse').forEach(item => {
+                    item.addEventListener('show.bs.collapse', (e) => {
+                        const positionId = e.target.id.replace('collapse', '');
+                        this.openAccordions[positionId] = true;
+                        this.saveAccordionState();
+                    });
+                    
+                    item.addEventListener('hide.bs.collapse', (e) => {
+                        const positionId = e.target.id.replace('collapse', '');
+                        this.openAccordions[positionId] = false;
+                        this.saveAccordionState();
+                    });
+                });
+                
+                // Apply saved state to DOM
+                this.applyAccordionState();
+            });
+        },
+        
+        applyAccordionState() {
+            Object.keys(this.openAccordions).forEach(positionId => {
+                if (this.openAccordions[positionId]) {
+                    const accordionEl = document.getElementById(`collapse${positionId}`);
+                    if (accordionEl) {
+                        const bsCollapse = new bootstrap.Collapse(accordionEl, {toggle: false});
+                        bsCollapse.show();
+                    }
+                }
+            });
+        },
+        
+        saveAccordionState() {
+            localStorage.setItem('electionAccordionState_{{ $election->id }}', JSON.stringify(this.openAccordions));
+        },
+        
+        isAccordionOpen(positionId) {
+            return this.openAccordions[positionId] === true;
+        },
+        
         showVoteDetails: {}
     }"
-    x-init="setInterval(() => { $wire.$refresh(); refreshing = true; setTimeout(() => { refreshing = false; }, 1000) }, {{ $refreshInterval * 1000 }})"
+    x-init="
+        initAccordions();
+        setInterval(() => { 
+            $wire.$refresh(); 
+            refreshing = true; 
+            setTimeout(() => { refreshing = false; }, 1000) 
+        }, {{ $refreshInterval * 1000 }});
+    "
 >
     <div class="container-fluid px-4">
         <h1 class="mt-4">Election Results</h1>
@@ -23,8 +80,8 @@
                         </div>
                         <div class="d-flex align-items-center">
                             <div class="me-2">
-                                <div class="badge bg-info" x-show="refreshing">
-                                    <i class="fas fa-sync-alt fa-spin me-1"></i> Refreshing...
+                                <div class="badge bg-info text-white" x-show="refreshing">
+                                    <i class="fas fa-sync-alt fa-spin me-1"></i> <span class="opacity-50"> Refreshing... </span>
                                 </div>
                             </div>
                             <a href="{{ route('elections') }}" class="btn btn-outline-secondary btn-sm">
@@ -68,7 +125,7 @@
                                         <div class="text-white-50">Total Voters</div>
                                         <div class="fs-3 fw-bold">{{ $totalVoters }}</div>
                                     </div>
-                                    <i class="fas fa-users fa-2x opacity-50"></i>
+                                    <i class="fas fa-users fa-2x text-white opacity-50"></i>
                                 </div>
                             </div>
                         </div>
@@ -81,7 +138,7 @@
                                         <div class="text-white-50">Voter Turnout</div>
                                         <div class="fs-3 fw-bold">{{ $voterTurnout }}%</div>
                                     </div>
-                                    <i class="fas fa-percentage fa-2x opacity-50"></i>
+                                    <i class="fas fa-percentage fa-2x text-white opacity-50"></i>
                                 </div>
                             </div>
                         </div>
@@ -94,13 +151,13 @@
                                         <div class="text-white-50">Total Votes</div>
                                         <div class="fs-3 fw-bold">{{ $totalVotes }}</div>
                                     </div>
-                                    <i class="fas fa-vote-yea fa-2x opacity-50"></i>
+                                    <i class="fas fa-vote-yea fa-2x text-white opacity-50"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6 mb-4">
-                        <div class="card bg-secondary text-white shadow">
+                        <div class="card bg-dark text-white shadow">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -146,92 +203,209 @@
                         @foreach($positions as $position)
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $position->id }}">
+                                    <button 
+                                        class="accordion-button" 
+                                        :class="{'collapsed': !isAccordionOpen('{{ $position->id }}')}"
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ $position->id }}"
+                                        aria-expanded="false"
+                                        aria-controls="collapse{{ $position->id }}"
+                                    >
                                         <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                             <span>{{ $position->name }}</span>
-                                            <span class="badge bg-primary">{{ $position->candidates->sum('votes_count') }} votes</span>
+                                            <span class="badge bg-primary">{{ $position->getTotalVotes() }} votes</span>
                                         </div>
                                     </button>
                                 </h2>
-                                <div id="collapse{{ $position->id }}" class="accordion-collapse collapse" data-bs-parent="#accordionResults">
+                                <div 
+                                    id="collapse{{ $position->id }}" 
+                                    class="accordion-collapse collapse" 
+                                    :class="{'show': isAccordionOpen('{{ $position->id }}')}" 
+                                    data-bs-parent="#accordionResults"
+                                >
                                     <div class="accordion-body">
                                         <div class="table-responsive">
-                                            <table class="table table-bordered">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th style="width: 80px;">#</th>
-                                                        <th>Candidate</th>
-                                                        <th class="text-center" style="width: 100px;">Votes</th>
-                                                        <th class="text-center" style="width: 200px;">Percentage</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @php
-                                                        $totalPositionVotes = $position->candidates->sum('votes_count');
-                                                        $rank = 1;
-                                                    @endphp
-                                                    
-                                                    @foreach($position->candidates as $candidate)
-                                                        <tr>
-                                                            <td class="text-center">
-                                                                @if($rank === 1)
-                                                                    <span class="badge bg-warning text-dark">
-                                                                        <i class="fas fa-trophy"></i>
-                                                                    </span>
+                                            @if($position->hasSingleCandidate())
+                                                @php
+                                                    $yesNoResults = $position->getYesNoVotes();
+                                                @endphp
+                                                @if($yesNoResults)
+                                                    <!-- YES/NO voting result display for single candidate -->
+                                                    <div class="card mb-4">
+                                                        <div class="card-header bg-light">
+                                                            <div class="d-flex align-items-center">
+                                                                @if($yesNoResults['candidate']->image_path)
+                                                                    <img src="{{ Storage::url($yesNoResults['candidate']->image_path) }}" class="me-3 rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="{{ $yesNoResults['candidate']->name }}">
                                                                 @else
-                                                                    {{ $rank }}
+                                                                    <div class="bg-secondary rounded-circle me-3 d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                                                                        <i class="fas fa-user text-white"></i>
+                                                                    </div>
                                                                 @endif
-                                                            </td>
-                                                            <td>
-                                                                <div class="d-flex align-items-center">
-                                                                    @if($candidate->image_path)
-                                                                        <img src="{{ Storage::url($candidate->image_path) }}" class="me-2 rounded-circle" style="width: 30px; height: 30px; object-fit: cover;" alt="{{ $candidate->name }}">
-                                                                    @else
-                                                                        <div class="bg-secondary rounded-circle me-2 d-flex justify-content-center align-items-center" style="width: 30px; height: 30px;">
-                                                                            <i class="fas fa-user text-white small"></i>
-                                                                        </div>
-                                                                    @endif
-                                                                    {{ $candidate->name }}
-                                                                    @if(!$candidate->is_active)
-                                                                        <span class="badge bg-danger ms-2">Inactive</span>
-                                                                    @endif
+                                                                <div>
+                                                                    <h5 class="mb-0">{{ $yesNoResults['candidate']->name }}</h5>
+                                                                    <p class="small text-muted mb-0">Single Candidate Vote (Approval Required)</p>
                                                                 </div>
-                                                            </td>
-                                                            <td class="text-center">{{ $candidate->votes_count }}</td>
-                                                            <td>
-                                                                @php
-                                                                    $percentage = $totalPositionVotes > 0 
-                                                                        ? round(($candidate->votes_count / $totalPositionVotes) * 100, 1) 
-                                                                        : 0;
-                                                                @endphp
-                                                                <div class="d-flex align-items-center justify-content-between">
-                                                                    <div class="progress flex-grow-1 me-2" style="height: 10px;">
-                                                                        <div 
-                                                                            class="progress-bar {{ $rank === 1 ? 'bg-success' : 'bg-primary' }}" 
-                                                                            role="progressbar" 
-                                                                            style="width: {{ $percentage }}%"
-                                                                            aria-valuenow="{{ $percentage }}" 
-                                                                            aria-valuemin="0" 
-                                                                            aria-valuemax="100">
+                                                                
+                                                            </div>
+                                                            <div class="d-flex align-items-center justify-content-end">
+                                                               
+                                                                
+                                                                <!-- Displaying the result status -->
+                                                            @if($yesNoResults['has_won'])
+                                                                <div class="">
+                                                                    <span class="badge bg-success ms-auto">APPROVED</span>
+                                                                </div>
+                                                                @else
+                                                                <div class="ms-auto">
+                                                                    <span class="badge bg-danger ms-auto">REJECTED</span>
+                                                                </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="row mb-3">
+                                                                <div class="col-md-6">
+                                                                    <h6>YES Votes</h6>
+                                                                    <div class="d-flex align-items-center justify-content-between">
+                                                                        <div class="progress flex-grow-1 me-2" style="height: 24px;">
+                                                                            <div 
+                                                                                class="progress-bar bg-success" 
+                                                                                role="progressbar" 
+                                                                                style="width: {{ $yesNoResults['yes_percent'] }}%"
+                                                                                aria-valuenow="{{ $yesNoResults['yes_percent'] }}" 
+                                                                                aria-valuemin="0" 
+                                                                                aria-valuemax="100"
+                                                                            >
+                                                                                {{ $yesNoResults['yes_votes'] }} ({{ $yesNoResults['yes_percent'] }}%)
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                    <span class="text-end" style="min-width: 40px;">{{ $percentage }}%</span>
                                                                 </div>
-                                                            </td>
-                                                        </tr>
-                                                        @php $rank++; @endphp
-                                                    @endforeach
-                                                    
-                                                    @if($totalPositionVotes === 0)
+                                                                <div class="col-md-6">
+                                                                    <h6>NO Votes</h6>
+                                                                    <div class="d-flex align-items-center justify-content-between">
+                                                                        <div class="progress flex-grow-1 me-2" style="height: 24px;">
+                                                                            <div 
+                                                                                class="progress-bar bg-danger" 
+                                                                                role="progressbar" 
+                                                                                style="width: {{ $yesNoResults['no_percent'] }}%"
+                                                                                aria-valuenow="{{ $yesNoResults['no_percent'] }}" 
+                                                                                aria-valuemin="0" 
+                                                                                aria-valuemax="100"
+                                                                            >
+                                                                                {{ $yesNoResults['no_votes'] }} ({{ $yesNoResults['no_percent'] }}%)
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-12 text-center">
+                                                                    <div class="alert {{ $yesNoResults['has_won'] ? 'alert-success' : 'alert-danger' }} mb-0">
+                                                                        <i class="fas {{ $yesNoResults['has_won'] ? 'fa-check-circle' : 'fa-times-circle' }} me-2"></i>
+                                                                        <strong>Result:</strong> 
+                                                                        @if($yesNoResults['has_won'])
+                                                                            Candidate has been approved with {{ $yesNoResults['yes_percent'] }}% YES votes.
+                                                                        @else
+                                                                            Candidate has been rejected with {{ $yesNoResults['no_percent'] }}% NO votes.
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-footer bg-light">
+                                                            <div class="d-flex justify-content-between text-muted small">
+                                                                <span>Total votes: {{ $yesNoResults['total_votes'] }}</span>
+                                                                <span>Turnout: {{ round(($yesNoResults['total_votes'] / max(1, $totalVoters)) * 100, 1) }}%</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <div class="alert alert-info">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        No voting data available for this single-candidate position.
+                                                    </div>
+                                                @endif
+                                            @else
+                                                <!-- Standard multi-candidate voting results -->
+                                                <table class="table table-bordered">
+                                                    <thead class="table-light">
                                                         <tr>
-                                                            <td colspan="4" class="text-center py-3 text-muted">
-                                                                <i class="fas fa-info-circle me-1"></i>
-                                                                No votes recorded for this position yet.
-                                                            </td>
+                                                            <th style="width: 80px;">#</th>
+                                                            <th>Candidate</th>
+                                                            <th class="text-center" style="width: 100px;">Votes</th>
+                                                            <th class="text-center" style="width: 200px;">Percentage</th>
                                                         </tr>
-                                                    @endif
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        @php
+                                                            $totalPositionVotes = $position->candidates->sum('votes_count');
+                                                            $rank = 1;
+                                                        @endphp
+                                                        
+                                                        @foreach($position->candidates as $candidate)
+                                                            <tr>
+                                                                <td class="text-center">
+                                                                    @if($rank === 1)
+                                                                        <span class="badge bg-warning text-dark">
+                                                                            <i class="fas fa-trophy"></i>
+                                                                        </span>
+                                                                    @else
+                                                                        {{ $rank }}
+                                                                    @endif
+                                                                </td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        @if($candidate->image_path)
+                                                                            <img src="{{ Storage::url($candidate->image_path) }}" class="me-2 rounded-circle" style="width: 30px; height: 30px; object-fit: cover;" alt="{{ $candidate->name }}">
+                                                                        @else
+                                                                            <div class="bg-secondary rounded-circle me-2 d-flex justify-content-center align-items-center" style="width: 30px; height: 30px;">
+                                                                                <i class="fas fa-user text-white small"></i>
+                                                                            </div>
+                                                                        @endif
+                                                                        {{ $candidate->name }}
+                                                                        @if(!$candidate->is_active)
+                                                                            <span class="badge bg-danger ms-2">Inactive</span>
+                                                                        @endif
+                                                                    </div>
+                                                                </td>
+                                                                <td class="text-center">{{ $candidate->votes_count }}</td>
+                                                                <td>
+                                                                    @php
+                                                                        $percentage = $totalPositionVotes > 0 
+                                                                            ? round(($candidate->votes_count / $totalPositionVotes) * 100, 1) 
+                                                                            : 0;
+                                                                    @endphp
+                                                                    <div class="d-flex align-items-center justify-content-between">
+                                                                        <div class="progress flex-grow-1 me-2" style="height: 10px;">
+                                                                            <div 
+                                                                                class="progress-bar {{ $rank === 1 ? 'bg-success' : 'bg-primary' }}" 
+                                                                                role="progressbar" 
+                                                                                style="width: {{ $percentage }}%"
+                                                                                aria-valuenow="{{ $percentage }}" 
+                                                                                aria-valuemin="0" 
+                                                                                aria-valuemax="100">
+                                                                            </div>
+                                                                        </div>
+                                                                        <span class="text-end" style="min-width: 40px;">{{ $percentage }}%</span>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            @php $rank++; @endphp
+                                                        @endforeach
+                                                        
+                                                        @if($totalPositionVotes === 0)
+                                                            <tr>
+                                                                <td colspan="4" class="text-center py-3 text-muted">
+                                                                    <i class="fas fa-info-circle me-1"></i>
+                                                                    No votes recorded for this position yet.
+                                                                </td>
+                                                            </tr>
+                                                        @endif
+                                                    </tbody>
+                                                </table>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

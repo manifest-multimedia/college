@@ -27,7 +27,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>Start:</strong> {{ $election->start_time->format('M d, Y h:i A') }}</p>
-                                <p><strong>Duration:</strong> {{ $election->voting_session_duration }} minutes per voter</p>
+                                <p><strong>Duration:</strong> {{ $election->voting_duration_minutes }} minutes per voter</p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>End:</strong> {{ $election->end_time->format('M d, Y h:i A') }}</p>

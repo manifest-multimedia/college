@@ -19,6 +19,7 @@ class ElectionVoting extends Component
     public $timeRemaining;
     
     public $votes = [];
+    public $yesNoVotes = [];
     public $confirmingSubmission = false;
     public $isSubmitting = false;
     public $voteSubmitted = false;
@@ -48,12 +49,22 @@ class ElectionVoting extends Component
         // Initialize votes array
         foreach ($this->election->positions as $position) {
             $this->votes[$position->id] = null;
+            $this->yesNoVotes[$position->id] = null;
         }
     }
     
     public function selectCandidate($positionId, $candidateId)
     {
         $this->votes[$positionId] = $candidateId;
+        // Reset yes/no vote since a candidate was selected
+        $this->yesNoVotes[$positionId] = null;
+    }
+
+    public function selectYesNo($positionId, $value)
+    {
+        $this->yesNoVotes[$positionId] = $value;
+        // Keep the candidate ID for reference (single candidate case)
+        // but we'll use yesNoVotes to determine the vote type
     }
     
     public function confirmSubmit()
@@ -61,8 +72,18 @@ class ElectionVoting extends Component
         // Check if all positions have a vote
         $unvoted = [];
         foreach ($this->election->positions as $position) {
-            if (!isset($this->votes[$position->id]) || is_null($this->votes[$position->id])) {
-                $unvoted[] = $position->name;
+            $hasSingleCandidate = $position->candidates->where('is_active', true)->count() === 1;
+            
+            if ($hasSingleCandidate) {
+                // For positions with a single candidate, check if yes/no vote was made
+                if (!isset($this->yesNoVotes[$position->id]) || is_null($this->yesNoVotes[$position->id])) {
+                    $unvoted[] = $position->name;
+                }
+            } else {
+                // For regular positions, check if a candidate was selected
+                if (!isset($this->votes[$position->id]) || is_null($this->votes[$position->id])) {
+                    $unvoted[] = $position->name;
+                }
             }
         }
         
@@ -102,16 +123,36 @@ class ElectionVoting extends Component
             $ipAddress = request()->ip();
             $userAgent = request()->userAgent();
             
-            foreach ($this->votes as $positionId => $candidateId) {
-                if (!is_null($candidateId)) {
+            foreach ($this->election->positions as $position) {
+                $hasSingleCandidate = $position->candidates->where('is_active', true)->count() === 1;
+                
+                if ($hasSingleCandidate) {
+                    // Handle YES/NO vote for single candidate
+                    $candidate = $position->candidates->where('is_active', true)->first();
+                    $voteType = $this->yesNoVotes[$position->id];
+                    
                     ElectionVote::create([
                         'election_id' => $this->election->id,
-                        'election_position_id' => $positionId,
-                        'election_candidate_id' => $candidateId,
+                        'election_position_id' => $position->id,
+                        'election_candidate_id' => $candidate->id,
                         'student_id' => $studentId,
                         'ip_address' => $ipAddress,
                         'user_agent' => $userAgent,
+                        'vote_type' => $voteType, // 'yes' or 'no'
                     ]);
+                } else {
+                    // Handle regular candidate vote
+                    if (!is_null($this->votes[$position->id])) {
+                        ElectionVote::create([
+                            'election_id' => $this->election->id,
+                            'election_position_id' => $position->id,
+                            'election_candidate_id' => $this->votes[$position->id],
+                            'student_id' => $studentId,
+                            'ip_address' => $ipAddress,
+                            'user_agent' => $userAgent,
+                            'vote_type' => 'candidate', // Regular candidate vote
+                        ]);
+                    }
                 }
             }
             

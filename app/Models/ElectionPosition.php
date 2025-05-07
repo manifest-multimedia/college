@@ -92,12 +92,67 @@ class ElectionPosition extends Model
     }
 
     /**
+     * Check if this position has only a single candidate
+     */
+    public function hasSingleCandidate(): bool
+    {
+        return $this->candidates()->where('is_active', true)->count() === 1;
+    }
+
+    /**
+     * Get YES/NO votes for a single candidate position
+     */
+    public function getYesNoVotes()
+    {
+        if (!$this->hasSingleCandidate()) {
+            return null;
+        }
+
+        $candidate = $this->candidates()->where('is_active', true)->first();
+        
+        if (!$candidate) {
+            return null;
+        }
+
+        $yesVotes = $this->votes()
+            ->where('election_candidate_id', $candidate->id)
+            ->where('vote_type', 'yes')
+            ->count();
+            
+        $noVotes = $this->votes()
+            ->where('election_candidate_id', $candidate->id)
+            ->where('vote_type', 'no')
+            ->count();
+            
+        $totalVotes = $yesVotes + $noVotes;
+        
+        $yesPercent = $totalVotes > 0 ? round(($yesVotes / $totalVotes) * 100, 1) : 0;
+        $noPercent = $totalVotes > 0 ? round(($noVotes / $totalVotes) * 100, 1) : 0;
+        
+        $hasWon = $yesVotes > $noVotes;
+        
+        return [
+            'candidate' => $candidate,
+            'yes_votes' => $yesVotes,
+            'no_votes' => $noVotes,
+            'yes_percent' => $yesPercent,
+            'no_percent' => $noPercent,
+            'total_votes' => $totalVotes,
+            'has_won' => $hasWon,
+        ];
+    }
+
+    /**
      * Get vote counts for all candidates in this position.
-     * 
-     * @return \Illuminate\Support\Collection
      */
     public function getCandidateVoteCounts()
     {
+        // If this is a single candidate position with YES/NO voting
+        if ($this->hasSingleCandidate()) {
+            return $this->getYesNoVotes();
+        }
+        
+        // Standard multiple candidate vote counting
         $results = $this->votes()
             ->select('election_candidate_id')
             ->selectRaw('COUNT(*) as vote_count')

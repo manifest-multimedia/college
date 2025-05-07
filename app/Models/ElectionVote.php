@@ -14,6 +14,11 @@ class ElectionVote extends Model
         'student_id',
         'ip_address',
         'user_agent',
+        'vote_type',
+    ];
+
+    protected $casts = [
+        'vote_type' => 'string',
     ];
 
     /**
