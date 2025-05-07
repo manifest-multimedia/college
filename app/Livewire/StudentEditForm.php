@@ -16,7 +16,7 @@ class StudentEditForm extends Component
     public $other_name;
     public $student_id_number;
     public $email;
-    public $phone;
+    public $mobile_number; // Changed from phone to mobile_number to match database
     public $college_class_id;
     public $cohort_id;
     public $status;
@@ -31,7 +31,7 @@ class StudentEditForm extends Component
         'other_name' => 'nullable|string|max:100',
         'student_id_number' => 'required|string|max:50',
         'email' => 'required|email|max:100',
-        'phone' => 'nullable|string|max:20',
+        'mobile_number' => 'nullable|string|max:20', // Changed from phone to mobile_number
         'college_class_id' => 'required|integer|exists:college_classes,id',
         'cohort_id' => 'required|integer|exists:cohorts,id',
         'status' => 'required|string|in:Active,Inactive,Pending,Graduated',
@@ -54,7 +54,7 @@ class StudentEditForm extends Component
             $this->other_name = $student->other_name;
             $this->student_id_number = $student->student_id;
             $this->email = $student->email;
-            $this->phone = $student->phone;
+            $this->mobile_number = $student->mobile_number; // Changed from phone to mobile_number
             $this->college_class_id = $student->college_class_id;
             $this->cohort_id = $student->cohort_id;
             $this->status = $student->status ?? 'Active';
@@ -86,7 +86,7 @@ class StudentEditForm extends Component
             $student->other_name = $this->other_name;
             $student->student_id = $this->student_id_number;
             $student->email = $this->email;
-            $student->phone = $this->phone;
+            $student->mobile_number = $this->mobile_number; // Changed from phone to mobile_number
             $student->college_class_id = $this->college_class_id;
             $student->cohort_id = $this->cohort_id;
             $student->status = $this->status;
@@ -104,7 +104,7 @@ class StudentEditForm extends Component
             return redirect()->route('students.show', $this->studentId);
         } catch (\Exception $e) {
             Log::error('Error updating student: ' . $e->getMessage());
-            session()->flash('error', 'Failed to update student information.');
+            session()->flash('error', 'Failed to update student information: ' . $e->getMessage());
         }
     }
     

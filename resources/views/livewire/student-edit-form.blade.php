@@ -67,9 +67,9 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="phone" class="form-label">Phone</label>
-                            <input type="text" id="phone" class="form-control @error('phone') is-invalid @enderror" wire:model="phone">
-                            @error('phone')
+                            <label for="mobile_number" class="form-label">Mobile Number</label>
+                            <input type="text" id="mobile_number" class="form-control @error('mobile_number') is-invalid @enderror" wire:model="mobile_number">
+                            @error('mobile_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

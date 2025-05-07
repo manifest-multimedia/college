@@ -118,7 +118,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ $student->CollegeClass()->first()->name }}</td>
+                            <td>{{ $student->CollegeClass()->first()?->name }}</td>
                             <td>{{ $student->Cohort()->first()->name ?? 'N/A' }}</td>
                             <td>
                                 @if($student->status == 'Active')
