@@ -12,7 +12,7 @@
                             <i class="fas fa-file-import me-2"></i>Import Students
                         </h1>
                         <div>
-                            <a href="{{ route('students.index') }}" class="btn btn-outline-secondary">
+                            <a href="{{ url('/students') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-1"></i> Back to Students
                             </a>
                         </div>

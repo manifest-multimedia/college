@@ -71,10 +71,10 @@
                 
                 <!-- Action buttons - using flex-fill on mobile to space them out -->
                 <div class="d-flex gap-2 flex-md-nowrap ms-auto">
-                    <button class="btn btn-sm btn-primary px-3 d-flex align-items-center" wire:click="importStudents">
+                    <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary px-3 d-flex align-items-center">
                         <i class="fas fa-file-import me-2"></i>
                         Import
-                    </button>
+                    </a>
                     <button class="btn btn-sm btn-light-primary px-3 d-flex align-items-center" wire:click="exportStudents">
                         <i class="fas fa-file-export me-2"></i>
                         Export

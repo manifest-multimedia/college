@@ -21,13 +21,6 @@
         </div>
     </div>
 
-    <div class="mb-4">
-        <div class="d-flex justify-content-end">
-            <a href="{{ route('students.import') }}" class="btn btn-primary">
-                <i class="fas fa-file-import me-1"></i> Import Students
-            </a>
-        </div>
-    </div>
     
     @livewire('students-table-widget')
     
