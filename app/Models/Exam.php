@@ -2,73 +2,54 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Exam extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
+        'title',
+        'description',
         'course_id',
-        'user_id',
-        'type',
-        'duration',
-        'password',
+        'academic_year_id',
+        'semester_id',
         'status',
-        'questions_per_session',
-        'passing_percentage',
-        'slug'
+        'date',
+        'time',
+        'duration',
     ];
 
-
-    // Add an attribute for $exam->description 
-    public function getDescriptionAttribute()
-    {
-        /**
-         * Description is the course class and semester
-         * CollegeClass->name
-         * Semester->name
-         */
-
-        return $this->course->collegeClass->name . ' ' . $this->course->year->name . ' (' . $this->course->semester->name . ')';
-    }
-
-
     /**
-     * Course associated with this exam.
+     * Get the course that owns the exam
      */
-
-
-
     public function course()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(Course::class);
     }
 
     /**
-     * Lecturer who created this exam.
+     * Get the academic year associated with the exam
      */
-    public function user()
+    public function academicYear()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(AcademicYear::class);
     }
 
     /**
-     * Questions associated with this exam.
+     * Get the semester associated with the exam
      */
-    public function questions()
+    public function semester()
     {
-        return $this->hasMany(Question::class);
+        return $this->belongsTo(Semester::class);
     }
 
     /**
-     * Sessions for this exam.
+     * Get the exam clearances for this exam
      */
-    public function sessions()
+    public function examClearances()
     {
-        return $this->hasMany(ExamSession::class);
-    }
-
-    public function proctoringSessions()
-    {
-        return $this->hasMany(ProctoringSession::class);
+        return $this->morphMany(ExamClearance::class, 'clearable');
     }
 }

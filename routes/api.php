@@ -7,10 +7,40 @@ use App\Http\Controllers\Api\Communication\SmsController;
 use App\Http\Controllers\Api\Communication\EmailController;
 use App\Http\Controllers\Api\Communication\ChatController;
 use App\Http\Controllers\Api\MemoController;
+use App\Http\Controllers\Api\ExamClearanceController;
+use App\Http\Controllers\Api\OfflineExamController;
+use App\Http\Controllers\Api\ExamEntryTicketController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+/*
+|--------------------------------------------------------------------------
+| Exam System API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Offline Exam Routes
+    Route::apiResource('offline-exams', OfflineExamController::class);
+    Route::post('offline-exams/{id}/process-clearance', [OfflineExamController::class, 'processClearance']);
+    
+    // Exam Clearance Routes
+    Route::get('exam-clearances', [ExamClearanceController::class, 'index']);
+    Route::get('exam-clearances/{id}', [ExamClearanceController::class, 'show']);
+    Route::put('exam-clearances/{id}', [ExamClearanceController::class, 'update']);
+    Route::post('exam-clearances/check', [ExamClearanceController::class, 'checkClearance']);
+    Route::post('exam-clearances/manual-override', [ExamClearanceController::class, 'manualOverride']);
+    Route::post('exam-clearances/bulk-process', [ExamClearanceController::class, 'bulkProcess']);
+    Route::get('students/{studentId}/clearances', [ExamClearanceController::class, 'getStudentClearances']);
+    
+    // Exam Entry Ticket Routes
+    Route::apiResource('exam-entry-tickets', ExamEntryTicketController::class)->except(['update', 'destroy']);
+    Route::post('exam-entry-tickets/bulk-issue', [ExamEntryTicketController::class, 'bulkIssue']);
+    Route::post('exam-entry-tickets/{id}/verify', [ExamEntryTicketController::class, 'verifyTicket']);
+    Route::get('students/{studentId}/tickets', [ExamEntryTicketController::class, 'getStudentTickets']);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -19,8 +49,8 @@ Route::get('/user', function (Request $request) {
 */
 
 Route::prefix('exam-tickets')->group(function () {
-    Route::post('/validate', [ExamTicketController::class, 'validateTicket']);
-    Route::post('/info', [ExamTicketController::class, 'ticketInfo']);
+    Route::post('/validate', [ExamEntryTicketController::class, 'validateTicket']);
+    Route::post('/info', [ExamEntryTicketController::class, 'ticketInfo']);
 });
 
 /*

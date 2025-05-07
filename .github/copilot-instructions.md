@@ -78,3 +78,12 @@ In Laravel 12  Kernel is no longer present we use bootstrap/app.php isntead.
 When impletting logging to track issues use the laravel logs facade by important the class and referencing the Log;
 
 When working with Uploads and Image Photos in Livewire: Reference the documentation https://livewire.laravel.com/docs/uploads#temporary-preview-urls
+
+Our students table uses             $table->increments('id'); for the id field. 
+
+Hence a realtionship with this would be defined as follows: 
+
+$table->unsignedInteger('subject_id');
+$table->foreign('subject_id')->references('id')->on('subjects');
+
+This is an example of how you properly reference tables tables which uses increments id for the ID field.

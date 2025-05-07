@@ -41,7 +41,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
            
-            @can('manage students')    
+            @can('view students')    
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
             data-kt-menu-placement="right-start"

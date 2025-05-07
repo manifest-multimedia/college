@@ -42,7 +42,8 @@ class CohortController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:cohorts',
             'description' => 'nullable|string',
-            'academic_year' => 'required|string|max:255',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'is_active' => 'boolean',
         ]);
         
@@ -50,7 +51,8 @@ class CohortController extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
-            'academic_year' => $validated['academic_year'],
+            'start_date' => $validated['start_date'] ?? null,
+            'end_date' => $validated['end_date'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'is_deleted' => false,
             'created_by' => auth()->id(),
@@ -85,7 +87,8 @@ class CohortController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:cohorts,name,' . $cohort->id,
             'description' => 'nullable|string',
-            'academic_year' => 'required|string|max:255',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'is_active' => 'boolean',
         ]);
         
@@ -93,7 +96,8 @@ class CohortController extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
-            'academic_year' => $validated['academic_year'],
+            'start_date' => $validated['start_date'] ?? null,
+            'end_date' => $validated['end_date'] ?? null,
             'is_active' => $validated['is_active'] ?? false,
         ]);
         

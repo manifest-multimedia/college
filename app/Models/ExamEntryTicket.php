@@ -13,7 +13,9 @@ class ExamEntryTicket extends Model
     protected $fillable = [
         'exam_clearance_id',
         'student_id',
-        'exam_type_id',
+        'exam_type_id', // Kept for backward compatibility
+        'ticketable_type', // New field for polymorphic relationship
+        'ticketable_id',   // New field for polymorphic relationship
         'qr_code',
         'ticket_number',
         'is_verified',
@@ -50,6 +52,16 @@ class ExamEntryTicket extends Model
     }
 
     /**
+     * Get the related exam (online or offline)
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function ticketable()
+    {
+        return $this->morphTo();
+    }
+
+    /**
      * Get the exam clearance associated with this entry ticket
      */
     public function examClearance()
@@ -67,6 +79,8 @@ class ExamEntryTicket extends Model
 
     /**
      * Get the exam type associated with this entry ticket
+     * 
+     * @deprecated Use ticketable relationship instead
      */
     public function examType()
     {
@@ -99,5 +113,25 @@ class ExamEntryTicket extends Model
         }
         
         return true;
+    }
+
+    /**
+     * Determine if the ticket is for an online exam.
+     *
+     * @return bool
+     */
+    public function isOnlineExam()
+    {
+        return $this->ticketable_type === 'App\\Models\\Exam';
+    }
+    
+    /**
+     * Determine if the ticket is for an offline exam.
+     *
+     * @return bool
+     */
+    public function isOfflineExam()
+    {
+        return $this->ticketable_type === 'App\\Models\\OfflineExam';
     }
 }

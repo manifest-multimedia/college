@@ -448,4 +448,26 @@ Route::middleware([
         Route::get('/{id}/edit', \App\Livewire\Memos\CreateMemo::class)->name('memo.edit');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Exam Module Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+        // Offline Exams Management
+        Route::get('/exams/offline', function () {
+            return view('admin.exam.offline-exams');
+        })->middleware('permission:view exams')->name('exams.offline');
+        
+        // Exam Clearances Management
+        Route::get('/exams/clearances', function () {
+            return view('admin.exam.clearances');
+        })->name('clearances.index');
+        
+        // Entry Tickets Management
+        Route::get('/exams/tickets', function () {
+            return view('admin.exam.tickets');
+        })->name('tickets.index');
+    });
+
 });

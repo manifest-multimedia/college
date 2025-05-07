@@ -24,6 +24,8 @@ class ExamType extends Model
 
     /**
      * Get the exam clearances associated with this exam type
+     * 
+     * @deprecated This relationship is maintained for backward compatibility
      */
     public function examClearances()
     {
@@ -31,10 +33,28 @@ class ExamType extends Model
     }
 
     /**
-     * Get exams associated with this exam type
+     * Get online exams associated with this exam type
      */
     public function exams()
     {
-        return $this->hasMany(Exam::class);
+        return $this->hasMany(Exam::class, 'type_id');
+    }
+
+    /**
+     * Get offline exams associated with this exam type
+     */
+    public function offlineExams()
+    {
+        return $this->hasMany(OfflineExam::class, 'type_id');
+    }
+
+    /**
+     * Get all exams (both online and offline) associated with this exam type
+     * 
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAllExamsAttribute()
+    {
+        return $this->exams->merge($this->offlineExams);
     }
 }
