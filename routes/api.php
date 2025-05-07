@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ExamTicketController;
 use App\Http\Controllers\Api\Communication\SmsController;
 use App\Http\Controllers\Api\Communication\EmailController;
 use App\Http\Controllers\Api\Communication\ChatController;
+use App\Http\Controllers\Api\MemoController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -55,5 +56,32 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/sessions/{sessionId}/messages', [ChatController::class, 'getMessageHistory']);
         Route::patch('/sessions/{sessionId}/status', [ChatController::class, 'updateSessionStatus']);
         Route::get('/sessions', [ChatController::class, 'getUserSessions']);
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Memo Management API Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('memos')->group(function () {
+        // Basic CRUD operations
+        Route::get('/', [MemoController::class, 'index']);
+        Route::post('/', [MemoController::class, 'store']);
+        Route::get('/{id}', [MemoController::class, 'show']);
+        Route::put('/{id}', [MemoController::class, 'update']);
+        
+        // Memo workflow actions
+        Route::post('/{id}/forward', [MemoController::class, 'forward']);
+        Route::post('/{id}/approve', [MemoController::class, 'approve']);
+        Route::post('/{id}/reject', [MemoController::class, 'reject']);
+        Route::post('/{id}/complete', [MemoController::class, 'complete']);
+        
+        // Procurement workflow actions
+        Route::post('/{id}/procured', [MemoController::class, 'markAsProcured']);
+        Route::post('/{id}/delivered', [MemoController::class, 'markAsDelivered']);
+        Route::post('/{id}/audited', [MemoController::class, 'markAsAudited']);
+        
+        // Attachment management
+        Route::delete('/{id}/attachments/{attachmentId}', [MemoController::class, 'deleteAttachment']);
     });
 });

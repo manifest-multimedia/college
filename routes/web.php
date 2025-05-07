@@ -429,4 +429,23 @@ Route::middleware([
         Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Memo Management System Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum'])->prefix('memos')->group(function () {
+        // Main memo listing and dashboard
+        Route::get('/', \App\Livewire\Memos\MemoList::class)->name('memos');
+        
+        // Create new memo
+        Route::get('/create', \App\Livewire\Memos\CreateMemo::class)->name('memo.create');
+        
+        // View memo details
+        Route::get('/{id}', \App\Livewire\Memos\ViewMemo::class)->name('memo.view');
+        
+        // Edit memo (only for draft memos)
+        Route::get('/{id}/edit', \App\Livewire\Memos\CreateMemo::class)->name('memo.edit');
+    });
+
 });
