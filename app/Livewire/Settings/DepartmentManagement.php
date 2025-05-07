@@ -74,6 +74,12 @@ class DepartmentManagement extends Component
         
         // Dispatch event to notify JavaScript to open modal
         $this->dispatch('modalStateChanged', ['isOpen' => true]);
+        
+        // Also dispatch departmentDataLoaded event for consistency with edit and view flows
+        $this->dispatch('departmentDataLoaded');
+        
+        // Log that openModal was called
+        Log::info('openModal called', ['mode' => $mode]);
     }
     
     public function closeModal()
