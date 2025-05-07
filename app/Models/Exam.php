@@ -19,6 +19,11 @@ class Exam extends Model
         'date',
         'time',
         'duration',
+        'password',
+        'user_id',
+        'questions_per_session',
+        'slug',
+        'exam_type',
     ];
 
     /**
@@ -26,7 +31,7 @@ class Exam extends Model
      */
     public function course()
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Subject::class, 'course_id');
     }
 
     /**

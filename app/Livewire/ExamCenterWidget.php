@@ -6,12 +6,12 @@ use Livewire\Component;
 use App\Models\Exam;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\Subject;
 use App\Models\User;
 
 class ExamCenterWidget extends Component
 {
-
     public $search;
     public $fitlerOptions = [
         '' => 'All',
@@ -19,8 +19,6 @@ class ExamCenterWidget extends Component
         'active' => 'Active',
         'completed' => 'Completed',
     ];
-
-
 
     public $filter = '';
 
@@ -37,63 +35,87 @@ class ExamCenterWidget extends Component
         $this->generatePassword($nopass);
     }
 
-    // Handle form submission to create the exam
-
-
     public function render()
     {
-        if (Auth::user()->role == 'admin' || Auth::user()->role == 'Super Admin') {
-            $exams = Exam::with(['course.collegeClass', 'course.semester', 'course.year'])
-                ->when(
-                    $this->search,
-                    function ($query) {
-                        return $query->whereHas('course', function ($query) {
-                            return $query->where('name', 'like', '%' . $this->search . '%');
-                        });
-                    }
-                )->when(
-                    $this->filter,
-                    function ($query) {
-                        return $query->where('status', $this->filter);
-                    }
-                )->get();
-        } else {
+        try {
+            if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+                $exams = Exam::with(['course', 'course.collegeClass', 'course.semester', 'course.year'])
+                    ->when(
+                        $this->search,
+                        function ($query) {
+                            return $query->whereHas('course', function ($query) {
+                                return $query->where('name', 'like', '%' . $this->search . '%');
+                            });
+                        }
+                    )->when(
+                        $this->filter,
+                        function ($query) {
+                            return $query->where('status', $this->filter);
+                        }
+                    )->get();
+            } else {
+                $exams = Exam::where('user_id', Auth::user()->id)
+                    ->with(['course', 'course.collegeClass', 'course.semester', 'course.year'])
+                    ->when(
+                        $this->search,
+                        function ($query) {
+                            return $query->whereHas('course', function ($query) {
+                                return $query->where('name', 'like', '%' . $this->search . '%');
+                            });
+                        }
+                    )
+                    ->when(
+                        $this->filter,
+                        function ($query) {
+                            return $query->where('status', $this->filter);
+                        }
+                    )
+                    ->get();
+            }
 
-            $exams = Exam::where('user_id', Auth::user()->id)
-                ->with(['course.collegeClass', 'course.semester', 'course.year'])
-                ->when(
-                    $this->search,
-                    function ($query) {
-                        return $query->whereHas('course', function ($query) {
-                            return $query->where('name', 'like', '%' . $this->search . '%');
-                        });
-                    }
-                )
-                ->when(
-                    $this->filter,
-                    function ($query) {
-                        return $query->where('status', $this->filter);
-                    }
-                )
-                ->get();
+            // Check for any exams with missing relationships
+            foreach ($exams as $exam) {
+                if (!$exam->course) {
+                    Log::warning('Exam found without course relationship', [
+                        'exam_id' => $exam->id,
+                        'slug' => $exam->slug,
+                        'user_id' => $exam->user_id,
+                    ]);
+                }
+            }
+
+            return view(
+                'livewire.exam-center-widget',
+                [
+                    'exams' => $exams,
+                    'users' => User::all(),
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error('Error in ExamCenterWidget render method: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return view with empty data to prevent further errors
+            return view(
+                'livewire.exam-center-widget',
+                [
+                    'exams' => collect([]),
+                    'users' => collect([]),
+                ]
+            );
         }
-
-
-
-        return view(
-            'livewire.exam-center-widget',
-            [
-                'exams' => $exams,
-                'users' => User::all(),
-            ]
-        );
     }
 
     public function generateSlug($exams)
     {
         foreach ($exams as $exam) {
+            if (!$exam->course) {
+                Log::warning('Unable to generate slug: Exam has no course', ['exam_id' => $exam->id]);
+                continue;
+            }
 
-            $slug  = Str::slug($exam->course->name . '-' . now()->format('Y-m-d H:i:s'));
+            $slug = Str::slug($exam->course->name . '-' . now()->format('Y-m-d H:i:s'));
 
             while (Exam::where('slug', $slug)->exists()) {
                 $slug = Str::slug($exam->course->name . '-' . now()->format('Y-m-d H:i:s'));
@@ -102,6 +124,7 @@ class ExamCenterWidget extends Component
             $exam->update(['slug' => $slug]);
         }
     }
+
     public function generatePassword($exams)
     {
         foreach ($exams as $exam) {
@@ -113,17 +136,25 @@ class ExamCenterWidget extends Component
         }
     }
 
-    /*************  ✨ Codeium Command ⭐  *************/
     /**
      * Delete an exam by its ID.
      *
      * @param int $id The ID of the exam to be deleted.
      * @return void
      */
-    /******  d1373e01-cbab-4675-b4ac-3ccf648c79b9  *******/
     public function deleteExam($id)
     {
-        $exam = Exam::find($id);
-        $exam->delete();
+        try {
+            $exam = Exam::find($id);
+            if ($exam) {
+                $exam->delete();
+                session()->flash('success', 'Exam deleted successfully.');
+            } else {
+                session()->flash('error', 'Exam not found.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error deleting exam: ' . $e->getMessage());
+            session()->flash('error', 'Failed to delete exam.');
+        }
     }
 }
