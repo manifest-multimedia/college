@@ -8,6 +8,35 @@ use Illuminate\Support\Facades\Hash;
 
 class Student extends Model
 {
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'student_id',
+        'first_name',
+        'last_name',
+        'other_name',
+        'gender',
+        'date_of_birth',
+        'nationality',
+        'country_of_residence',
+        'home_region',
+        'home_town',
+        'religion',
+        'mobile_number',
+        'email',
+        'gps_address',
+        'postal_address',
+        'residential_address',
+        'marital_status',
+        'college_class_id',
+        'cohort_id',
+        'status',
+        'user_id',
+    ];
+
     // Get attribute name
     public function getNameAttribute()
     {

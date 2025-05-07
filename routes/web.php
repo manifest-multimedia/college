@@ -127,6 +127,9 @@ Route::middleware([
             return view('students');
         })->name('students');
 
+        // Student Import Route
+        Route::get('/students/import', [App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
+
         // Student individual routes
         Route::get('/students/{student}', function ($student) {
             return view('students.show', ['studentId' => $student]);
