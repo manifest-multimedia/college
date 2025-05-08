@@ -486,4 +486,11 @@ Route::middleware([
         })->name('tickets.index');
     });
 
+    // Exam Extra Time Management (System role only)
+    Route::middleware(['auth:sanctum', 'role:System'])->group(function () {
+        Route::get('/admin/exam-extra-time', function () {
+            return view('exams.extra-time');
+        })->name('admin.exam-extra-time');
+    });
+
 });

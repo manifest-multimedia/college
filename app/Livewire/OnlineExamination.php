@@ -9,6 +9,7 @@ use App\Models\Response;
 use Livewire\Component;
 use Carbon\Carbon;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class OnlineExamination extends Component
 {
@@ -55,7 +56,26 @@ class OnlineExamination extends Component
 
         // Initialize user and session
         $this->initializeExamSession();
+        
+        // Load existing responses from the database
+        $this->loadResponses();
+        
+        // Then load questions with the loaded responses
         $this->loadQuestions();
+    }
+
+    protected function loadResponses()
+    {
+        // Load all responses for this exam session from the database
+        $existingResponses = Response::where('exam_session_id', $this->examSession->id)->get();
+        
+        // Map responses to question IDs for easier access
+        $this->responses = $existingResponses->mapWithKeys(function ($response) {
+            return [$response->question_id => $response->selected_option];
+        })->toArray();
+        
+        // Store in session as backup
+        session()->put('responses', $this->responses);
     }
 
     public function initializeExamSession()
@@ -81,10 +101,31 @@ class OnlineExamination extends Component
                 ]
             );
 
+            // Calculate exam end time including any extra time
+            $examDuration = (int) $this->exam->duration;
+            $extraTime = (int) $this->examSession->extra_time_minutes;
+            $totalDuration = $examDuration + $extraTime;
+
             $this->examStartTime = Carbon::parse($this->examSession->started_at);
-            $this->remainingTime = $this->getRemainingTime();
+            $this->remainingTime = $this->calculateRemainingTime();
+
+            // If extra time has been added, log it for monitoring
+            if ($extraTime > 0) {
+                Log::info('Extra time applied to exam session', [
+                    'session_id' => $this->examSession->id,
+                    'student_id' => $this->student->student_id,
+                    'extra_minutes' => $extraTime,
+                    'total_duration' => $totalDuration,
+                    'new_end_time' => $this->examSession->adjustedCompletionTime
+                ]);
+            }
         } catch (\Throwable $th) {
             // Handle exceptions gracefully
+            Log::error('Error initializing exam session', [
+                'error' => $th->getMessage(),
+                'student_id' => $this->student_id,
+                'exam_id' => $this->exam->id
+            ]);
             report($th);
         }
     }
@@ -160,27 +201,42 @@ class OnlineExamination extends Component
         return $score;
     }
 
+    public function calculateRemainingTime()
+    {
+        // Use the adjusted completion time (which includes extra time) from the model
+        $adjustedCompletionTime = $this->examSession->adjustedCompletionTime;
+        $currentTime = Carbon::now();
+
+        // If the adjusted completion time is in the past, return 0
+        if ($currentTime->gt($adjustedCompletionTime)) {
+            return 0;
+        }
+
+        return $currentTime->diffInSeconds($adjustedCompletionTime);
+    }
+
     public function getRemainingTime()
     {
-
         $startedAt = Carbon::parse($this->examSession->started_at);
-        $completedAt = Carbon::parse($this->examSession->completed_at);
+
+        // Use the adjusted completion time instead of directly calculating from completed_at
+        $adjustedCompletionTime = $this->examSession->adjustedCompletionTime;
+
         $this->timerStart = $startedAt;
-        $this->timerFinish = $completedAt;
+        $this->timerFinish = $adjustedCompletionTime;
 
-        $this->startedAt = $startedAt->format('l, jS F Y h:i A'); // Example: "Monday, 28th November 2024 10:30 AM"
-        $this->estimatedEndTime = $completedAt->format('l, jS F Y h:i A'); // Example: "Monday, 28th November 2024 1:30 PM"
+        $this->startedAt = $startedAt->format('l, jS F Y h:i A');
+        $this->estimatedEndTime = $adjustedCompletionTime->format('l, jS F Y h:i A');
 
+        // Calculate remaining time in seconds
+        $remainingSeconds = $this->calculateRemainingTime();
 
-        // $startedAt = Carbon::parse($this->examSession->started_at);
-        // $completedAt = Carbon::parse($this->examSession->completed_at);
+        // Convert to hours, minutes, seconds
+        $this->hours = floor($remainingSeconds / 3600);
+        $this->minutes = floor(($remainingSeconds % 3600) / 60);
+        $this->seconds = $remainingSeconds % 60;
 
-        // $this->startedAt = $startedAt->diffForHumans(); // Example: "2 hours ago"
-        // $this->estimatedEndTime = $completedAt->diffForHumans(); // Example: "in 3 hours"
-        $now = Carbon::now();
-
-        $remainingSeconds = $completedAt->diffInSeconds($now, false);
-        return max(0, $remainingSeconds);
+        return $remainingSeconds;
     }
 
     public function render()

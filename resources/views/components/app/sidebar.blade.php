@@ -282,6 +282,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
+                    
+                    @hasrole('System')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('admin.exam-extra-time') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Extra Time Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasrole
                 </div>
                 <!--end:Menu sub-->
             </div>

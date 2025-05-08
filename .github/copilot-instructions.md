@@ -8,12 +8,13 @@ Livewire: Uses tag-based syntax — e.g., <livewire:component-name />
 Use Laravel Blade Components for all views:
 
 ✅ Layouts
-Dashboard/Dashboard Views: Use components.default.layout.blade.php
+Dashboard/Dashboard Views: Use components.dashboard.default.blade.php
 
 To use this in blade we use tag syntax and pass in the title 
-<x-backend.default title="title" /> 
+<x-dashboard.default title="User Dashboard">
+
 Contnet 
-</x-backend.default>
+</x-dashboard.default>
 
 📌 Note: Use components.dashboard.default for all dashboard-related views.
 
@@ -90,3 +91,11 @@ $table->unsignedInteger('subject_id');
 $table->foreign('subject_id')->references('id')->on('subjects');
 
 This is an example of how you properly reference tables tables which uses increments id for the ID field.
+
+Use Laravel Tinker for checking databse structure; commands like php artisan db:show table_name do not work. Alternatively review all migrations for the related tables and models.
+
+To use Laravel Tinker first enter enter, then run commands within the console:
+- Run php artisan tinker 
+- Once we're inside tinker we can then run other commands instead of chaining commands 
+
+We'd use wire:model.live for fields that require realtime livewire updates such as filterable selection components.
