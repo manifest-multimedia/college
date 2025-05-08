@@ -33,6 +33,10 @@ class ExamExtraTime extends Component
     // For selections
     public $selectedSessions = [];
     public $perPage = 10;
+
+    // Modal related properties
+    public $showViewModal = false;
+    public $viewingSession = null;
     
     // Rules for validation
     protected $rules = [
@@ -180,6 +184,107 @@ class ExamExtraTime extends Component
             $this->selectedSessions = array_diff($this->selectedSessions, [$sessionId]);
         } else {
             $this->selectedSessions[] = $sessionId;
+        }
+    }
+
+    /**
+     * Open the view session modal
+     */
+    public function viewSession($sessionId)
+    {
+        try {
+            $this->viewingSession = ExamSession::with([
+                'student', 
+                'exam.course', 
+                'extraTimeAddedBy',
+                'responses.question.options'
+            ])->findOrFail($sessionId);
+            
+            $this->showViewModal = true;
+            
+            Log::info('Viewing exam session details', [
+                'user_id' => Auth::id(),
+                'session_id' => $sessionId
+            ]);
+        } catch (\Exception $e) {
+            $this->errorMessage = 'Error loading session details: ' . $e->getMessage();
+            Log::error('Error viewing exam session', [
+                'error' => $e->getMessage(),
+                'session_id' => $sessionId,
+                'user_id' => Auth::id()
+            ]);
+        }
+    }
+    
+    /**
+     * Close the view session modal
+     */
+    public function closeViewModal()
+    {
+        $this->showViewModal = false;
+        $this->viewingSession = null;
+    }
+
+    /**
+     * Add extra time from the modal view
+     */
+    public function addExtraTimeFromModal()
+    {
+        if (!$this->viewingSession) {
+            $this->errorMessage = 'Session details not found.';
+            return;
+        }
+        
+        try {
+            $now = Carbon::now();
+            $sessionId = $this->viewingSession->id;
+            
+            // Validate the extra time value
+            if ($this->extraTimeMinutes < 1 || $this->extraTimeMinutes > 60) {
+                $this->errorMessage = 'Extra time must be between 1 and 60 minutes.';
+                return;
+            }
+            
+            // Update the session with extra time
+            $updated = ExamSession::where('id', $sessionId)
+                ->update([
+                    'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                    'extra_time_added_by' => Auth::id(),
+                    'extra_time_added_at' => $now,
+                ]);
+            
+            if ($updated) {
+                // Refresh the session data
+                $this->viewingSession = ExamSession::with([
+                    'student', 
+                    'exam.course', 
+                    'extraTimeAddedBy',
+                    'responses.question.options'
+                ])->find($sessionId);
+                
+                $this->successMessage = 'Successfully added ' . $this->extraTimeMinutes . ' extra minute(s) to the exam session.';
+                
+                // Reset extra time minutes to default
+                $this->extraTimeMinutes = 5;
+                
+                // Log the action
+                Log::info('Extra time added from modal', [
+                    'user_id' => Auth::id(),
+                    'session_id' => $sessionId,
+                    'minutes_added' => $this->extraTimeMinutes,
+                    'student_id' => $this->viewingSession->student_id ?? null,
+                    'exam_id' => $this->viewingSession->exam_id ?? null
+                ]);
+            } else {
+                $this->errorMessage = 'No changes were made.';
+            }
+        } catch (\Exception $e) {
+            $this->errorMessage = 'An error occurred: ' . $e->getMessage();
+            Log::error('Error adding extra time from modal', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->viewingSession->id ?? null,
+                'user_id' => Auth::id()
+            ]);
         }
     }
     

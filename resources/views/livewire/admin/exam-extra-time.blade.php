@@ -160,9 +160,9 @@
                                     </td>
                                     <td>{{ $session->adjustedCompletionTime->format('M d, Y g:i A') }}</td>
                                     <td>
-                                        <a href="#" class="btn btn-sm btn-icon btn-light btn-active-light-primary" title="View Session Details">
+                                        <button type="button" wire:click="viewSession({{ $session->id }})" class="btn btn-sm btn-icon btn-light btn-active-light-primary" title="View Session Details">
                                             <i class="bi bi-eye"></i>
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -192,5 +192,199 @@
                 </div>
             </div>
         </div>
+    @endif
+
+    <!-- Session Details Modal -->
+    @if($showViewModal && $viewingSession)
+        <div class="modal fade show" tabindex="-1" style="display: block; padding-right: 17px;" 
+            aria-modal="true" role="dialog">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Session Details</h5>
+                        <button type="button" class="btn-close" wire:click="closeViewModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h3 class="card-title">
+                                        <i class="bi bi-person-badge me-2"></i>
+                                        Student Information
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Name:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->student->name ?? 'Unknown' }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Email:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->student->email ?? 'No email' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Student ID:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->student->student->student_id ?? 'No ID' }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Course:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->exam->course->name ?? 'Unknown Course' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h3 class="card-title">
+                                        <i class="bi bi-alarm me-2"></i>
+                                        Exam Timing
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Started At:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->started_at->format('M d, Y g:i A') }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Original End Time:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->completed_at->format('M d, Y g:i A') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Extra Time:</label>
+                                            @if($viewingSession->extra_time_minutes > 0)
+                                                <span class="badge bg-success">{{ $viewingSession->extra_time_minutes }} minutes</span>
+                                                
+                                                @if($viewingSession->extra_time_added_at)
+                                                <div class="small text-muted mt-1">
+                                                    Added {{ $viewingSession->extra_time_added_at->diffForHumans() }}
+                                                    @if($viewingSession->extraTimeAddedBy)
+                                                        by {{ $viewingSession->extraTimeAddedBy->name }}
+                                                    @endif
+                                                </div>
+                                                @endif
+                                            @else
+                                                <span class="badge bg-light text-dark">None</span>
+                                            @endif
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="text-muted fs-7 d-block">Adjusted End Time:</label>
+                                            <span class="fs-6 fw-semibold">{{ $viewingSession->adjustedCompletionTime->format('M d, Y g:i A') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="me-4">
+                                                <label class="text-muted fs-7 d-block">Exam Status:</label>
+                                                @if($viewingSession->completed_at && $viewingSession->completed_at->isPast())
+                                                    <span class="badge bg-danger">Completed</span>
+                                                @elseif(now()->gt($viewingSession->adjustedCompletionTime))
+                                                    <span class="badge bg-danger">Time Expired</span>
+                                                @else
+                                                    <span class="badge bg-success">Active</span>
+                                                @endif
+                                            </div>
+                                            
+                                            @if($viewingSession->auto_submitted)
+                                                <div class="me-4">
+                                                    <span class="badge bg-warning text-dark">Auto-submitted</span>
+                                                </div>
+                                            @endif
+                                            
+                                            <div>
+                                                <label class="text-muted fs-7 d-block">Remaining Time:</label>
+                                                @if(now()->gt($viewingSession->adjustedCompletionTime))
+                                                    <span class="text-danger fw-bold">Expired</span>
+                                                @else
+                                                    @php
+                                                        $remainingSeconds = now()->diffInSeconds($viewingSession->adjustedCompletionTime, false);
+                                                        $hours = floor($remainingSeconds / 3600);
+                                                        $minutes = floor(($remainingSeconds % 3600) / 60);
+                                                        $seconds = $remainingSeconds % 60;
+                                                    @endphp
+                                                    <span class="text-success fw-bold">
+                                                        {{ sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h3 class="card-title">
+                                        <i class="bi bi-question-circle me-2"></i>
+                                        Exam Progress
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="fs-6 fw-semibold">Questions Answered</span>
+                                        <span class="fs-6 fw-bold text-primary">
+                                            {{ count($viewingSession->responses) }} / {{ $viewingSession->exam->questions->count() }}
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        @php
+                                            $progressPercent = $viewingSession->exam->questions->count() > 0 
+                                                ? (count($viewingSession->responses) / $viewingSession->exam->questions->count() * 100) 
+                                                : 0;
+                                        @endphp
+                                        <div class="progress-bar bg-primary" 
+                                             role="progressbar" 
+                                             style="width: {{ $progressPercent }}%;" 
+                                             aria-valuenow="{{ $progressPercent }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                @if($viewingSession->score !== null)
+                                    <div class="mb-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="fs-6 fw-semibold">Score</span>
+                                            <span class="fs-6 fw-bold text-success">
+                                                {{ $viewingSession->score }} points
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeViewModal">Close</button>
+                        @if(now()->lt($viewingSession->adjustedCompletionTime) && !$viewingSession->completed_at)
+                            <button type="button" class="btn btn-primary" wire:click="addExtraTimeFromModal">
+                                <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
     @endif
 </div>

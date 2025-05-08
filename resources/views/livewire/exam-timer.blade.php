@@ -1,10 +1,20 @@
 <div>
     @include('components.partials.styles.timer-styles')
-    <div id="countdown" class="text-xl font-bold timer-text badge bg-danger pulse"></div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div id="countdown" class="text-xl font-bold timer-text badge bg-danger pulse"></div>
+        <button id="toggle-debug" class="btn btn-sm btn-outline-secondary" type="button">
+            <i class="fas fa-cog me-1"></i> Debug
+        </button>
+    </div>
     
-    <!-- Debug information -->
-    <div class="mt-3 p-3 bg-light rounded border small" id="timer-debug">
-        <h6 class="fw-bold mb-2">Timer Debug Info:</h6>
+    <!-- Debug information (hidden by default) -->
+    <div class="mt-3 p-3 bg-light rounded border small d-none" id="timer-debug">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0">Timer Debug Info:</h6>
+            <button id="close-debug" class="btn btn-sm btn-link text-secondary" type="button">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         <div class="d-flex flex-column">
             <div><strong>Start Time:</strong> <span id="debug-start-time">Loading...</span></div>
             <div><strong>End Time:</strong> <span id="debug-end-time">Loading...</span></div>
@@ -18,6 +28,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Toggle debug panel
+            document.getElementById('toggle-debug').addEventListener('click', () => {
+                document.getElementById('timer-debug').classList.toggle('d-none');
+            });
+            
+            // Close debug panel
+            document.getElementById('close-debug').addEventListener('click', () => {
+                document.getElementById('timer-debug').classList.add('d-none');
+            });
+        
             // Constants for localStorage keys
             const STORAGE_KEY_PREFIX = 'exam_' + @js($exam_session_id) + '_';
             const STORAGE_START_AT = STORAGE_KEY_PREFIX + 'startAt';
@@ -75,6 +95,9 @@
                 if (new Date().getTime() >= savedCompletedAt) {
                     document.getElementById('countdown').innerText = "Time's up!";
                     document.getElementById('debug-extra-time').innerHTML = '<span class="text-danger">Timer expired</span>';
+                    
+                    // Auto-submit when time is up
+                    autoSubmitExam();
                     return;
                 }
 
@@ -84,6 +107,9 @@
                 function updateCountdown() {
                     if (timeLeft <= 0) {
                         document.getElementById('countdown').innerText = "Time's up!";
+                        
+                        // Auto-submit when time is up
+                        autoSubmitExam();
                         return;
                     }
 
@@ -108,10 +134,50 @@
                     if (timeLeft <= 0) {
                         clearInterval(intervalId);
                         document.getElementById('countdown').innerText = "Time's up!";
+                        
+                        // Auto-submit when time is up
+                        autoSubmitExam();
                     } else {
                         updateCountdown();
                     }
                 }, 1000);
+            }
+            
+            // Function to auto-submit the exam when time elapses
+            function autoSubmitExam() {
+                // Check if the exam has already been submitted
+                const alreadySubmitted = localStorage.getItem(STORAGE_KEY_PREFIX + 'timeExpired') === 'true';
+                
+                // Get the parent container to check if we're in expired view
+                const examExpired = document.body.classList.contains('exam-expired');
+                
+                // Only proceed if this is a new expiration and we're not already in expired view
+                if (alreadySubmitted || examExpired) {
+                    console.log('Exam already submitted or in expired view. Not auto-submitting again.');
+                    return;
+                }
+                
+                // Set a flag in localStorage to indicate time has expired
+                localStorage.setItem(STORAGE_KEY_PREFIX + 'timeExpired', 'true');
+                
+                // Get the submit button element
+                const submitBtn = document.getElementById('submitBtn');
+                
+                if (submitBtn) {
+                    console.log('Time expired, auto-submitting exam...');
+                    
+                    // Show a brief message to the user
+                    const notification = document.createElement('div');
+                    notification.className = 'alert alert-warning text-center mt-2';
+                    notification.innerHTML = '<strong>Time\'s up!</strong> Your exam is being submitted...';
+                    document.getElementById('countdown').parentNode.appendChild(notification);
+                    
+                    // Wait briefly then submit the form
+                    setTimeout(() => {
+                        Livewire.dispatch('examTimeExpired');
+                        submitBtn.click();
+                    }, 2000);
+                }
             }
 
             // Check for extra time updates from the server every 30 seconds

@@ -34,7 +34,10 @@ class OnlineExamination extends Component
     public $timerStart;
     public $timerFinish;
 
-    protected $listeners = ['submitExam'];
+    public $examExpired = false;
+    public $timeExpiredAt = null;
+
+    protected $listeners = ['submitExam', 'examTimeExpired'];
 
     public function mount($examPassword, $student_id = null)
     {
@@ -178,6 +181,20 @@ class OnlineExamination extends Component
     public function storeResponse($questionId, $answer)
     {
         try {
+            // Don't process responses if exam is expired
+            if ($this->isExamExpired()) {
+                return;
+            }
+            
+            // Log the response being saved
+            Log::info('Saving exam response', [
+                'session_id' => $this->examSession->id,
+                'question_id' => $questionId,
+                'answer' => $answer,
+                'student_id' => $this->user->id
+            ]);
+            
+            // Create or update the response in the database
             $response = Response::updateOrCreate(
                 [
                     'exam_session_id' => $this->examSession->id,
@@ -187,10 +204,21 @@ class OnlineExamination extends Component
                 ['selected_option' => $answer]
             );
 
+            // Update the responses array in memory
             $this->responses[$questionId] = $answer;
+            
+            // Store in session as backup
             session()->put('responses', $this->responses);
+            
+            // Dispatch browser event in Laravel 12 format
+            $this->dispatch('responseUpdated');
         } catch (\Throwable $th) {
-            // Handle exceptions gracefully
+            // Log any errors that occur
+            Log::error('Error storing exam response', [
+                'error' => $th->getMessage(),
+                'question_id' => $questionId,
+                'student_id' => $this->user->id ?? null
+            ]);
             report($th);
         }
     }
@@ -297,12 +325,90 @@ class OnlineExamination extends Component
         }
     }
 
+    /**
+     * Handle automatic exam submission when time expires
+     */
+    public function examTimeExpired()
+    {
+        try {
+            // Mark the exam as expired
+            $this->examExpired = true;
+            $this->timeExpiredAt = now();
+            
+            // Log the expiration
+            Log::info('Exam time expired - automatic submission', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'exam_id' => $this->exam->id,
+                'time' => $this->timeExpiredAt
+            ]);
+            
+            // Calculate and save the score
+            $score = $this->calculateScore();
+            
+            // Update the session with completion info
+            $this->examSession->update([
+                'completed_at' => $this->timeExpiredAt,
+                'score' => $score,
+                'auto_submitted' => true,
+            ]);
+            
+            session()->flash('message', 'Time expired! Your exam has been automatically submitted.');
+        } catch (\Exception $e) {
+            Log::error('Error handling exam expiration', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->examSession->id ?? null,
+                'student_id' => $this->student->student_id ?? null
+            ]);
+        }
+    }
+    
+    /**
+     * Check if the exam is expired or completed
+     */
+    public function isExamExpired()
+    {
+        // First let's add some debug logging to troubleshoot the issue
+        Log::info('Checking if exam is expired', [
+            'session_id' => $this->examSession->id ?? null,
+            'completed_at' => $this->examSession->completed_at ?? 'null',
+            'adjustedCompletionTime' => $this->examSession->adjustedCompletionTime ?? 'null',
+            'current_time' => Carbon::now()->toDateTimeString()
+        ]);
+        
+        // Don't count an exam as expired if it was just created and completed_at is the end time
+        // This checks if completed_at is in the future (meaning it's the scheduled end time)
+        if ($this->examSession && $this->examSession->completed_at && Carbon::parse($this->examSession->completed_at)->isFuture()) {
+            Log::info('Exam is not expired because completed_at is in the future (scheduled end time)');
+            return false;
+        }
+        
+        // Check if the exam was explicitly marked as completed (not just setting the end time)
+        if ($this->examSession && $this->examSession->completed_at && !Carbon::parse($this->examSession->completed_at)->isFuture()) {
+            Log::info('Exam is expired because completed_at is in the past (was submitted)');
+            return true;
+        }
+        
+        // Check if the current time is past the adjusted completion time
+        if ($this->examSession && Carbon::now()->gt($this->examSession->adjustedCompletionTime)) {
+            Log::info('Exam is expired because current time is past adjustedCompletionTime');
+            return true;
+        }
+        
+        Log::info('Exam is active and not expired');
+        return false;
+    }
+
     public function render()
     {
+        // Check if exam is expired
+        $examExpired = $this->isExamExpired();
+        
         return view('livewire.online-examination', [
             'questions' => $this->questions,
             'exam' => $this->exam,
             'remainingTime' => $this->remainingTime,
+            'examExpired' => $examExpired
         ]);
     }
 }
