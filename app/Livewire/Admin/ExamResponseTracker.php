@@ -37,6 +37,14 @@ class ExamResponseTracker extends Component
     // For tracking a specific session's responses
     public $sessionResponses = [];
     
+    // Score metrics
+    public $totalQuestions = 0;
+    public $totalAttempted = 0;
+    public $totalCorrect = 0;
+    public $totalMarks = 0;
+    public $obtainedMarks = 0;
+    public $scorePercentage = 0;
+    
     // Track if responses are found
     public $responsesFound = false;
     
@@ -154,11 +162,42 @@ class ExamResponseTracker extends Component
                     ->find($this->session_id);
         
         if ($session) {
+            // Reset metrics
+            $this->totalQuestions = 0;
+            $this->totalAttempted = 0;
+            $this->totalCorrect = 0;
+            $this->totalMarks = 0;
+            $this->obtainedMarks = 0;
+            $this->scorePercentage = 0;
+            
+            // Get exam details for total questions and marks calculation
+            $exam = Exam::find($session->exam_id);
+            if ($exam) {
+                $this->totalQuestions = $exam->questions->count();
+                $this->totalMarks = $this->totalQuestions * $exam->marks_per_question;
+            }
+            
+            // Get marks_per_question value for use in closure
+            $marksPerQuestion = $exam ? $exam->marks_per_question : 0;
+            
             // Prepare responses data for display, including correct answers
-            $this->sessionResponses = $session->responses->map(function($response) {
+            $this->sessionResponses = $session->responses->map(function($response) use ($marksPerQuestion) {
                 $question = $response->question;
                 $correctOption = $question->options->where('is_correct', true)->first();
                 $selectedOption = $question->options->where('id', $response->selected_option)->first();
+                
+                $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
+                $isAttempted = !is_null($response->selected_option);
+                
+                // Update metrics
+                if ($isAttempted) {
+                    $this->totalAttempted++;
+                }
+                
+                if ($isCorrect) {
+                    $this->totalCorrect++;
+                    $this->obtainedMarks += $marksPerQuestion;
+                }
                 
                 return [
                     'question_id' => $question->id,
@@ -167,7 +206,8 @@ class ExamResponseTracker extends Component
                     'correct_option_text' => $correctOption ? $correctOption->option_text : 'No correct answer defined',
                     'selected_option_id' => $response->selected_option,
                     'selected_option_text' => $selectedOption ? $selectedOption->option_text : 'No answer selected',
-                    'is_correct' => ($correctOption && $response->selected_option == $correctOption->id),
+                    'is_correct' => $isCorrect,
+                    'is_attempted' => $isAttempted,
                     'all_options' => $question->options->map(function($option) {
                         return [
                             'id' => $option->id,
@@ -177,6 +217,11 @@ class ExamResponseTracker extends Component
                     })
                 ];
             });
+            
+            // Calculate percentage
+            if ($this->totalMarks > 0) {
+                $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
+            }
             
             $this->responsesFound = count($this->sessionResponses) > 0;
         }

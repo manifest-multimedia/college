@@ -8,9 +8,12 @@ Livewire: Uses tag-based syntax — e.g., <livewire:component-name />
 Use Laravel Blade Components for all views:
 
 ✅ Layouts
-Backend Views: Use components.backend.layout.blade.php
+Dashboard/Dashboard Views: Use components.default.layout.blade.php
 
-Dashboard Views: Use components.default.layout.blade.php
+To use this in blade we use tag syntax and pass in the title 
+<x-backend.default title="title" /> 
+Contnet 
+</x-backend.default>
 
 📌 Note: Use components.dashboard.default for all dashboard-related views.
 

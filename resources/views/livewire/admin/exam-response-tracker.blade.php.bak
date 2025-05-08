@@ -90,22 +90,17 @@
                     @endif
                     
                     @if($session_id && $responsesFound)
+                        <!-- Score Metrics Summary -->
                         <div class="card mt-4 mb-4">
-                            <div class="card-header">
+                            <div class="card-header bg-info">
                                 <div class="card-title">
-                                    <h3>
-                                        <i class="ki-duotone ki-chart fs-2 me-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Score Summary
-                                    </h3>
+                                    <h3 class="text-white">Score Summary</h3>
                                 </div>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <div class="card bg-light h-100">
+                                        <div class="card bg-light">
                                             <div class="card-body">
                                                 <h5 class="card-title">Questions</h5>
                                                 <div class="d-flex justify-content-between align-items-center">
@@ -120,7 +115,7 @@
                                     </div>
                                     
                                     <div class="col-md-4">
-                                        <div class="card bg-light h-100">
+                                        <div class="card bg-light">
                                             <div class="card-body">
                                                 <h5 class="card-title">Marks</h5>
                                                 <div class="d-flex justify-content-between align-items-center">
@@ -135,7 +130,7 @@
                                     </div>
                                     
                                     <div class="col-md-4">
-                                        <div class="card bg-light h-100">
+                                        <div class="card bg-light">
                                             <div class="card-body">
                                                 <h5 class="card-title">Overall Performance</h5>
                                                 @php
@@ -156,89 +151,6 @@
                                                         $performanceText = 'Pass';
                                                     }
                                                 @endphp
-                                                <div class="d-flex justify-content-center align-items-center">
-                                                    <div class="text-center">
-                                                        <h3 class="mb-0">{{ $scorePercentage }}%</h3>
-                                                        <span class="badge bg-{{ $performanceClass }} fs-6 mt-2">
-                                                            {{ $performanceText }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <p class="text-center text-muted mt-2">{{ $totalCorrect }} of {{ $totalQuestions }} correct</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <h3>
-                                        <i class="ki-duotone ki-document fs-2 me-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Student Responses
-                                    </h3>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Question</th>
-                                                <th>Student's Answer</th>
-                                                <th>Correct Answer</th>
-                                                <th>Status</th>
-                                                <th>All Options</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($sessionResponses as $index => $response)
-                                                <tr class="{{ $response['is_correct'] ? 'table-success' : 'table-danger' }}">
-                                                    <td>{{ $index + 1 }}</td>
-                                                    <td>{{ $response['question_text'] }}</td>
-                                                    <td>{{ $response['selected_option_text'] }}</td>
-                                                    <td>{{ $response['correct_option_text'] }}</td>
-                                                    <td>
-                                                        @if($response['is_correct'])
-                                                            <span class="badge bg-success">Correct</span>
-                                                        @else
-                                                            <span class="badge bg-danger">Incorrect</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-primary" 
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#optionsModal{{ $response['question_id'] }}">
-                                                            View Options
-                                                        </button>
-                                                        
-                                                        <!-- Modal for Options -->
-                                                        <div class="modal fade" id="optionsModal{{ $response['question_id'] }}" tabindex="-1" 
-                                                             aria-labelledby="optionsModalLabel{{ $response['question_id'] }}" aria-hidden="true">
-                                                            <div class="modal-dialog">
-                                                                <div class="modal-content">
-                                                                    <div class="modal-header">
-                                                                        <h5 class="modal-title" id="optionsModalLabel{{ $response['question_id'] }}">
-                                                                            Question Options
-                                                                        </h5>
-                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                    </div>
-                                                                    <div class="modal-body">
-                                                                        <p><strong>Question:</strong> {{ $response['question_text'] }}</p>
-                                                                        <hr>
-                                                                        <h6>All Options:</h6>
-                                                                        <ul class="list-group">
-                                                                            @foreach($response['all_options'] as $option)
-                                                                                <li class="list-group-item 
-                                                                                    {{ $option['id'] == $response['selected_option_id'] ? 'list-group-item-primary' : '' }}
-                                                                                    {{ $option['is_correct'] ? 'list-group-item-success' : '' }}">
-                                                                                    {{ $option['text'] }}
                                                                                     
                                                                                     @if($option['id'] == $response['selected_option_id'])
                                                                                         <span class="badge bg-primary float-end">Selected</span>
