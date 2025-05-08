@@ -49,12 +49,12 @@ class ExamLogin extends Component
         }
 
         // Additional validation: Check if the student is eligible to take the exam
-        if (!$student->isEligibleForExam()) {
-            session()->flash('error', "
-            Dear " . $student->first_name . ",
-            You are not eligible to take this exam. You have pending fees to clear. Please see the accounts Office for clearance.");
-            return;
-        }
+        // if (!$student->isEligibleForExam()) {
+        //     session()->flash('error', "
+        //     Dear " . $student->first_name . ",
+        //     You are not eligible to take this exam. You have pending fees to clear. Please see the accounts Office for clearance.");
+        //     return;
+        // }
         // Login successful, redirect to the exam page
 
         // Create User for Student
