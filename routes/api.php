@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ExamTicketController;
 use App\Http\Controllers\Api\Communication\SmsController;
 use App\Http\Controllers\Api\Communication\EmailController;
 use App\Http\Controllers\Api\Communication\ChatController;
+use App\Http\Controllers\Api\Communication\ChatDocumentController;
 use App\Http\Controllers\Api\MemoController;
 use App\Http\Controllers\Api\ExamClearanceController;
 use App\Http\Controllers\Api\OfflineExamController;
@@ -86,6 +87,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/sessions/{sessionId}/messages', [ChatController::class, 'getMessageHistory']);
         Route::patch('/sessions/{sessionId}/status', [ChatController::class, 'updateSessionStatus']);
         Route::get('/sessions', [ChatController::class, 'getUserSessions']);
+        
+        // Document upload routes
+        Route::post('/upload', [ChatDocumentController::class, 'upload']);
+        Route::post('/document/download-url', [ChatDocumentController::class, 'getDownloadUrl']);
+        
+        // Typing status route
+        Route::post('/typing', [ChatController::class, 'updateTypingStatus']);
     });
     
     /*

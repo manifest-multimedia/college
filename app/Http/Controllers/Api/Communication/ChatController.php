@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Events\Communication\UserTypingEvent;
 
 class ChatController extends Controller
 {
@@ -232,6 +233,50 @@ class ChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to get user sessions: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Update typing status for a chat session.
+     */
+    public function updateTypingStatus(Request $request): JsonResponse
+    {
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'session_id' => 'required|string',
+            'typing' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Broadcast typing status
+            broadcast(new UserTypingEvent(
+                $request->input('session_id'),
+                $request->input('typing'),
+                auth()->id()
+            ))->toOthers();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Typing status updated'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update typing status', [
+                'error' => $e->getMessage(),
+                'session_id' => $request->input('session_id'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update typing status: ' . $e->getMessage(),
             ], 500);
         }
     }

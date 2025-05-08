@@ -430,6 +430,14 @@ Route::middleware([
         Route::get('/sms', \App\Livewire\Communication\SendSms::class)->name('communication.sms');
         Route::get('/email', \App\Livewire\Communication\SendEmail::class)->name('communication.email');
         Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
+        
+        // Document preview and download routes
+        Route::get('/chat/document/preview/{path}', [\App\Http\Controllers\Communication\ChatDocumentPreviewController::class, 'preview'])
+            ->name('chat.document.preview')
+            ->where('path', '.*');
+        Route::get('/chat/document/download/{path}', [\App\Http\Controllers\Communication\ChatDocumentPreviewController::class, 'download'])
+            ->name('chat.document.download')
+            ->where('path', '.*');
     });
 
     /*
