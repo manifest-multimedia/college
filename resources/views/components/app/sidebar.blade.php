@@ -269,6 +269,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    
+                    @hasrole('Super Admin')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('exam.response.tracker') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Response Tracker</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasrole
                 </div>
                 <!--end:Menu sub-->
             </div>
