@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('chat_messages', function (Blueprint $table) {
-            $table->string('openai_file_id')->nullable()->after('document_path');
+            $table->string('openai_file_id')->nullable();
         });
     }
 
