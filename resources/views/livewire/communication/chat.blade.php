@@ -27,15 +27,33 @@
                             {{ session('error') }}
                         </div>
                     @endif
-
+                    
+                    <!-- Tabs for Active and Archived Sessions -->
+                    <ul class="nav nav-tabs mb-4" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $activeTab === 'active' ? 'active' : '' }}" 
+                                    wire:click="changeTab('active')" type="button">
+                                <i class="bi bi-chat-left-text"></i> Active
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $activeTab === 'archived' ? 'active' : '' }}" 
+                                    wire:click="changeTab('archived')" type="button">
+                                <i class="bi bi-archive"></i> Archived
+                            </button>
+                        </li>
+                    </ul>
+                    
                     <div class="d-flex justify-content-between mb-4">
-                        <h5>Recent Chats</h5>
+                        <h5>{{ $activeTab === 'active' ? 'Recent Chats' : 'Archived Chats' }}</h5>
+                        @if($activeTab === 'active')
                         <button class="btn btn-sm btn-primary" wire:click="toggleNewSessionForm">
                             <i class="bi bi-plus-circle"></i> New Chat
                         </button>
+                        @endif
                     </div>
 
-                    @if ($isCreatingSession)
+                    @if ($isCreatingSession && $activeTab === 'active')
                         <div class="mb-4">
                             <div class="input-group">
                                 <input type="text" class="form-control" placeholder="Chat title" wire:model="newSessionTitle">
@@ -46,31 +64,66 @@
                     @endif
 
                     <div class="list-group">
-                        @forelse ($sessions as $session)
-                            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ $selectedSessionId === $session['session_id'] ? 'active' : '' }}"
-                                wire:click="selectSession('{{ $session['session_id'] }}')">
-                                <div>
-                                    <h6 class="mb-1">{{ $session['title'] }}</h6>
-                                    <small>{{ \Carbon\Carbon::parse($session['last_activity_at'])->diffForHumans() }}</small>
+                        @if($activeTab === 'active')
+                            @forelse ($sessions as $session)
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ $selectedSessionId === $session['session_id'] ? 'active' : '' }}"
+                                    wire:click="selectSession('{{ $session['session_id'] }}')">
+                                    <div>
+                                        <h6 class="mb-1">{{ $session['title'] }}</h6>
+                                        <small>{{ \Carbon\Carbon::parse($session['last_activity_at'])->diffForHumans() }}</small>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm {{ $selectedSessionId === $session['session_id'] ? 'btn-light' : 'btn-outline-secondary' }}" 
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                                onclick="event.stopPropagation();">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" wire:click.prevent="archiveSession('{{ $session['session_id'] }}')">
+                                                <i class="bi bi-archive"></i> Archive
+                                            </a></li>
+                                            <li><a class="dropdown-item text-danger" href="#" wire:click.prevent="deleteSession('{{ $session['session_id'] }}')">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
                                 </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm {{ $selectedSessionId === $session['session_id'] ? 'btn-light' : 'btn-outline-secondary' }}" 
-                                            type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                            onclick="event.stopPropagation();">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" wire:click.prevent="archiveSession('{{ $session['session_id'] }}')">Archive</a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" wire:click.prevent="deleteSession('{{ $session['session_id'] }}')">Delete</a></li>
-                                    </ul>
+                            @empty
+                                <div class="text-center p-4">
+                                    <p class="text-muted">No active chat sessions</p>
+                                    <button class="btn btn-primary" wire:click="toggleNewSessionForm">Start a new conversation</button>
                                 </div>
-                            </div>
-                        @empty
-                            <div class="text-center p-4">
-                                <p class="text-muted">No chat sessions yet</p>
-                                <button class="btn btn-primary" wire:click="toggleNewSessionForm">Start a new conversation</button>
-                            </div>
-                        @endforelse
+                            @endforelse
+                        @else
+                            @forelse ($archivedSessions as $session)
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ $selectedSessionId === $session['session_id'] ? 'active' : '' }}"
+                                    wire:click="selectSession('{{ $session['session_id'] }}')">
+                                    <div>
+                                        <h6 class="mb-1">{{ $session['title'] }}</h6>
+                                        <small>{{ \Carbon\Carbon::parse($session['last_activity_at'])->diffForHumans() }}</small>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm {{ $selectedSessionId === $session['session_id'] ? 'btn-light' : 'btn-outline-secondary' }}" 
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                                onclick="event.stopPropagation();">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" wire:click.prevent="restoreSession('{{ $session['session_id'] }}')">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                            </a></li>
+                                            <li><a class="dropdown-item text-danger" href="#" wire:click.prevent="deleteSession('{{ $session['session_id'] }}')">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center p-4">
+                                    <p class="text-muted">No archived chat sessions</p>
+                                </div>
+                            @endforelse
+                        @endif
                     </div>
                 </div>
             </div>
@@ -87,6 +140,9 @@
                                 <span class="path2"></span>
                             </i>
                             {{ $selectedSession ? $selectedSession['title'] : 'Select a conversation' }}
+                            @if($selectedSession && $selectedSession['status'] === 'archived')
+                                <span class="badge bg-secondary ms-2">Archived</span>
+                            @endif
                         </h3>
                     </div>
                 </div>
@@ -109,7 +165,7 @@
                                                 @if (isset($chatMessage['is_document']) && $chatMessage['is_document'])
                                                     <div class="document-container">
                                                         <div class="mb-2 d-flex align-items-center">
-                                                            @if (isset($chatMessage['mime_type']) && str_contains($chatMessage['mime_type'], 'image'))
+                                                            @if (isset($chatMessage['mime_type']) && str_contains($chatMessage['mime_type'] ?? '', 'image'))
                                                                 <img src="{{ route('chat.document.preview', ['path' => $chatMessage['file_path']]) }}" 
                                                                     alt="{{ $chatMessage['file_name'] }}" class="img-fluid mb-2 rounded" style="max-height: 200px;">
                                                             @else
@@ -190,42 +246,56 @@
                             </div>
                         </div>
                         
-                        <!-- Message Input -->
+                        <!-- Message Input - Only show if session is active -->
                         <div class="mt-auto">
-                            <form wire:submit.prevent="sendMessage">
-                                <div class="input-group mb-3">
-                                    <label class="btn btn-outline-secondary" for="file-upload">
-                                        <i class="bi bi-paperclip"></i>
-                                    </label>
-                                    <input id="file-upload" type="file" wire:model.live="document" class="d-none" 
-                                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.csv,.xls,.xlsx">
-                                    <textarea class="form-control" rows="2" wire:model="message" id="message-input"
-                                              placeholder="Message AI Sensei..." 
-                                              wire:keydown="handleTyping"
-                                              wire:keydown.enter="sendMessage"></textarea>
-                                    <button class="btn btn-primary" type="submit" id="send-button">
-                                        <i class="bi bi-send-fill"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- File preview -->
-                                @if ($document)
-                                <div class="document-preview alert alert-light d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <i class="bi bi-file-earmark"></i> {{ $document->getClientOriginalName() }}
+                            @if($selectedSession && $selectedSession['status'] === 'archived')
+                                <div class="alert alert-info mb-3">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            This chat is archived. Restore it to continue the conversation.
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary" wire:click="restoreSession('{{ $selectedSessionId }}')">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Restore Chat
+                                        </button>
                                     </div>
-                                    <button type="button" class="btn-close" wire:click="removeDocument"></button>
                                 </div>
-                                @endif
-                                
-                                @error('document') 
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                @enderror
-                                
-                                <div class="text-center text-muted small">
-                                    <p>AI Sensei is powered by <a href="https://manifestghana.com" target="_blank">Manifest Digital</a></p>
-                                </div>
-                            </form>
+                            @else
+                                <form wire:submit.prevent="sendMessage">
+                                    <div class="input-group mb-3">
+                                        <label class="btn btn-outline-secondary" for="file-upload">
+                                            <i class="bi bi-paperclip"></i>
+                                        </label>
+                                        <input id="file-upload" type="file" wire:model.live="document" class="d-none" 
+                                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.csv,.xls,.xlsx">
+                                        <textarea class="form-control" rows="2" wire:model="message" id="message-input"
+                                                  placeholder="Message AI Sensei..." 
+                                                  wire:keydown="handleTyping"
+                                                  wire:keydown.enter="sendMessage"></textarea>
+                                        <button class="btn btn-primary" type="submit" id="send-button">
+                                            <i class="bi bi-send-fill"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- File preview -->
+                                    @if ($document)
+                                    <div class="document-preview alert alert-light d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <i class="bi bi-file-earmark"></i> {{ $document->getClientOriginalName() }}
+                                        </div>
+                                        <button type="button" class="btn-close" wire:click="removeDocument"></button>
+                                    </div>
+                                    @endif
+                                    
+                                    @error('document') 
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </form>
+                            @endif
+                            
+                            <div class="text-center text-muted small mt-3">
+                                <p>AI Sensei is powered by <a href="https://manifestghana.com" target="_blank">Manifest Digital</a></p>
+                            </div>
                         </div>
                     @else
                         <div class="d-flex align-items-center justify-content-center flex-column h-100">
@@ -233,7 +303,13 @@
                             <div class="text-center">
                                 <h4>Welcome to AI Sensei</h4>
                                 <p class="text-muted">Select a conversation from the left panel or create a new one to begin chatting.</p>
-                                <button class="btn btn-primary" wire:click="toggleNewSessionForm">Start a new conversation</button>
+                                @if($activeTab === 'active')
+                                    <button class="btn btn-primary" wire:click="toggleNewSessionForm">Start a new conversation</button>
+                                @else
+                                    <button class="btn btn-outline-secondary" wire:click="changeTab('active')">
+                                        <i class="bi bi-chat-left-text"></i> View active conversations
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @endif
@@ -472,7 +548,10 @@
             }
         });
     </script>
-    
+    @endpush
+    @push('styles')
+        
+
     <style>
         /* Typing animation */
         .typing-dots {

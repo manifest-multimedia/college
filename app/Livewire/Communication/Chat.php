@@ -17,6 +17,7 @@ class Chat extends Component
     public ?string $sessionId = null;
     public array $messages = [];
     public array $sessions = [];
+    public array $archivedSessions = [];
     public ?string $selectedSessionId = null;
     public ?array $selectedSession = null;
     public int $messageLimit = 50;
@@ -24,6 +25,7 @@ class Chat extends Component
     public bool $isCreatingSession = false;
     public string $newSessionTitle = '';
     public $document = null; // For file uploads
+    public string $activeTab = 'active'; // 'active' or 'archived'
     
     // Initialize with null to prevent "must not be accessed before initialization" error
     protected ?ChatServiceInterface $chatService = null;
@@ -35,12 +37,14 @@ class Chat extends Component
         'refreshMessages',
         'loadMoreMessages',
         'archiveSession',
+        'restoreSession',
         'deleteSession',
         'echo:private-chat.*,new.message' => 'handleNewMessage',
         'echo:private-chat.*,document.uploaded' => 'handleDocumentUploaded',
         'echo:private-chat.*,user.typing' => 'handleUserTyping',
         'echo:private-chat.*,ai.typing' => 'handleAiTyping',
         'addMessage',
+        'changeTab',
     ];
     
     protected $rules = [
@@ -58,11 +62,54 @@ class Chat extends Component
         $this->loadSessions();
     }
     
+    public function changeTab($tab)
+    {
+        $this->activeTab = $tab;
+        
+        if ($tab === 'archived') {
+            $this->loadArchivedSessions();
+            // Clear selected session if it's not in archived sessions
+            if ($this->selectedSessionId) {
+                $found = false;
+                foreach ($this->archivedSessions as $session) {
+                    if ($session['session_id'] === $this->selectedSessionId) {
+                        $found = true;
+                        break;
+                    }
+                }
+                
+                if (!$found) {
+                    $this->selectedSessionId = null;
+                    $this->selectedSession = null;
+                    $this->messages = [];
+                }
+            }
+        } else {
+            $this->loadSessions();
+            // Clear selected session if it's not in active sessions
+            if ($this->selectedSessionId) {
+                $found = false;
+                foreach ($this->sessions as $session) {
+                    if ($session['session_id'] === $this->selectedSessionId) {
+                        $found = true;
+                        break;
+                    }
+                }
+                
+                if (!$found) {
+                    $this->selectedSessionId = null;
+                    $this->selectedSession = null;
+                    $this->messages = [];
+                }
+            }
+        }
+    }
+    
     public function loadSessions()
     {
         try {
             $chatSessions = ChatSession::where('user_id', auth()->id())
-                ->where('status', '!=', 'deleted')
+                ->where('status', 'active')
                 ->orderBy('last_activity_at', 'desc')
                 ->limit(30)
                 ->get()
@@ -70,8 +117,8 @@ class Chat extends Component
             
             $this->sessions = $chatSessions;
             
-            // Select the first session by default if none is selected
-            if (empty($this->selectedSessionId) && !empty($this->sessions)) {
+            // Select the first session by default if none is selected and we're on the active tab
+            if (empty($this->selectedSessionId) && !empty($this->sessions) && $this->activeTab === 'active') {
                 $this->selectSession($this->sessions[0]['session_id']);
             }
         } catch (\Exception $e) {
@@ -82,12 +129,39 @@ class Chat extends Component
         }
     }
     
+    public function loadArchivedSessions()
+    {
+        try {
+            $archivedSessions = ChatSession::where('user_id', auth()->id())
+                ->where('status', 'archived')
+                ->orderBy('last_activity_at', 'desc')
+                ->limit(30)
+                ->get()
+                ->toArray();
+            
+            $this->archivedSessions = $archivedSessions;
+            
+            // Select the first archived session by default if none is selected and we're on the archived tab
+            if (empty($this->selectedSessionId) && !empty($this->archivedSessions) && $this->activeTab === 'archived') {
+                $this->selectSession($this->archivedSessions[0]['session_id']);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to load archived chat sessions', [
+                'error' => $e->getMessage()
+            ]);
+            $this->archivedSessions = [];
+        }
+    }
+    
     public function selectSession($sessionId)
     {
         $this->selectedSessionId = $sessionId;
         $this->messageOffset = 0;
         $this->loadMessages();
-        $this->selectedSession = collect($this->sessions)
+        
+        // Find the selected session from either active or archived sessions
+        $allSessions = array_merge($this->sessions, $this->archivedSessions);
+        $this->selectedSession = collect($allSessions)
             ->firstWhere('session_id', $sessionId);
         
         // Dispatch event for frontend to listen for real-time updates
@@ -305,7 +379,12 @@ class Chat extends Component
             $result = $this->chatService->updateSessionStatus($sessionId, 'archived');
             
             if ($result) {
-                $this->loadSessions();
+                if ($this->activeTab === 'active') {
+                    $this->loadSessions();
+                } else {
+                    $this->loadArchivedSessions();
+                }
+                
                 if ($this->selectedSessionId === $sessionId) {
                     $this->selectedSessionId = null;
                     $this->selectedSession = null;
@@ -321,6 +400,36 @@ class Chat extends Component
                 'session_id' => $sessionId
             ]);
             session()->flash('error', 'An error occurred while archiving chat session');
+        }
+    }
+    
+    public function restoreSession($sessionId)
+    {
+        try {
+            $result = $this->chatService->updateSessionStatus($sessionId, 'active');
+            
+            if ($result) {
+                if ($this->activeTab === 'archived') {
+                    $this->loadArchivedSessions();
+                } else {
+                    $this->loadSessions();
+                }
+                
+                if ($this->selectedSessionId === $sessionId) {
+                    $this->selectedSessionId = null;
+                    $this->selectedSession = null;
+                    $this->messages = [];
+                }
+                session()->flash('success', 'Chat session restored successfully');
+            } else {
+                session()->flash('error', 'Failed to restore chat session');
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to restore chat session', [
+                'error' => $e->getMessage(),
+                'session_id' => $sessionId
+            ]);
+            session()->flash('error', 'An error occurred while restoring chat session');
         }
     }
     
