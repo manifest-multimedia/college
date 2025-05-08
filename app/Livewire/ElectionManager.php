@@ -9,6 +9,8 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as Logger;
+use Illuminate\Support\Carbon;
+
 class ElectionManager extends Component
 {
     use WithPagination, WithFileUploads;
@@ -61,6 +63,11 @@ class ElectionManager extends Component
     public function save()
     {
         $validated = $this->validate();
+        
+        // Convert string datetime values to Carbon instances
+        $validated['start_time'] = Carbon::parse($validated['start_time']);
+        $validated['end_time'] = Carbon::parse($validated['end_time']);
+        
         DB::beginTransaction();
         try {
             if ($this->isEditing) {
@@ -128,7 +135,6 @@ class ElectionManager extends Component
             $this->showCreateForm = false;
             
         } catch (\Exception $e) {
-            dd($e->getMessage());
             // Log the error
             Logger::error('Election creation/update error: ' . $e->getMessage());
             DB::rollBack();

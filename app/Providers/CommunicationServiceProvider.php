@@ -9,6 +9,7 @@ use App\Services\Communication\Email\EmailServiceInterface;
 use App\Services\Communication\Email\LaravelMailService;
 use App\Services\Communication\Chat\ChatServiceInterface;
 use App\Services\Communication\Chat\OpenAIChatService;
+use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 
 class CommunicationServiceProvider extends ServiceProvider
 {
@@ -29,10 +30,15 @@ class CommunicationServiceProvider extends ServiceProvider
             return new LaravelMailService();
         });
 
+        // Register OpenAIFilesService
+        $this->app->singleton(OpenAIFilesService::class, function ($app) {
+            return new OpenAIFilesService();
+        });
+
         // Register Chat services
         $this->app->bind(ChatServiceInterface::class, function ($app) {
             // You can switch the implementation based on configuration
-            return new OpenAIChatService();
+            return new OpenAIChatService($app->make(OpenAIFilesService::class));
         });
     }
 

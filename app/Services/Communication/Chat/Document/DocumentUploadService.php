@@ -5,6 +5,7 @@ namespace App\Services\Communication\Chat\Document;
 use App\Events\Communication\DocumentUploadedEvent;
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
+use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,19 @@ use Illuminate\Support\Str;
 
 class DocumentUploadService
 {
+    /**
+     * OpenAI Files Service instance
+     */
+    protected OpenAIFilesService $openAIFilesService;
+    
+    /**
+     * Constructor
+     */
+    public function __construct(OpenAIFilesService $openAIFilesService)
+    {
+        $this->openAIFilesService = $openAIFilesService;
+    }
+    
     /**
      * Upload a document to a chat session.
      *
@@ -43,6 +57,27 @@ class DocumentUploadService
                     'message' => 'Failed to store document'
                 ];
             }
+
+            // Upload file to OpenAI Files API for advanced processing
+            $fullPath = Storage::disk('public')->path($path);
+            $openAIUpload = $this->openAIFilesService->uploadFile($fullPath);
+            $openAIFileId = null;
+            
+            if ($openAIUpload['success']) {
+                $openAIFileId = $openAIUpload['file_id'];
+                Log::info('Document uploaded to OpenAI Files API', [
+                    'file_name' => $file->getClientOriginalName(),
+                    'openai_file_id' => $openAIFileId,
+                    'session_id' => $sessionId,
+                ]);
+            } else {
+                // Log the error but continue with the flow
+                Log::warning('Failed to upload document to OpenAI Files API', [
+                    'file_name' => $file->getClientOriginalName(),
+                    'error' => $openAIUpload['message'],
+                    'session_id' => $sessionId,
+                ]);
+            }
             
             // Create chat message for document
             $message = ChatMessage::create([
@@ -55,6 +90,9 @@ class DocumentUploadService
                 'file_name' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
+                'metadata' => [
+                    'openai_file_id' => $openAIFileId,
+                ],
             ]);
             
             // Update session last activity
@@ -73,6 +111,7 @@ class DocumentUploadService
                 'mime_type' => $message->mime_type,
                 'file_size' => $message->file_size,
                 'timestamp' => $message->created_at,
+                'openai_file_id' => $openAIFileId,
             ];
             
             // Broadcast document uploaded event
@@ -81,6 +120,8 @@ class DocumentUploadService
             return [
                 'success' => true,
                 'message' => 'Document uploaded successfully',
+                'file_path' => $path,
+                'openai_file_id' => $openAIFileId,
                 'data' => $messageData
             ];
         } catch (\Exception $e) {

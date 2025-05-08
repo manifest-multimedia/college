@@ -271,59 +271,97 @@ class Chat extends Component
         }
     }
     
+    /**
+     * Handle document upload
+     */
     public function handleDocumentUpload()
     {
-        // Validate the document first
-        $this->validate();
+        if (!$this->document) {
+            return;
+        }
         
         try {
-            // If no session selected, create one
-            if (!$this->selectedSessionId) {
-                $result = $this->createNewSession();
-                
-                if (!$result['success']) {
-                    session()->flash('error', $result['message'] ?? 'Failed to create a chat session');
-                    return;
-                }
-                
-                $this->selectedSessionId = $result['session_id'];
-            }
-            
-            // Get file information for temporary display
+            // Get original file name
             $fileName = $this->document->getClientOriginalName();
             
-            // Add a placeholder for the document upload
-            $documentMessage = [
-                'id' => 'temp_doc_' . time(),
-                'type' => 'user',
-                'is_document' => true,
-                'message' => 'Document uploading: ' . $fileName,
-                'file_name' => $fileName,
-                'timestamp' => now(),
-            ];
-            
-            // Add to messages array for immediate feedback
-            $this->messages[] = $documentMessage;
-            
-            // Upload the document
+            // Process and upload document
             $result = $this->documentService->uploadDocument(
                 $this->selectedSessionId,
                 $this->document
             );
             
             if ($result['success']) {
-                $this->document = null; // Reset the upload
-                $this->refreshMessages(); // Get the actual uploaded document with proper links
-                $this->loadSessions(); // Refresh the list to update last_activity_at
+                // Check if there's a message to send along with the document
+                if (!empty($this->message)) {
+                    $userMessage = $this->message;
+                    
+                    // Generate message for AI that includes document information
+                    $aiMessage = sprintf(
+                        "User uploaded a document: '%s' with the message: \"%s\".",
+                        $fileName,
+                        $userMessage
+                    );
+                    
+                    // Send notification to AI about the document and including user's message
+                    $this->chatService->sendMessage(
+                        $this->selectedSessionId,
+                        $aiMessage,
+                        auth()->id(),
+                        [
+                            'is_document_notification' => true, 
+                            'document_path' => $result['file_path'] ?? null,
+                            'openai_file_id' => $result['openai_file_id'] ?? null
+                        ]
+                    );
+                    
+                    // Clear the message input
+                    $this->message = '';
+                } else {
+                    // If no message, still notify AI about the document
+                    $aiMessage = sprintf("User uploaded a document: '%s'.", $fileName);
+                    
+                    $this->chatService->sendMessage(
+                        $this->selectedSessionId,
+                        $aiMessage,
+                        auth()->id(),
+                        [
+                            'is_document_notification' => true, 
+                            'document_path' => $result['file_path'] ?? null,
+                            'openai_file_id' => $result['openai_file_id'] ?? null
+                        ]
+                    );
+                }
+                
+                // Reset the document upload
+                $this->document = null;
+                
+                // Refresh the messages
+                $this->loadSessionMessages();
+                
+                // Display success message
+                $this->dispatch('notify', [
+                    'type' => 'success',
+                    'message' => 'Document uploaded successfully'
+                ]);
             } else {
-                session()->flash('error', $result['message'] ?? 'Failed to upload document');
+                // Display error message
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => $result['message']
+                ]);
             }
         } catch (\Exception $e) {
+            // Log the error
             Log::error('Failed to upload document', [
                 'error' => $e->getMessage(),
-                'session_id' => $this->selectedSessionId
+                'session_id' => $this->selectedSessionId,
             ]);
-            session()->flash('error', 'An error occurred while uploading document');
+            
+            // Display error message
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Failed to upload document: ' . $e->getMessage()
+            ]);
         }
     }
     
