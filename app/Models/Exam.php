@@ -57,4 +57,25 @@ class Exam extends Model
     {
         return $this->morphMany(ExamClearance::class, 'clearable');
     }
+
+    /**
+     * Questions associated with this exam.
+     */
+    public function questions()
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    /**
+     * Sessions for this exam.
+     */
+    public function sessions()
+    {
+        return $this->hasMany(ExamSession::class);
+    }
+
+    public function proctoringSessions()
+    {
+        return $this->hasMany(ProctoringSession::class);
+    }
 }

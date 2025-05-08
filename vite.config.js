@@ -11,4 +11,21 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            external: ['laravel-echo', 'pusher-js'],
+            output: {
+                globals: {
+                    'laravel-echo': 'Echo',
+                    'pusher-js': 'Pusher'
+                }
+            }
+        }
+    },
+    resolve: {
+        alias: {
+            'laravel-echo': 'laravel-echo',
+            'pusher-js': 'pusher-js'
+        }
+    },
 });
