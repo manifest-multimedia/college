@@ -24,7 +24,7 @@
                 <br>
                 You have {{ $exam->duration }} minutes to complete this exam.
             </p>
-            <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" />
+            <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" :examSessionId="$examSession->id" />
         </div>
        
     

@@ -73,17 +73,27 @@ class ExamSession extends Model
      */
     public function getAdjustedCompletionTimeAttribute()
     {
-        if (!$this->completed_at) {
+        if (!$this->started_at) {
             return null;
         }
         
-        // If no extra time was added, return the original completion time
-        if ($this->extra_time_minutes <= 0) {
-            return $this->completed_at;
+        // First, get the original completion time based on the exam duration
+        $originalEndTime = $this->completed_at;
+        
+        // If completed_at is null or equal to started_at (which is an error condition),
+        // recalculate the completion time from the exam duration
+        if (!$originalEndTime || $originalEndTime->equalTo($this->started_at)) {
+            // Get the exam duration in minutes
+            $durationMinutes = $this->exam->duration ?? 0;
+            $originalEndTime = $this->started_at->copy()->addMinutes($durationMinutes);
         }
         
-        // Add extra time to the original completion time
-        return $this->completed_at->addMinutes($this->extra_time_minutes);
+        // Add any extra time minutes to the end time
+        if ($this->extra_time_minutes > 0) {
+            return $originalEndTime->copy()->addMinutes($this->extra_time_minutes);
+        }
+        
+        return $originalEndTime;
     }
 
     /**

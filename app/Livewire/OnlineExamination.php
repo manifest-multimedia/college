@@ -89,17 +89,35 @@ class OnlineExamination extends Component
 
             $this->student_index = $this->student->student_id;
 
-            // Check or create exam session
-            $this->examSession = ExamSession::firstOrCreate(
-                [
+            // Check for existing exam session
+            $existingSession = ExamSession::where('exam_id', $this->exam->id)
+                ->where('student_id', $this->user->id)
+                ->first();
+
+            if ($existingSession) {
+                // Use the existing session
+                $this->examSession = $existingSession;
+            } else {
+                // Create a new exam session with proper start and end times
+                $examStartTime = Carbon::parse($this->exam->date); // Use the scheduled exam date from the exam
+                $examEndTime = $examStartTime->copy()->addMinutes((int) $this->exam->duration);
+                
+                // Create a new session with the proper times
+                $this->examSession = ExamSession::create([
                     'exam_id' => $this->exam->id,
                     'student_id' => $this->user->id,
-                ],
-                [
-                    'started_at' => now(),
-                    'completed_at' => now()->addMinutes((int) $this->exam->duration),
-                ]
-            );
+                    'started_at' => $examStartTime,
+                    'completed_at' => $examEndTime,
+                ]);
+                
+                // Log the creation of a new exam session
+                Log::info('New exam session created', [
+                    'session_id' => $this->examSession->id,
+                    'student_id' => $this->student->student_id,
+                    'exam_start' => $examStartTime->toDateTimeString(),
+                    'exam_end' => $examEndTime->toDateTimeString()
+                ]);
+            }
 
             // Calculate exam end time including any extra time
             $examDuration = (int) $this->exam->duration;
@@ -217,26 +235,61 @@ class OnlineExamination extends Component
 
     public function getRemainingTime()
     {
-        $startedAt = Carbon::parse($this->examSession->started_at);
+        try {
+            // Get the exam's scheduled date
+            $examDate = Carbon::parse($this->exam->date);
+            
+            // Get the actual start time from the exam schedule rather than the session start time
+            $startedAt = $examDate;
+            
+            // Calculate the expected completion time based on the exam duration
+            $examDuration = (int) $this->exam->duration;
+            $extraTime = (int) $this->examSession->extra_time_minutes;
+            $totalDuration = $examDuration + $extraTime;
+            
+            // Calculate proper end time based on the exam's scheduled date
+            $adjustedCompletionTime = $examDate->copy()->addMinutes($totalDuration);
+            
+            // Set the values for the view
+            $this->timerStart = $startedAt;
+            $this->timerFinish = $adjustedCompletionTime;
+            $this->startedAt = $startedAt->format('l, jS F Y h:i A');
+            $this->estimatedEndTime = $adjustedCompletionTime->format('l, jS F Y h:i A');
 
-        // Use the adjusted completion time instead of directly calculating from completed_at
-        $adjustedCompletionTime = $this->examSession->adjustedCompletionTime;
+            // Calculate remaining time in seconds
+            $currentTime = Carbon::now();
+            $remainingSeconds = 0;
+            
+            if ($currentTime->lt($adjustedCompletionTime)) {
+                $remainingSeconds = $currentTime->diffInSeconds($adjustedCompletionTime);
+            }
 
-        $this->timerStart = $startedAt;
-        $this->timerFinish = $adjustedCompletionTime;
+            // Convert to hours, minutes, seconds
+            $this->hours = floor($remainingSeconds / 3600);
+            $this->minutes = floor(($remainingSeconds % 3600) / 60);
+            $this->seconds = $remainingSeconds % 60;
 
-        $this->startedAt = $startedAt->format('l, jS F Y h:i A');
-        $this->estimatedEndTime = $adjustedCompletionTime->format('l, jS F Y h:i A');
+            // Log actual times for debugging
+            Log::info('Timer values calculated', [
+                'exam_id' => $this->exam->id,
+                'exam_date' => $this->exam->date,
+                'exam_duration' => $examDuration,
+                'extra_time' => $extraTime,
+                'start_time' => $startedAt->toDateTimeString(),
+                'end_time' => $adjustedCompletionTime->toDateTimeString(),
+                'current_time' => $currentTime->toDateTimeString(),
+                'remaining_seconds' => $remainingSeconds
+            ]);
 
-        // Calculate remaining time in seconds
-        $remainingSeconds = $this->calculateRemainingTime();
-
-        // Convert to hours, minutes, seconds
-        $this->hours = floor($remainingSeconds / 3600);
-        $this->minutes = floor(($remainingSeconds % 3600) / 60);
-        $this->seconds = $remainingSeconds % 60;
-
-        return $remainingSeconds;
+            return $adjustedCompletionTime->toIso8601String();
+        } catch (\Exception $e) {
+            Log::error('Error calculating remaining time', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return now()->addHour()->toIso8601String();
+        }
     }
 
     public function render()
