@@ -97,16 +97,23 @@ class OnlineExamination extends Component
             if ($existingSession) {
                 // Use the existing session
                 $this->examSession = $existingSession;
-            } else {
-                // Create a new exam session with proper start and end times
-                $examStartTime = Carbon::parse($this->exam->date); // Use the scheduled exam date from the exam
-                $examEndTime = $examStartTime->copy()->addMinutes((int) $this->exam->duration);
                 
-                // Create a new session with the proper times
+                Log::info('Using existing exam session', [
+                    'session_id' => $this->examSession->id,
+                    'student_id' => $this->student->student_id,
+                    'start_time' => $this->examSession->started_at->toDateTimeString(),
+                    'end_time' => $this->examSession->completed_at->toDateTimeString()
+                ]);
+            } else {
+                // Create a new exam session with current time as start time
+                $currentTime = now();
+                $examEndTime = $currentTime->copy()->addMinutes((int) $this->exam->duration);
+                
+                // Create a new session with the current time
                 $this->examSession = ExamSession::create([
                     'exam_id' => $this->exam->id,
                     'student_id' => $this->user->id,
-                    'started_at' => $examStartTime,
+                    'started_at' => $currentTime,
                     'completed_at' => $examEndTime,
                 ]);
                 
@@ -114,7 +121,7 @@ class OnlineExamination extends Component
                 Log::info('New exam session created', [
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
-                    'exam_start' => $examStartTime->toDateTimeString(),
+                    'exam_start' => $currentTime->toDateTimeString(),
                     'exam_end' => $examEndTime->toDateTimeString()
                 ]);
             }
@@ -236,19 +243,17 @@ class OnlineExamination extends Component
     public function getRemainingTime()
     {
         try {
-            // Get the exam's scheduled date
-            $examDate = Carbon::parse($this->exam->date);
-            
-            // Get the actual start time from the exam schedule rather than the session start time
-            $startedAt = $examDate;
+            // Get the actual start time from when the student started the exam
+            $startedAt = Carbon::parse($this->examSession->started_at);
             
             // Calculate the expected completion time based on the exam duration
             $examDuration = (int) $this->exam->duration;
             $extraTime = (int) $this->examSession->extra_time_minutes;
             $totalDuration = $examDuration + $extraTime;
             
-            // Calculate proper end time based on the exam's scheduled date
-            $adjustedCompletionTime = $examDate->copy()->addMinutes($totalDuration);
+            // Calculate proper end time based on the actual start time 
+            // (when the student logged in to take the exam)
+            $adjustedCompletionTime = $startedAt->copy()->addMinutes($totalDuration);
             
             // Set the values for the view
             $this->timerStart = $startedAt;
@@ -271,8 +276,8 @@ class OnlineExamination extends Component
 
             // Log actual times for debugging
             Log::info('Timer values calculated', [
-                'exam_id' => $this->exam->id,
-                'exam_date' => $this->exam->date,
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
                 'exam_duration' => $examDuration,
                 'extra_time' => $extraTime,
                 'start_time' => $startedAt->toDateTimeString(),

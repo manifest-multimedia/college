@@ -19,21 +19,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Constants for localStorage keys
-            const STORAGE_START_AT = 'startAt';
-            const STORAGE_COMPLETED_AT = 'completedAt';
-            const STORAGE_TIME_LEFT = 'exam_time_left';
-            const STORAGE_LAST_SYNC = 'exam_last_sync';
+            const STORAGE_KEY_PREFIX = 'exam_' + @js($exam_session_id) + '_';
+            const STORAGE_START_AT = STORAGE_KEY_PREFIX + 'startAt';
+            const STORAGE_COMPLETED_AT = STORAGE_KEY_PREFIX + 'completedAt';
+            const STORAGE_TIME_LEFT = STORAGE_KEY_PREFIX + 'timeLeft';
+            const STORAGE_LAST_SYNC = STORAGE_KEY_PREFIX + 'lastSync';
 
-            // Parse dates and store them in localStorage
-            const startAt = new Date(@js($started_at)).getTime();
-            const completedAt = new Date(@js($completed_at)).getTime();
-            localStorage.setItem(STORAGE_START_AT, startAt);
-            localStorage.setItem(STORAGE_COMPLETED_AT, completedAt);
+            // Parse fixed dates from server - DO NOT UPDATE THESE DURING PAGE REFRESHES
+            const fixedStartAt = new Date(@js($started_at)).getTime();
+            const fixedEndAt = new Date(@js($completed_at)).getTime();
 
-            // Retrieve dates and saved time left
+            // Use the fixed times from the server
+            localStorage.setItem(STORAGE_START_AT, fixedStartAt);
+            localStorage.setItem(STORAGE_COMPLETED_AT, fixedEndAt);
+
+            // Get stored values
             const savedStartAt = parseInt(localStorage.getItem(STORAGE_START_AT), 10);
             const savedCompletedAt = parseInt(localStorage.getItem(STORAGE_COMPLETED_AT), 10);
-            let timeLeft = parseInt(localStorage.getItem(STORAGE_TIME_LEFT), 10) || (savedCompletedAt - new Date().getTime());
+            
+            // Calculate time left based on fixed end time, not browser refresh time
+            let timeLeft = savedCompletedAt - new Date().getTime();
             
             // Update debug information
             function updateDebugInfo() {
@@ -70,7 +75,6 @@
                 if (new Date().getTime() >= savedCompletedAt) {
                     document.getElementById('countdown').innerText = "Time's up!";
                     document.getElementById('debug-extra-time').innerHTML = '<span class="text-danger">Timer expired</span>';
-                    localStorage.removeItem(STORAGE_TIME_LEFT);
                     return;
                 }
 
@@ -108,58 +112,43 @@
                         updateCountdown();
                     }
                 }, 1000);
-
-                // Save the remaining time in localStorage before page unload
-                window.addEventListener('beforeunload', () => {
-                    localStorage.setItem(STORAGE_TIME_LEFT, timeLeft);
-                });
-
-                // Clear saved time left when the countdown is complete
-                if (timeLeft <= 0) {
-                    localStorage.removeItem(STORAGE_TIME_LEFT);
-                }
             }
 
-            // Check for timer updates from the server every 30 seconds
-            // This will detect if extra time has been added
+            // Check for extra time updates from the server every 30 seconds
             setInterval(() => {
                 syncWithServer();
             }, 30000);
 
             // Function to sync timer with server
             function syncWithServer() {
-                // Call the Livewire method to get updated timer info
-                @this.call('getRemainingTime').then(serverInfo => {
-                    if (serverInfo) {
-                        // Update the completedAt time from server (which includes any extra time)
-                        const newCompletedAt = new Date(serverInfo).getTime();
+                // Call the Livewire method to get updated timer info for extra time only
+                @this.call('checkForExtraTime').then(extraTimeInfo => {
+                    if (extraTimeInfo && extraTimeInfo.hasExtraTime) {
+                        // Get the new end time with extra time
+                        const newCompletedAt = new Date(extraTimeInfo.newEndTime).getTime();
                         
-                        // Only update if the completion time has changed (extra time was added)
                         if (newCompletedAt > savedCompletedAt) {
-                            console.log('Timer updated: Extra time detected');
-                            
-                            // Calculate the difference (extra time added in ms)
-                            const extraTimeMs = newCompletedAt - savedCompletedAt;
-                            const extraMinutes = Math.floor(extraTimeMs / (1000 * 60));
+                            // Calculate the extra time added in minutes
+                            const extraTimeMinutes = Math.floor((newCompletedAt - savedCompletedAt) / (1000 * 60));
                             
                             document.getElementById('debug-extra-time').innerHTML = 
-                                `<span class="text-success">${extraMinutes} minutes added</span>`;
+                                `<span class="text-success">${extraTimeMinutes} minutes added</span>`;
                             
+                            // Update the end time in localStorage
                             localStorage.setItem(STORAGE_COMPLETED_AT, newCompletedAt);
                             
                             // Recalculate time left
                             timeLeft = newCompletedAt - new Date().getTime();
-                            localStorage.setItem(STORAGE_TIME_LEFT, timeLeft);
                             localStorage.setItem(STORAGE_LAST_SYNC, new Date().getTime());
                             
                             // Update debug info
                             updateDebugInfo();
                             
-                            // Reload the page to reset the timer completely
+                            // Reload the page for a complete timer reset
                             location.reload();
-                        } else {
-                            document.getElementById('debug-extra-time').innerText = 'No extra time detected';
                         }
+                    } else {
+                        document.getElementById('debug-extra-time').innerText = 'No extra time detected';
                     }
                 });
             }
