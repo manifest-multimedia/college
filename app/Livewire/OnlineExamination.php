@@ -431,8 +431,8 @@ class OnlineExamination extends Component
         // Determine if student has extra time
         $hasExtraTime = $this->examSession && $this->examSession->extra_time_minutes > 0;
         
-        // If exam is expired but student has extra time, they can still submit responses
-        $canStillSubmit = $examExpired && $hasExtraTime && Carbon::now()->lt($this->examSession->adjustedCompletionTime);
+        // Student can submit if they have extra time and are within the adjusted completion time
+        $canStillSubmit = $hasExtraTime && Carbon::now()->lt($this->examSession->adjustedCompletionTime);
         
         return view('livewire.online-examination', [
             'questions' => $this->questions,
