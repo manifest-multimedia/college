@@ -168,10 +168,10 @@ class ElectionVoterVerification extends Component
         // Define the available security question fields
         $securityFields = [
             'email' => 'Email Address',
-            'date_of_birth' => 'Date of Birth',
-            'home_region' => 'Home Region',
-            'mobile_number' => 'Mobile Number',
-            'religion' => 'Religion'
+            // 'date_of_birth' => 'Date of Birth',
+            // 'home_region' => 'Home Region',
+            // 'mobile_number' => 'Mobile Number',
+            // 'religion' => 'Religion'
         ];
         
         // Randomly select one field for verification
