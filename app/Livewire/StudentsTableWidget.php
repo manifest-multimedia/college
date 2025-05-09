@@ -20,17 +20,17 @@ class StudentsTableWidget extends Component
     public $cohortFilter = '';
     
     // Reset pagination when filters change
-    protected function updatingSearch() 
+    public function updatingSearch() 
     {
         $this->resetPage();
     }
     
-    protected function updatingProgramFilter()
+    public function updatingProgramFilter()
     {
         $this->resetPage();
     }
     
-    protected function updatingCohortFilter()
+    public function updatingCohortFilter()
     {
         $this->resetPage();
     }
