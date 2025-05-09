@@ -34,8 +34,8 @@ class CleanupEmptyStudentRecords extends Command
             $this->info('DRY RUN MODE: No database changes will be made');
         }
 
-        // Find students with missing required fields
-        $query = Student::where(function ($query) {
+        // Define our query condition that identifies empty records
+        $emptyRecordCondition = function ($query) {
             $query->whereNull('student_id')
                   ->orWhere('student_id', '')
                   ->orWhereNull('first_name')
@@ -44,9 +44,10 @@ class CleanupEmptyStudentRecords extends Command
                   ->orWhere('last_name', '')
                   ->orWhereNull('email')
                   ->orWhere('email', '');
-        });
+        };
 
-        $emptyRecordsCount = $query->count();
+        // Count how many records match our condition
+        $emptyRecordsCount = Student::where($emptyRecordCondition)->count();
         
         if ($emptyRecordsCount === 0) {
             $this->info('No empty student records found. Nothing to clean up.');
@@ -57,7 +58,7 @@ class CleanupEmptyStudentRecords extends Command
         
         // Sample of records to be deleted (show up to 5)
         $this->info('Sample records that will be removed:');
-        $sampleRecords = $query->limit(5)->get();
+        $sampleRecords = Student::where($emptyRecordCondition)->limit(5)->get();
         
         $headers = ['ID', 'Student ID', 'First Name', 'Last Name', 'Email'];
         $rows = [];
@@ -86,19 +87,17 @@ class CleanupEmptyStudentRecords extends Command
             }
         }
         
-        // Initialize counter for deleted records
-        $deletedCount = 0;
-        
         // Start transaction for safer operations
         DB::beginTransaction();
         
         try {
-            // Get all IDs to log them
-            $idsToDelete = $query->pluck('id')->toArray();
+            // Create a fresh query to get all IDs to delete
+            $recordsToDelete = Student::where($emptyRecordCondition);
+            $idsToDelete = $recordsToDelete->pluck('id')->toArray();
             
             if (!$isDryRun) {
-                // Perform the deletion
-                $deletedCount = $query->delete();
+                // Create yet another fresh query for the actual deletion
+                $deletedCount = Student::whereIn('id', $idsToDelete)->delete();
                 
                 // Log the deletion
                 Log::info('Empty student records deleted', [
@@ -114,7 +113,12 @@ class CleanupEmptyStudentRecords extends Command
             } else {
                 // In dry run mode, just report what would be done
                 $this->info("Would delete {$emptyRecordsCount} empty student records");
-                $this->info("IDs that would be deleted: " . implode(', ', $idsToDelete));
+                
+                if (count($idsToDelete) <= 20) {
+                    $this->info("IDs that would be deleted: " . implode(', ', $idsToDelete));
+                } else {
+                    $this->info("First 20 IDs that would be deleted: " . implode(', ', array_slice($idsToDelete, 0, 20)) . "...");
+                }
                 
                 // Rollback transaction in dry run mode
                 DB::rollBack();
