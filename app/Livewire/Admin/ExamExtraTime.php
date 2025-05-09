@@ -25,6 +25,7 @@ class ExamExtraTime extends Component
     public $search = '';
     public $extraTimeMinutes = 5; // Default of 5 minutes
     public $applyToAll = false;
+    public $includeCompletedSessions = false; // Control whether to include completed sessions
     
     // Properties for tracking success/error messages
     public $successMessage = '';
@@ -129,14 +130,20 @@ class ExamExtraTime extends Component
             $now = Carbon::now();
             
             if ($this->applyToAll) {
-                // Apply extra time to all active sessions for this exam
-                $sessionsUpdated = ExamSession::where('exam_id', $this->exam_id)
-                                           ->whereNull('completed_at')
-                                           ->update([
-                                               'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
-                                               'extra_time_added_by' => Auth::id(),
-                                               'extra_time_added_at' => $now,
-                                           ]);
+                // Build query for all sessions for this exam
+                $query = ExamSession::where('exam_id', $this->exam_id);
+                
+                // Only filter by completed_at if we're not including completed sessions
+                if (!$this->includeCompletedSessions) {
+                    $query->whereNull('completed_at');
+                }
+                
+                // Apply extra time to filtered sessions
+                $sessionsUpdated = $query->update([
+                    'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                    'extra_time_added_by' => Auth::id(),
+                    'extra_time_added_at' => $now,
+                ]);
             } else {
                 // Apply extra time to selected sessions only
                 if (empty($this->selectedSessions)) {
@@ -145,11 +152,11 @@ class ExamExtraTime extends Component
                 }
                 
                 $sessionsUpdated = ExamSession::whereIn('id', $this->selectedSessions)
-                                           ->update([
-                                               'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
-                                               'extra_time_added_by' => Auth::id(),
-                                               'extra_time_added_at' => $now,
-                                           ]);
+                                   ->update([
+                                       'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                                       'extra_time_added_by' => Auth::id(),
+                                       'extra_time_added_at' => $now,
+                                   ]);
             }
             
             if ($sessionsUpdated > 0) {
@@ -163,7 +170,8 @@ class ExamExtraTime extends Component
                     'exam_id' => $this->exam_id,
                     'minutes_added' => $this->extraTimeMinutes,
                     'sessions_affected' => $sessionsUpdated,
-                    'applied_to_all' => $this->applyToAll
+                    'applied_to_all' => $this->applyToAll,
+                    'included_completed' => $this->includeCompletedSessions
                 ]);
             } else {
                 $this->errorMessage = 'No sessions were updated. Please check your selections.';
@@ -246,12 +254,28 @@ class ExamExtraTime extends Component
             }
             
             // Update the session with extra time
-            $updated = ExamSession::where('id', $sessionId)
-                ->update([
-                    'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
-                    'extra_time_added_by' => Auth::id(),
-                    'extra_time_added_at' => $now,
-                ]);
+            $updates = [
+                'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                'extra_time_added_by' => Auth::id(),
+                'extra_time_added_at' => $now,
+            ];
+            
+            // If adding time to a completed session, we need to set it to allow continuation
+            $isCompleted = $this->viewingSession->completed_at && !Carbon::parse($this->viewingSession->completed_at)->isFuture();
+            
+            // Include reactivation info in log for completed sessions
+            $isReactivation = false;
+
+            // For completed or expired sessions, update the completion time to allow continuation
+            if ($isCompleted || now()->gt($this->viewingSession->adjustedCompletionTime)) {
+                // Set the new end time based on current time plus extra time
+                $newEndTime = $now->copy()->addMinutes($this->extraTimeMinutes);
+                $updates['completed_at'] = $newEndTime;
+                $isReactivation = true;
+            }
+            
+            // Update the session
+            $updated = ExamSession::where('id', $sessionId)->update($updates);
             
             if ($updated) {
                 // Refresh the session data
@@ -262,18 +286,25 @@ class ExamExtraTime extends Component
                     'responses.question.options'
                 ])->find($sessionId);
                 
-                $this->successMessage = 'Successfully added ' . $this->extraTimeMinutes . ' extra minute(s) to the exam session.';
+                $message = 'Successfully added ' . $this->extraTimeMinutes . ' extra minute(s) to the exam session.';
+                
+                if ($isReactivation) {
+                    $message .= ' The session has been reactivated for the student to continue.';
+                }
+                
+                $this->successMessage = $message;
                 
                 // Reset extra time minutes to default
                 $this->extraTimeMinutes = 5;
                 
-                // Log the action
+                // Log the action with additional reactivation info
                 Log::info('Extra time added from modal', [
                     'user_id' => Auth::id(),
                     'session_id' => $sessionId,
                     'minutes_added' => $this->extraTimeMinutes,
                     'student_id' => $this->viewingSession->student_id ?? null,
-                    'exam_id' => $this->viewingSession->exam_id ?? null
+                    'exam_id' => $this->viewingSession->exam_id ?? null,
+                    'reactivated' => $isReactivation
                 ]);
             } else {
                 $this->errorMessage = 'No changes were made.';

@@ -82,6 +82,19 @@
                             </label>
                         </div>
                         <div class="form-text">Enable to apply extra time to all active sessions for this exam</div>
+                        
+                        @if($applyToAll)
+                        <div class="form-check form-switch mt-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="includeCompletedSessions" wire:model.live="includeCompletedSessions">
+                            <label class="form-check-label fw-semibold" for="includeCompletedSessions">
+                                Include completed sessions
+                            </label>
+                        </div>
+                        <div class="form-text text-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> 
+                            This will reactivate previously completed or expired exam sessions
+                        </div>
+                        @endif
                     </div>
                 </div>
                 
@@ -376,10 +389,19 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="closeViewModal">Close</button>
-                        @if(now()->lt($viewingSession->adjustedCompletionTime) && !$viewingSession->completed_at)
-                            <button type="button" class="btn btn-primary" wire:click="addExtraTimeFromModal">
-                                <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
-                            </button>
+                        
+                        <!-- Always show the add extra time button, even for completed sessions -->
+                        <button type="button" class="btn btn-primary" wire:click="addExtraTimeFromModal">
+                            <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
+                        </button>
+                        
+                        @if($viewingSession->completed_at && now()->lt($viewingSession->adjustedCompletionTime))
+                            <div class="badge bg-success ms-2 py-2">Session is active</div>
+                        @elseif($viewingSession->completed_at) 
+                            <div class="badge bg-warning text-dark ms-2 py-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                Adding time will reactivate this session
+                            </div>
                         @endif
                     </div>
                 </div>
