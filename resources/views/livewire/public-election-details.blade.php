@@ -91,7 +91,7 @@
                             <ul class="list-group list-group-flush">
                                 @forelse($positions as $position)
                                     <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-bottom">
-                                        <span>{{ $position->title }}</span>
+                                        <span>{{ $position->name }}</span>
                                         <span class="badge bg-primary rounded-pill">
                                             {{ $candidateCounts[$position->id] }} {{ Str::plural('candidate', $candidateCounts[$position->id]) }}
                                         </span>

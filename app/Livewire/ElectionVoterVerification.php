@@ -220,6 +220,7 @@ class ElectionVoterVerification extends Component
             // Security verification successful
             $this->createVotingSession();
         } else {
+
             Log::warning('Security verification failed', [
                 'student_id' => $this->student_id,
                 'question_field' => $this->securityQuestionField,
@@ -326,7 +327,7 @@ class ElectionVoterVerification extends Component
                 'student_id' => $this->student_id,
                 'election_id' => $this->election->id,
                 'session_id' => $sessionId,
-                'redirect_to' => route('election.vote', [
+                'redirect_to' => route('public.elections.vote', [
                     'election' => $this->election->id,
                     'sessionId' => $votingSession->session_id
                 ])
@@ -352,7 +353,7 @@ class ElectionVoterVerification extends Component
     
     protected function redirectToVoting($votingSession)
     {
-        $url = route('election.vote', [
+        $url = route('public.elections.vote', [
             'election' => $this->election->id,
             'sessionId' => $votingSession->session_id
         ]);
@@ -360,12 +361,12 @@ class ElectionVoterVerification extends Component
         Log::info('Attempting to redirect to voting page', [
             'election_id' => $this->election->id,
             'session_id' => $votingSession->session_id,
-            'route' => 'election.vote',
+            'route' => 'public.elections.vote',
             'url' => $url
         ]);
 
-        // Use the simpler direct redirect for better reliability
-        return redirect()->to($url);
+        // Use Livewire's native redirect method that correctly handles client-side navigation
+        return $this->redirect($url, navigate: true);
     }
     
     public function resetVerification()
