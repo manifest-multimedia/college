@@ -15,6 +15,12 @@
                     This platform allows students to participate in college-wide elections by voting for their preferred candidates.
                     <br>All you need is your Student ID to verify your identity and cast your vote.
                 </p>
+                <p> <strong>Note:</strong>
+                    <br /> Ensure you have your Student ID ready for verification.
+                    <br /> You are not allowed to vote for someone else. You will face disciplinary action if you do.
+                    <br /> If you have any issues, please contact the election committee.
+                    <br /> Happy Voting!
+                </p>
             </div>
             
             <!-- Active Elections Section -->

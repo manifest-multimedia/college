@@ -93,7 +93,6 @@
 
     <!-- Audio element for error alert (hidden) -->
     <audio id="error-alert" src="{{ asset('sounds/error_alert.mp3') }}" preload="auto"></audio>
-
     <script>
         document.addEventListener('livewire:initialized', () => {
             @this.on('redirect', (event) => {
@@ -112,6 +111,15 @@
                 if (audioElement) {
                     audioElement.currentTime = 0;
                     audioElement.play();
+                }
+            });
+            
+            // Stop sound when key combinations are pressed
+            document.addEventListener('keydown', (e) => {
+                const audioElement = document.getElementById('error-alert');
+                if (audioElement && (e.ctrlKey || e.metaKey || e.altKey)) {
+                    audioElement.pause();
+                    audioElement.currentTime = 0;
                 }
             });
         });
