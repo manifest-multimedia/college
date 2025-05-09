@@ -54,7 +54,7 @@
             }
         }"
         x-init="startTimer()"
-        @voteSubmitted.window="setTimeout(() => window.location.href = '{{ route('election.thank-you', $election->id) }}', 1500)"
+        @voteSubmitted.window="setTimeout(() => window.location.href = '/public/elections/{{ $election->id }}/thank-you', 1500)"
         class="voting-interface"
     >
         <div class="container-fluid py-4">
