@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;  // Add DB facade import
 use Livewire\WithPagination;
 use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -22,14 +23,14 @@ class ExamExtraTime extends Component
     // Properties for filtering and selection
     public $exam_id = null;
     public $search = '';
-    public $extraTimeMinutes = 20; // Default of 5 minutes
+    public $extraTimeMinutes = 20; // Default of 20 minutes
     public $applyToAll = false;
     public $includeCompletedSessions = false; // Control whether to include completed sessions
     
-    // Store student details when found
-    public $foundStudent = null;
-    public $foundUser = null;
-    public $studentFound = false;
+    // Store multiple found students
+    public $foundStudents = [];
+    public $foundUserIds = [];
+    public $processingSearch = false;
     
     // Properties for tracking success/error messages
     public $successMessage = '';
@@ -88,10 +89,45 @@ class ExamExtraTime extends Component
         }
     }
     
+    public function updatedSearch()
+    {
+        // Clear previous found students when search is updated
+        if (strlen($this->search) >= 3) {
+            $this->processMultipleStudentIds();
+        } else {
+            $this->foundStudents = [];
+            $this->foundUserIds = [];
+        }
+    }
+    
+    public function processMultipleStudentIds()
+    {
+        $this->processingSearch = true;
+        $this->foundStudents = [];
+        $this->foundUserIds = [];
+        
+        // Split the search input by newlines and spaces
+        $studentIdList = preg_split('/[\s,]+/', $this->search);
+        $studentIdList = array_filter($studentIdList); // Remove empty entries
+        
+        if (count($studentIdList) > 0) {
+            foreach ($studentIdList as $studentId) {
+                $studentId = trim($studentId);
+                if (strlen($studentId) >= 3) {
+                    $this->findStudentByCollegeId($studentId);
+                }
+            }
+        }
+        
+        $this->processingSearch = false;
+    }
+    
     public function resetSessions()
     {
         $this->selectedSessions = [];
         $this->search = '';
+        $this->foundStudents = [];
+        $this->foundUserIds = [];
         $this->resetPage();
     }
     
@@ -103,35 +139,15 @@ class ExamExtraTime extends Component
         
         $query = ExamSession::where('exam_id', $this->exam_id);
         
-        // Apply search filter if provided
-        if ($this->search) {
-            // First try to find students matching the search criteria
-            $foundUserIds = [];
-            
-            if (strlen($this->search) >= 3) {
-                // Try to find students by their college ID or name
-                $students = Student::where('student_id', 'like', '%' . $this->search . '%')
-                    ->orWhere('first_name', 'like', '%' . $this->search . '%')
-                    ->get();
-                
-                // Get associated user accounts by email
-                if ($students->isNotEmpty()) {
-                    $emails = $students->pluck('email')->toArray();
-                    $users = User::whereIn('email', $emails)->get();
-                    $foundUserIds = $users->pluck('id')->toArray();
-                }
-            }
-            
-            // Apply filter using found user IDs or direct user search
-            if (!empty($foundUserIds)) {
-                $query->whereIn('student_id', $foundUserIds);
-            } else {
-                // Fallback to direct search in user accounts
-                $query->whereHas('student', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
-            }
+        // Apply search filter if we have found user IDs
+        if (!empty($this->foundUserIds)) {
+            $query->whereIn('student_id', $this->foundUserIds);
+        } elseif ($this->search && strlen($this->search) >= 3) {
+            // Fallback to direct search in user accounts if no students explicitly found
+            $query->whereHas('student', function($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('email', 'like', '%' . $this->search . '%');
+            });
         }
         
         // Get sessions with student and exam info
@@ -152,6 +168,11 @@ class ExamExtraTime extends Component
                 // Build query for all sessions for this exam
                 $query = ExamSession::where('exam_id', $this->exam_id);
                 
+                // Filter by found user IDs if we have them
+                if (!empty($this->foundUserIds)) {
+                    $query->whereIn('student_id', $this->foundUserIds);
+                }
+                
                 // Only filter by completed_at if we're not including completed sessions
                 if (!$this->includeCompletedSessions) {
                     $query->whereNull('completed_at');
@@ -159,7 +180,7 @@ class ExamExtraTime extends Component
                 
                 // Apply extra time to filtered sessions
                 $sessionsUpdated = $query->update([
-                    'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                    'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
                     'extra_time_added_by' => Auth::id(),
                     'extra_time_added_at' => $now,
                 ]);
@@ -172,7 +193,7 @@ class ExamExtraTime extends Component
                 
                 $sessionsUpdated = ExamSession::whereIn('id', $this->selectedSessions)
                                    ->update([
-                                       'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                                       'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
                                        'extra_time_added_by' => Auth::id(),
                                        'extra_time_added_at' => $now,
                                    ]);
@@ -190,7 +211,8 @@ class ExamExtraTime extends Component
                     'minutes_added' => $this->extraTimeMinutes,
                     'sessions_affected' => $sessionsUpdated,
                     'applied_to_all' => $this->applyToAll,
-                    'included_completed' => $this->includeCompletedSessions
+                    'included_completed' => $this->includeCompletedSessions,
+                    'student_count' => count($this->foundUserIds)
                 ]);
             } else {
                 $this->errorMessage = 'No sessions were updated. Please check your selections.';
@@ -274,7 +296,7 @@ class ExamExtraTime extends Component
             
             // Update the session with extra time
             $updates = [
-                'extra_time_minutes' => \DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
                 'extra_time_added_by' => Auth::id(),
                 'extra_time_added_at' => $now,
             ];
@@ -344,23 +366,28 @@ class ExamExtraTime extends Component
     public function findStudentByCollegeId($studentCollegeId)
     {
         try {
-            // Reset student-related properties
-            $this->foundStudent = null;
-            $this->foundUser = null;
-            $this->studentFound = false;
-            
             // Find student by student_id (college ID)
             $student = Student::where('student_id', 'like', '%' . $studentCollegeId . '%')->first();
             
             if ($student) {
-                $this->foundStudent = $student;
-                $this->studentFound = true;
-                
                 // Find associated user account by email
                 $user = User::where('email', $student->email)->first();
+                
+                // Add to found students collection (avoid duplicates)
+                $studentData = [
+                    'student' => $student,
+                    'user' => $user,
+                    'has_user_account' => !is_null($user)
+                ];
+                
+                // Use student's ID as the key to avoid duplicates
+                $this->foundStudents[$student->id] = $studentData;
+                
+                // If user account exists, add to the found user IDs for filtering
                 if ($user) {
-                    $this->foundUser = $user;
-                    return $user->id; // Return the user ID for use in queries
+                    if (!in_array($user->id, $this->foundUserIds)) {
+                        $this->foundUserIds[] = $user->id;
+                    }
                 } else {
                     // Log warning that student has no user account
                     Log::warning('Student found but has no associated user account', [
@@ -370,14 +397,44 @@ class ExamExtraTime extends Component
                     ]);
                 }
             }
-            
-            return null;
         } catch (\Exception $e) {
             Log::error('Error finding student', [
                 'error' => $e->getMessage(),
                 'student_id' => $studentCollegeId
             ]);
-            return null;
+        }
+    }
+    
+    // Remove a student from the found list
+    public function removeStudent($studentId)
+    {
+        if (isset($this->foundStudents[$studentId])) {
+            $userId = $this->foundStudents[$studentId]['user']->id ?? null;
+            
+            // Remove from foundUserIds array if exists
+            if ($userId && in_array($userId, $this->foundUserIds)) {
+                $this->foundUserIds = array_diff($this->foundUserIds, [$userId]);
+            }
+            
+            // Remove from foundStudents array
+            unset($this->foundStudents[$studentId]);
+        }
+    }
+    
+    // Select all sessions for found students
+    public function selectAllFoundSessions()
+    {
+        $this->selectedSessions = [];
+        
+        if (!empty($this->foundUserIds)) {
+            $sessions = ExamSession::where('exam_id', $this->exam_id)
+                ->whereIn('student_id', $this->foundUserIds)
+                ->pluck('id')
+                ->toArray();
+                
+            if (!empty($sessions)) {
+                $this->selectedSessions = $sessions;
+            }
         }
     }
     
@@ -391,7 +448,8 @@ class ExamExtraTime extends Component
                    
         return view('livewire.admin.exam-extra-time', [
             'exams' => $exams,
-            'examSessions' => $this->examSessions
+            'examSessions' => $this->examSessions,
+            'foundStudentsCount' => count($this->foundStudents)
         ]);
     }
 }

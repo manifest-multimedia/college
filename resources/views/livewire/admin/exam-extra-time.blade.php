@@ -58,45 +58,87 @@
                         <label for="search" class="form-label fw-semibold">Search Students</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" id="search" wire:model.live.debounce.300ms="search" 
-                                class="form-control" placeholder="Search by student name, ID or email">
+                            <textarea id="search" wire:model.live.debounce.500ms="search" 
+                                class="form-control" rows="3" 
+                                placeholder="Enter one or more student IDs separated by spaces, commas, or new lines"></textarea>
                         </div>
-                        <div class="form-text">Enter student college ID (e.g., PNMTC/DA/RM/22/23/197) or name</div>
+                        <div class="form-text">
+                            Enter multiple student college IDs (e.g., PNMTC/DA/RM/22/23/197, PNMTC/DA/RM/22/23/198)
+                            <div class="mt-1"><strong>Tip:</strong> You can paste a list of IDs from Excel or any other source</div>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Display student information if found -->
-                @if($studentFound && $foundStudent)
+                @if(count($foundStudents) > 0)
                 <div class="alert alert-success mb-4">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="symbol symbol-circle symbol-30px me-3 bg-light">
-                            <span class="symbol-label bg-primary text-inverse-primary">
-                                {{ substr($foundStudent->name ?? 'U', 0, 1) }}
-                            </span>
+                    <div class="d-flex align-items-center mb-2 justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="symbol symbol-30px me-3 bg-light">
+                                <span class="symbol-label bg-primary text-inverse-primary">
+                                    <i class="bi bi-people-fill"></i>
+                                </span>
+                            </div>
+                            <h5 class="mb-0">{{ $foundStudentsCount }} Student(s) Found</h5>
                         </div>
-                        <h5 class="mb-0">Student Found!</h5>
+                        
+                        @if(!$applyToAll && !empty($foundUserIds))
+                        <button type="button" wire:click="selectAllFoundSessions" class="btn btn-sm btn-primary">
+                            <i class="bi bi-check-all me-1"></i>
+                            Select All Sessions
+                        </button>
+                        @endif
                     </div>
-                    <div class="ps-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Name:</strong> {{ $foundStudent->name }}</p>
-                                <p class="mb-1"><strong>Student ID:</strong> {{ $foundStudent->student_id }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-1"><strong>Email:</strong> {{ $foundStudent->email }}</p>
-                                @if($foundUser)
-                                    <p class="mb-1 text-success">
-                                        <i class="bi bi-check-circle-fill me-1"></i>
-                                        User account linked
-                                    </p>
-                                @else
-                                    <p class="mb-1 text-danger">
-                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                        No user account found
-                                    </p>
-                                @endif
-                            </div>
+                    
+                    <div class="table-responsive mt-2">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Student ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($foundStudents as $index => $data)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $data['student']->student_id }}</td>
+                                    <td>{{ $data['student']->name }}</td>
+                                    <td>{{ $data['student']->email }}</td>
+                                    <td>
+                                        @if($data['has_user_account'])
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle-fill me-1"></i> Account Linked
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i> No User Account
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <button type="button" wire:click="removeStudent({{ $data['student']->id }})" 
+                                            class="btn btn-sm btn-outline-danger btn-icon" title="Remove from selection">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @elseif($processingSearch)
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
+                        <span>Searching for students...</span>
                     </div>
                 </div>
                 @endif
@@ -136,7 +178,7 @@
                 </div>
                 
                 <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" @if(!$exam_id || (empty($foundUserIds) && !$applyToAll)) disabled @endif>
                         <i class="bi bi-plus-circle me-2"></i>
                         Add Extra Time
                     </button>
