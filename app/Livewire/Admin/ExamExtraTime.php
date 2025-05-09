@@ -27,6 +27,11 @@ class ExamExtraTime extends Component
     public $applyToAll = false;
     public $includeCompletedSessions = false; // Control whether to include completed sessions
     
+    // Store student details when found
+    public $foundStudent = null;
+    public $foundUser = null;
+    public $studentFound = false;
+    
     // Properties for tracking success/error messages
     public $successMessage = '';
     public $errorMessage = '';
@@ -99,7 +104,6 @@ class ExamExtraTime extends Component
         }
         
         $query = ExamSession::where('exam_id', $this->exam_id);
-                        //    ->whereNull('completed_at'); // Only active sessions
         
         // Apply search filter if provided
         if ($this->search) {
@@ -112,7 +116,19 @@ class ExamExtraTime extends Component
         
         // Filter by student ID if provided
         if ($this->student_id) {
-            $query->where('student_id', $this->student_id);
+            // Find the user_id associated with this student_id (college ID)
+            $userId = $this->findStudentByCollegeId($this->student_id);
+            
+            if ($userId) {
+                $query->where('student_id', $userId); // Filter by user ID, not student ID
+            } else {
+                // If no user found, make sure we return empty results
+                // by adding an impossible condition
+                $query->where('student_id', 0);
+                
+                // Add error message to inform the user
+                $this->errorMessage = 'No user account found for student ID: ' . $this->student_id;
+            }
         }
         
         // Get sessions with student and exam info
@@ -316,6 +332,49 @@ class ExamExtraTime extends Component
                 'session_id' => $this->viewingSession->id ?? null,
                 'user_id' => Auth::id()
             ]);
+        }
+    }
+
+    /**
+     * Find a student by their college ID and get their associated user account
+     */
+    public function findStudentByCollegeId($studentCollegeId)
+    {
+        try {
+            // Reset student-related properties
+            $this->foundStudent = null;
+            $this->foundUser = null;
+            $this->studentFound = false;
+            
+            // Find student by student_id (college ID)
+            $student = Student::where('student_id', 'like', '%' . $studentCollegeId . '%')->first();
+            
+            if ($student) {
+                $this->foundStudent = $student;
+                $this->studentFound = true;
+                
+                // Find associated user account by email
+                $user = User::where('email', $student->email)->first();
+                if ($user) {
+                    $this->foundUser = $user;
+                    return $user->id; // Return the user ID for use in queries
+                } else {
+                    // Log warning that student has no user account
+                    Log::warning('Student found but has no associated user account', [
+                        'student_id' => $student->id,
+                        'student_college_id' => $student->student_id,
+                        'email' => $student->email
+                    ]);
+                }
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Error finding student', [
+                'error' => $e->getMessage(),
+                'student_id' => $studentCollegeId
+            ]);
+            return null;
         }
     }
     
