@@ -87,6 +87,16 @@ class ExamExtraTime extends Component
             // Reset selected sessions when apply to all changes
             $this->selectedSessions = [];
         }
+
+        if ($field === 'student_id') {
+            // Reset sessions and handle student ID change
+            $this->resetSessions();
+            
+            // Only look up student if we have at least 3 characters
+            if (strlen($this->student_id) >= 3) {
+                $this->findStudentByCollegeId($this->student_id);
+            }
+        }
     }
     
     public function resetSessions()

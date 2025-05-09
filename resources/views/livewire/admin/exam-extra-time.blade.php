@@ -64,6 +64,55 @@
                     </div>
                 </div>
                 
+                <!-- Student ID search form -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label for="student_id" class="form-label fw-semibold">Search by Student ID</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                            <input type="text" id="student_id" wire:model.live.debounce.300ms="student_id" 
+                                class="form-control" placeholder="Enter college student ID">
+                        </div>
+                        <div class="form-text">Enter the student's college ID (e.g., PNMTC/DA/RM/22/23/197)</div>
+                    </div>
+                </div>
+                
+                <!-- Display student information if found -->
+                @if($studentFound && $foundStudent)
+                <div class="alert alert-success mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="symbol symbol-circle symbol-30px me-3 bg-light">
+                            <span class="symbol-label bg-primary text-inverse-primary">
+                                {{ substr($foundStudent->name ?? 'U', 0, 1) }}
+                            </span>
+                        </div>
+                        <h5 class="mb-0">Student Found!</h5>
+                    </div>
+                    <div class="ps-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Name:</strong> {{ $foundStudent->name }}</p>
+                                <p class="mb-1"><strong>Student ID:</strong> {{ $foundStudent->student_id }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Email:</strong> {{ $foundStudent->email }}</p>
+                                @if($foundUser)
+                                    <p class="mb-1 text-success">
+                                        <i class="bi bi-check-circle-fill me-1"></i>
+                                        User account linked
+                                    </p>
+                                @else
+                                    <p class="mb-1 text-danger">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        No user account found
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+                
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3">
                         <label for="extraTimeMinutes" class="form-label fw-semibold required">Extra Time (Minutes)</label>
