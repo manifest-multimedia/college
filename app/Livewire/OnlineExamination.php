@@ -368,24 +368,37 @@ class OnlineExamination extends Component
      */
     public function isExamExpired()
     {
-        // First let's add some debug logging to troubleshoot the issue
-        Log::info('Checking if exam is expired', [
-            'session_id' => $this->examSession->id ?? null,
-            'completed_at' => $this->examSession->completed_at ?? 'null',
-            'adjustedCompletionTime' => $this->examSession->adjustedCompletionTime ?? 'null',
-            'current_time' => Carbon::now()->toDateTimeString()
-        ]);
-        
-        // Don't count an exam as expired if it was just created and completed_at is the end time
-        // This checks if completed_at is in the future (meaning it's the scheduled end time)
-        if ($this->examSession && $this->examSession->completed_at && Carbon::parse($this->examSession->completed_at)->isFuture()) {
-            Log::info('Exam is not expired because completed_at is in the future (scheduled end time)');
+        // First check if extra time has been recently added
+        $extraTimeAdded = $this->examSession && $this->examSession->extra_time_minutes > 0 && 
+                          $this->examSession->extra_time_added_at && 
+                          Carbon::parse($this->examSession->extra_time_added_at)->isToday();
+                          
+        // If extra time was added recently, treat the exam as active regardless of completed_at
+        if ($extraTimeAdded && Carbon::now()->lt($this->examSession->adjustedCompletionTime)) {
+            Log::info('Exam is active due to recently added extra time', [
+                'session_id' => $this->examSession->id ?? null,
+                'extra_time_minutes' => $this->examSession->extra_time_minutes,
+                'extra_time_added_at' => $this->examSession->extra_time_added_at,
+                'adjustedCompletionTime' => $this->examSession->adjustedCompletionTime
+            ]);
             return false;
         }
         
-        // Check if the exam was explicitly marked as completed (not just setting the end time)
-        if ($this->examSession && $this->examSession->completed_at && !Carbon::parse($this->examSession->completed_at)->isFuture()) {
-            Log::info('Exam is expired because completed_at is in the past (was submitted)');
+        // Don't count an exam as expired if completed_at is in the future (meaning it's the scheduled end time)
+        if ($this->examSession && $this->examSession->completed_at && Carbon::parse($this->examSession->completed_at)->isFuture()) {
+            Log::info('Exam is not expired because completed_at is in the future');
+            return false;
+        }
+        
+        // Always use adjustedCompletionTime which includes any extra time
+        if ($this->examSession && $this->examSession->adjustedCompletionTime && Carbon::now()->lt($this->examSession->adjustedCompletionTime)) {
+            Log::info('Exam is not expired - still within adjusted completion time');
+            return false;
+        }
+        
+        // Check if the exam was explicitly marked as completed with score
+        if ($this->examSession && $this->examSession->completed_at && $this->examSession->score !== null) {
+            Log::info('Exam is expired because it was submitted with a score');
             return true;
         }
         
