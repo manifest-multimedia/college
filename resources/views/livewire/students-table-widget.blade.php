@@ -79,10 +79,7 @@
                         <i class="fas fa-file-export me-2"></i>
                         Export
                     </button>
-                    {{-- <a href="/generate" class="btn btn-sm btn-light-primary px-3 d-flex align-items-center">
-                        <i class="fas fa-id-card me-2"></i>
-                        Generate IDs
-                    </a> --}}
+                   
                 </div>
             </div>
         </div>
@@ -143,13 +140,9 @@
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item text-danger" href="#" 
-                                               onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this student?')) document.getElementById('delete-form-{{ $student->id }}').submit();">
+                                               wire:click.prevent="confirmStudentDeletion({{ $student->id }})">
                                                <i class="fas fa-trash-alt me-2"></i>Delete
                                             </a>
-                                            <form id="delete-form-{{ $student->id }}" action="/students/{{ $student->id }}" method="POST" style="display: none;">
-                                                @csrf
-                                                @method('DELETE')
-                                            </form>
                                         </li>
                                     </ul>
                                 </div>
@@ -175,4 +168,51 @@
             {{ $students->links() }}
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    @if($confirmingStudentDeletion)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Delete Student
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" wire:click="cancelStudentDeletion" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="fs-5 text-gray-800 mb-0">
+                        Are you sure you want to delete this student? This action cannot be undone.
+                    </p>
+                    <div class="alert alert-warning mt-4 mb-0">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle fs-4 me-3"></i>
+                            <div>
+                                <p class="mb-1">This will remove the student from the system including:</p>
+                                <ul class="mb-0 ps-3">
+                                    <li>Student academic records</li>
+                                    <li>Course registrations</li>
+                                    <li>Financial records</li>
+                                    <li>Associated documents</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" wire:click="cancelStudentDeletion">
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" wire:click="deleteStudent" wire:loading.attr="disabled">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        <span wire:loading.remove>Delete Student</span>
+                        <span wire:loading wire:target="deleteStudent">Deleting...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

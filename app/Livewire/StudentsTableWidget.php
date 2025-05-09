@@ -18,6 +18,8 @@ class StudentsTableWidget extends Component
     public $search = '';
     public $programFilter = '';
     public $cohortFilter = '';
+    public $confirmingStudentDeletion = false;
+    public $studentToDelete = null;
     
     // Reset pagination when filters change
     public function updatingSearch() 
@@ -67,6 +69,72 @@ class StudentsTableWidget extends Component
             Log::error('Error viewing student: ' . $e->getMessage());
             session()->flash('error', 'Unable to view student. Please try again.');
         }
+    }
+    
+    /**
+     * Show confirmation modal before deleting student
+     *
+     * @param int $studentId
+     * @return void
+     */
+    public function confirmStudentDeletion($studentId)
+    {
+        $this->confirmingStudentDeletion = true;
+        $this->studentToDelete = $studentId;
+    }
+    
+    /**
+     * Cancel student deletion
+     *
+     * @return void
+     */
+    public function cancelStudentDeletion()
+    {
+        $this->confirmingStudentDeletion = false;
+        $this->studentToDelete = null;
+    }
+    
+    /**
+     * Delete a student
+     *
+     * @return void
+     */
+    public function deleteStudent()
+    {
+        if (!$this->studentToDelete) {
+            return;
+        }
+        
+        try {
+            // Make a DELETE request to the students.destroy route
+            $response = app('router')->dispatch(
+                request()->create(
+                    route('students.destroy', $this->studentToDelete),
+                    'DELETE'
+                )
+            );
+            
+            $statusCode = $response->getStatusCode();
+            
+            if ($statusCode === 200) {
+                session()->flash('success', 'Student deleted successfully.');
+            } else {
+                session()->flash('error', 'Failed to delete student.');
+                Log::error('Failed to delete student', [
+                    'student_id' => $this->studentToDelete,
+                    'status_code' => $statusCode
+                ]);
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', 'An error occurred while deleting the student.');
+            Log::error('Error deleting student', [
+                'student_id' => $this->studentToDelete,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        $this->confirmingStudentDeletion = false;
+        $this->studentToDelete = null;
     }
     
     public function render()

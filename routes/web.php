@@ -47,11 +47,6 @@ Route::get('/tutor-assessment', function () {
     return redirect()->away("https://forms.gle/9EpmJY9fTDT6QaUw9");
 });
 
-// Generate Student IDs and redirect to dashboard
-Route::get('/generate', function () {
-    generateStudentID(); // Ensure this function exists
-    return redirect()->route('dashboard');
-})->name('generate-student-ids');
 
 // Redirect to Sign-Up page
 Route::get('/sign-up', function () {
@@ -138,6 +133,9 @@ Route::middleware([
         Route::get('/students/{student}/edit', function ($student) {
             return view('students.edit', ['studentId' => $student]);
         })->name('students.edit');
+        
+        Route::delete('/students/{student}', [\App\Http\Controllers\StudentController::class, 'destroy'])
+            ->name('students.destroy');
         
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
