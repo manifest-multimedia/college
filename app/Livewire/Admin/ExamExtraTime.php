@@ -22,7 +22,7 @@ class ExamExtraTime extends Component
     // Properties for filtering and selection
     public $exam_id = null;
     public $search = '';
-    public $extraTimeMinutes = 5; // Default of 5 minutes
+    public $extraTimeMinutes = 20; // Default of 5 minutes
     public $applyToAll = false;
     public $includeCompletedSessions = false; // Control whether to include completed sessions
     
@@ -181,7 +181,7 @@ class ExamExtraTime extends Component
             if ($sessionsUpdated > 0) {
                 $this->successMessage = $sessionsUpdated . ' exam session(s) were granted ' . $this->extraTimeMinutes . ' extra minute(s)';
                 $this->selectedSessions = [];
-                $this->extraTimeMinutes = 5; // Reset to default
+                $this->extraTimeMinutes = 20; // Reset to default
                 
                 // Log the action
                 Log::info('Extra time added', [
@@ -314,7 +314,7 @@ class ExamExtraTime extends Component
                 $this->successMessage = $message;
                 
                 // Reset extra time minutes to default
-                $this->extraTimeMinutes = 5;
+                $this->extraTimeMinutes = 20;
                 
                 // Log the action with additional reactivation info
                 Log::info('Extra time added from modal', [

@@ -34,26 +34,16 @@ class ExamTimer extends Component
                     // Use the actual time when the student started the exam
                     $startedAt = $session->started_at;
                     
-                    // Get the exam duration
-                    $exam = $session->exam;
-                    if ($exam) {
-                        // Calculate completion time based on when the student started + duration
-                        $durationMinutes = $exam->duration;
-                        $completedAt = Carbon::parse($startedAt)->addMinutes($durationMinutes);
-                        
-                        // Add any extra time that has been granted
-                        if ($session->extra_time_minutes > 0) {
-                            $completedAt = $completedAt->addMinutes($session->extra_time_minutes);
-                        }
-                        
-                        Log::info('ExamTimer using student session times', [
-                            'session_id' => $session->id, 
-                            'start_time' => $startedAt,
-                            'duration' => $durationMinutes,
-                            'extra_time' => $session->extra_time_minutes,
-                            'end_time' => $completedAt
-                        ]);
-                    }
+                    // Use the adjustedCompletionTime property which includes extra time
+                    $completedAt = $session->adjustedCompletionTime;
+                    
+                    Log::info('ExamTimer using session adjustedCompletionTime', [
+                        'session_id' => $session->id, 
+                        'start_time' => $startedAt,
+                        'extra_time' => $session->extra_time_minutes,
+                        'adjustedCompletionTime' => $completedAt,
+                        'has_extra_time' => $session->extra_time_minutes > 0 ? 'Yes' : 'No'
+                    ]);
                 }
             }
             
@@ -83,18 +73,20 @@ class ExamTimer extends Component
             if ($this->exam_session_id) {
                 $session = ExamSession::with('exam')->find($this->exam_session_id);
                 
-                if ($session && $session->exam) {
-                    $exam = $session->exam;
-                    // Use the actual time when the student started the exam
-                    $startTime = Carbon::parse($session->started_at);
-                    // Calculate end time with duration and extra time
-                    $endTime = $startTime->copy()->addMinutes($exam->duration + $session->extra_time_minutes);
+                if ($session) {
+                    // Use the adjustedCompletionTime accessor which handles all time calculations
+                    $endTime = $session->adjustedCompletionTime;
+                    
+                    // Update the completed_at property to reflect latest end time
+                    $this->completed_at = $endTime->toIso8601String();
                     
                     Log::info('Timer updated from server', [
                         'session_id' => $session->id,
-                        'start_time' => $startTime->toDateTimeString(),
+                        'start_time' => $session->started_at->toDateTimeString(),
                         'end_time' => $endTime->toDateTimeString(),
-                        'extra_time' => $session->extra_time_minutes
+                        'extra_time' => $session->extra_time_minutes,
+                        'extra_time_added_at' => $session->extra_time_added_at ? $session->extra_time_added_at->toDateTimeString() : 'N/A',
+                        'time_remaining_seconds' => $endTime->diffInSeconds(now(), false)
                     ]);
                     
                     return $endTime->toIso8601String();
@@ -124,26 +116,39 @@ class ExamTimer extends Component
                 $session = ExamSession::with('exam')->find($this->exam_session_id);
                 
                 if ($session && $session->exam) {
-                    // Calculate base end time from start time + duration
+                    // Calculate base end time from start time + duration (without extra time)
                     $startTime = Carbon::parse($session->started_at);
                     $baseEndTime = $startTime->copy()->addMinutes($session->exam->duration);
                     
+                    // Get the adjusted end time which includes extra time
+                    $adjustedEndTime = $session->adjustedCompletionTime;
+                    
                     // Check if extra time has been added
                     if ($session->extra_time_minutes > 0) {
-                        // Calculate new end time with extra time
-                        $newEndTime = $baseEndTime->copy()->addMinutes($session->extra_time_minutes);
+                        // Calculate how recently the extra time was added (if available)
+                        $recentlyAdded = false;
+                        $addedAgo = null;
+                        
+                        if ($session->extra_time_added_at) {
+                            $recentlyAdded = $session->extra_time_added_at->diffInMinutes(now()) < 5; // Added in last 5 minutes
+                            $addedAgo = $session->extra_time_added_at->diffForHumans();
+                        }
                         
                         Log::info('Extra time detected', [
                             'session_id' => $session->id,
                             'extra_minutes' => $session->extra_time_minutes,
                             'base_end_time' => $baseEndTime->toDateTimeString(),
-                            'new_end_time' => $newEndTime->toDateTimeString()
+                            'adjusted_end_time' => $adjustedEndTime->toDateTimeString(),
+                            'recently_added' => $recentlyAdded,
+                            'added_ago' => $addedAgo
                         ]);
                         
                         return [
                             'hasExtraTime' => true,
                             'extraMinutes' => $session->extra_time_minutes,
-                            'newEndTime' => $newEndTime->toIso8601String()
+                            'newEndTime' => $adjustedEndTime->toIso8601String(),
+                            'recentlyAdded' => $recentlyAdded,
+                            'addedAgo' => $addedAgo
                         ];
                     }
                 }
