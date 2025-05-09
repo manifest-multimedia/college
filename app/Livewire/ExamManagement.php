@@ -62,7 +62,7 @@ class ExamManagement extends Component
         Exam::create([
             'course_id' => $this->course_code,
             'user_id' => $this->user_id,
-            'exam_type' => $this->exam_type,
+            'type' => $this->exam_type, // Changed from 'exam_type' to 'type' to match DB column
             'duration' => $this->exam_duration,
             'password' => $this->regeneratePassword(),
             'questions_per_session' => $this->questions_per_session,
