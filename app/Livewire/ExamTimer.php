@@ -13,6 +13,8 @@ class ExamTimer extends Component
     public $started_at;
     public $completed_at;
     public $exam_session_id;
+    public $has_extra_time = false;
+    public $extra_time_minutes = 0;
 
     public function mount($startedAt = null, $completedAt = null, $examSessionId = null)
     {
@@ -36,6 +38,10 @@ class ExamTimer extends Component
                     
                     // Use the adjustedCompletionTime property which includes extra time
                     $completedAt = $session->adjustedCompletionTime;
+                    
+                    // Set extra time information
+                    $this->has_extra_time = $session->hasExtraTime;
+                    $this->extra_time_minutes = $session->extra_time_minutes;
                     
                     Log::info('ExamTimer using session adjustedCompletionTime', [
                         'session_id' => $session->id, 
@@ -80,13 +86,18 @@ class ExamTimer extends Component
                     // Update the completed_at property to reflect latest end time
                     $this->completed_at = $endTime->toIso8601String();
                     
+                    // Update extra time properties
+                    $this->has_extra_time = $session->hasExtraTime;
+                    $this->extra_time_minutes = $session->extra_time_minutes;
+                    
                     Log::info('Timer updated from server', [
                         'session_id' => $session->id,
                         'start_time' => $session->started_at->toDateTimeString(),
                         'end_time' => $endTime->toDateTimeString(),
                         'extra_time' => $session->extra_time_minutes,
                         'extra_time_added_at' => $session->extra_time_added_at ? $session->extra_time_added_at->toDateTimeString() : 'N/A',
-                        'time_remaining_seconds' => $endTime->diffInSeconds(now(), false)
+                        'time_remaining_seconds' => $endTime->diffInSeconds(now(), false),
+                        'is_active' => $endTime->gt(now())
                     ]);
                     
                     return $endTime->toIso8601String();
@@ -125,6 +136,10 @@ class ExamTimer extends Component
                     
                     // Check if extra time has been added
                     if ($session->extra_time_minutes > 0) {
+                        // Update component properties
+                        $this->has_extra_time = true;
+                        $this->extra_time_minutes = $session->extra_time_minutes;
+                        
                         // Calculate how recently the extra time was added (if available)
                         $recentlyAdded = false;
                         $addedAgo = null;
@@ -140,7 +155,8 @@ class ExamTimer extends Component
                             'base_end_time' => $baseEndTime->toDateTimeString(),
                             'adjusted_end_time' => $adjustedEndTime->toDateTimeString(),
                             'recently_added' => $recentlyAdded,
-                            'added_ago' => $addedAgo
+                            'added_ago' => $addedAgo,
+                            'is_active' => $adjustedEndTime->gt(now())
                         ]);
                         
                         return [
@@ -148,13 +164,17 @@ class ExamTimer extends Component
                             'extraMinutes' => $session->extra_time_minutes,
                             'newEndTime' => $adjustedEndTime->toIso8601String(),
                             'recentlyAdded' => $recentlyAdded,
-                            'addedAgo' => $addedAgo
+                            'addedAgo' => $addedAgo,
+                            'isActive' => $adjustedEndTime->gt(now())
                         ];
                     }
                 }
             }
             
             // No extra time or unable to find session
+            $this->has_extra_time = false;
+            $this->extra_time_minutes = 0;
+            
             return [
                 'hasExtraTime' => false
             ];
@@ -171,8 +191,49 @@ class ExamTimer extends Component
         }
     }
 
+    /**
+     * Check if the exam session is still active based on the adjusted completion time
+     */
+    public function isExamActive()
+    {
+        try {
+            if ($this->exam_session_id) {
+                $session = ExamSession::find($this->exam_session_id);
+                
+                if ($session) {
+                    // Check if the adjusted completion time is in the future
+                    $isActive = $session->adjustedCompletionTime->gt(now());
+                    
+                    Log::info('Exam active status checked', [
+                        'session_id' => $session->id,
+                        'is_active' => $isActive,
+                        'now' => now()->toDateTimeString(),
+                        'adjusted_end_time' => $session->adjustedCompletionTime->toDateTimeString()
+                    ]);
+                    
+                    return [
+                        'isActive' => $isActive,
+                        'hasExtraTime' => $session->extra_time_minutes > 0,
+                        'endTimeIso' => $session->adjustedCompletionTime->toIso8601String()
+                    ];
+                }
+            }
+            
+            return ['isActive' => false];
+        } catch (\Exception $e) {
+            Log::error('Error checking if exam is active', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return ['isActive' => false, 'error' => true];
+        }
+    }
+
     public function render()
     {
-        return view('livewire.exam-timer');
+        return view('livewire.exam-timer', [
+            'hasExtraTime' => $this->has_extra_time,
+            'extraTimeMinutes' => $this->extra_time_minutes
+        ]);
     }
 }
