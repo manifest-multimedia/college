@@ -62,7 +62,7 @@ class ExamManagement extends Component
         Exam::create([
             'course_id' => $this->course_code,
             'user_id' => $this->user_id,
-            'type' => $this->exam_type, // Changed from 'exam_type' to 'type' to match DB column
+            'type' => $this->exam_type,
             'duration' => $this->exam_duration,
             'password' => $this->regeneratePassword(),
             'questions_per_session' => $this->questions_per_session,
@@ -75,7 +75,7 @@ class ExamManagement extends Component
 
         // Flash success message and redirect
         session()->flash('message', 'Exam created successfully!');
-        return redirect()->route('e'); // Redirect to the list of exams
+        return redirect()->route('examcenter'); // Redirect to the list of exams
     }
 
     public function render()

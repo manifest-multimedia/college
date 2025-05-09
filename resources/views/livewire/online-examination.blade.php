@@ -1,4 +1,4 @@
-<div class="container my-5 {{ $examExpired ? 'exam-expired' : '' }}">
+<div class="container my-5 {{ $examExpired && !$canStillSubmit ? 'exam-expired' : '' }}">
   <div class="row">
       <!-- Main Exam Content -->
       <div class="mb-4 text-center">
@@ -20,13 +20,23 @@
                 You're being proctored by AI Sensei. Any suspecious activity will result in immediate disqualification. You're required to answer {{ count($questions) }} questions in total.
                 <br>
                 You have {{ $exam->duration }} minutes to complete this exam.
+                @if($hasExtraTime)
+                <br>
+                <strong>Additional time:</strong> You have been granted {{ $extraTimeMinutes }} extra minutes.
+                @endif
             </p>
             
-            @if ($examExpired)
+            @if ($examExpired && !$canStillSubmit)
                 <div class="alert alert-danger text-center mt-3">
                     <i class="bi bi-alarm me-2"></i>
                     <strong>Time's Up!</strong> Your exam submission time has elapsed.
                 </div>
+            @elseif ($examExpired && $canStillSubmit)
+                <div class="alert alert-warning text-center mt-3">
+                    <i class="bi bi-alarm me-2"></i>
+                    <strong>Regular Time Expired!</strong> You are now using your extra time allocation.
+                </div>
+                <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" :examSessionId="$examSession->id" />
             @else
                 <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" :examSessionId="$examSession->id" />
             @endif
@@ -45,15 +55,20 @@
                     {{ $student_name }}
                 </div>
     
-                @if ($examExpired)
+                @if ($examExpired && !$canStillSubmit)
                     <div class="alert alert-warning mb-4">
                         <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i> Exam Completed</h4>
                         <p>Your exam time has expired, and your answers have been submitted automatically. You can no longer modify your responses.</p>
                     </div>
+                @elseif ($examExpired && $canStillSubmit)
+                    <div class="alert alert-info mb-4">
+                        <h4 class="alert-heading"><i class="bi bi-clock-history me-2"></i> Extra Time Active</h4>
+                        <p>Regular exam time has expired, but you are allowed to continue answering questions using your extra time allocation.</p>
+                    </div>
                 @endif
                 
                 <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer">
-                    <form wire:submit.prevent="{{ $examExpired ? 'logout' : 'submitExam' }}">
+                    <form wire:submit.prevent="{{ $examExpired && !$canStillSubmit ? 'logout' : 'submitExam' }}">
                         <div class="questions-container">
                             @foreach ($questions as $index => $question)
                                 <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
@@ -62,11 +77,11 @@
                                     <ul class="list-unstyled">
                                         @foreach ($question['options'] as $option)
                                             <li>
-                                                <label class="form-check-label {{ $examExpired ? 'disabled' : '' }}">
+                                                <label class="form-check-label {{ $examExpired && !$canStillSubmit ? 'disabled' : '' }}">
                                                     <input type="radio" class="mx-2 form-check-input" 
                                                            name="responses[{{ $question['id'] }}]" 
                                                            value="{{ $option['id'] }}"
-                                                           @if($examExpired)
+                                                           @if($examExpired && !$canStillSubmit)
                                                                disabled
                                                            @else
                                                                wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})"
@@ -92,9 +107,13 @@
                     Questions Answered: <strong id="answeredCount">{{ count(array_filter($responses)) }}</strong> / {{ count($questions) }}
                 </p>
                 
-                @if ($examExpired)
+                @if ($examExpired && !$canStillSubmit)
                     <div class="alert alert-info mt-3 mb-0 py-2 small">
                         <i class="bi bi-info-circle me-1"></i> Exam has been submitted
+                    </div>
+                @elseif ($examExpired && $canStillSubmit)
+                    <div class="alert alert-warning mt-3 mb-0 py-2 small">
+                        <i class="bi bi-clock-history me-1"></i> Using extra time
                     </div>
                 @endif
             </div>
@@ -116,7 +135,7 @@
             </div>
             
             <div class="bg-white card-footer d-flex justify-content-center align-items-center">
-                @if ($examExpired)
+                @if ($examExpired && !$canStillSubmit)
                     <a href="{{ route('take-exam') }}" class="btn btn-secondary w-100">
                         <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
                     </a>
@@ -132,7 +151,7 @@
  @include('components.partials.styles.exam-styles')
  @include('components.partials.styles.scrollbar-styles')
  
- @if($examExpired)
+ @if($examExpired && !$canStillSubmit)
     <style>
         .form-check-label.disabled {
             color: #6c757d;
@@ -145,6 +164,12 @@
         
         .tracker-item.answered {
             opacity: 0.8;
+        }
+    </style>
+ @elseif ($examExpired && $canStillSubmit)
+    <style>
+        .question {
+            border-left: 3px solid #ffc107;
         }
     </style>
  @endif

@@ -181,8 +181,17 @@ class OnlineExamination extends Component
     public function storeResponse($questionId, $answer)
     {
         try {
-            // Don't process responses if exam is expired
-            if ($this->isExamExpired()) {
+            // Check if the exam is expired but has extra time
+            $hasExtraTime = $this->examSession && $this->examSession->extra_time_minutes > 0;
+            $isExpired = $this->isExamExpired();
+            
+            // Don't process responses if exam is expired and has no extra time
+            if ($isExpired && !$hasExtraTime) {
+                Log::info('Response not saved - exam is expired without extra time', [
+                    'session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                    'student_id' => $this->user->id
+                ]);
                 return;
             }
             
@@ -191,7 +200,9 @@ class OnlineExamination extends Component
                 'session_id' => $this->examSession->id,
                 'question_id' => $questionId,
                 'answer' => $answer,
-                'student_id' => $this->user->id
+                'student_id' => $this->user->id,
+                'exam_expired' => $isExpired,
+                'has_extra_time' => $hasExtraTime
             ]);
             
             // Create or update the response in the database
@@ -417,11 +428,20 @@ class OnlineExamination extends Component
         // Check if exam is expired
         $examExpired = $this->isExamExpired();
         
+        // Determine if student has extra time
+        $hasExtraTime = $this->examSession && $this->examSession->extra_time_minutes > 0;
+        
+        // If exam is expired but student has extra time, they can still submit responses
+        $canStillSubmit = $examExpired && $hasExtraTime && Carbon::now()->lt($this->examSession->adjustedCompletionTime);
+        
         return view('livewire.online-examination', [
             'questions' => $this->questions,
             'exam' => $this->exam,
             'remainingTime' => $this->remainingTime,
-            'examExpired' => $examExpired
+            'examExpired' => $examExpired,
+            'hasExtraTime' => $hasExtraTime,
+            'canStillSubmit' => $canStillSubmit,
+            'extraTimeMinutes' => $this->examSession ? $this->examSession->extra_time_minutes : 0
         ]);
     }
 }
