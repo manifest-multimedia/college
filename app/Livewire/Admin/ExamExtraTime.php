@@ -21,7 +21,6 @@ class ExamExtraTime extends Component
     
     // Properties for filtering and selection
     public $exam_id = null;
-    public $student_id = null;
     public $search = '';
     public $extraTimeMinutes = 5; // Default of 5 minutes
     public $applyToAll = false;
@@ -87,23 +86,12 @@ class ExamExtraTime extends Component
             // Reset selected sessions when apply to all changes
             $this->selectedSessions = [];
         }
-
-        if ($field === 'student_id') {
-            // Reset sessions and handle student ID change
-            $this->resetSessions();
-            
-            // Only look up student if we have at least 3 characters
-            if (strlen($this->student_id) >= 3) {
-                $this->findStudentByCollegeId($this->student_id);
-            }
-        }
     }
     
     public function resetSessions()
     {
         $this->selectedSessions = [];
         $this->search = '';
-        $this->student_id = null;
         $this->resetPage();
     }
     
@@ -117,27 +105,32 @@ class ExamExtraTime extends Component
         
         // Apply search filter if provided
         if ($this->search) {
-            // Filter by student info
-            $query->whereHas('student', function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%');
-            });
-        }
-        
-        // Filter by student ID if provided
-        if ($this->student_id) {
-            // Find the user_id associated with this student_id (college ID)
-            $userId = $this->findStudentByCollegeId($this->student_id);
+            // First try to find students matching the search criteria
+            $foundUserIds = [];
             
-            if ($userId) {
-                $query->where('student_id', $userId); // Filter by user ID, not student ID
-            } else {
-                // If no user found, make sure we return empty results
-                // by adding an impossible condition
-                $query->where('student_id', 0);
+            if (strlen($this->search) >= 3) {
+                // Try to find students by their college ID or name
+                $students = Student::where('student_id', 'like', '%' . $this->search . '%')
+                    ->orWhere('first_name', 'like', '%' . $this->search . '%')
+                    ->get();
                 
-                // Add error message to inform the user
-                $this->errorMessage = 'No user account found for student ID: ' . $this->student_id;
+                // Get associated user accounts by email
+                if ($students->isNotEmpty()) {
+                    $emails = $students->pluck('email')->toArray();
+                    $users = User::whereIn('email', $emails)->get();
+                    $foundUserIds = $users->pluck('id')->toArray();
+                }
+            }
+            
+            // Apply filter using found user IDs or direct user search
+            if (!empty($foundUserIds)) {
+                $query->whereIn('student_id', $foundUserIds);
+            } else {
+                // Fallback to direct search in user accounts
+                $query->whereHas('student', function($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('email', 'like', '%' . $this->search . '%');
+                });
             }
         }
         

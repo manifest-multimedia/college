@@ -58,22 +58,10 @@
                         <label for="search" class="form-label fw-semibold">Search Students</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" id="search" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Search by name, ID or email">
+                            <input type="text" id="search" wire:model.live.debounce.300ms="search" 
+                                class="form-control" placeholder="Search by student name, ID or email">
                         </div>
-                        <div class="form-text">Search for specific students to apply extra time</div>
-                    </div>
-                </div>
-                
-                <!-- Student ID search form -->
-                <div class="row mb-4">
-                    <div class="col-md-6 mb-3">
-                        <label for="student_id" class="form-label fw-semibold">Search by Student ID</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                            <input type="text" id="student_id" wire:model.live.debounce.300ms="student_id" 
-                                class="form-control" placeholder="Enter college student ID">
-                        </div>
-                        <div class="form-text">Enter the student's college ID (e.g., PNMTC/DA/RM/22/23/197)</div>
+                        <div class="form-text">Enter student college ID (e.g., PNMTC/DA/RM/22/23/197) or name</div>
                     </div>
                 </div>
                 
