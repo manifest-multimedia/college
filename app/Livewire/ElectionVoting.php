@@ -181,7 +181,7 @@ class ElectionVoting extends Component
             $this->dispatch('voteSubmitted');
             
             // Queue a redirect after a short delay to allow the thank you message to be displayed
-            return $this->redirect(route('election.thank-you', ['election' => $this->election->id, 'sessionId' => $this->sessionId]), navigate: true);
+            return $this->redirect('/public/elections/' . $this->election->id . '/thank-you?sessionId=' . $this->sessionId, navigate: true);
             
         } catch (\Exception $e) {
             DB::rollBack();
