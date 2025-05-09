@@ -8,11 +8,11 @@
 
     <form action="{{ route('file.upload') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        {{-- <div class="mb-3">
+        <div class="mb-3">
         
-            <label for="exam_id" class="form-label">Exam ID</label>
-            <input type="text" name="exam_id" id="exam_id" class="form-control" value="{{ $examId }}" required>
-        </div> --}}
+            {{-- <label for="exam_id" class="form-label">Exam ID</label> --}}
+            <input type="hidden" name="exam_id" id="exam_id" class="form-control" value="{{ $examId }}" required>
+        </div>
         <div class="mb-3">
             <label for="file" class="form-label">Choose File</label>
             <div class="input-group">
