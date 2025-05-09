@@ -98,4 +98,4 @@ To use Laravel Tinker first enter enter, then run commands within the console:
 - Run php artisan tinker 
 - Once we're inside tinker we can then run other commands instead of chaining commands 
 
-We'd use wire:model.live for fields that require realtime livewire updates such as filterable selection components.
+In laravel 12 we don't need to use @livewireScripts and @livewireStyles it's part of the system by default.

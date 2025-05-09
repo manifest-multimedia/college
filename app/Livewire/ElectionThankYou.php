@@ -33,6 +33,6 @@ class ElectionThankYou extends Component
     public function render()
     {
         return view('livewire.election-thank-you')
-            ->layout('components.dashboard.default',['title' => 'Thank You for Voting']);
+            ->layout('components.public.layout', ['title' => 'Thank You for Voting']);
     }
 }

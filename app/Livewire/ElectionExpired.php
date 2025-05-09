@@ -17,6 +17,6 @@ class ElectionExpired extends Component
     public function render()
     {
         return view('livewire.election-expired')
-            ->layout('components.dashboard.default', ['title' => 'Voting Session Expired']);
+            ->layout('components.public.layout', ['title' => 'Session Expired']);
     }
 }

@@ -1,96 +1,83 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card border-0 shadow-lg">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <h1 class="h3 mb-3">Student Voter Verification</h1>
-                        <h2 class="h4 text-primary mb-4">{{ $election->name }}</h2>
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-vote-yea me-2"></i>
+                            Election Voter Verification
+                        </h3>
                     </div>
-                    
-                    <div class="alert alert-info mb-4">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                <i class="fas fa-info-circle fa-2x"></i>
+                    <div class="card-body">
+                        @if ($verificationStep === 'id')
+                            <!-- Step 1: Student ID Verification -->
+                            <h5>Enter Student ID to Vote</h5>
+                            <p>Please enter your Student ID to verify your eligibility to vote in this election.</p>
+                            
+                            <form wire:submit.prevent="verify" class="mb-4">
+                                <div class="mb-3">
+                                    <label for="student_id" class="form-label">Student ID</label>
+                                    <input type="text" wire:model="student_id" class="form-control @error('student_id') is-invalid @enderror" id="student_id" placeholder="Enter your Student ID">
+                                    @error('student_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                @if ($errorMessage)
+                                    <div class="alert alert-danger">{{ $errorMessage }}</div>
+                                @endif
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check-circle me-1"></i> Verify ID
+                                </button>
+                            </form>
+                        @elseif ($verificationStep === 'security')
+                            <!-- Step 2: Security Question Verification -->
+                            <h5>Identity Verification</h5>
+                            <p>To verify your identity, please answer the following security question:</p>
+                            
+                            <div class="alert alert-info">
+                                <strong>Security Question:</strong> What is your {{ $securityQuestion }}?
                             </div>
-                            <div>
-                                <p class="mb-1"><strong>Important Information</strong></p>
-                                <p class="mb-0">Enter your Student ID to begin the voting process. Once verified, you'll have {{ $election->voting_session_duration }} minutes to complete your voting.</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    @if($errorMessage)
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            {{ $errorMessage }}
-                        </div>
-                    @endif
-                    
-                    @if($successMessage)
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle me-2"></i>
-                            {{ $successMessage }}
-                        </div>
-                    @endif
-                    
-                    <form wire:submit.prevent="verify">
-                        <div class="mb-4">
-                            <label for="student_id" class="form-label">Student ID</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-id-card"></i>
-                                </span>
-                                <input 
-                                    wire:model="student_id" 
-                                    type="text" 
-                                    id="student_id" 
-                                    class="form-control form-control-lg @error('student_id') is-invalid @enderror" 
-                                    placeholder="Enter your Student ID"
-                                    autocomplete="off" 
-                                    autofocus
-                                >
-                                @error('student_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
+                            
+                            <form wire:submit.prevent="verifySecurityQuestion" class="mb-4">
+                                <div class="mb-3">
+                                    <label for="securityAnswer" class="form-label">Your Answer</label>
+                                    <input type="text" wire:model="securityAnswer" class="form-control @error('securityAnswer') is-invalid @enderror" id="securityAnswer" placeholder="Enter your answer">
+                                    @error('securityAnswer')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                                @if ($errorMessage)
+                                    <div class="alert alert-danger">{{ $errorMessage }}</div>
+                                @endif
+                                
+                                <div class="d-flex">
+                                    <button type="button" wire:click="resetVerification" class="btn btn-secondary me-2">
+                                        <i class="fas fa-arrow-left me-1"></i> Back
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-check-circle me-1"></i> Verify
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
                         
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                Verify & Begin Voting
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <div class="card border-0 shadow mt-4">
-                <div class="card-body p-4">
-                    <h3 class="h5 mb-3">Election Details</h3>
-                    
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <p><strong>Start Time:</strong> {{ $election->start_time->format('M d, Y h:i A') }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>End Time:</strong> {{ $election->end_time->format('M d, Y h:i A') }}</p>
+                        <div class="mt-4">
+                            <h6>Election: {{ $election->title }}</h6>
+                            <p>
+                                <strong>Start:</strong> {{ $election->start_time->format('M j, Y g:i A') }}<br>
+                                <strong>End:</strong> {{ $election->end_time->format('M j, Y g:i A') }}
+                            </p>
                         </div>
                     </div>
-                    
-                    <div class="mb-0">
-                        <p class="mb-0"><strong>Status:</strong> 
-                            @if($election->isActive())
-                                <span class="badge bg-success">Active & In Progress</span>
-                            @elseif($election->hasEnded())
-                                <span class="badge bg-secondary">Completed</span>
-                            @elseif(!$election->is_active)
-                                <span class="badge bg-warning text-dark">Inactive</span>
-                            @else
-                                <span class="badge bg-info">Upcoming</span>
-                            @endif
-                        </p>
+                    <div class="card-footer bg-light">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            If you encounter any issues, please contact the election administrator.
+                        </small>
                     </div>
                 </div>
             </div>
@@ -104,6 +91,9 @@
         </div>
     </div>
 
+    <!-- Audio element for error alert (hidden) -->
+    <audio id="error-alert" src="{{ asset('sounds/error_alert.mp3') }}" preload="auto"></audio>
+
     <script>
         document.addEventListener('livewire:initialized', () => {
             @this.on('redirect', (event) => {
@@ -114,6 +104,15 @@
                 setTimeout(() => {
                     window.location.href = event.url;
                 }, 100);
+            });
+            
+            // Listen for verification failure events
+            @this.on('verification-failed', () => {
+                const audioElement = document.getElementById('error-alert');
+                if (audioElement) {
+                    audioElement.currentTime = 0;
+                    audioElement.play();
+                }
             });
         });
     </script>

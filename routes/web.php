@@ -494,3 +494,26 @@ Route::middleware([
     });
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| Public Election Routes
+|--------------------------------------------------------------------------
+|
+| These routes are publicly accessible without authentication
+| so students can vote without logging in to the system.
+|
+*/
+Route::prefix('public/elections')->name('public.elections.')->group(function () {
+    // View all active elections
+    Route::get('/', \App\Livewire\PublicElections::class)->name('index');
+    
+    // View single election details
+    Route::get('/{election}', \App\Livewire\PublicElectionDetails::class)->name('show');
+    
+    // Public verification and voting routes
+    Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('verify');
+    Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('vote');
+    Route::get('/{election}/thank-you/{sessionId?}', \App\Livewire\ElectionThankYou::class)->name('thank-you');
+    Route::get('/{election}/expired', \App\Livewire\ElectionExpired::class)->name('expired');
+});

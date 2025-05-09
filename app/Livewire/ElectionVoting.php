@@ -197,10 +197,7 @@ class ElectionVoting extends Component
     
     public function render()
     {
-        return view('livewire.election-voting', [
-            'positions' => $this->election->positions()->with(['candidates' => function($query) {
-                $query->where('is_active', true)->orderBy('display_order');
-            }])->orderBy('display_order')->get()
-        ])->layout('components.dashboard.default', ['title' => 'Vote in Election']);
+        return view('livewire.election-voting')
+            ->layout('components.public.layout', ['title' => 'Vote - ' . ($this->election->title ?? 'Election')]);
     }
 }
