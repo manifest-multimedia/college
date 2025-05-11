@@ -152,6 +152,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     {{-- @endcan --}}
+                    
+                    <!-- AI Sensei Assistant with File Capabilities -->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ route('communication.ai-sensei') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">AI Sensei Assistant</span>
+                            <span class="badge badge-light-primary">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
                 </div>
                 <!--end:Menu sub-->
             </div>

@@ -2,21 +2,25 @@
 
 namespace App\Services\Communication\Chat\OpenAI;
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
 
 class OpenAIFilesService
 {
     /**
-     * The API URL for OpenAI Files endpoints
+     * OpenAI API credentials and URLs
      */
-    protected string $apiUrl;
+    protected $apiKey;
+    protected $baseUrl;
     
     /**
-     * The API key for OpenAI
+     * Local storage configuration
      */
-    protected string $apiKey;
+    protected $diskName;
+    protected $storagePath;
     
     /**
      * Constructor
@@ -24,255 +28,278 @@ class OpenAIFilesService
     public function __construct()
     {
         $this->apiKey = Config::get('services.openai.key');
-        $this->apiUrl = Config::get('services.openai.files_url', 'https://api.openai.com/v1/files');
+        $this->baseUrl = Config::get('services.openai.base_url', 'https://api.openai.com/v1');
         
-        if (empty($this->apiKey)) {
-            throw new \Exception('OpenAI API key not configured');
-        }
+        $this->diskName = Config::get('services.openai.storage_disk', 'local');
+        $this->storagePath = Config::get('services.openai.storage_path', 'openai-files');
     }
     
     /**
-     * Upload a file to OpenAI Files API
+     * Upload a file to OpenAI
      * 
-     * @param string $filePath The path to the file
-     * @param string $purpose The purpose of the file (default: 'assistants')
+     * @param UploadedFile $file
+     * @param string $purpose
      * @return array
      */
-    public function uploadFile(string $filePath, string $purpose = 'assistants'): array
+    public function uploadFile(UploadedFile $file, string $purpose = 'assistants')
     {
         try {
-            // Check if file exists
-            if (!file_exists($filePath)) {
-                throw new \Exception("File not found: {$filePath}");
+            // Store the file locally first
+            $path = $file->storeAs(
+                $this->storagePath,
+                $file->hashName(),
+                $this->diskName
+            );
+            
+            if (!$path) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to store file locally',
+                ];
             }
             
-            // Create multipart request
-            $response = Http::withToken($this->apiKey)
-                ->attach('file', fopen($filePath, 'r'), basename($filePath))
-                ->post("{$this->apiUrl}", [
+            $fullPath = Storage::disk($this->diskName)->path($path);
+            
+            // Upload file to OpenAI
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+            ])->attach(
+                'file', file_get_contents($fullPath), $file->getClientOriginalName()
+            )->post("{$this->baseUrl}/files", [
+                'purpose' => $purpose,
+            ]);
+            
+            $responseData = $response->json();
+            
+            if ($response->successful()) {
+                // Save the file ID and other metadata to track in a local database if needed
+                $fileData = [
+                    'file_id' => $responseData['id'],
+                    'filename' => $file->getClientOriginalName(),
                     'purpose' => $purpose,
-                ]);
-            
-            if ($response->successful()) {
-                $result = $response->json();
-                Log::info('File uploaded to OpenAI', [
-                    'file_id' => $result['id'],
-                    'filename' => basename($filePath)
-                ]);
+                    'bytes' => $responseData['bytes'],
+                    'created_at' => $responseData['created_at'],
+                    'local_path' => $path,
+                ];
                 
                 return [
                     'success' => true,
-                    'file_id' => $result['id'],
-                    'filename' => $result['filename'],
-                    'purpose' => $result['purpose'],
-                    'created_at' => $result['created_at']
+                    'data' => $fileData,
                 ];
             } else {
-                $error = $response->json();
-                Log::error('OpenAI file upload failed', [
-                    'status' => $response->status(),
-                    'error' => $error
+                Log::error('OpenAI file upload error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'file' => $file->getClientOriginalName(),
                 ]);
                 
                 return [
                     'success' => false,
-                    'message' => $error['error']['message'] ?? 'Unknown error',
-                    'status' => $response->status()
+                    'message' => $responseData['error']['message'] ?? 'Unknown file upload error',
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('OpenAI file upload exception', [
+            Log::error('OpenAI file upload failed', [
                 'error' => $e->getMessage(),
-                'file' => basename($filePath)
+                'file' => $file->getClientOriginalName(),
             ]);
             
             return [
                 'success' => false,
-                'message' => 'File upload failed: ' . $e->getMessage()
+                'message' => 'File upload failed: ' . $e->getMessage(),
             ];
         }
     }
     
     /**
-     * Retrieve a list of files
+     * List all files
      * 
+     * @param string|null $purpose
      * @return array
      */
-    public function listFiles(): array
+    public function listFiles(?string $purpose = null)
     {
         try {
-            $response = Http::withToken($this->apiKey)
-                ->get($this->apiUrl);
+            $queryParams = [];
+            if ($purpose) {
+                $queryParams['purpose'] = $purpose;
+            }
+            
+            $queryString = !empty($queryParams) ? '?' . http_build_query($queryParams) : '';
+            
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+            ])->get("{$this->baseUrl}/files{$queryString}");
+            
+            $responseData = $response->json();
             
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'files' => $response->json()['data']
+                    'data' => $responseData['data'] ?? [],
                 ];
             } else {
-                $error = $response->json();
-                Log::error('OpenAI list files failed', [
-                    'status' => $response->status(),
-                    'error' => $error
+                Log::error('OpenAI file listing error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
                 ]);
                 
                 return [
                     'success' => false,
-                    'message' => $error['error']['message'] ?? 'Unknown error'
+                    'message' => $responseData['error']['message'] ?? 'Unknown file listing error',
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('OpenAI list files exception', [
-                'error' => $e->getMessage()
-            ]);
-            
-            return [
-                'success' => false,
-                'message' => 'Failed to list files: ' . $e->getMessage()
-            ];
-        }
-    }
-    
-    /**
-     * Retrieve a specific file by ID
-     * 
-     * @param string $fileId The file ID
-     * @return array
-     */
-    public function getFile(string $fileId): array
-    {
-        try {
-            $response = Http::withToken($this->apiKey)
-                ->get("{$this->apiUrl}/{$fileId}");
-            
-            if ($response->successful()) {
-                return [
-                    'success' => true,
-                    'file' => $response->json()
-                ];
-            } else {
-                $error = $response->json();
-                Log::error('OpenAI get file failed', [
-                    'status' => $response->status(),
-                    'error' => $error,
-                    'file_id' => $fileId
-                ]);
-                
-                return [
-                    'success' => false,
-                    'message' => $error['error']['message'] ?? 'Unknown error'
-                ];
-            }
-        } catch (\Exception $e) {
-            Log::error('OpenAI get file exception', [
+            Log::error('OpenAI file listing failed', [
                 'error' => $e->getMessage(),
-                'file_id' => $fileId
             ]);
             
             return [
                 'success' => false,
-                'message' => 'Failed to get file: ' . $e->getMessage()
+                'message' => 'File listing failed: ' . $e->getMessage(),
             ];
         }
-    }
-    
-    /**
-     * Retrieve a specific file by ID (alias for getFile for API naming consistency)
-     * 
-     * @param string $fileId The file ID
-     * @return array
-     */
-    public function retrieveFile(string $fileId): array
-    {
-        return $this->getFile($fileId);
     }
     
     /**
      * Delete a file from OpenAI
      * 
-     * @param string $fileId The file ID
+     * @param string $fileId
+     * @param bool $deleteLocal
+     * @param string|null $localPath
      * @return array
      */
-    public function deleteFile(string $fileId): array
+    public function deleteFile(string $fileId, bool $deleteLocal = true, ?string $localPath = null)
     {
         try {
-            $response = Http::withToken($this->apiKey)
-                ->delete("{$this->apiUrl}/{$fileId}");
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+            ])->delete("{$this->baseUrl}/files/{$fileId}");
+            
+            $responseData = $response->json();
             
             if ($response->successful()) {
-                Log::info('OpenAI file deleted', [
-                    'file_id' => $fileId
-                ]);
+                // Delete local file if requested and path is provided
+                if ($deleteLocal && $localPath) {
+                    if (Storage::disk($this->diskName)->exists($localPath)) {
+                        Storage::disk($this->diskName)->delete($localPath);
+                    }
+                }
                 
                 return [
                     'success' => true,
-                    'deleted' => $response->json()['deleted']
+                    'data' => $responseData,
                 ];
             } else {
-                $error = $response->json();
-                Log::error('OpenAI delete file failed', [
-                    'status' => $response->status(),
-                    'error' => $error,
-                    'file_id' => $fileId
+                Log::error('OpenAI file deletion error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'file_id' => $fileId,
                 ]);
                 
                 return [
                     'success' => false,
-                    'message' => $error['error']['message'] ?? 'Unknown error'
+                    'message' => $responseData['error']['message'] ?? 'Unknown file deletion error',
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('OpenAI delete file exception', [
+            Log::error('OpenAI file deletion failed', [
                 'error' => $e->getMessage(),
-                'file_id' => $fileId
+                'file_id' => $fileId,
             ]);
             
             return [
                 'success' => false,
-                'message' => 'Failed to delete file: ' . $e->getMessage()
+                'message' => 'File deletion failed: ' . $e->getMessage(),
             ];
         }
     }
     
     /**
-     * Retrieve file content
+     * Retrieve file information from OpenAI
      * 
-     * @param string $fileId The file ID
+     * @param string $fileId
      * @return array
      */
-    public function retrieveFileContent(string $fileId): array
+    public function getFile(string $fileId)
     {
         try {
-            $response = Http::withToken($this->apiKey)
-                ->get("{$this->apiUrl}/{$fileId}/content");
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+            ])->get("{$this->baseUrl}/files/{$fileId}");
+            
+            $responseData = $response->json();
             
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'content' => $response->body()
+                    'data' => $responseData,
                 ];
             } else {
-                $error = $response->json();
-                Log::error('OpenAI retrieve file content failed', [
-                    'status' => $response->status(),
-                    'error' => $error,
-                    'file_id' => $fileId
+                Log::error('OpenAI file retrieval error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'file_id' => $fileId,
                 ]);
                 
                 return [
                     'success' => false,
-                    'message' => $error['error']['message'] ?? 'Unknown error'
+                    'message' => $responseData['error']['message'] ?? 'Unknown file retrieval error',
                 ];
             }
         } catch (\Exception $e) {
-            Log::error('OpenAI retrieve file content exception', [
+            Log::error('OpenAI file retrieval failed', [
                 'error' => $e->getMessage(),
-                'file_id' => $fileId
+                'file_id' => $fileId,
             ]);
             
             return [
                 'success' => false,
-                'message' => 'Failed to retrieve file content: ' . $e->getMessage()
+                'message' => 'File retrieval failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+    
+    /**
+     * Retrieve file content from OpenAI
+     * 
+     * @param string $fileId
+     * @return array
+     */
+    public function getFileContent(string $fileId)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+            ])->get("{$this->baseUrl}/files/{$fileId}/content");
+            
+            // For file content, check if the response is successful but handle the content as raw data
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->body(),
+                ];
+            } else {
+                $responseData = $response->json();
+                Log::error('OpenAI file content retrieval error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'file_id' => $fileId,
+                ]);
+                
+                return [
+                    'success' => false,
+                    'message' => $responseData['error']['message'] ?? 'Unknown file content retrieval error',
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI file content retrieval failed', [
+                'error' => $e->getMessage(),
+                'file_id' => $fileId,
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'File content retrieval failed: ' . $e->getMessage(),
             ];
         }
     }

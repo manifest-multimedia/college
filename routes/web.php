@@ -432,6 +432,7 @@ Route::middleware([
         Route::get('/sms', \App\Livewire\Communication\SendSms::class)->name('communication.sms');
         Route::get('/email', \App\Livewire\Communication\SendEmail::class)->name('communication.email');
         Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
+        Route::get('/ai-sensei', \App\Livewire\Communication\AISenseiChat::class)->name('communication.ai-sensei');
         
         // SMS Contact Groups and Contacts Management
         Route::get('/contact-groups', \App\Livewire\Communication\ContactGroups::class)->name('communication.contact-groups');

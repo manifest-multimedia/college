@@ -5,7 +5,6 @@ namespace App\Events\Communication;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -15,22 +14,26 @@ class DocumentUploadedEvent implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * The session ID for the chat.
+     * The session ID
+     *
+     * @var string
      */
     public string $sessionId;
 
     /**
-     * The message data containing document information.
+     * Document details
+     *
+     * @var array
      */
-    public array $message;
+    public array $document;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(string $sessionId, array $message)
+    public function __construct(string $sessionId, array $document)
     {
         $this->sessionId = $sessionId;
-        $this->message = $message;
+        $this->document = $document;
     }
 
     /**
@@ -41,10 +44,10 @@ class DocumentUploadedEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('chat.' . $this->sessionId),
+            new PresenceChannel('chat.' . $this->sessionId),
         ];
     }
-    
+
     /**
      * The event's broadcast name.
      */
