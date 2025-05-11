@@ -433,6 +433,11 @@ Route::middleware([
         Route::get('/email', \App\Livewire\Communication\SendEmail::class)->name('communication.email');
         Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
         
+        // SMS Contact Groups and Contacts Management
+        Route::get('/contact-groups', \App\Livewire\Communication\ContactGroups::class)->name('communication.contact-groups');
+        Route::get('/contacts/{groupId?}', \App\Livewire\Communication\Contacts::class)->name('communication.contacts');
+        Route::get('/sms-logs', \App\Livewire\Communication\SmsLogs::class)->name('communication.sms-logs');
+        
         // Document preview and download routes
         Route::get('/chat/document/preview/{path}', [\App\Http\Controllers\Communication\ChatDocumentPreviewController::class, 'preview'])
             ->name('chat.document.preview')

@@ -47,6 +47,11 @@ return [
         'from' => env('TWILIO_FROM_NUMBER'),
     ],
 
+    'nalo' => [
+        'api_key' => env('NALO_API_KEY'),
+        'sender_id' => env('NALO_SENDER_ID', 'PNMTC'),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'url' => env('OPENAI_API_URL', 'https://api.openai.com/v1/chat/completions'),

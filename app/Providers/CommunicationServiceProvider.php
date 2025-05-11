@@ -5,11 +5,13 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Services\Communication\SMS\SmsServiceInterface;
 use App\Services\Communication\SMS\TwilioSmsService;
+use App\Services\Communication\SMS\NaloSmsService;
 use App\Services\Communication\Email\EmailServiceInterface;
 use App\Services\Communication\Email\LaravelMailService;
 use App\Services\Communication\Chat\ChatServiceInterface;
 use App\Services\Communication\Chat\OpenAIChatService;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
+use Illuminate\Support\Facades\Config;
 
 class CommunicationServiceProvider extends ServiceProvider
 {
@@ -20,8 +22,13 @@ class CommunicationServiceProvider extends ServiceProvider
     {
         // Register SMS services
         $this->app->bind(SmsServiceInterface::class, function ($app) {
-            // You can switch the implementation based on configuration
-            return new TwilioSmsService();
+            // Get the default SMS provider from configuration
+            $defaultProvider = Config::get('communication.default_sms_provider', 'twilio');
+            
+            return match ($defaultProvider) {
+                'nalo' => new NaloSmsService(),
+                default => new TwilioSmsService(),
+            };
         });
 
         // Register Email services
