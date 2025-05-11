@@ -241,11 +241,13 @@
                                     <th class="fw-bold">Full Message:</th>
                                     <td>{{ $selectedLog->message }}</td>
                                 </tr>
-                                @if(is_array($selectedLog->response_data))
+                                @if(is_array($selectedLog->response_data) || is_object($selectedLog->response_data))
                                 <tr>
                                     <th class="fw-bold">Response Data:</th>
                                     <td>
-                                        <pre class="bg-light p-3 rounded">{{ json_encode($selectedLog->response_data, JSON_PRETTY_PRINT) }}</pre>
+                                        <div class="bg-light p-3 rounded" style="max-width: 100%; overflow-x: auto;">
+                                            <pre style="white-space: pre-wrap; word-break: break-word; margin: 0;">{{ json_encode($selectedLog->response_data, JSON_PRETTY_PRINT) }}</pre>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endif
