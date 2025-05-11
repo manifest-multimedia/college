@@ -83,6 +83,20 @@ class SmsLogs extends Component
     {
         $this->resetPage();
     }
+
+    public function delete($id){
+        try {
+            $log = SmsLog::findOrFail($id);
+            $log->delete();
+            session()->flash('success', 'SMS log deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to delete SMS log', [
+                'error' => $e->getMessage(),
+                'id' => $id
+            ]);
+            session()->flash('error', 'Failed to delete SMS log: ' . $e->getMessage());
+        }
+    }
     
     public function render()
     {

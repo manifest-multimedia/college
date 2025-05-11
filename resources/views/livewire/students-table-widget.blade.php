@@ -215,4 +215,76 @@
         </div>
     </div>
     @endif
+
+    <!-- Export Format Selection Modal -->
+    @if($showingExportModal)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-file-export me-2"></i>
+                        Export Students
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" wire:click="cancelExport" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="fs-5 text-gray-800 mb-4">
+                        Please select your preferred export format:
+                    </p>
+                    
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Excel Option -->
+                        <div class="form-check form-check-custom form-check-solid">
+                            <input class="form-check-input" type="radio" value="excel" id="export_excel" wire:model.live="exportFormat">
+                            <label class="form-check-label d-flex align-items-center" for="export_excel">
+                                <span class="symbol symbol-30px me-3">
+                                    <i class="fas fa-file-excel text-success fs-1"></i>
+                                </span>
+                                <div>
+                                    <span class="fw-bold d-block">Excel (.xlsx)</span>
+                                    <span class="text-muted">Export to Microsoft Excel spreadsheet format</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <!-- PDF Option -->
+                        <div class="form-check form-check-custom form-check-solid">
+                            <input class="form-check-input" type="radio" value="pdf" id="export_pdf" wire:model="exportFormat">
+                            <label class="form-check-label d-flex align-items-center" for="export_pdf">
+                                <span class="symbol symbol-30px me-3">
+                                    <i class="fas fa-file-pdf text-danger fs-1"></i>
+                                </span>
+                                <div>
+                                    <span class="fw-bold d-block">PDF (.pdf)</span>
+                                    <span class="text-muted">Export to Portable Document Format</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4 mb-0">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle fs-4 me-3"></i>
+                            <div>
+                                <p class="mb-0">The export will include {{ $studentsTotal }} student records based on your current filters.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" wire:click="cancelExport">
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" wire:click="processExport" wire:loading.attr="disabled" @if(!$exportFormat) disabled @endif>
+                        <i class="fas fa-file-export me-1"></i>
+                        <span wire:loading.remove>Export</span>
+                        <span wire:loading wire:target="processExport">Exporting...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

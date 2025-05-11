@@ -8,6 +8,9 @@ use App\Models\CollegeClass;
 use App\Models\Cohort;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\StudentExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StudentsTableWidget extends Component
 {
@@ -20,6 +23,8 @@ class StudentsTableWidget extends Component
     public $cohortFilter = '';
     public $confirmingStudentDeletion = false;
     public $studentToDelete = null;
+    public $showingExportModal = false;
+    public $exportFormat = '';
     
     // Reset pagination when filters change
     public function updatingSearch() 
@@ -35,6 +40,80 @@ class StudentsTableWidget extends Component
     public function updatingCohortFilter()
     {
         $this->resetPage();
+    }
+    
+    /**
+     * Show export format selection modal
+     *
+     * @return void
+     */
+    public function exportStudents()
+    {
+        $this->showingExportModal = true;
+    }
+    
+    /**
+     * Cancel export process
+     *
+     * @return void
+     */
+    public function cancelExport()
+    {
+        $this->showingExportModal = false;
+        $this->exportFormat = '';
+    }
+    
+    /**
+     * Process student export based on selected format
+     *
+     * @return mixed
+     */
+    public function processExport()
+    {
+        try {
+            if ($this->exportFormat == 'excel') {
+                return Excel::download(
+                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter),
+                    'students_export_' . date('Y-m-d_H-i-s') . '.xlsx'
+                );
+            } elseif ($this->exportFormat == 'pdf') {
+                // Get filtered students data
+                $students = Student::query()
+                    ->when($this->search, function($query) {
+                        return $query->where(function($q) {
+                            $q->where('student_id', 'like', '%' . $this->search . '%')
+                              ->orWhere('first_name', 'like', '%' . $this->search . '%')
+                              ->orWhere('last_name', 'like', '%' . $this->search . '%')
+                              ->orWhere('email', 'like', '%' . $this->search . '%');
+                        });
+                    })
+                    ->when($this->programFilter, function($query) {
+                        return $query->where('college_class_id', $this->programFilter);
+                    })
+                    ->when($this->cohortFilter, function($query) {
+                        return $query->where('cohort_id', $this->cohortFilter);
+                    })
+                    ->with(['collegeClass', 'cohort'])
+                    ->get();
+
+                $pdf = PDF::loadView('exports.students-pdf', [
+                    'students' => $students
+                ]);
+                
+                return response()->streamDownload(function() use ($pdf) {
+                    echo $pdf->output();
+                }, 'students_export_' . date('Y-m-d_H-i-s') . '.pdf');
+            } else {
+                session()->flash('error', 'Please select a valid export format.');
+                $this->showingExportModal = false;
+                return null;
+            }
+        } catch (\Exception $e) {
+            Log::error('Export error: ' . $e->getMessage());
+            session()->flash('error', 'An error occurred while exporting students. Please try again.');
+            $this->showingExportModal = false;
+            return null;
+        }
     }
     
     /**

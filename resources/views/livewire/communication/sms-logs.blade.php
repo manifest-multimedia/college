@@ -140,6 +140,18 @@
                                                 <span class="path3"></span>
                                             </i>
                                         </button>
+                                        {{-- Delete --}}
+                                        
+                                        @if(auth()->user()->hasRole('System'))
+                                            <button type="button" wire:click="delete({{ $log->id }})" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" title="Delete">
+                                                <i class="ki-duotone ki-trash fs-3">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                    <span class="path3"></span>
+                                                </i>
+                                            </button>
+                                        @endif
+
                                         @if($log->status == 'failed' || $log->status == 'pending')
                                             <button type="button" wire:click="resendSms({{ $log->id }})" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" title="Resend">
                                                 <i class="ki-duotone ki-send fs-3">
