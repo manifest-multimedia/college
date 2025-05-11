@@ -10,6 +10,8 @@ return [
     | messages. You may change this to any of the providers defined in the
     | "providers" array below.
     |
+    | Available options: 'twilio', 'manifest-digital', 'nalo'
+    |
     */
     'default_sms_provider' => env('SMS_PROVIDER', 'twilio'),
 
@@ -35,4 +37,19 @@ return [
     |
     */
     'log_retention_days' => env('SMS_LOG_RETENTION_DAYS', 90),
+
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Providers Display Names
+    |--------------------------------------------------------------------------
+    |
+    | This maps the internal provider keys to user-friendly display names
+    | shown in the UI.
+    |
+    */
+    'provider_display_names' => [
+        'twilio' => 'Twilio',
+        'nalo' => 'Manifest Digital',
+        'manifest-digital' => 'Manifest Digital',
+    ],
 ];

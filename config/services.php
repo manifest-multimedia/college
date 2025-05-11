@@ -49,7 +49,10 @@ return [
 
     'nalo' => [
         'api_key' => env('NALO_API_KEY'),
+        'username' => env('NALO_USERNAME'),
+        'password' => env('NALO_PASSWORD'),
         'sender_id' => env('NALO_SENDER_ID', 'PNMTC'),
+        'reseller_prefix' => env('NALO_RESELLER_PREFIX', 'Resl_Nalo'),
     ],
 
     'openai' => [

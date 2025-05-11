@@ -26,7 +26,7 @@ class CommunicationServiceProvider extends ServiceProvider
             $defaultProvider = Config::get('communication.default_sms_provider', 'twilio');
             
             return match ($defaultProvider) {
-                'nalo' => new NaloSmsService(),
+                'manifest-digital', 'nalo' => new NaloSmsService(), // Allow both names for backward compatibility
                 default => new TwilioSmsService(),
             };
         });
