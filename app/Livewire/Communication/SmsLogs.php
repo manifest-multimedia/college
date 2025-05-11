@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Log;
 class SmsLogs extends Component
 {
     use WithPagination;
+
+    // pagination theme = bootstrap
+    protected $paginationTheme = 'bootstrap';
+    
     
     public $searchTerm = '';
     public $statusFilter = '';

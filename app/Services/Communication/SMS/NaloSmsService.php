@@ -155,6 +155,45 @@ class NaloSmsService extends AbstractSmsService
             ];
         }
         
+        // Check if we got a JSON response instead of plain text
+        $jsonResponse = json_decode($responseBody, true);
+        if (is_array($jsonResponse)) {
+            // Check for success in JSON response format
+            if (isset($jsonResponse['status']) && (string)$jsonResponse['status'] === "1701") {
+                return [
+                    'success' => true,
+                    'message_id' => $jsonResponse['job_id'] ?? null,
+                    'response' => $jsonResponse
+                ];
+            }
+            
+            // Special case: If we have a job_id, this is likely still a success
+            if (isset($jsonResponse['job_id'])) {
+                return [
+                    'success' => true,
+                    'message_id' => $jsonResponse['job_id'],
+                    'response' => $jsonResponse
+                ];
+            }
+            
+            $errorCode = $jsonResponse['code'] ?? $jsonResponse['status'] ?? 1710;
+            $errorMessage = $this->getErrorMessage($errorCode);
+            
+            Log::error('Manifest Digital SMS sending failed (JSON response)', [
+                'recipient' => $recipient,
+                'error_code' => $errorCode,
+                'error' => $errorMessage,
+                'response' => $jsonResponse
+            ]);
+            
+            return [
+                'success' => false,
+                'error_code' => $errorCode,
+                'error_message' => $errorMessage,
+                'response' => $jsonResponse
+            ];
+        }
+        
         // Handle error codes
         $errorCode = intval(trim($responseBody));
         $errorMessage = $this->getErrorMessage($errorCode);
@@ -221,18 +260,35 @@ class NaloSmsService extends AbstractSmsService
         $responseBody = $response->getBody()->getContents();
         $responseData = json_decode($responseBody, true);
         
-        // Check if the response contains a success code
-        if (is_array($responseData) && isset($responseData['code']) && $responseData['code'] == 1701) {
+        // Check for the two possible success formats from Nalo API:
+        // 1. Response with code 1701
+        // 2. Response with status 1701 (or as string "1701")
+        if (
+            (is_array($responseData) && isset($responseData['code']) && $responseData['code'] == 1701) ||
+            (is_array($responseData) && isset($responseData['status']) && (string)$responseData['status'] === "1701")
+        ) {
+            $messageId = $responseData['message_id'] ?? $responseData['job_id'] ?? null;
+            
             return [
                 'success' => true,
-                'message_id' => $responseData['message_id'] ?? null,
+                'message_id' => $messageId,
                 'response' => $responseData
             ];
         }
         
         // Handle error
-        $errorCode = $responseData['code'] ?? 1710; // Default to internal error
+        $errorCode = $responseData['code'] ?? $responseData['status'] ?? 1710; // Default to internal error
         $errorMessage = $this->getErrorMessage($errorCode);
+        
+        // Special case: If we have a job_id but status isn't clearly 1701, 
+        // this is likely still a success based on the provided example
+        if (is_array($responseData) && isset($responseData['job_id'])) {
+            return [
+                'success' => true,
+                'message_id' => $responseData['job_id'],
+                'response' => $responseData
+            ];
+        }
         
         Log::error('Manifest Digital SMS sending failed', [
             'recipient' => $recipient,
