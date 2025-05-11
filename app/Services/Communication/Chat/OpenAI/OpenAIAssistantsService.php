@@ -801,6 +801,124 @@ class OpenAIAssistantsService
     }
     
     /**
+     * List runs for a thread
+     * 
+     * @param string $threadId
+     * @param int $limit
+     * @param string|null $order
+     * @param string|null $after
+     * @param string|null $before
+     * @return array
+     */
+    public function listRuns(
+        string $threadId,
+        int $limit = 20,
+        ?string $order = null,
+        ?string $after = null,
+        ?string $before = null
+    ) {
+        try {
+            $queryParams = ['limit' => $limit];
+            
+            if ($order) {
+                $queryParams['order'] = $order;
+            }
+            
+            if ($after) {
+                $queryParams['after'] = $after;
+            }
+            
+            if ($before) {
+                $queryParams['before'] = $before;
+            }
+            
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->get("{$this->baseUrl}/threads/{$threadId}/runs?" . http_build_query($queryParams));
+            
+            $responseData = $response->json();
+            
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $responseData,
+                ];
+            } else {
+                Log::error('OpenAI thread runs listing error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'thread_id' => $threadId,
+                ]);
+                
+                return [
+                    'success' => false,
+                    'message' => $responseData['error']['message'] ?? 'Unknown thread runs listing error',
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI thread runs listing failed', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId,
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'Thread runs listing failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Cancel a run
+     * 
+     * @param string $threadId
+     * @param string $runId
+     * @return array
+     */
+    public function cancelRun(string $threadId, string $runId)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->post("{$this->baseUrl}/threads/{$threadId}/runs/{$runId}/cancel");
+            
+            $responseData = $response->json();
+            
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $responseData,
+                ];
+            } else {
+                Log::error('OpenAI run cancellation error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'thread_id' => $threadId,
+                    'run_id' => $runId,
+                ]);
+                
+                return [
+                    'success' => false,
+                    'message' => $responseData['error']['message'] ?? 'Unknown run cancellation error',
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI run cancellation failed', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId,
+                'run_id' => $runId,
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'Run cancellation failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+    
+    /**
      * Attach a file to a thread
      * 
      * @param string $threadId

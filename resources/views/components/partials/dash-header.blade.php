@@ -1,5 +1,5 @@
-
 <body id="kt_body" class="header-tablet-and-mobile-fixed aside-enabled">
+    @stack('styles')
     <!--begin::Theme mode setup on page load-->
     <script>
         var defaultThemeMode = "light";
