@@ -11,6 +11,7 @@ use App\Models\CollegeClass;
 use App\Models\Year;
 use App\Models\Semester;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class ExamManagement extends Component
 {
@@ -25,7 +26,6 @@ class ExamManagement extends Component
     public $user_id;
     public $questions_per_session;
 
-
     // Validation rules for form input
     protected $rules = [
         'course_code' => 'required|string|max:255',
@@ -35,17 +35,14 @@ class ExamManagement extends Component
     ];
 
     protected $messages = [
-
         'course_code.required' => 'Please select a course.',
         'exam_type.required' => 'Please select an exam type.',
         'exam_duration.required' => 'Please enter an exam duration.',
         'exam_duration.min' => 'Exam duration must be at least 1 minute.',
-
     ];
 
     public function mount()
     {
-
         if (Auth::user()->role != 'Super Admin') {
             $this->user_id = Auth::user()->id;
         }
@@ -53,6 +50,7 @@ class ExamManagement extends Component
         // Automatically generate an exam password
         $this->exam_password = $this->regeneratePassword();
     }
+
     // Handle form submission to create the exam
     public function createExam()
     {
@@ -70,8 +68,6 @@ class ExamManagement extends Component
         ]);
 
         $this->reset(['course_code', 'exam_type', 'exam_duration', 'exam_password']);
-
-
 
         // Flash success message and redirect
         session()->flash('message', 'Exam created successfully!');
@@ -101,13 +97,31 @@ class ExamManagement extends Component
         $years = Year::all();
         $semesters = Semester::all();
 
+        // Get staff users using Spatie's role system
+        // This queries users who have any role except Student and Parent
+        $staffUsers = User::whereHas('roles', function($query) {
+                $query->whereNotIn('name', ['Student', 'Parent']);
+            })
+            ->orWhere(function($query) {
+                // Also include users with 'role' column (for backward compatibility)
+                $query->whereNotIn('role', ['Student', 'Parent'])
+                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+            })
+            ->orderBy('name', 'asc')
+            ->get();
+
+        // Log the count of staff users for monitoring
+        Log::info('Staff users loaded for exam management', [
+            'count' => $staffUsers->count(),
+            'user_id' => Auth::id()
+        ]);
+
         return view('livewire.exam-management', [
             'courses' => $courses,
             'classes' => $classes,
             'years' => $years,
             'semesters' => $semesters,
-            'users' => User::all(),
-
+            'users' => $staffUsers,
         ]);
     }
 

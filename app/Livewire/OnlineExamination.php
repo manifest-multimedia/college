@@ -310,6 +310,65 @@ class OnlineExamination extends Component
     }
 
     /**
+     * Get remaining time for the exam (ISO format)
+     * This is a backward-compatibility method for the deprecated timer system
+     * It will be removed once the new timer system is fully integrated across all environments
+     * 
+     * @return string ISO 8601 format datetime string
+     * @deprecated Since May 12, 2025 - Use the new ExamTimerService instead
+     */
+    public function getRemainingTime()
+    {
+        try {
+            // Log deprecated method call for monitoring
+            Log::info('Deprecated getRemainingTime method called', [
+                'session_id' => $this->examSession->id ?? null,
+                'student_id' => $this->student->student_id ?? null,
+                'exam_id' => $this->exam->id ?? null
+            ]);
+            
+            // Get the actual start time from when the student started the exam
+            $startedAt = Carbon::parse($this->examSession->started_at);
+            
+            // Calculate the expected completion time based on the exam duration
+            $examDuration = (int) $this->exam->duration;
+            $extraTime = (int) $this->examSession->extra_time_minutes;
+            $totalDuration = $examDuration + $extraTime;
+            
+            // Calculate proper end time based on the actual start time 
+            $adjustedCompletionTime = $startedAt->copy()->addMinutes($totalDuration);
+            
+            // Set the values for the view
+            $this->timerStart = $startedAt;
+            $this->timerFinish = $adjustedCompletionTime;
+            $this->startedAt = $startedAt->format('l, jS F Y h:i A');
+            $this->estimatedEndTime = $adjustedCompletionTime->format('l, jS F Y h:i A');
+
+            // Calculate remaining time in seconds
+            $currentTime = Carbon::now();
+            $remainingSeconds = 0;
+            
+            if ($currentTime->lt($adjustedCompletionTime)) {
+                $remainingSeconds = $currentTime->diffInSeconds($adjustedCompletionTime);
+            }
+
+            // Convert to hours, minutes, seconds
+            $this->hours = floor($remainingSeconds / 3600);
+            $this->minutes = floor(($remainingSeconds % 3600) / 60);
+            $this->seconds = $remainingSeconds % 60;
+
+            return $adjustedCompletionTime->toIso8601String();
+        } catch (\Exception $e) {
+            Log::error('Error calculating remaining time', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return now()->addHour()->toIso8601String();
+        }
+    }
+
+    /**
      * Handle automatic exam submission when time expires
      * This method is triggered by the new timer component via Livewire event
      */
