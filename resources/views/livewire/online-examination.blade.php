@@ -20,25 +20,21 @@
                 You're being proctored by AI Sensei. Any suspecious activity will result in immediate disqualification. You're required to answer {{ count($questions) }} questions in total.
                 <br>
                 You have {{ $exam->duration }} minutes to complete this exam.
-                @if($hasExtraTime)
-                <br>
-                <strong>Additional time:</strong> You have been granted {{ $extraTimeMinutes }} extra minutes.
-                @endif
+             
             </p>
             
-            @if ($examExpired && !$canStillSubmit)
-                <div class="alert alert-danger text-center mt-3">
-                    <i class="bi bi-alarm me-2"></i>
-                    <strong>Time's Up!</strong> Your exam submission time has elapsed.
-                </div>
-            @elseif ($examExpired && $canStillSubmit)
-                <div class="alert alert-warning text-center mt-3">
-                    <i class="bi bi-alarm me-2"></i>
-                    <strong>Regular Time Expired!</strong> You are now using your extra time allocation.
-                </div>
-            @endif
+        
             
-            <!-- TEMPORARY CHANGE (May 12, 2025): Timer component has been removed -->
+            <!-- New Timer Component -->
+            <x-exam.timer 
+                :examSessionId="$examSession->id"
+                :startedAt="$examSession->started_at->toIso8601String()"
+                :completedAt="$examSession->adjustedCompletionTime->toIso8601String()"
+                :hasExtraTime="$hasExtraTime"
+                :extraTimeMinutes="$extraTimeMinutes"
+                :debug="false"
+                class="mt-3"
+            />
         </div>
     </div>
 </div>
@@ -145,7 +141,10 @@
     </div>
   </div>
 
- <!-- TEMPORARY CHANGE (May 12, 2025): Removed timer-scripts include -->
+ <!-- New timer scripts and styles -->
+ <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">
+ <script src="{{ asset('js/services/ExamTimerService.js') }}"></script>
+ 
  @include('components.partials.styles.exam-styles')
  @include('components.partials.styles.scrollbar-styles')
  

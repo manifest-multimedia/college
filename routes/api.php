@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MemoController;
 use App\Http\Controllers\Api\ExamClearanceController;
 use App\Http\Controllers\Api\OfflineExamController;
 use App\Http\Controllers\Api\ExamEntryTicketController;
+use App\Http\Controllers\Api\ExamTimerController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -123,3 +124,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}/attachments/{attachmentId}', [MemoController::class, 'deleteAttachment']);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Exam Timer API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/exam-timer/status', [ExamTimerController::class, 'checkStatus']);
+Route::post('/exam-timer/extra-time', [ExamTimerController::class, 'checkExtraTime']);
+Route::post('/exam/submit', [ExamTimerController::class, 'submitExam']);

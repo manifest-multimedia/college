@@ -37,8 +37,8 @@ class OnlineExamination extends Component
     public $examExpired = false;
     public $timeExpiredAt = null;
 
-    // TEMPORARY CHANGE (May 12, 2025): Removed timer-related listeners
-    protected $listeners = ['submitExam'];
+    // Add examTimeExpired to listeners for new timer component
+    protected $listeners = ['submitExam', 'examTimeExpired'];
 
     public function mount($examPassword, $student_id = null)
     {
@@ -119,6 +119,9 @@ class OnlineExamination extends Component
                     'student_id' => $this->user->id,
                     'started_at' => $currentTime,
                     'completed_at' => $examEndTime,
+                    'extra_time_minutes' => 0,
+                    'extra_time_added_at' => null,
+                    'auto_submitted' => false,
                 ]);
                 
                 // Log the creation of a new exam session
@@ -246,15 +249,34 @@ class OnlineExamination extends Component
     {
         try {
             $score = $this->calculateScore();
+            
+            // Update the exam session with completion information
             $this->examSession->update([
                 'completed_at' => now(),
                 'score' => $score,
+                'auto_submitted' => false, // Explicitly mark as manually submitted
+            ]);
+
+            // Log successful exam submission
+            Log::info('Exam manually submitted by student', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'score' => $score,
+                'question_count' => count($this->questions),
+                'answered_count' => count(array_filter($this->responses))
             ]);
 
             session()->flash('message', 'Exam submitted successfully.');
             return redirect()->route('take-exam');
         } catch (\Throwable $th) {
             // Handle submission errors
+            Log::error('Error submitting exam', [
+                'error' => $th->getMessage(),
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id
+            ]);
+            
+            session()->flash('error', 'Failed to submit exam. Please try again.');
             report($th);
         }
     }
@@ -287,65 +309,9 @@ class OnlineExamination extends Component
         return $currentTime->diffInSeconds($adjustedCompletionTime);
     }
 
-    public function getRemainingTime()
-    {
-        try {
-            // Get the actual start time from when the student started the exam
-            $startedAt = Carbon::parse($this->examSession->started_at);
-            
-            // Calculate the expected completion time based on the exam duration
-            $examDuration = (int) $this->exam->duration;
-            $extraTime = (int) $this->examSession->extra_time_minutes;
-            $totalDuration = $examDuration + $extraTime;
-            
-            // Calculate proper end time based on the actual start time 
-            // (when the student logged in to take the exam)
-            $adjustedCompletionTime = $startedAt->copy()->addMinutes($totalDuration);
-            
-            // Set the values for the view
-            $this->timerStart = $startedAt;
-            $this->timerFinish = $adjustedCompletionTime;
-            $this->startedAt = $startedAt->format('l, jS F Y h:i A');
-            $this->estimatedEndTime = $adjustedCompletionTime->format('l, jS F Y h:i A');
-
-            // Calculate remaining time in seconds
-            $currentTime = Carbon::now();
-            $remainingSeconds = 0;
-            
-            if ($currentTime->lt($adjustedCompletionTime)) {
-                $remainingSeconds = $currentTime->diffInSeconds($adjustedCompletionTime);
-            }
-
-            // Convert to hours, minutes, seconds
-            $this->hours = floor($remainingSeconds / 3600);
-            $this->minutes = floor(($remainingSeconds % 3600) / 60);
-            $this->seconds = $remainingSeconds % 60;
-
-            // Log actual times for debugging
-            Log::info('Timer values calculated', [
-                'session_id' => $this->examSession->id,
-                'student_id' => $this->student->student_id,
-                'exam_duration' => $examDuration,
-                'extra_time' => $extraTime,
-                'start_time' => $startedAt->toDateTimeString(),
-                'end_time' => $adjustedCompletionTime->toDateTimeString(),
-                'current_time' => $currentTime->toDateTimeString(),
-                'remaining_seconds' => $remainingSeconds
-            ]);
-
-            return $adjustedCompletionTime->toIso8601String();
-        } catch (\Exception $e) {
-            Log::error('Error calculating remaining time', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return now()->addHour()->toIso8601String();
-        }
-    }
-
     /**
      * Handle automatic exam submission when time expires
+     * This method is triggered by the new timer component via Livewire event
      */
     public function examTimeExpired()
     {
@@ -355,7 +321,7 @@ class OnlineExamination extends Component
             $this->timeExpiredAt = now();
             
             // Log the expiration
-            Log::info('Exam time expired - automatic submission', [
+            Log::info('Exam time expired - automatic submission triggered by timer component', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
                 'exam_id' => $this->exam->id,
@@ -372,13 +338,25 @@ class OnlineExamination extends Component
                 'auto_submitted' => true,
             ]);
             
-            session()->flash('message', 'Time expired! Your exam has been automatically submitted.');
+            // Return status for the JS callback
+            return [
+                'success' => true,
+                'message' => 'Time expired! Your exam has been automatically submitted.',
+                'score' => $score,
+                'submittedAt' => $this->timeExpiredAt->toIso8601String()
+            ];
         } catch (\Exception $e) {
             Log::error('Error handling exam expiration', [
                 'error' => $e->getMessage(),
                 'session_id' => $this->examSession->id ?? null,
                 'student_id' => $this->student->student_id ?? null
             ]);
+            
+            return [
+                'success' => false,
+                'error' => 'Failed to process exam submission.',
+                'errorDetails' => $e->getMessage()
+            ];
         }
     }
     
