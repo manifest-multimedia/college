@@ -24,6 +24,9 @@
                         <td>
                             
                             <span class="text-muted fw-semibold d-block fs-7">{{ $exam->created_at }}</span>
+                            <span class="text-muted fw-semibold d-block fs-7">
+                                <small>Created by: {{ $exam->user ? $exam->user->name : 'Unknown' }}</small>
+                            </span>
                         </td>
                         <td>    
                             
@@ -46,19 +49,63 @@
                         </td>
                         @endif
                         <td>
-                            
-                            <span class="text-muted fw-semibold d-block fs-7">{{ ucfirst($exam->status) }}</span>
+                            @php
+                                $statusClass = [
+                                    'upcoming' => 'badge-light-primary',
+                                    'active' => 'badge-light-success',
+                                    'completed' => 'badge-light-info',
+                                    'cancelled' => 'badge-light-danger',
+                                ][$exam->status] ?? 'badge-light-warning';
+                            @endphp
+                            <span class="badge {{ $statusClass }}">{{ ucfirst($exam->status) }}</span>
                         </td>
                         <td class="px-3">
-                            <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Question Bank</a>
-                            {{-- Delete --}}
-                            @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
-                            <!-- Edit -->
-                            <a href="{{ route('exams.edit', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Edit</a>
-                            {{-- Generate Results --}}
-                            <a href="{{ route('exam.results', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-sm btn-light btn-active-light-primary">Generate Results</a>
-                            <!-- Delete -->
-                            <a href="javascript:void(0)" wire:click="deleteExam({{ $exam->id }})" class="btn btn-sm btn-light btn-active-light-danger">Delete</a>
-                            @endif
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light btn-active-light-primary" type="button" id="dropdownMenuButton-{{ $exam->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Actions
+                                    <i class="ki-duotone ki-down fs-5 ms-1"></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ $exam->id }}">
+                                    <li>
+                                        <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="dropdown-item">
+                                            <i class="ki-duotone ki-bank fs-6 me-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>Question Bank
+                                        </a>
+                                    </li>
+                                    
+                                    @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
+                                        <li>
+                                            <a href="{{ route('exams.edit', $exam->slug ? $exam->slug : $exam->id) }}" class="dropdown-item">
+                                                <i class="ki-duotone ki-pencil fs-6 me-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('exam.results', $exam->slug ? $exam->slug : $exam->id) }}" class="dropdown-item">
+                                                <i class="ki-duotone ki-document fs-6 me-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>Generate Results
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a href="javascript:void(0)" wire:click="$dispatch('confirmDelete', { examId: {{ $exam->id }}, examName: '{{ $exam->course ? $exam->course->name : 'this exam' }}' })" class="dropdown-item text-danger">
+                                                <i class="ki-duotone ki-trash fs-6 me-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                    <span class="path3"></span>
+                                                    <span class="path4"></span>
+                                                    <span class="path5"></span>
+                                                </i>Delete
+                                            </a>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
                         </td>
                     </tr>

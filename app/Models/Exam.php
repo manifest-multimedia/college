@@ -78,4 +78,9 @@ class Exam extends Model
     {
         return $this->hasMany(ProctoringSession::class);
     }
+    // Exam User
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

@@ -176,14 +176,27 @@ class ExamCenterWidget extends Component
         try {
             $exam = Exam::find($id);
             if ($exam) {
+                // Get the exam name for the success message
+                $examName = $exam->course ? $exam->course->name : 'Exam';
+                
+                // Delete the exam
                 $exam->delete();
-                session()->flash('success', 'Exam deleted successfully.');
+                
+                // Flash success message
+                session()->flash('success', "Exam '{$examName}' deleted successfully.");
+                
+                // Dispatch event to close modal
+                $this->dispatch('examDeleted');
             } else {
                 session()->flash('error', 'Exam not found.');
             }
         } catch (\Exception $e) {
-            Log::error('Error deleting exam: ' . $e->getMessage());
-            session()->flash('error', 'Failed to delete exam.');
+            Log::error('Error deleting exam: ' . $e->getMessage(), [
+                'exam_id' => $id,
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            session()->flash('error', 'Failed to delete exam. Please try again later.');
         }
     }
 }

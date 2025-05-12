@@ -1,4 +1,4 @@
-    <div>
+<div>
         <div class="mt-20 mb-5 card mb-xl-10">
             <div class="border-0 card-header d-flex align-items-center justify-content-between">
                 <!-- Card Title (left aligned) -->
@@ -76,5 +76,54 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" tabindex="-1" id="delete-exam-modal" wire:ignore.self>
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete <strong id="exam-name-to-delete"></strong>?</p>
+                        <p class="text-danger">This action cannot be undone. All associated questions and student responses will also be deleted.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirm-delete-btn" wire:click="deleteExam(0)">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const modal = new bootstrap.Modal(document.getElementById('delete-exam-modal'));
+                const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+                const examNameElement = document.getElementById('exam-name-to-delete');
+                
+                // Listen for the confirmDelete event
+                window.addEventListener('confirmDelete', event => {
+                    const examId = event.detail.examId;
+                    const examName = event.detail.examName;
+                    
+                    // Set the exam name in the modal
+                    examNameElement.textContent = examName;
+                    
+                    // Update the delete button to use the correct exam ID
+                    confirmDeleteBtn.setAttribute('wire:click', `deleteExam(${examId})`);
+                    
+                    // Show the modal
+                    modal.show();
+                });
+                
+                // After deleting, hide the modal
+                window.addEventListener('examDeleted', () => {
+                    modal.hide();
+                });
+            });
+        </script>
+        @endpush
     </div>
-    
