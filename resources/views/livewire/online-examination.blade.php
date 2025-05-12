@@ -73,22 +73,21 @@
                             @foreach ($questions as $index => $question)
                                 <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
                                     <p><strong>Q{{ $index + 1 }}:</strong> {{ $question['question'] }}</p>
-                
                                     <ul class="list-unstyled">
                                         @foreach ($question['options'] as $option)
                                             <li>
-                                                <label class="form-check-label {{ $examExpired && !$canStillSubmit ? 'disabled' : '' }}">
+                                                <label class="form-check-label">
                                                     <input type="radio" class="mx-2 form-check-input" 
                                                            name="responses[{{ $question['id'] }}]" 
                                                            value="{{ $option['id'] }}"
-                                                           @if($examExpired && !$canStillSubmit)
-                                                               disabled
-                                                           @else
-                                                               wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})"
-                                                           @endif
+                                                           wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})"
                                                            @if (isset($responses[$question['id']]) && $responses[$question['id']] == $option['id']) checked @endif>
                                                     {{ $option['option_text'] }}
                                                 </label>
+                                                <!-- TEMPORARY CHANGE (May 12, 2025): Removed conditional disabling of radio buttons 
+                                                     when exam time expires. This allows students to save their answers at all times
+                                                     during ongoing exams, even after the timer ends.
+                                                     Original code had: @if($examExpired && !$canStillSubmit) disabled @endif -->
                                             </li>
                                         @endforeach
                                     </ul>

@@ -181,6 +181,12 @@ class OnlineExamination extends Component
     public function storeResponse($questionId, $answer)
     {
         try {
+            // TEMPORARY CHANGE (May 12, 2025): Removed time expiration restrictions to allow students 
+            // to save their answers at all times during ongoing exams. This bypasses the normal checks
+            // for exam expiration to ensure students can submit even after the timer ends.
+            // TODO: Restore proper time restrictions after current exam period.
+            
+            /* Original code commented out:
             // Check if the exam is expired but has extra time
             $hasExtraTime = $this->examSession && $this->examSession->extra_time_minutes > 0;
             $isExpired = $this->isExamExpired();
@@ -194,6 +200,7 @@ class OnlineExamination extends Component
                 ]);
                 return;
             }
+            */
             
             // Log the response being saved
             Log::info('Saving exam response', [
@@ -201,8 +208,8 @@ class OnlineExamination extends Component
                 'question_id' => $questionId,
                 'answer' => $answer,
                 'student_id' => $this->user->id,
-                'exam_expired' => $isExpired,
-                'has_extra_time' => $hasExtraTime
+                'exam_expired' => $this->isExamExpired(),
+                'has_extra_time' => $this->examSession && $this->examSession->extra_time_minutes > 0
             ]);
             
             // Create or update the response in the database
