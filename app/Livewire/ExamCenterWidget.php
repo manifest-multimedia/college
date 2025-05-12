@@ -39,7 +39,16 @@ class ExamCenterWidget extends Component
     {
         try {
             if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
-                $exams = Exam::with(['course', 'course.collegeClass', 'course.semester', 'course.year'])
+                $exams = Exam::with([
+                    'course', 
+                    'course.collegeClass', 
+                    'course.semester', 
+                    'course.year', 
+                    'questions' => function($query) {
+                        // Just select count to optimize performance
+                        $query->select('exam_id');
+                    }
+                ])
                     ->when(
                         $this->search,
                         function ($query) {
@@ -52,10 +61,20 @@ class ExamCenterWidget extends Component
                         function ($query) {
                             return $query->where('status', $this->filter);
                         }
-                    )->get();
+                    )->withCount('questions')
+                    ->get();
             } else {
                 $exams = Exam::where('user_id', Auth::user()->id)
-                    ->with(['course', 'course.collegeClass', 'course.semester', 'course.year'])
+                    ->with([
+                        'course', 
+                        'course.collegeClass', 
+                        'course.semester', 
+                        'course.year', 
+                        'questions' => function($query) {
+                            // Just select count to optimize performance
+                            $query->select('exam_id');
+                        }
+                    ])
                     ->when(
                         $this->search,
                         function ($query) {
@@ -70,6 +89,7 @@ class ExamCenterWidget extends Component
                             return $query->where('status', $this->filter);
                         }
                     )
+                    ->withCount('questions')
                     ->get();
             }
 
@@ -88,7 +108,16 @@ class ExamCenterWidget extends Component
                 'livewire.exam-center-widget',
                 [
                     'exams' => $exams,
-                    'users' => User::all(),
+                    'users' => User::whereHas('roles', function($query) {
+                        $query->whereNotIn('name', ['Student', 'Parent']);
+                    })
+                    ->orWhere(function($query) {
+                        // Also include users with 'role' column (for backward compatibility)
+                        $query->whereNotIn('role', ['Student', 'Parent'])
+                            ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+                    })
+                    ->orderBy('name', 'asc')
+                    ->get(),
                 ]
             );
         } catch (\Exception $e) {

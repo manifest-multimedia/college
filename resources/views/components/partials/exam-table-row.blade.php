@@ -7,7 +7,10 @@
                                     </span>
                                 </div>
                                 <div class="d-flex justify-content-start flex-column">
-                                    <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->course ? $exam->course->name : 'No Course Name' }}</a>
+                                    <div class="d-flex align-items-center">
+                                        <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->course ? $exam->course->name : 'No Course Name' }}</a>
+                                        <span class="badge badge-light-primary ms-2">{{ $exam->questions_count ?? 0 }} questions</span>
+                                    </div>
                                     <span class="text-muted fw-semibold d-block fs-7">
                                         @if($exam->course && $exam->course->collegeClass && $exam->course->year && $exam->course->semester)
                                             {{ $exam->course->collegeClass->name . ' - ' . $exam->course->year->name . ' (' . $exam->course->semester->name . ')' }}
