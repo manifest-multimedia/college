@@ -65,7 +65,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!-- Communication Module Navigation -->
             @hasrole(['System', 'Super Admin'])
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $communicationRoutes = [
+                    'communication.sms',
+                    'communication.contact-groups',
+                    'communication.contacts',
+                    'communication.sms-logs',
+                    'communication.email',
+                    'communication.chat',
+                    'communication.ai-sensei'
+                ];
+                $isCommunicationActive = in_array(request()->route()->getName(), $communicationRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isCommunicationActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -80,11 +92,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isCommunicationActive ? 'show' : '' }}">
                     {{-- @can('send sms') --}}
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.sms') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.sms') ? 'active' : '' }}" href="{{ route('communication.sms') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -96,7 +108,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.contact-groups') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.contact-groups') ? 'active' : '' }}" href="{{ route('communication.contact-groups') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -107,7 +119,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.contacts') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.contacts') ? 'active' : '' }}" href="{{ route('communication.contacts') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -118,7 +130,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.sms-logs') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.sms-logs') ? 'active' : '' }}" href="{{ route('communication.sms-logs') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -130,7 +142,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     {{-- @can('send email') --}}
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.email') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.email') ? 'active' : '' }}" href="{{ route('communication.email') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -143,7 +155,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     {{-- @can('use ai chat') --}}
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.chat') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.chat') ? 'active' : '' }}" href="{{ route('communication.chat') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -156,7 +168,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!-- AI Sensei Assistant with File Capabilities -->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('communication.ai-sensei') }}">
+                        <a class="menu-link {{ request()->routeIs('communication.ai-sensei') ? 'active' : '' }}" href="{{ route('communication.ai-sensei') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -172,7 +184,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endhasrole
             
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $memoRoutes = ['memos', 'memo.create'];
+                $isMemoActive = in_array(request()->route()->getName(), $memoRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isMemoActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -186,10 +202,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isMemoActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('memos') }}">
+                        <a class="menu-link {{ request()->routeIs('memos') ? 'active' : '' }}" href="{{ route('memos') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -200,7 +216,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('memo.create') }}">
+                        <a class="menu-link {{ request()->routeIs('memo.create') ? 'active' : '' }}" href="{{ route('memo.create') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -215,7 +231,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             
             @hasrole('Super Admin|Administrator|Academic Officer')
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $academicRoutes = ['academics.dashboard', 'academics.exam-types'];
+                $isAcademicActive = in_array(request()->route()->getName(), $academicRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isAcademicActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -229,10 +249,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isAcademicActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academics.dashboard') }}">
+                        <a class="menu-link {{ request()->routeIs('academics.dashboard') ? 'active' : '' }}" href="{{ route('academics.dashboard') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -243,7 +263,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('academics.exam-types') }}">
+                        <a class="menu-link {{ request()->routeIs('academics.exam-types') ? 'active' : '' }}" href="{{ route('academics.exam-types') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -259,7 +279,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endhasrole
             @canany(['view exams', 'create exams', 'edit exams', 'grade exams'])
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $examRoutes = [
+                    'examcenter', 'examsessions', 'questionbank', 'exam.results', 
+                    'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
+                    'exams.create', 'exams.edit'
+                ];
+                $isExamActive = in_array(request()->route()->getName(), $examRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isExamActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -274,10 +302,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isExamActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('examcenter') }}">
+                        <a class="menu-link {{ request()->routeIs('examcenter') ? 'active' : '' }}" href="{{ route('examcenter') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -287,7 +315,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('examsessions') }}">
+                        <a class="menu-link {{ request()->routeIs('examsessions') ? 'active' : '' }}" href="{{ route('examsessions') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -297,7 +325,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('questionbank') }}">
+                        <a class="menu-link {{ request()->routeIs('questionbank') || request()->routeIs('questionbank.with.slug') ? 'active' : '' }}" href="{{ route('questionbank') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -307,7 +335,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('exam.results') }}">
+                        <a class="menu-link {{ request()->routeIs('exam.results') ? 'active' : '' }}" href="{{ route('exam.results') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -319,7 +347,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     @hasrole('Super Admin')
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('exam.response.tracker') }}">
+                        <a class="menu-link {{ request()->routeIs('exam.response.tracker') ? 'active' : '' }}" href="{{ route('exam.response.tracker') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -332,7 +360,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     @hasrole('System')
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('admin.exam-extra-time') }}">
+                        <a class="menu-link {{ request()->routeIs('admin.exam-extra-time') ? 'active' : '' }}" href="{{ route('admin.exam-extra-time') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -349,7 +377,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             
             @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports'])
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $financeRoutes = [
+                    'finance.billing', 'finance.fee.types', 'finance.fee.structure', 
+                    'finance.payments', 'finance.exam.clearance', 'finance.exam.tickets.manager', 
+                    'finance.exam.scanner', 'finance.course.registration', 'finance.reports'
+                ];
+                $isFinanceActive = in_array(request()->route()->getName(), $financeRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isFinanceActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -364,10 +400,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isFinanceActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.billing') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.billing') ? 'active' : '' }}" href="{{ route('finance.billing') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -377,7 +413,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.fee.types') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.fee.types') ? 'active' : '' }}" href="{{ route('finance.fee.types') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -387,7 +423,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.fee.structure') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.fee.structure') ? 'active' : '' }}" href="{{ route('finance.fee.structure') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -397,7 +433,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.payments') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.payments') ? 'active' : '' }}" href="{{ route('finance.payments') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -407,7 +443,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.exam.clearance') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.exam.clearance') ? 'active' : '' }}" href="{{ route('finance.exam.clearance') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -417,7 +453,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.exam.tickets.manager') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.exam.tickets.manager') ? 'active' : '' }}" href="{{ route('finance.exam.tickets.manager') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -427,7 +463,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.exam.scanner') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.exam.scanner') ? 'active' : '' }}" href="{{ route('finance.exam.scanner') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -437,7 +473,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.course.registration') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.course.registration') ? 'active' : '' }}" href="{{ route('finance.course.registration') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -447,7 +483,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('finance.reports') }}">
+                        <a class="menu-link {{ request()->routeIs('finance.reports') ? 'active' : '' }}" href="{{ route('finance.reports') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -462,7 +498,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endcanany
             
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $courseRegRoutes = [
+                    'courseregistration', 'courseregistration.history', 'courseregistration.approvals'
+                ];
+                $isCourseRegActive = in_array(request()->route()->getName(), $courseRegRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isCourseRegActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -476,10 +518,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isCourseRegActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('courseregistration') }}">
+                        <a class="menu-link {{ request()->routeIs('courseregistration') ? 'active' : '' }}" href="{{ route('courseregistration') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -489,7 +531,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('courseregistration.history') }}">
+                        <a class="menu-link {{ request()->routeIs('courseregistration.history') ? 'active' : '' }}" href="{{ route('courseregistration.history') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -499,7 +541,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('courseregistration.approvals') }}">
+                        <a class="menu-link {{ request()->routeIs('courseregistration.approvals') ? 'active' : '' }}" href="{{ route('courseregistration.approvals') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -514,7 +556,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
 
             @hasanyrole('Super Admin|Administrator')
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $electionRoutes = [
+                    'elections', 'elections.active', 'election.results'
+                ];
+                $isElectionActive = in_array(request()->route()->getName(), $electionRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isElectionActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -529,10 +577,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isElectionActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('elections') }}">
+                        <a class="menu-link {{ request()->routeIs('elections') ? 'active' : '' }}" href="{{ route('elections') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -542,7 +590,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('elections.active') }}">
+                        <a class="menu-link {{ request()->routeIs('elections.active') ? 'active' : '' }}" href="{{ route('elections.active') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -551,10 +599,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     
-                    <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('election.results', ['election' => 1]) }}">
+                        <a class="menu-link {{ request()->routeIs('election.results') ? 'active' : '' }}" href="{{ route('election.results', ['election' => 1]) }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -570,7 +617,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
 
             @can('election management.manage elections')
                 <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isElectionActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -585,10 +632,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isElectionActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('elections') }}">
+                        <a class="menu-link {{ request()->routeIs('elections') ? 'active' : '' }}" href="{{ route('elections') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -598,7 +645,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('elections.active') }}">
+                        <a class="menu-link {{ request()->routeIs('elections.active') ? 'active' : '' }}" href="{{ route('elections.active') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -607,10 +654,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     
-                    <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('election.results', ['election' => 1]) }}">
+                        <a class="menu-link {{ request()->routeIs('election.results') ? 'active' : '' }}" href="{{ route('election.results', ['election' => 1]) }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -625,7 +671,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endcan
             
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $supportRoutes = [
+                    'support.tickets', 'support.knowledgebase'
+                ];
+                $isSupportActive = in_array(request()->route()->getName(), $supportRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isSupportActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -639,10 +691,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isSupportActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('support.tickets') }}">
+                        <a class="menu-link {{ request()->routeIs('support.tickets') ? 'active' : '' }}" href="{{ route('support.tickets') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -652,7 +704,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('support.knowledgebase') }}">
+                        <a class="menu-link {{ request()->routeIs('support.knowledgebase') ? 'active' : '' }}" href="{{ route('support.knowledgebase') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -667,7 +719,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             
             @hasanyrole('Super Admin|Administrator')
             <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+            @php
+                $settingsRoutes = [
+                    'settings.general', 'settings.users', 'settings.roles', 
+                    'settings.permissions', 'settings.backup', 'settings.departments',
+                    'settings.user-departments'
+                ];
+                $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isSettingsActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
                     <span class="menu-icon">
@@ -681,10 +741,10 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </span>
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion">
+                <div class="menu-sub menu-sub-accordion {{ $isSettingsActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.general') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.general') ? 'active' : '' }}" href="{{ route('settings.general') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -694,7 +754,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.users') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.users') ? 'active' : '' }}" href="{{ route('settings.users') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -704,7 +764,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.roles') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.roles') ? 'active' : '' }}" href="{{ route('settings.roles') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -714,7 +774,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.permissions') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.permissions') ? 'active' : '' }}" href="{{ route('settings.permissions') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -724,7 +784,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.backup') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.backup') ? 'active' : '' }}" href="{{ route('settings.backup') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -735,7 +795,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.departments') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.departments') ? 'active' : '' }}" href="{{ route('settings.departments') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -746,7 +806,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link" href="{{ route('settings.user-departments') }}">
+                        <a class="menu-link {{ request()->routeIs('settings.user-departments') ? 'active' : '' }}" href="{{ route('settings.user-departments') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
