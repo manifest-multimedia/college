@@ -155,75 +155,106 @@ class ExamResponseTracker extends Component
     {
         if (!$this->session_id) return;
         
-        // Get all responses for this session with questions and correct options
-        $session = ExamSession::with(['responses.question.options' => function($query) {
-                        $query->orderBy('id', 'asc');
-                    }])
-                    ->find($this->session_id);
-        
-        if ($session) {
-            // Reset metrics
-            $this->totalQuestions = 0;
-            $this->totalAttempted = 0;
-            $this->totalCorrect = 0;
-            $this->totalMarks = 0;
-            $this->obtainedMarks = 0;
-            $this->scorePercentage = 0;
+        try {
+            // Get all responses for this session with questions and correct options
+            $session = ExamSession::with(['responses.question.options' => function($query) {
+                            $query->orderBy('id', 'asc');
+                        }])
+                        ->find($this->session_id);
             
-            // Get exam details for total questions and marks calculation
-            $exam = Exam::find($session->exam_id);
-            if ($exam) {
-                $this->totalQuestions = $exam->questions->count();
-                $this->totalMarks = $this->totalQuestions * $exam->marks_per_question;
-            }
-            
-            // Get marks_per_question value for use in closure
-            $marksPerQuestion = $exam ? $exam->marks_per_question : 0;
-            
-            // Prepare responses data for display, including correct answers
-            $this->sessionResponses = $session->responses->map(function($response) use ($marksPerQuestion) {
-                $question = $response->question;
-                $correctOption = $question->options->where('is_correct', true)->first();
-                $selectedOption = $question->options->where('id', $response->selected_option)->first();
+            if ($session) {
+                // Reset metrics
+                $this->totalQuestions = 0;
+                $this->totalAttempted = 0;
+                $this->totalCorrect = 0;
+                $this->totalMarks = 0;
+                $this->obtainedMarks = 0;
+                $this->scorePercentage = 0;
                 
-                $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
-                $isAttempted = !is_null($response->selected_option);
-                
-                // Update metrics
-                if ($isAttempted) {
-                    $this->totalAttempted++;
-                }
-                
-                if ($isCorrect) {
-                    $this->totalCorrect++;
-                    $this->obtainedMarks += $marksPerQuestion;
-                }
-                
-                return [
-                    'question_id' => $question->id,
-                    'question_text' => $question->question_text,
-                    'correct_option_id' => $correctOption ? $correctOption->id : null,
-                    'correct_option_text' => $correctOption ? $correctOption->option_text : 'No correct answer defined',
-                    'selected_option_id' => $response->selected_option,
-                    'selected_option_text' => $selectedOption ? $selectedOption->option_text : 'No answer selected',
-                    'is_correct' => $isCorrect,
-                    'is_attempted' => $isAttempted,
-                    'all_options' => $question->options->map(function($option) {
+                // Get exam details for total questions and marks calculation
+                $exam = Exam::find($session->exam_id);
+                if ($exam) {
+                    // Use questions_per_session if available, otherwise fall back to total questions
+                    $this->totalQuestions = $exam->questions_per_session ?? $exam->questions->count();
+                    
+                    // Calculate total marks based on the questions_per_session value
+                    // Each question contributes its mark value (defaulting to 1 if not specified)
+                    $this->totalMarks = 0;
+                    
+                    // Get all responses for this session
+                    $responses = $session->responses;
+                    
+                    // Prepare responses data for display, including correct answers
+                    $this->sessionResponses = $responses->map(function($response) {
+                        $question = $response->question;
+                        $correctOption = $question->options->where('is_correct', true)->first();
+                        $selectedOption = $question->options->where('id', $response->selected_option)->first();
+                        
+                        $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
+                        $isAttempted = !is_null($response->selected_option);
+                        
+                        // Get question mark value, default to 1 if not specified
+                        $questionMark = $question->mark ?? 1;
+                        
+                        // Add to total marks (for all questions in the session)
+                        $this->totalMarks += $questionMark;
+                        
+                        // Update metrics
+                        if ($isAttempted) {
+                            $this->totalAttempted++;
+                        }
+                        
+                        if ($isCorrect) {
+                            $this->totalCorrect++;
+                            $this->obtainedMarks += $questionMark;
+                        }
+                        
                         return [
-                            'id' => $option->id,
-                            'text' => $option->option_text,
-                            'is_correct' => $option->is_correct
+                            'question_id' => $question->id,
+                            'question_text' => $question->question_text,
+                            'correct_option_id' => $correctOption ? $correctOption->id : null,
+                            'correct_option_text' => $correctOption ? $correctOption->option_text : 'No correct answer defined',
+                            'selected_option_id' => $response->selected_option,
+                            'selected_option_text' => $selectedOption ? $selectedOption->option_text : 'No answer selected',
+                            'is_correct' => $isCorrect,
+                            'is_attempted' => $isAttempted,
+                            'mark' => $questionMark, // Include the mark value for display
+                            'all_options' => $question->options->map(function($option) {
+                                return [
+                                    'id' => $option->id,
+                                    'text' => $option->option_text,
+                                    'is_correct' => $option->is_correct
+                                ];
+                            })
                         ];
-                    })
-                ];
-            });
-            
-            // Calculate percentage
-            if ($this->totalMarks > 0) {
-                $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
+                    });
+                    
+                    // Log for debugging
+                    Log::info('Exam response metrics', [
+                        'session_id' => $this->session_id,
+                        'exam_id' => $session->exam_id,
+                        'total_questions' => $this->totalQuestions,
+                        'questions_per_session' => $exam->questions_per_session,
+                        'total_attempted' => $this->totalAttempted,
+                        'total_correct' => $this->totalCorrect,
+                        'total_marks' => $this->totalMarks,
+                        'obtained_marks' => $this->obtainedMarks
+                    ]);
+                }
+                
+                // Calculate percentage
+                if ($this->totalMarks > 0) {
+                    $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
+                }
+                
+                $this->responsesFound = count($this->sessionResponses) > 0;
             }
-            
-            $this->responsesFound = count($this->sessionResponses) > 0;
+        } catch (\Exception $e) {
+            Log::error('Error loading exam responses', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'session_id' => $this->session_id
+            ]);
         }
     }
     
