@@ -36,10 +36,9 @@
                     <i class="bi bi-alarm me-2"></i>
                     <strong>Regular Time Expired!</strong> You are now using your extra time allocation.
                 </div>
-                <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" :examSessionId="$examSession->id" />
-            @else
-                <livewire:exam-timer :startedAt="$timerStart" :completedAt="$timerFinish" :examSessionId="$examSession->id" />
             @endif
+            
+            <!-- TEMPORARY CHANGE (May 12, 2025): Timer component has been removed -->
         </div>
     </div>
 </div>
@@ -146,7 +145,7 @@
     </div>
   </div>
 
- @include('components.partials.timer-scripts')
+ <!-- TEMPORARY CHANGE (May 12, 2025): Removed timer-scripts include -->
  @include('components.partials.styles.exam-styles')
  @include('components.partials.styles.scrollbar-styles')
  

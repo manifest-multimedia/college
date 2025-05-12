@@ -37,7 +37,8 @@ class OnlineExamination extends Component
     public $examExpired = false;
     public $timeExpiredAt = null;
 
-    protected $listeners = ['submitExam', 'examTimeExpired'];
+    // TEMPORARY CHANGE (May 12, 2025): Removed timer-related listeners
+    protected $listeners = ['submitExam'];
 
     public function mount($examPassword, $student_id = null)
     {
