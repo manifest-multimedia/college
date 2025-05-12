@@ -15,6 +15,8 @@ class DashboardCounters extends Component
     public $activeStaff = 0;
     public $totalStudents = 0;
     public $activePrograms = 0;
+    public $smsCredits = 0;
+    public $totalExams = 0;
 
     public function mount()
     {
