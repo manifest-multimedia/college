@@ -233,6 +233,43 @@
         
         console.log('Question overview updated. Answered:', answeredCount);
     }
+
+    // Initialize device heartbeat system
+    document.addEventListener('livewire:initialized', function () {
+        // Send heartbeats to keep the device session active
+        const heartbeatInterval = setInterval(function() {
+            // Only send heartbeat if the page is visible
+            if (document.visibilityState === 'visible') {
+                @this.heartbeat();
+            }
+        }, 30000); // Send heartbeat every 30 seconds
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Immediately send a heartbeat when page becomes visible
+                @this.heartbeat();
+            }
+        });
+
+        // Clear interval on page unload
+        window.addEventListener('beforeunload', function() {
+            clearInterval(heartbeatInterval);
+        });
+        
+        // Track device switching attempts
+        function checkDeviceConsistency() {
+            @this.validateDeviceAccess().then(function(result) {
+                if (result.deviceConflict) {
+                    // Redirect to conflict page or reload to show the conflict view
+                    window.location.reload();
+                }
+            });
+        }
+        
+        // Check device consistency every 60 seconds
+        setInterval(checkDeviceConsistency, 60000);
+    });
  </script>
  
  <style>

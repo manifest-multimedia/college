@@ -10,6 +10,8 @@ use Livewire\Component;
 use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Helpers\DeviceDetector;
 
 class OnlineExamination extends Component
 {
@@ -30,6 +32,8 @@ class OnlineExamination extends Component
     public $student_index;
     public $startedAt;
     public $estimatedEndTime;
+    public $deviceConflict = false;
+    public $readOnlyMode = false; // New property for read-only access to completed exams
 
     public $timerStart;
     public $timerFinish;
@@ -38,7 +42,7 @@ class OnlineExamination extends Component
     public $timeExpiredAt = null;
 
     // Add examTimeExpired to listeners for new timer component
-    protected $listeners = ['submitExam', 'examTimeExpired'];
+    protected $listeners = ['submitExam', 'examTimeExpired', 'heartbeat'];
 
     public function mount($examPassword, $student_id = null)
     {
@@ -61,6 +65,18 @@ class OnlineExamination extends Component
         // Initialize user and session
         $this->initializeExamSession();
         
+        // Check if exam is completed and set read-only mode
+        if ($this->examSession && $this->examSession->completed_at) {
+            $this->readOnlyMode = true;
+            
+            // Log view-only access
+            Log::info('Read-only access to completed exam', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'completed_at' => $this->examSession->completed_at->toDateTimeString()
+            ]);
+        }
+        
         // Load existing responses from the database
         $this->loadResponses();
         
@@ -68,9 +84,37 @@ class OnlineExamination extends Component
         $this->loadQuestions();
     }
 
+    /**
+     * Generate a unique device identifier
+     */
+    private function getDeviceInfo()
+    {
+        $detector = new DeviceDetector();
+        
+        return json_encode($detector->getDeviceInfo());
+    }
+
+    /**
+     * Handle regular heartbeat from client to update last activity
+     */
+    public function heartbeat()
+    {
+        if ($this->examSession) {
+            $sessionToken = session('exam_session_token');
+            if ($sessionToken) {
+                $this->examSession->last_activity = now();
+                $this->examSession->save();
+            }
+        }
+    }
+
     protected function loadResponses()
     {
-        // Load all responses for this exam session from the database
+        // Check device consistency before loading responses
+        if (!$this->validateDeviceAccess()) {
+            return;
+        }
+
         $existingResponses = Response::where('exam_session_id', $this->examSession->id)->get();
         
         // Map responses to question IDs for easier access
@@ -80,6 +124,54 @@ class OnlineExamination extends Component
         
         // Store in session as backup
         session()->put('responses', $this->responses);
+    }
+
+    /**
+     * Validate that the current device matches the session device
+     */
+    public function validateDeviceAccess()
+    {
+        // Get the current device info and token
+        $currentDeviceInfo = $this->getDeviceInfo();
+        $sessionToken = session('exam_session_token');
+        
+        // If no token in session, generate a new one
+        if (!$sessionToken) {
+            $sessionToken = Str::random(40);
+            session(['exam_session_token' => $sessionToken]);
+        }
+
+        // If the exam is completed (in read-only mode), we're less strict about device validation
+        if ($this->readOnlyMode) {
+            // Still update the device info for tracking purposes, but don't enforce restrictions
+            $this->examSession->updateDeviceAccess($sessionToken, $currentDeviceInfo);
+            
+            Log::info('Device access allowed in read-only mode', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'device_info' => $currentDeviceInfo
+            ]);
+            
+            return true;
+        }
+
+        // If the session is being accessed from a different device
+        if ($this->examSession->isBeingAccessedFromDifferentDevice($sessionToken, $currentDeviceInfo)) {
+            $this->deviceConflict = true;
+            
+            Log::warning('Device conflict detected during exam', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'saved_device' => $this->examSession->device_info,
+                'current_device' => $currentDeviceInfo
+            ]);
+            
+            return false;
+        }
+        
+        // Keep updating the last activity time
+        $this->examSession->updateDeviceAccess($sessionToken, $currentDeviceInfo);
+        return true;
     }
 
     public function initializeExamSession()
@@ -106,22 +198,35 @@ class OnlineExamination extends Component
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
                     'start_time' => $this->examSession->started_at->toDateTimeString(),
-                    'end_time' => $this->examSession->completed_at->toDateTimeString()
+                    'end_time' => $this->examSession->completed_at ? $this->examSession->completed_at->toDateTimeString() : 'Not completed'
                 ]);
+                
+                // Validate device access
+                if (!$this->validateDeviceAccess()) {
+                    return;
+                }
             } else {
                 // Create a new exam session with current time as start time
                 $currentTime = now();
                 $examEndTime = $currentTime->copy()->addMinutes((int) $this->exam->duration);
+                
+                // Get session token and device info
+                $sessionToken = session('exam_session_token') ?? Str::random(40);
+                session(['exam_session_token' => $sessionToken]);
+                $deviceInfo = $this->getDeviceInfo();
                 
                 // Create a new session with the current time
                 $this->examSession = ExamSession::create([
                     'exam_id' => $this->exam->id,
                     'student_id' => $this->user->id,
                     'started_at' => $currentTime,
-                    'completed_at' => $examEndTime,
+                    'completed_at' => null,
                     'extra_time_minutes' => 0,
                     'extra_time_added_at' => null,
                     'auto_submitted' => false,
+                    'session_token' => $sessionToken,
+                    'device_info' => $deviceInfo,
+                    'last_activity' => $currentTime
                 ]);
                 
                 // Log the creation of a new exam session
@@ -129,7 +234,7 @@ class OnlineExamination extends Component
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
                     'exam_start' => $currentTime->toDateTimeString(),
-                    'exam_end' => $examEndTime->toDateTimeString()
+                    'device_info' => $deviceInfo
                 ]);
             }
 
@@ -145,20 +250,19 @@ class OnlineExamination extends Component
             if ($extraTime > 0) {
                 Log::info('Extra time applied to exam session', [
                     'session_id' => $this->examSession->id,
-                    'student_id' => $this->student->student_id,
-                    'extra_minutes' => $extraTime,
-                    'total_duration' => $totalDuration,
-                    'new_end_time' => $this->examSession->adjustedCompletionTime
+                    'extra_time' => $extraTime,
+                    'total_duration' => $totalDuration
                 ]);
             }
-        } catch (\Throwable $th) {
-            // Handle exceptions gracefully
+
+        } catch (\Exception $e) {
             Log::error('Error initializing exam session', [
-                'error' => $th->getMessage(),
-                'student_id' => $this->student_id,
-                'exam_id' => $this->exam->id
+                'error' => $e->getMessage(),
+                'student_id' => $this->student->student_id ?? null,
+                'exam_id' => $this->exam->id ?? null
             ]);
-            report($th);
+            
+            abort(500, 'An error occurred while setting up the exam session.');
         }
     }
 
@@ -185,6 +289,17 @@ class OnlineExamination extends Component
     public function storeResponse($questionId, $answer)
     {
         try {
+            // If in read-only mode, don't allow any changes to responses
+            if ($this->readOnlyMode) {
+                // Log attempt to modify in read-only mode
+                Log::warning('Attempt to modify exam in read-only mode', [
+                    'session_id' => $this->examSession->id,
+                    'student_id' => $this->student->student_id,
+                    'question_id' => $questionId
+                ]);
+                return;
+            }
+            
             // TEMPORARY CHANGE (May 12, 2025): Removed time expiration restrictions to allow students 
             // to save their answers at all times during ongoing exams. This bypasses the normal checks
             // for exam expiration to ensure students can submit even after the timer ends.
@@ -470,22 +585,37 @@ class OnlineExamination extends Component
 
     public function render()
     {
-        // Check if exam is expired
-        $examExpired = $this->isExamExpired();
+        // If there's a device conflict, show the device conflict view
+        if ($this->deviceConflict) {
+            return view('livewire.exam-device-conflict');
+        }
         
-        // Determine if student has extra time
-        $hasExtraTime = $this->examSession && $this->examSession->extra_time_minutes > 0;
+        // For read-only mode (completed exams), use a different view
+        if ($this->readOnlyMode) {
+            return view('livewire.exam-review-mode', [
+                'questions' => $this->questions,
+                'exam' => $this->exam,
+                'examSession' => $this->examSession,
+                'student' => $this->student,
+                'student_index' => $this->student_index,
+                'responses' => $this->responses
+            ]);
+        }
         
-        // Student can submit if they have extra time and are within the adjusted completion time
-        $canStillSubmit = $hasExtraTime && Carbon::now()->lt($this->examSession->adjustedCompletionTime);
+        // Refresh the remaining time on each render for active exams
+        $this->calculateRemainingTime();
         
+        // Update last activity time on each render
+        $this->heartbeat();
+        
+        // Regular exam view for active exams
         return view('livewire.online-examination', [
             'questions' => $this->questions,
             'exam' => $this->exam,
             'remainingTime' => $this->remainingTime,
-            'examExpired' => $examExpired,
-            'hasExtraTime' => $hasExtraTime,
-            'canStillSubmit' => $canStillSubmit,
+            'examExpired' => $this->isExamExpired(),
+            'hasExtraTime' => $this->examSession && $this->examSession->extra_time_minutes > 0,
+            'canStillSubmit' => $this->examSession && $this->examSession->extra_time_minutes > 0 && Carbon::now()->lt($this->examSession->adjustedCompletionTime),
             'extraTimeMinutes' => $this->examSession ? $this->examSession->extra_time_minutes : 0
         ]);
     }
