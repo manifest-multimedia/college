@@ -242,7 +242,7 @@
                                         </div>
                                     </td>
                                     <td>{{ $session->started_at->format('M d, Y g:i A') }}</td>
-                                    <td>{{ $session->completed_at->format('M d, Y g:i A') }}</td>
+                                    <td>{{ $session->completed_at ? $session->completed_at->format('M d, Y g:i A') : 'Not set' }}</td>
                                     <td>
                                         @if($session->extra_time_minutes > 0)
                                             <span class="badge bg-success">{{ $session->extra_time_minutes }} minutes</span>
@@ -250,7 +250,7 @@
                                             <span class="badge bg-light text-dark">None</span>
                                         @endif
                                     </td>
-                                    <td>{{ $session->adjustedCompletionTime->format('M d, Y g:i A') }}</td>
+                                    <td>{{ $session->adjustedCompletionTime ? $session->adjustedCompletionTime->format('M d, Y g:i A') : 'Not set' }}</td>
                                     <td>
                                         <button type="button" wire:click="viewSession({{ $session->id }})" class="btn btn-sm btn-icon btn-light btn-active-light-primary" title="View Session Details">
                                             <i class="bi bi-eye"></i>
