@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Models\Student;
 
 class ExamSession extends Model
 {
@@ -201,10 +202,15 @@ class ExamSession extends Model
      */
     public function recordDeviceAccessAttempt($token, $deviceInfo, $isConflict = false)
     {
+        // Get the student record to retrieve the user_id
+        $student = Student::find($this->student_id);
+        $studentUserId = $student ? $student->user_id : null;
+        
         // Create access log entry
         DeviceAccessLog::create([
             'exam_session_id' => $this->id,
             'student_id' => $this->student_id,
+            'student_user_id' => $studentUserId,
             'exam_id' => $this->exam_id,
             'device_info' => $deviceInfo,
             'session_token' => $token,
