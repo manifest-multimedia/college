@@ -7,28 +7,31 @@
             <p>Student Name: {{ $student_name }} | Student ID : {{ $student_index }} </p>
             <p>Proctor: AI Sensei </p>
 
-
             <div class="p-3 rounded border shadow-lg row bg-light">
                 <div class="col-md-12">
-                    <div class="card-body d-flex flex-column align-items-start justify-content-center">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
 
-                        <div class="p-3 pt-4 card-text" style="font-size:18px;font-weight:600">
+                        <div class="p-3 pt-4 card-text w-100" style="font-size:18px;font-weight:600">
                             <div class="d-flex justify-content-center">
                                 <h4 class="text-center text-danger"><strong> Instructions</strong></h4>
                             </div>
                             <p>
-                                You're being proctored by AI Sensei. Any suspecious activity will result in immediate
+                                You're being proctored by AI Sensei. <br />Any suspecious activity will result in immediate
                                 disqualification. You're required to answer {{ count($questions) }} questions in total.
                                 <br>
-                                You have {{ $exam->duration }} minutes to complete this exam.
-
+                                You have <span class="text-danger">{{ $exam->duration }} minutes</span> to complete this exam.
                             </p>
 
-
-
-                            <!-- New Timer Component -->
-                            <x-exam.timer :examSessionId="$examSession->id" :startedAt="$examSession->started_at->toIso8601String()" :completedAt="$examSession->adjustedCompletionTime->toIso8601String()" :hasExtraTime="$hasExtraTime"
-                                :extraTimeMinutes="$extraTimeMinutes" :debug="false" class="mt-3" />
+                            <div class="d-flex justify-content-center w-100">
+                                <!-- New Timer Component -->
+                                <x-exam.timer :examSessionId="$examSession->id" 
+                                    :startedAt="$examSession->started_at->toIso8601String()" 
+                                    :completedAt="$examSession->adjustedCompletionTime->toIso8601String()" 
+                                    :hasExtraTime="$hasExtraTime"
+                                    :extraTimeMinutes="$extraTimeMinutes" 
+                                    :debug="false" 
+                                    class="mt-3" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -273,6 +276,10 @@
     </script>
 
     <style>
+        .question{
+            min-width:720px !important;
+            width:100% !important;
+        }
         .highlight-question {
             box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
             border: 2px solid #007bff;
