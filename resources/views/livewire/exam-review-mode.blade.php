@@ -58,24 +58,26 @@
                                 @endphp
                                 
                                 @foreach ($question['options'] as $option)
-                                    <div class="option-wrapper mb-3">
-                                        <div class="card option-card @if($option['id'] == $selectedOption) border-success selected-option @else border-light @endif">
-                                            <div class="card-body py-3">
-                                                <div class="form-check d-flex align-items-center">
-                                                    <input class="form-check-input me-3" 
-                                                           type="radio" 
-                                                           disabled
-                                                           {{ ($selectedOption == $option['id']) ? 'checked' : '' }}>
-                                                    <label class="form-check-label @if($selectedOption == $option['id']) fw-medium @endif">
-                                                        {{ $option['option_text'] }}
-                                                        @if($option['id'] == $selectedOption)
-                                                            <span class="badge bg-success ms-2">Your Answer</span>
-                                                        @endif
-                                                    </label>
+                                    @if(!empty($option['option_text']))
+                                        <div class="option-wrapper mb-3">
+                                            <div class="card option-card @if($option['id'] == $selectedOption) border-success selected-option @else border-light @endif">
+                                                <div class="card-body py-3">
+                                                    <div class="form-check d-flex align-items-center">
+                                                        <input class="form-check-input me-3" 
+                                                                type="radio" 
+                                                                disabled
+                                                                {{ ($selectedOption == $option['id']) ? 'checked' : '' }}>
+                                                        <label class="form-check-label @if($selectedOption == $option['id']) fw-medium @endif">
+                                                            {{ $option['option_text'] }}
+                                                            @if($option['id'] == $selectedOption)
+                                                                <span class="badge bg-success ms-2">Your Answer</span>
+                                                            @endif
+                                                        </label>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    @endif
                                 @endforeach
                             </div>
                         </div>

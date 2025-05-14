@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        
+// Drop the table if it exists
+        Schema::dropIfExists('device_access_logs');
+        // Create the device_access_logs table
         Schema::create('device_access_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('exam_session_id');
