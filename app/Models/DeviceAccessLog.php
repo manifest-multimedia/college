@@ -8,6 +8,7 @@ class DeviceAccessLog extends Model
 {
     protected $fillable = [
         'exam_session_id',
+        'student_user_id',
         'student_id',
         'exam_id',
         'device_info',
@@ -35,7 +36,7 @@ class DeviceAccessLog extends Model
      */
     public function student()
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(Student::class, 'student_id');
     }
     
     /**

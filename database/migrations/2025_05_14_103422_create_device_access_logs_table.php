@@ -19,6 +19,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedInteger('exam_session_id');
             $table->unsignedBigInteger('student_user_id');
+            $table->unsignedInteger('student_id');
             $table->unsignedInteger('exam_id');
             $table->string('device_info');
             $table->string('session_token');
@@ -31,7 +32,7 @@ return new class extends Migration
             $table->foreign('exam_session_id')->references('id')->on('exam_sessions');
             $table->foreign('student_user_id')->references('id')->on('users');
             $table->foreign('exam_id')->references('id')->on('exams');
-            
+            $table->foreign('student_id')->references('id')->on('students');
             // Add index for faster lookups
             $table->index(['exam_session_id', 'access_time']);
         });
