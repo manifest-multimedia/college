@@ -18,7 +18,7 @@ return new class extends Migration
         Schema::create('device_access_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedInteger('exam_session_id');
-            $table->unsignedInteger('student_id');
+            $table->unsignedBigInteger('student_user_id');
             $table->unsignedInteger('exam_id');
             $table->string('device_info');
             $table->string('session_token');
@@ -29,7 +29,7 @@ return new class extends Migration
             
             // Define foreign keys
             $table->foreign('exam_session_id')->references('id')->on('exam_sessions');
-            $table->foreign('student_id')->references('id')->on('users');
+            $table->foreign('student_user_id')->references('id')->on('users');
             $table->foreign('exam_id')->references('id')->on('exams');
             
             // Add index for faster lookups
