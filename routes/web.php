@@ -206,7 +206,7 @@ Route::middleware([
     // Exam Results - System Role Access Only
     Route::get('/exams/results', function () {
         return view('exams.results');
-    })->middleware(['auth', 'role:System'])->name('exams.results');
+    })->middleware(['auth', 'role:System|Academic Officer|Administrator|Lecturer'])->name('exams.results');
 
     /*
     |--------------------------------------------------------------------------

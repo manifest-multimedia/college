@@ -44,6 +44,15 @@ class ExamExtraTime extends Component
     public $showViewModal = false;
     public $viewingSession = null;
     
+    // New properties for session restoration feature
+    public $restoreSession = false;
+    public $restoreMinutes = 30;
+    public $restoreReason = '';
+    
+    // New properties for extra time management
+    public $modifyExtraTime = false;
+    public $newExtraTimeValue = 0;
+    
     // Rules for validation
     protected $rules = [
         'extraTimeMinutes' => 'required|integer|min:1|max:60',
@@ -361,6 +370,98 @@ class ExamExtraTime extends Component
     }
 
     /**
+     * Toggle the restore session form
+     */
+    public function toggleRestoreForm()
+    {
+        $this->restoreSession = !$this->restoreSession;
+        
+        if (!$this->restoreSession) {
+            $this->restoreMinutes = 30;
+            $this->restoreReason = '';
+        }
+    }
+
+    /**
+     * Restore an expired exam session to allow student login
+     */
+    public function restoreExamSession()
+    {
+        if (!$this->viewingSession) {
+            $this->errorMessage = 'Session details not found.';
+            return;
+        }
+
+        $this->validate([
+            'restoreMinutes' => 'required|integer|min:5|max:120',
+            'restoreReason' => 'required|string|min:5'
+        ], [
+            'restoreMinutes.required' => 'Please specify restoration time in minutes',
+            'restoreMinutes.min' => 'Restoration time must be at least 5 minutes',
+            'restoreMinutes.max' => 'Restoration time cannot exceed 120 minutes',
+            'restoreReason.required' => 'Please provide a reason for restoring this exam session',
+            'restoreReason.min' => 'Reason must be at least 5 characters'
+        ]);
+        
+        try {
+            $now = Carbon::now();
+            $sessionId = $this->viewingSession->id;
+            
+            // Calculate new end time based on current time plus restore minutes
+            $newEndTime = $now->copy()->addMinutes($this->restoreMinutes);
+            
+            // Update the session to allow student to continue
+            $updates = [
+                'completed_at' => $newEndTime, // Set to future time to make it active
+                'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $this->restoreMinutes),
+                'extra_time_added_by' => Auth::id(),
+                'extra_time_added_at' => $now,
+                'auto_submitted' => false, // Reset auto-submission flag
+            ];
+            
+            $updated = ExamSession::where('id', $sessionId)->update($updates);
+            
+            if ($updated) {
+                // Log the restoration event with reason
+                Log::info('Exam session restored', [
+                    'user_id' => Auth::id(),
+                    'session_id' => $sessionId,
+                    'minutes_given' => $this->restoreMinutes,
+                    'student_id' => $this->viewingSession->student_id ?? null,
+                    'exam_id' => $this->viewingSession->exam_id ?? null,
+                    'reason' => $this->restoreReason,
+                    'new_end_time' => $newEndTime->toDateTimeString()
+                ]);
+                
+                // Refresh the session data
+                $this->viewingSession = ExamSession::with([
+                    'student', 
+                    'exam.course', 
+                    'extraTimeAddedBy',
+                    'responses.question.options'
+                ])->find($sessionId);
+                
+                $this->successMessage = 'Session successfully restored. The student can now log in and continue the exam for the next ' . 
+                    $this->restoreMinutes . ' minutes.';
+                    
+                // Reset form fields
+                $this->restoreMinutes = 30;
+                $this->restoreReason = '';
+                $this->restoreSession = false;
+            } else {
+                $this->errorMessage = 'Failed to restore exam session.';
+            }
+        } catch (\Exception $e) {
+            $this->errorMessage = 'An error occurred: ' . $e->getMessage();
+            Log::error('Error restoring exam session', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->viewingSession->id ?? null,
+                'user_id' => Auth::id()
+            ]);
+        }
+    }
+
+    /**
      * Find a student by their college ID and get their associated user account
      */
     public function findStudentByCollegeId($studentCollegeId)
@@ -435,6 +536,179 @@ class ExamExtraTime extends Component
             if (!empty($sessions)) {
                 $this->selectedSessions = $sessions;
             }
+        }
+    }
+
+    /**
+     * Toggle the extra time modification form
+     */
+    public function toggleModifyExtraTimeForm()
+    {
+        $this->modifyExtraTime = !$this->modifyExtraTime;
+        
+        if ($this->modifyExtraTime && $this->viewingSession) {
+            // Initialize with current extra time value for editing
+            $this->newExtraTimeValue = $this->viewingSession->extra_time_minutes;
+        }
+    }
+    
+    /**
+     * Update the extra time for a session (modify existing value)
+     */
+    public function updateExtraTime()
+    {
+        if (!$this->viewingSession) {
+            $this->errorMessage = 'Session details not found.';
+            return;
+        }
+        
+        $this->validate([
+            'newExtraTimeValue' => 'required|integer|min:0|max:120'
+        ], [
+            'newExtraTimeValue.required' => 'Please specify the new extra time in minutes',
+            'newExtraTimeValue.min' => 'Extra time cannot be negative',
+            'newExtraTimeValue.max' => 'Extra time cannot exceed 120 minutes'
+        ]);
+        
+        try {
+            $now = Carbon::now();
+            $sessionId = $this->viewingSession->id;
+            $currentExtraTime = $this->viewingSession->extra_time_minutes;
+            
+            // Calculate time difference
+            $timeDiff = $this->newExtraTimeValue - $currentExtraTime;
+            
+            // Don't proceed if there's no change
+            if ($timeDiff == 0) {
+                $this->errorMessage = 'No changes were made to the extra time.';
+                return;
+            }
+            
+            // Prepare update data
+            $updates = [
+                'extra_time_minutes' => $this->newExtraTimeValue,
+                'extra_time_added_by' => Auth::id(),
+                'extra_time_added_at' => $now
+            ];
+            
+            // For expired or completed sessions that are getting more time, reactivate them
+            $isExpired = $this->viewingSession->completed_at && 
+                        (Carbon::parse($this->viewingSession->completed_at)->isPast() || 
+                        Carbon::now()->gt($this->viewingSession->adjustedCompletionTime));
+            
+            $isBeingIncreased = $timeDiff > 0;
+            
+            if ($isExpired && $isBeingIncreased) {
+                // Calculate new end time based on current time plus the new extra time
+                $newEndTime = $now->copy()->addMinutes($this->newExtraTimeValue);
+                $updates['completed_at'] = $newEndTime;
+                $updates['auto_submitted'] = false; // Reset auto-submission flag
+            }
+            
+            // Update the session with the new extra time
+            $updated = ExamSession::where('id', $sessionId)->update($updates);
+            
+            if ($updated) {
+                // Create appropriate success message
+                $action = $timeDiff > 0 ? 'increased by ' . $timeDiff : 'reduced by ' . abs($timeDiff);
+                
+                $this->successMessage = "Extra time successfully {$action} minutes.";
+                
+                if ($isExpired && $isBeingIncreased) {
+                    $this->successMessage .= ' The session has been reactivated for the student to continue.';
+                }
+                
+                // Log the action
+                Log::info('Extra time modified', [
+                    'user_id' => Auth::id(),
+                    'session_id' => $sessionId,
+                    'previous_time' => $currentExtraTime,
+                    'new_time' => $this->newExtraTimeValue,
+                    'time_difference' => $timeDiff,
+                    'student_id' => $this->viewingSession->student_id ?? null,
+                    'exam_id' => $this->viewingSession->exam_id ?? null,
+                    'session_reactivated' => $isExpired && $isBeingIncreased
+                ]);
+                
+                // Refresh the session data
+                $this->viewingSession = ExamSession::with([
+                    'student', 
+                    'exam.course', 
+                    'extraTimeAddedBy',
+                    'responses.question.options'
+                ])->find($sessionId);
+                
+                // Reset form
+                $this->modifyExtraTime = false;
+            } else {
+                $this->errorMessage = 'Failed to update extra time.';
+            }
+        } catch (\Exception $e) {
+            $this->errorMessage = 'An error occurred: ' . $e->getMessage();
+            Log::error('Error updating extra time', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->viewingSession->id ?? null,
+                'user_id' => Auth::id()
+            ]);
+        }
+    }
+    
+    /**
+     * Remove all extra time from a session
+     */
+    public function removeExtraTime()
+    {
+        if (!$this->viewingSession) {
+            $this->errorMessage = 'Session details not found.';
+            return;
+        }
+        
+        try {
+            $now = Carbon::now();
+            $sessionId = $this->viewingSession->id;
+            $currentExtraTime = $this->viewingSession->extra_time_minutes;
+            
+            if ($currentExtraTime <= 0) {
+                $this->errorMessage = 'This session has no extra time to remove.';
+                return;
+            }
+            
+            // Update the session to remove extra time
+            $updated = ExamSession::where('id', $sessionId)->update([
+                'extra_time_minutes' => 0,
+                'extra_time_added_by' => Auth::id(),
+                'extra_time_added_at' => $now
+            ]);
+            
+            if ($updated) {
+                // Log the action
+                Log::info('Extra time removed', [
+                    'user_id' => Auth::id(),
+                    'session_id' => $sessionId,
+                    'removed_minutes' => $currentExtraTime,
+                    'student_id' => $this->viewingSession->student_id ?? null,
+                    'exam_id' => $this->viewingSession->exam_id ?? null
+                ]);
+                
+                // Refresh the session data
+                $this->viewingSession = ExamSession::with([
+                    'student', 
+                    'exam.course', 
+                    'extraTimeAddedBy',
+                    'responses.question.options'
+                ])->find($sessionId);
+                
+                $this->successMessage = "Successfully removed {$currentExtraTime} minutes of extra time.";
+            } else {
+                $this->errorMessage = 'Failed to remove extra time.';
+            }
+        } catch (\Exception $e) {
+            $this->errorMessage = 'An error occurred: ' . $e->getMessage();
+            Log::error('Error removing extra time', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->viewingSession->id ?? null,
+                'user_id' => Auth::id()
+            ]);
         }
     }
     

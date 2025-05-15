@@ -297,6 +297,7 @@
                         <button type="button" class="btn-close" wire:click="closeViewModal"></button>
                     </div>
                     <div class="modal-body">
+                        <!-- Student Information Card -->
                         <div class="card shadow-sm mb-4">
                             <div class="card-header">
                                 <div class="card-title">
@@ -332,6 +333,7 @@
                             </div>
                         </div>
 
+                        <!-- Exam Timing Card -->
                         <div class="card shadow-sm mb-4">
                             <div class="card-header">
                                 <div class="card-title">
@@ -420,6 +422,123 @@
                             </div>
                         </div>
                         
+                        <!-- Extra Time Management Form -->
+                        @if($modifyExtraTime && $viewingSession)
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-light-primary">
+                                <div class="card-title">
+                                    <h3 class="card-title">
+                                        <i class="bi bi-pencil-square me-2"></i>
+                                        Modify Extra Time
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form wire:submit.prevent="updateExtraTime" class="mb-3">
+                                    <div class="alert alert-info mb-3">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <i class="bi bi-info-circle-fill fs-3"></i>
+                                            </div>
+                                            <div>
+                                                <p class="mb-1 fw-semibold">Current extra time: {{ $viewingSession->extra_time_minutes }} minutes</p>
+                                                <p class="mb-0">Enter a new value to update or remove extra time (set to 0 to remove all extra time).</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="newExtraTimeValue" class="form-label fw-semibold required">New Extra Time Value (Minutes)</label>
+                                            <input type="number" id="newExtraTimeValue" wire:model="newExtraTimeValue" 
+                                                class="form-control @error('newExtraTimeValue') is-invalid @enderror" min="0" max="120">
+                                            @error('newExtraTimeValue') 
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-light" wire:click="toggleModifyExtraTimeForm">
+                                            Cancel
+                                        </button>
+                                        <div>
+                                            <button type="button" class="btn btn-danger me-2" wire:click="removeExtraTime" @if($viewingSession->extra_time_minutes <= 0) disabled @endif>
+                                                <i class="bi bi-trash me-1"></i> Remove All Extra Time
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-check-circle me-1"></i> Update Extra Time
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endif
+                        
+                        <!-- Session Restoration Form -->
+                        @if($restoreSession && $viewingSession)
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-light-warning">
+                                <div class="card-title">
+                                    <h3 class="card-title">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>
+                                        Restore Exam Session
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form wire:submit.prevent="restoreExamSession">
+                                    <div class="alert alert-warning mb-3">
+                                        <div class="d-flex">
+                                            <div class="me-3">
+                                                <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                                            </div>
+                                            <div>
+                                                <p class="mb-1 fw-semibold">You are about to restore an expired exam session</p>
+                                                <p class="mb-0">This will allow the student to log back in and continue the exam. Please provide a reason for this action.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="restoreMinutes" class="form-label fw-semibold required">Minutes to Grant</label>
+                                            <input type="number" id="restoreMinutes" wire:model="restoreMinutes" 
+                                                class="form-control @error('restoreMinutes') is-invalid @enderror" min="5" max="120">
+                                            @error('restoreMinutes') 
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                            <div class="form-text">How many minutes should the student have to complete the exam?</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <label for="restoreReason" class="form-label fw-semibold required">Reason for Restoration</label>
+                                            <textarea id="restoreReason" wire:model="restoreReason" rows="3" 
+                                                class="form-control @error('restoreReason') is-invalid @enderror"
+                                                placeholder="Provide a reason for restoring this exam session"></textarea>
+                                            @error('restoreReason') 
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-light" wire:click="toggleRestoreForm">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="bi bi-arrow-clockwise me-1"></i> Restore Session
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endif
+                        
+                        <!-- Exam Progress Card -->
                         <div class="card shadow-sm">
                             <div class="card-header">
                                 <div class="card-title">
@@ -466,22 +585,39 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="closeViewModal">Close</button>
+                    <div class="modal-footer justify-content-between">
+                        <!-- Left side - session actions -->
+                        <div>
+                            @php
+                                $isExpired = now()->gt($viewingSession->adjustedCompletionTime);
+                                $isCompleted = $viewingSession->completed_at && $viewingSession->completed_at->isPast();
+                            @endphp
+                            
+                            @if($isExpired || $isCompleted)
+                                <button type="button" class="btn btn-warning me-2" wire:click="toggleRestoreForm">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Restore Session
+                                </button>
+                            @endif
+                            
+                            <button type="button" class="btn btn-info" wire:click="toggleModifyExtraTimeForm">
+                                <i class="bi bi-gear me-1"></i> 
+                                @if($viewingSession->extra_time_minutes > 0)
+                                    Modify Extra Time
+                                @else
+                                    Add Extra Time
+                                @endif
+                            </button>
+                        </div>
                         
-                        <!-- Always show the add extra time button, even for completed sessions -->
-                        <button type="button" class="btn btn-primary" wire:click="addExtraTimeFromModal">
-                            <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
-                        </button>
-                        
-                        @if($viewingSession->completed_at && now()->lt($viewingSession->adjustedCompletionTime))
-                            <div class="badge bg-success ms-2 py-2">Session is active</div>
-                        @elseif($viewingSession->completed_at) 
-                            <div class="badge bg-warning text-dark ms-2 py-2">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                Adding time will reactivate this session
-                            </div>
-                        @endif
+                        <!-- Right side - closing and additional buttons -->
+                        <div>
+                            <button type="button" class="btn btn-light" wire:click="closeViewModal">Close</button>
+                            
+                            <!-- Always show the add extra time button -->
+                            <button type="button" class="btn btn-primary" wire:click="addExtraTimeFromModal">
+                                <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -2,8 +2,8 @@
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <div class="card-title d-flex justify-content-between align-items-center">
+                <div class="card-header  d-flex justify-content-between align-items-center">
+                    <div class="card-title">
                         <h3>
                             <i class="ki-duotone ki-chart fs-2 me-2">
                                 <span class="path1"></span>
@@ -11,10 +11,11 @@
                             </i>
                             Exam Results
                         </h3>
+                    </div>
                         <div>
                             <p class="text-muted mb-0">View and export exam results for all students</p>
                         </div>
-                    </div>
+                    
                 </div>
                 
                 <div class="card-body">

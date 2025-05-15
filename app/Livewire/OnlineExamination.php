@@ -44,6 +44,7 @@ class OnlineExamination extends Component
     // Add examTimeExpired to listeners for new timer component
     protected $listeners = ['submitExam', 'examTimeExpired', 'heartbeat'];
 
+    // Update the mount method to properly handle restored exam sessions
     public function mount($examPassword, $student_id = null)
     {
         $this->examPassword = $examPassword;
@@ -65,15 +66,23 @@ class OnlineExamination extends Component
         // Initialize user and session
         $this->initializeExamSession();
         
-        // Check if exam is completed and set read-only mode
+        // Check if exam is completed - but account for restored sessions
         if ($this->examSession && $this->examSession->completed_at) {
-            $this->readOnlyMode = true;
+            // A restored session has completed_at set to a future date with auto_submitted set to false
+            $isRestoredSession = $this->examSession->completed_at->isFuture() && !$this->examSession->auto_submitted;
             
-            // Log view-only access
-            Log::info('Read-only access to completed exam', [
+            // Only set read-only mode if it's NOT a restored session
+            $this->readOnlyMode = !$isRestoredSession;
+            
+            // Log the session status for debugging
+            Log::info('Exam session status determined', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
-                'completed_at' => $this->examSession->completed_at->toDateTimeString()
+                'completed_at' => $this->examSession->completed_at->toDateTimeString(),
+                'is_future_date' => $this->examSession->completed_at->isFuture(),
+                'auto_submitted' => $this->examSession->auto_submitted,
+                'is_restored_session' => $isRestoredSession,
+                'read_only_mode' => $this->readOnlyMode
             ]);
         }
         

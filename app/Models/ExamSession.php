@@ -85,9 +85,15 @@ class ExamSession extends Model
             return null;
         }
         
-        // If the exam is already completed, return the actual completion time
+        // For restored sessions, the completed_at field is set to a future date
+        // and represents when the restored session expires
+        if ($this->completed_at && $this->completed_at->isFuture() && !$this->auto_submitted) {
+            return $this->completed_at;
+        }
+        
+        // For normal completed sessions (not restored), return the actual completion time
         // This prevents extra time from being applied to completed exams
-        if ($this->completed_at) {
+        if ($this->completed_at && !$this->completed_at->isFuture()) {
             return $this->completed_at;
         }
         

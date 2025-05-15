@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Helpers\DeviceDetector;
+use Carbon\Carbon;
 
 class ExamLogin extends Component
 {
@@ -22,7 +23,7 @@ class ExamLogin extends Component
         // check environment set values for local
         if (env('APP_ENV') == 'local') {
             // $this->studentId = "PNMTC/DA/RGN/24/25/001";
-            $this->examPassword = "Tg1ecnvj";
+            $this->examPassword = "vaQTusuK";
         }
     }
 
@@ -99,7 +100,6 @@ class ExamLogin extends Component
             // Check if there's an existing active exam session
             $existingSession = ExamSession::where('exam_id', $exam->id)
                 ->where('student_id', $user->id)
-                ->whereNull('completed_at')
                 ->first();
                 
             if ($existingSession) {
@@ -117,8 +117,20 @@ class ExamLogin extends Component
                     return;
                 }
                 
+                // Check if the session has a completed_at date in the future (restored session)
+                if ($existingSession->completed_at && $existingSession->completed_at->isFuture()) {
+                    Log::info('Restored exam session detected', [
+                        'session_id' => $existingSession->id,
+                        'student_id' => $student->student_id,
+                        'completed_at' => $existingSession->completed_at->toDateTimeString(),
+                        'extra_time_minutes' => $existingSession->extra_time_minutes
+                    ]);
+                    
+                    // Update device access info for this restored session
+                    $existingSession->updateDeviceAccess($sessionToken, $deviceInfo);
+                }
                 // If the adjusted completion time is in the past, the session has expired
-                if ($existingSession->adjustedCompletionTime->isPast()) {
+                elseif ($existingSession->adjustedCompletionTime->isPast()) {
                     Log::info('Existing session found but expired', [
                         'session_id' => $existingSession->id,
                         'student_id' => $student->student_id,
