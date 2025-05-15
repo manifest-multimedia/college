@@ -629,7 +629,7 @@ class ExamResultsComponent extends Component
         
         // If user is a lecturer, only show their exams
         if ($this->isLecturer && $this->currentUser) {
-            $examsQuery->where('created_by', $this->currentUser->id);
+            $examsQuery->where('user_id', $this->currentUser->id);
         }
         
         // Get the exams based on the filter
