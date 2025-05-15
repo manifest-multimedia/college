@@ -191,18 +191,20 @@ class ExamResponseTracker extends Component
                 $exam = Exam::find($session->exam_id);
                 if ($exam) {
                     // Use questions_per_session if available, otherwise fall back to total questions
-                    $this->totalQuestions = $exam->questions_per_session ?? $exam->questions->count();
-                    
-                    // Calculate total marks based on the questions_per_session value
-                    // Each question contributes its mark value (defaulting to 1 if not specified)
-                    $this->totalMarks = 0;
+                    $questionsPerSession = $exam->questions_per_session ?? $exam->questions->count();
+                    $this->totalQuestions = $questionsPerSession;
                     
                     // Get all responses for this session
                     $responses = $session->responses;
                     
-                    // Prepare responses data for display, including correct answers
-                    $this->sessionResponses = $responses->map(function($response) {
+                    // Create a collection of processed responses so we can sort/limit them
+                    $processedResponses = collect();
+                    
+                    // Process each response to calculate metrics
+                    foreach ($responses as $response) {
                         $question = $response->question;
+                        if (!$question) continue;
+                        
                         $correctOption = $question->options->where('is_correct', true)->first();
                         $selectedOption = $question->options->where('id', $response->selected_option)->first();
                         
@@ -212,30 +214,45 @@ class ExamResponseTracker extends Component
                         // Get question mark value, default to 1 if not specified
                         $questionMark = $question->mark ?? 1;
                         
-                        // Add to total marks (for all questions in the session)
-                        $this->totalMarks += $questionMark;
-                        
-                        // Update metrics
-                        if ($isAttempted) {
-                            $this->totalAttempted++;
-                        }
-                        
-                        if ($isCorrect) {
-                            $this->totalCorrect++;
-                            $this->obtainedMarks += $questionMark;
-                        }
-                        
-                        return [
-                            'question_id' => $question->id,
-                            'question_text' => $question->question_text,
-                            'correct_option_id' => $correctOption ? $correctOption->id : null,
-                            'correct_option_text' => $correctOption ? $correctOption->option_text : 'No correct answer defined',
-                            'selected_option_id' => $response->selected_option,
-                            'selected_option_text' => $selectedOption ? $selectedOption->option_text : 'No answer selected',
+                        // Add to processed responses collection with relevant metrics
+                        $processedResponses->push([
+                            'response' => $response,
+                            'question' => $question,
+                            'correct_option' => $correctOption,
+                            'selected_option' => $selectedOption,
                             'is_correct' => $isCorrect,
                             'is_attempted' => $isAttempted,
-                            'mark' => $questionMark, // Include the mark value for display
-                            'all_options' => $question->options->map(function($option) {
+                            'mark_value' => $questionMark
+                        ]);
+                    }
+                    
+                    // Log the original counts for debugging
+                    $originalCount = $processedResponses->count();
+                    $originalAttempted = $processedResponses->where('is_attempted', true)->count();
+                    
+                    // Only take the configured number of questions per session
+                    // This ensures we don't count extra questions from shuffling
+                    $limitedResponses = $processedResponses->take($questionsPerSession);
+                    
+                    // Calculate metrics from the limited responses
+                    $this->totalAttempted = $limitedResponses->where('is_attempted', true)->count();
+                    $this->totalCorrect = $limitedResponses->where('is_correct', true)->count();
+                    $this->totalMarks = $limitedResponses->sum('mark_value');
+                    $this->obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
+                    
+                    // Map the limited responses for display
+                    $this->sessionResponses = $limitedResponses->map(function($item) {
+                        return [
+                            'question_id' => $item['question']->id,
+                            'question_text' => $item['question']->question_text,
+                            'correct_option_id' => $item['correct_option'] ? $item['correct_option']->id : null,
+                            'correct_option_text' => $item['correct_option'] ? $item['correct_option']->option_text : 'No correct answer defined',
+                            'selected_option_id' => $item['response']->selected_option,
+                            'selected_option_text' => $item['selected_option'] ? $item['selected_option']->option_text : 'No answer selected',
+                            'is_correct' => $item['is_correct'],
+                            'is_attempted' => $item['is_attempted'],
+                            'mark' => $item['mark_value'],
+                            'all_options' => $item['question']->options->map(function($option) {
                                 return [
                                     'id' => $option->id,
                                     'text' => $option->option_text,
@@ -245,22 +262,22 @@ class ExamResponseTracker extends Component
                         ];
                     });
                     
-                    // Log for debugging
-                    Log::info('Exam response metrics', [
-                        'session_id' => $this->session_id,
-                        'exam_id' => $session->exam_id,
-                        'total_questions' => $this->totalQuestions,
-                        'questions_per_session' => $exam->questions_per_session,
-                        'total_attempted' => $this->totalAttempted,
-                        'total_correct' => $this->totalCorrect,
-                        'total_marks' => $this->totalMarks,
-                        'obtained_marks' => $this->obtainedMarks
-                    ]);
-                }
-                
-                // Calculate percentage
-                if ($this->totalMarks > 0) {
-                    $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
+                    // Log if we're limiting the displayed responses
+                    if ($originalCount > $questionsPerSession) {
+                        Log::info('Limiting response tracker responses', [
+                            'session_id' => $this->session_id,
+                            'exam_id' => $session->exam_id,
+                            'original_count' => $originalCount,
+                            'original_attempted' => $originalAttempted,
+                            'limited_to' => $questionsPerSession,
+                            'limited_attempted' => $this->totalAttempted
+                        ]);
+                    }
+                    
+                    // Calculate percentage
+                    if ($this->totalMarks > 0) {
+                        $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
+                    }
                 }
                 
                 $this->responsesFound = count($this->sessionResponses) > 0;

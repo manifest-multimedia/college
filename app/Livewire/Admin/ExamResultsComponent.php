@@ -173,14 +173,24 @@ class ExamResultsComponent extends Component
                 ->with([
                     'student', // This is actually User model
                     'exam.course',
-                    'responses.question.options'
+                    'responses.question.options',
+                    'student.student' // Load the Student model via User -> Student relationship
                 ]);
                 
             // Apply filters
             if ($this->search) {
-                $query->whereHas('student', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%');
+                $searchTerm = $this->search;
+                $query->where(function($query) use ($searchTerm) {
+                    // Search in user table (name and email)
+                    $query->whereHas('student', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', '%' . $searchTerm . '%')
+                          ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                    });
+                    
+                    // Also search by student_id in the students table through the relationship
+                    $query->orWhereHas('student.student', function($q) use ($searchTerm) {
+                        $q->where('student_id', 'like', '%' . $searchTerm . '%');
+                    });
                 });
             }
             
@@ -434,14 +444,24 @@ class ExamResultsComponent extends Component
                 ->with([
                     'student', // This is actually User model
                     'exam.course',
-                    'responses.question.options'
+                    'responses.question.options',
+                    'student.student' // Load the Student model via User -> Student relationship
                 ]);
                 
             // Apply filters
             if ($this->search) {
-                $query->whereHas('student', function($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%');
+                $searchTerm = $this->search;
+                $query->where(function($query) use ($searchTerm) {
+                    // Search in user table (name and email)
+                    $query->whereHas('student', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', '%' . $searchTerm . '%')
+                          ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                    });
+                    
+                    // Also search by student_id in the students table through the relationship
+                    $query->orWhereHas('student.student', function($q) use ($searchTerm) {
+                        $q->where('student_id', 'like', '%' . $searchTerm . '%');
+                    });
                 });
             }
             
