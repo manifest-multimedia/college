@@ -239,7 +239,7 @@
                                                     <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
                                                 </td>
                                                 <td>
-                                                    <a href="{{ route('exam.response.tracker') }}?student_id={{ $result['student_id'] }}" 
+                                                    <a href="{{ route('exam.response.tracker') }}?student_id={{ $result['student_id'] }}&exam_id={{ $exam_id }}&session_id={{ $result['session_id'] }}" 
                                                        class="btn btn-sm btn-primary">
                                                         View Details
                                                     </a>

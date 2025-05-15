@@ -47,10 +47,26 @@ class ExamResponseTracker extends Component
     
     // Track if responses are found
     public $responsesFound = false;
+
+    // For direct linking with all needed parameters
+    protected $queryString = ['student_id', 'exam_id', 'session_id'];
     
     public function mount()
     {
-        // Initialize component
+        // Check if student_id is provided in URL
+        if (!empty($this->student_id) && strlen($this->student_id) >= 3) {
+            $this->findStudent();
+            
+            // If exam_id is also provided, automatically load sessions
+            if ($this->exam_id && $this->foundUser) {
+                $this->loadExamSessions();
+                
+                // If session_id is also provided, automatically load responses
+                if ($this->session_id) {
+                    $this->loadSessionResponses();
+                }
+            }
+        }
     }
     
     public function updatedStudentId()

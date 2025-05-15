@@ -62,11 +62,19 @@ class ExamResultsComponent extends Component
     public function updatedSearch()
     {
         $this->resetPage();
+        $this->loadExamResults();
     }
     
     public function updatedCollegeClassId()
     {
         $this->resetPage();
+        $this->loadExamResults();
+    }
+    
+    public function updatedPerPage()
+    {
+        $this->resetPage();
+        $this->loadExamResults();
     }
     
     public function sortBy($field)
@@ -393,12 +401,8 @@ class ExamResultsComponent extends Component
                 $userEmail = $session->student->email ?? null;
                 $student = $userEmail ? Student::where('email', $userEmail)->first() : null;
                 
-                // Reset counters for each session
-                $totalQuestions = 0;
-                $totalAttempted = 0; 
-                $totalCorrect = 0;
-                $totalMarks = 0;
-                $obtainedMarks = 0;
+                // Create a collection of processed responses so we can sort/limit them
+                $processedResponses = collect();
                 
                 // Get all responses with their questions and options
                 $responses = $session->responses;
@@ -413,24 +417,47 @@ class ExamResultsComponent extends Component
                     
                     // Question mark value (default to 1 if not specified)
                     $questionMark = $question->mark ?? 1;
-                    $totalMarks += $questionMark;
                     
                     // Check if the answer is correct
                     $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
                     $isAttempted = !is_null($response->selected_option);
                     
-                    if ($isAttempted) {
-                        $totalAttempted++;
-                    }
-                    
-                    if ($isCorrect) {
-                        $totalCorrect++;
-                        $obtainedMarks += $questionMark;
-                    }
+                    // Add to processed responses collection with relevant metrics
+                    $processedResponses->push([
+                        'response' => $response,
+                        'is_correct' => $isCorrect,
+                        'is_attempted' => $isAttempted,
+                        'mark_value' => $questionMark
+                    ]);
                 }
+                
+                // Log the original counts for debugging
+                $originalAttempted = $processedResponses->where('is_attempted', true)->count();
+                
+                // Only take the configured number of questions per session
+                // This ensures we don't count extra questions from shuffling
+                $limitedResponses = $processedResponses->take($questionsPerSession);
+                
+                // Now calculate the metrics from the limited responses
+                $totalQuestions = $limitedResponses->count(); // This should match questionsPerSession
+                $totalAttempted = $limitedResponses->where('is_attempted', true)->count();
+                $totalCorrect = $limitedResponses->where('is_correct', true)->count();
+                $totalMarks = $limitedResponses->sum('mark_value');
+                $obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
                 
                 // Calculate percentage (prevent division by zero)
                 $scorePercentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
+                
+                // Log if we're limiting the displayed responses for troubleshooting
+                if ($originalAttempted > $questionsPerSession) {
+                    Log::info('Limiting exported responses for student', [
+                        'session_id' => $session->id,
+                        'student_name' => $session->student->name ?? 'Unknown',
+                        'original_attempted' => $originalAttempted,
+                        'limited_to' => $totalAttempted,
+                        'questions_per_session' => $questionsPerSession
+                    ]);
+                }
                 
                 // Add to results
                 $results[] = [
@@ -444,7 +471,7 @@ class ExamResultsComponent extends Component
                     'score' => $totalCorrect . '/' . $questionsPerSession,
                     'total_marks' => $totalMarks,
                     'obtained_marks' => $obtainedMarks,
-                    'answered' => $totalAttempted . '/' . $questionsPerSession,
+                    'answered' => min($totalAttempted, $questionsPerSession) . '/' . $questionsPerSession,
                     'score_percentage' => $scorePercentage
                 ];
             }
