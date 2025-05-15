@@ -303,9 +303,12 @@ class ExamExtraTime extends Component
                 return;
             }
             
+            // Ensure extra time minutes is an integer
+            $extraTimeMinutes = (int) $this->extraTimeMinutes;
+            
             // Update the session with extra time
             $updates = [
-                'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $this->extraTimeMinutes),
+                'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $extraTimeMinutes),
                 'extra_time_added_by' => Auth::id(),
                 'extra_time_added_at' => $now,
             ];
@@ -319,7 +322,7 @@ class ExamExtraTime extends Component
             // For completed or expired sessions, update the completion time to allow continuation
             if ($isCompleted || now()->gt($this->viewingSession->adjustedCompletionTime)) {
                 // Set the new end time based on current time plus extra time
-                $newEndTime = $now->copy()->addMinutes($this->extraTimeMinutes);
+                $newEndTime = $now->copy()->addMinutes($extraTimeMinutes);
                 $updates['completed_at'] = $newEndTime;
                 $isReactivation = true;
             }
@@ -336,7 +339,7 @@ class ExamExtraTime extends Component
                     'responses.question.options'
                 ])->find($sessionId);
                 
-                $message = 'Successfully added ' . $this->extraTimeMinutes . ' extra minute(s) to the exam session.';
+                $message = 'Successfully added ' . $extraTimeMinutes . ' extra minute(s) to the exam session.';
                 
                 if ($isReactivation) {
                     $message .= ' The session has been reactivated for the student to continue.';
@@ -351,7 +354,7 @@ class ExamExtraTime extends Component
                 Log::info('Extra time added from modal', [
                     'user_id' => Auth::id(),
                     'session_id' => $sessionId,
-                    'minutes_added' => $this->extraTimeMinutes,
+                    'minutes_added' => $extraTimeMinutes,
                     'student_id' => $this->viewingSession->student_id ?? null,
                     'exam_id' => $this->viewingSession->exam_id ?? null,
                     'reactivated' => $isReactivation
@@ -407,13 +410,16 @@ class ExamExtraTime extends Component
             $now = Carbon::now();
             $sessionId = $this->viewingSession->id;
             
+            // Ensure restore minutes is an integer
+            $restoreMinutes = (int) $this->restoreMinutes;
+            
             // Calculate new end time based on current time plus restore minutes
-            $newEndTime = $now->copy()->addMinutes($this->restoreMinutes);
+            $newEndTime = $now->copy()->addMinutes($restoreMinutes);
             
             // Update the session to allow student to continue
             $updates = [
                 'completed_at' => $newEndTime, // Set to future time to make it active
-                'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $this->restoreMinutes),
+                'extra_time_minutes' => DB::raw('extra_time_minutes + ' . $restoreMinutes),
                 'extra_time_added_by' => Auth::id(),
                 'extra_time_added_at' => $now,
                 'auto_submitted' => false, // Reset auto-submission flag
@@ -426,7 +432,7 @@ class ExamExtraTime extends Component
                 Log::info('Exam session restored', [
                     'user_id' => Auth::id(),
                     'session_id' => $sessionId,
-                    'minutes_given' => $this->restoreMinutes,
+                    'minutes_given' => $restoreMinutes,
                     'student_id' => $this->viewingSession->student_id ?? null,
                     'exam_id' => $this->viewingSession->exam_id ?? null,
                     'reason' => $this->restoreReason,
@@ -442,7 +448,7 @@ class ExamExtraTime extends Component
                 ])->find($sessionId);
                 
                 $this->successMessage = 'Session successfully restored. The student can now log in and continue the exam for the next ' . 
-                    $this->restoreMinutes . ' minutes.';
+                    $restoreMinutes . ' minutes.';
                     
                 // Reset form fields
                 $this->restoreMinutes = 30;
