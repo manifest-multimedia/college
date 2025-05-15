@@ -203,6 +203,11 @@ Route::middleware([
         return view('exams.response-tracker');
     })->middleware('role:Super Admin')->name('exam.response.tracker');
 
+    // Exam Results - System Role Access Only
+    Route::get('/exams/results', function () {
+        return view('exams.results');
+    })->middleware(['auth', 'role:System'])->name('exams.results');
+
     /*
     |--------------------------------------------------------------------------
     | Election System Routes
