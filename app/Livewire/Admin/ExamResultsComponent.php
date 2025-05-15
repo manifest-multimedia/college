@@ -38,6 +38,11 @@ class ExamResultsComponent extends Component
     public $highestScore = 0;
     public $lowestScore = 0;
     
+    // User role tracking
+    protected $currentUser;
+    protected $isLecturer = false;
+    protected $authorized = false;
+    
     protected $queryString = [
         'exam_id' => ['except' => null],
         'search' => ['except' => ''],
@@ -47,10 +52,69 @@ class ExamResultsComponent extends Component
     
     public function mount()
     {
+        // Check if user is authorized to access this component
+        $this->currentUser = auth()->user();
+        
+        if (!$this->currentUser) {
+            return $this->redirectToLogin();
+        }
+        
+        // Check if user has one of the allowed roles
+        $allowedRoles = ['System', 'Administrator', 'Super Admin', 'Lecturer'];
+        $authorized = false;
+        
+        foreach ($allowedRoles as $role) {
+            if ($this->currentUser->hasRole($role)) {
+                $authorized = true;
+                
+                if ($role === 'Lecturer') {
+                    $this->isLecturer = true;
+                }
+                
+                break;
+            }
+        }
+        
+        if (!$authorized) {
+            return $this->redirectToUnauthorized();
+        }
+        
+        $this->authorized = true;
+        
         // Load results if exam_id is provided in URL
         if ($this->exam_id) {
             $this->loadExamResults();
         }
+    }
+    
+    /**
+     * Redirect unauthorized users to login page
+     */
+    protected function redirectToLogin()
+    {
+        // Log unauthorized access attempt
+        Log::warning('Unauthorized access attempt to ExamResultsComponent', [
+            'ip' => request()->ip()
+        ]);
+        
+        // Redirect to login
+        return redirect()->route('login');
+    }
+    
+    /**
+     * Redirect unauthorized users to 403 page
+     */
+    protected function redirectToUnauthorized()
+    {
+        // Log unauthorized access attempt
+        Log::warning('Forbidden access attempt to ExamResultsComponent', [
+            'user_id' => $this->currentUser->id,
+            'email' => $this->currentUser->email,
+            'ip' => request()->ip()
+        ]);
+        
+        // Redirect to 403 forbidden page
+        abort(403, 'You do not have permission to access exam results.');
     }
     
     public function updatedExamId()
@@ -540,8 +604,19 @@ class ExamResultsComponent extends Component
     
     public function render()
     {
+        // Query builder for exams
+        $examsQuery = Exam::with('course');
+        
+        // If user is a lecturer, only show their exams
+        if ($this->isLecturer && $this->currentUser) {
+            $examsQuery->where('created_by', $this->currentUser->id);
+        }
+        
+        // Get the exams based on the filter
+        $exams = $examsQuery->orderBy('created_at', 'desc')->get();
+        
         return view('livewire.admin.exam-results-component', [
-            'exams' => Exam::with('course')->get(),
+            'exams' => $exams,
             'collegeClasses' => CollegeClass::orderBy('name')->get(),
         ]);
     }
