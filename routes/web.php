@@ -501,6 +501,19 @@ Route::middleware([
         })->name('admin.exam-extra-time');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth'])->prefix('notifications')->group(function () {
+        Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/get', [App\Http\Controllers\NotificationController::class, 'getNotifications']);
+        Route::post('/{id}/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
+        Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy']);
+    });
+
 });
 
 /*

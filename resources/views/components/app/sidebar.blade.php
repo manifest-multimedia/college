@@ -281,7 +281,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             @php
                 $examRoutes = [
-                    'examcenter', 'examsessions', 'questionbank', 'exam.results', 
+                    'examcenter', 'examsessions', 'questionbank', 'exams.results', 
                     'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
                     'exams.create', 'exams.edit'
                 ];
@@ -340,18 +340,20 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Exam Results</span>
+                            <span class="badge badge-light-primary">New</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
                     
-                    @hasrole('Super Admin')
+                    @hasrole('System|Super Admin')
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('exam.response.tracker') ? 'active' : '' }}" href="{{ route('exam.response.tracker') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Response Tracker</span>
+                            <span class="menu-title">Exam Audit</span>
+                            <span class="badge badge-light-primary">New</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -364,7 +366,8 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Extra Time Management</span>
+                            <span class="menu-title">Extra Time Manager</span>
+                            <span class="badge badge-light-primary">New</span>
                         </a>
                     </div>
                     <!--end:Menu item-->

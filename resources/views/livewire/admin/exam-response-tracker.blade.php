@@ -9,12 +9,12 @@
                                 <span class="path1"></span>
                                 <span class="path2"></span>
                             </i>
-                            Exam Response Tracker
+                            Exam Audit Tool
                         </h1>
                     </div>
                         <div class="float-end">
                             
-                        <p class="text-muted">Track student responses to exam questions in real-time</p>
+                        <p class="text-muted">Track and analyze student exam sessions and responses.</p>
                         </div>
                 
                 </div>
