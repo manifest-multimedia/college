@@ -335,11 +335,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('exam.results') ? 'active' : '' }}" href="{{ route('exam.results') }}">
+                        <a class="menu-link {{ request()->routeIs('exams.results') ? 'active' : '' }}" href="{{ route('exams.results') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Results Management</span>
+                            <span class="menu-title">Exam Results</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -553,15 +553,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
-
+            @php
+            $electionRoutes = [
+                'elections', 'elections.active', 'election.results'
+            ];
+            $isElectionActive = in_array(request()->route()->getName(), $electionRoutes);
+        @endphp
             @hasanyrole('Super Admin|Administrator')
             <!--begin:Menu item-->
-            @php
-                $electionRoutes = [
-                    'elections', 'elections.active', 'election.results'
-                ];
-                $isElectionActive = in_array(request()->route()->getName(), $electionRoutes);
-            @endphp
+           
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isElectionActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
                 <span class="menu-link">
