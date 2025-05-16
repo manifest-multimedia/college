@@ -635,9 +635,55 @@ class ExamResultsComponent extends Component
         // Get the exams based on the filter
         $exams = $examsQuery->orderBy('created_at', 'desc')->get();
         
+        // Generate paginated data if we have an exam selected
+        $examSessions = collect([]);
+        if ($this->exam_id) {
+            // Build base query for exam sessions
+            $query = ExamSession::where('exam_id', $this->exam_id)
+                ->whereNotNull('completed_at')
+                ->with([
+                    'student', 
+                    'exam.course',
+                    'responses.question.options',
+                    'student.student'
+                ]);
+                
+            // Apply filters
+            if ($this->search) {
+                $searchTerm = $this->search;
+                $query->where(function($query) use ($searchTerm) {
+                    $query->whereHas('student', function($q) use ($searchTerm) {
+                        $q->where('name', 'like', '%' . $searchTerm . '%')
+                          ->orWhere('email', 'like', '%' . $searchTerm . '%');
+                    });
+                    
+                    $query->orWhereHas('student.student', function($q) use ($searchTerm) {
+                        $q->where('student_id', 'like', '%' . $searchTerm . '%');
+                    });
+                });
+            }
+            
+            if ($this->college_class_id) {
+                $studentIds = Student::where('college_class_id', $this->college_class_id)
+                    ->join('users', 'students.email', '=', 'users.email')
+                    ->pluck('users.id');
+                    
+                $query->whereIn('student_id', $studentIds);
+            }
+            
+            // Get paginated results
+            $examSessions = $query->paginate($this->perPage);
+            
+            // Load results if needed
+            if (!$this->hasResults && $examSessions->count() > 0) {
+                $this->loadExamResults();
+            }
+        }
+        
         return view('livewire.admin.exam-results-component', [
             'exams' => $exams,
             'collegeClasses' => CollegeClass::orderBy('name')->get(),
+            'paginatedSessions' => $examSessions,
         ]);
     }
 }

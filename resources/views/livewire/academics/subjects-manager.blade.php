@@ -1,11 +1,12 @@
 <div>    <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
                         <h1 class="card-title">
                             <i class="fas fa-book me-2"></i> Manage Courses
                         </h1>
+                        </div>
                         <div class="d-flex">
                             <div class="input-group me-2">
                                 <input wire:model.live.debounce.300ms="search" class="form-control" placeholder="Search courses...">
@@ -17,7 +18,7 @@
                                 <i class="fas fa-plus-circle me-1"></i> Add New Course
                             </button>
                         </div>
-                    </div>
+                    
                 </div>
                 <div class="card-body">
                     @if (session()->has('message'))

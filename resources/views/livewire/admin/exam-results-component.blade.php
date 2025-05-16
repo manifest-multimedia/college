@@ -249,6 +249,11 @@
                                     </tbody>
                                 </table>
                             </div>
+                            
+                            <!-- Pagination Section -->
+                            <div class="d-flex justify-content-center mt-4">
+                                {{ $paginatedSessions->links() }}
+                            </div>
                         @else
                             <div class="alert alert-info">
                                 <h4 class="alert-heading">No Results Found</h4>
