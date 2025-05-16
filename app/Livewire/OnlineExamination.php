@@ -275,26 +275,161 @@ class OnlineExamination extends Component
         }
     }
 
+    // public function loadQuestions()
+    // {
+    //     try {
+    //         // Get the number of questions per session from the exam configuration or use 140 as fallback
+    //         $questionsPerSession = $this->exam->questions_per_session ?? 140;
+            
+    //         // First, get any questions that the student has already answered
+    //         $answeredQuestionIds = array_keys($this->responses);
+    //         $answeredQuestions = [];
+            
+    //         if (!empty($answeredQuestionIds)) {
+    //             $answeredQuestions = $this->exam->questions()
+    //                 ->whereIn('id', $answeredQuestionIds)
+    //                 ->get();
+                
+    //             Log::info('Prioritizing previously answered questions', [
+    //                 'session_id' => $this->examSession->id,
+    //                 'student_id' => $this->student->student_id,
+    //                 'answered_count' => count($answeredQuestions)
+    //             ]);
+    //         }
+            
+    //         // Calculate how many additional random questions we need
+    //         $additionalQuestionsNeeded = $questionsPerSession - count($answeredQuestions);
+            
+    //         // If we need additional questions, get them randomly but exclude already answered ones
+    //         $randomQuestions = collect([]);
+    //         if ($additionalQuestionsNeeded > 0) {
+    //             $randomQuestions = $this->exam->questions()
+    //                 ->when(!empty($answeredQuestionIds), function($query) use ($answeredQuestionIds) {
+    //                     return $query->whereNotIn('id', $answeredQuestionIds);
+    //                 })
+    //                 ->inRandomOrder()
+    //                 ->take($additionalQuestionsNeeded)
+    //                 ->get();
+    //         }
+            
+    //         // Merge the answered questions with the random questions
+    //         $examQuestions = $answeredQuestions->merge($randomQuestions);
+            
+    //         // Log question selection details for debugging
+    //         Log::info('Exam questions loaded', [
+    //             'session_id' => $this->examSession->id,
+    //             'total_questions' => $examQuestions->count(),
+    //             'previously_answered' => count($answeredQuestions),
+    //             'random_questions' => $randomQuestions->count()
+    //         ]);
+            
+    //         // Map the questions to the format expected by the view
+    //         $this->questions = $examQuestions->map(function ($question) {
+    //             // Get the response for this question if it exists
+    //             $response = Response::where('exam_session_id', $this->examSession->id)
+    //                 ->where('question_id', $question->id)
+    //                 ->first();
+
+    //             // Update the responses array with the selected option
+    //             $this->responses[$question->id] = $response ? $response->selected_option : null;
+
+    //             return [
+    //                 'id' => $question->id,
+    //                 'question' => $question->question_text,
+    //                 'options' => $question->options()->get()->toArray(),
+    //                 'marks' => $question->mark,
+    //             ];
+    //         });
+            
+    //     } catch (\Exception $e) {
+    //         Log::error('Error loading exam questions', [
+    //             'error' => $e->getMessage(),
+    //             'student_id' => $this->student->student_id ?? null,
+    //             'exam_id' => $this->exam->id ?? null
+    //         ]);
+            
+    //         // If there's an error, ensure we at least have an empty questions array
+    //         $this->questions = [];
+    //     }
+    // }
     public function loadQuestions()
     {
-        $examQuestions = $this->exam->questions()->inRandomOrder()->take(140)->get();
-
-        $this->questions = $examQuestions->map(function ($question) {
-            $response = Response::where('exam_session_id', $this->examSession->id)
-                ->where('question_id', $question->id)
-                ->first();
-
-            $this->responses[$question->id] = $response ? $response->selected_option : null;
-
-            return [
-                'id' => $question->id,
-                'question' => $question->question_text,
-                'options' => $question->options()->get()->toArray(),
-                'marks' => $question->mark,
-            ];
-        });
+        try {
+            // Get the number of questions per session from the exam configuration or use 140 as fallback
+            $questionsPerSession = $this->exam->questions_per_session ?? 140;
+    
+            // Retrieve existing responses for this exam session
+            $existingResponses = Response::where('exam_session_id', $this->examSession->id)->get();
+            $answeredQuestionIds = $existingResponses->pluck('question_id')->toArray();
+    
+            // Get previously answered questions
+            $answeredQuestions = collect([]);
+            if (!empty($answeredQuestionIds)) {
+                $answeredQuestions = $this->exam->questions()
+                    ->whereIn('id', $answeredQuestionIds)
+                    ->get();
+    
+                Log::info('Prioritizing previously answered questions', [
+                    'session_id' => $this->examSession->id,
+                    'student_id' => $this->student->student_id,
+                    'answered_count' => $answeredQuestions->count(),
+                ]);
+            }
+    
+            // Calculate how many additional random questions are needed
+            $additionalQuestionsNeeded = max(0, $questionsPerSession - $answeredQuestions->count());
+    
+            // Get additional random questions, excluding already answered ones
+            $randomQuestions = collect([]);
+            if ($additionalQuestionsNeeded > 0) {
+                $randomQuestions = $this->exam->questions()
+                    ->whereNotIn('id', $answeredQuestionIds)
+                    ->inRandomOrder()
+                    ->take($additionalQuestionsNeeded)
+                    ->get();
+    
+                Log::info('Loaded random questions', [
+                    'session_id' => $this->examSession->id,
+                    'student_id' => $this->student->student_id,
+                    'random_count' => $randomQuestions->count(),
+                ]);
+            }
+    
+            // Combine answered and random questions, ensuring both are collections
+            $examQuestions = $answeredQuestions->concat($randomQuestions)->shuffle();
+    
+            // Log question selection details for debugging
+            Log::info('Exam questions loaded', [
+                'session_id' => $this->examSession->id,
+                'total_questions' => $examQuestions->count(),
+                'previously_answered' => $answeredQuestions->count(),
+                'random_questions' => $randomQuestions->count(),
+            ]);
+    
+            // Map the questions to the format expected by the view
+            $this->questions = $examQuestions->map(function ($question) {
+                // Get the response for this question if it exists
+                $response = $this->responses[$question->id] ?? null;
+    
+                return [
+                    'id' => $question->id,
+                    'question' => $question->question_text,
+                    'options' => $question->options()->get()->toArray(),
+                    'marks' => $question->mark,
+                ];
+            })->values()->toArray();
+    
+        } catch (\Exception $e) {
+            Log::error('Error loading exam questions', [
+                'error' => $e->getMessage(),
+                'student_id' => $this->student->student_id ?? null,
+                'exam_id' => $this->exam->id ?? null,
+            ]);
+    
+            // Ensure questions is an empty array on error
+            $this->questions = [];
+        }
     }
-
     public function storeResponse($questionId, $answer)
     {
         try {
