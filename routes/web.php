@@ -418,6 +418,9 @@ Route::middleware([
         // Exam Types
         Route::get('/exam-types', App\Livewire\Academics\ExamTypeManager::class)->name('exam-types');
 
+        // Subjects/Courses Management
+        Route::get('/courses', \App\Livewire\Academics\SubjectsManager::class)->name('academics.courses');
+
         // Year migration command (for admins only)
         Route::post('/migrate-year-data', function () {
             if (auth()->user()->hasRole('admin')) {
