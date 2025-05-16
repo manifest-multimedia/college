@@ -59,6 +59,7 @@ class UpdateExamOptionIds extends Command
         $fixedCount = 0;
         $errorCount = 0;
         $skippedCount = 0;
+        $alreadyMatchedCount = 0;
         
         // Create a progress bar for better visibility
         $progressBar = $this->output->createProgressBar($examSessions->count());
@@ -80,16 +81,18 @@ class UpdateExamOptionIds extends Command
                     $currentOptions = $question->options;
                     $selectedOptionId = $response->selected_option;
                     
+                    // Check if the selected option matches any current option
+                    $existingMatch = $currentOptions->firstWhere('id', $selectedOptionId);
+                    if ($existingMatch) {
+                        $alreadyMatchedCount++;
+                        continue; // Already matched, no need to fix
+                    }
+                    
                     // Get the last 2 digits of the selected option
                     $selectedOptionSuffix = substr((string)$selectedOptionId, -2);
                     
                     // Find option with matching suffix
-                    $matchingOption = $currentOptions->first(function ($option) use ($selectedOptionSuffix, $selectedOptionId) {
-                        // If IDs already match, no need to update
-                        if ($option->id == $selectedOptionId) {
-                            return false;
-                        }
-                        
+                    $matchingOption = $currentOptions->first(function ($option) use ($selectedOptionSuffix) {
                         $optionSuffix = substr((string)$option->id, -2);
                         return $optionSuffix === $selectedOptionSuffix;
                     });
@@ -102,8 +105,12 @@ class UpdateExamOptionIds extends Command
                             $response->update([
                                 'selected_option' => $matchingOption->id
                             ]);
-                            $fixedCount++;
                         }
+                        
+                        $fixedCount++; // Count as fixed regardless of dry run status
+                    } else {
+                        $this->warn("\nNo matching option found for Response #{$response->id} with selected option {$selectedOptionId}");
+                        $skippedCount++;
                     }
                 }
             } catch (\Exception $e) {
@@ -112,6 +119,8 @@ class UpdateExamOptionIds extends Command
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
+                
+                $this->error("\nError processing exam session {$session->id}: {$e->getMessage()}");
             }
             
             $progressBar->advance();
@@ -126,12 +135,16 @@ class UpdateExamOptionIds extends Command
             $this->info("Processing complete. Fixed {$fixedCount} responses.");
         }
         
+        if ($alreadyMatchedCount > 0) {
+            $this->line("{$alreadyMatchedCount} responses already had correct option IDs.");
+        }
+        
         if ($errorCount > 0) {
             $this->warn("{$errorCount} errors occurred during processing. Check logs for details.");
         }
         
         if ($skippedCount > 0) {
-            $this->line("{$skippedCount} responses skipped (no selected option or no question).");
+            $this->line("{$skippedCount} responses skipped (no selected option, no matching option found, or no question).");
         }
         
         return 0;
