@@ -44,7 +44,7 @@
                     </span>
                     <input type="text" class="form-control form-control-sm form-control-solid ps-8" 
                            placeholder="Search students..." 
-                           wire:model.debounce.500ms="search">
+                           wire:model.live.debounce.500ms="search">
                 </div>
                 
                 <!-- Program Filter -->
