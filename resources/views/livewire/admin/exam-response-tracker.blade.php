@@ -52,6 +52,12 @@
                                             <option value="">-- Select an Exam --</option>
                                             @foreach($exams as $exam)
                                                 <option value="{{ $exam->id }}">
+
+                                                    {{-- Add Exam ID if user has role 'System' --}}
+                                                    @if(auth()->user()->hasRole('System'))
+                                                        {{ $exam->id }} -
+                                                    @endif
+                                                    
                                                     {{ $exam->course->name ?? 'Unknown Course' }} ({{ $exam->created_at->format('d M, Y') }})
                                                 </option>
                                             @endforeach
@@ -192,7 +198,13 @@
                                                 <th>#</th>
                                                 <th>Question</th>
                                                 <th>Student's Answer</th>
+                                                @if(auth()->user()->hasRole('System'))
+                                                    <th>Option ID</th>
+                                                @endif
                                                 <th>Correct Answer</th>
+                                                @if(auth()->user()->hasRole('System'))
+                                                    <th>Correct ID</th>
+                                                @endif
                                                 <th>Status</th>
                                                 <th>All Options</th>
                                             </tr>
@@ -203,7 +215,13 @@
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $response['question_text'] }}</td>
                                                     <td>{{ $response['selected_option_text'] }}</td>
+                                                    @if(auth()->user()->hasRole('System'))
+                                                        <td>{{ $response['selected_option_id'] ?? 'N/A' }}</td>
+                                                    @endif
                                                     <td>{{ $response['correct_option_text'] }}</td>
+                                                    @if(auth()->user()->hasRole('System'))
+                                                        <td>{{ $response['correct_option_id'] ?? 'N/A' }}</td>
+                                                    @endif
                                                     <td>
                                                         @if($response['is_correct'])
                                                             <span class="badge bg-success">Correct</span>
@@ -238,6 +256,9 @@
                                                                                 <li class="list-group-item 
                                                                                     {{ $option['id'] == $response['selected_option_id'] ? 'list-group-item-primary' : '' }}
                                                                                     {{ $option['is_correct'] ? 'list-group-item-success' : '' }}">
+                                                                                    @if(auth()->user()->hasRole('System'))
+                                                                                        <strong>ID: {{ $option['id'] }}</strong> - 
+                                                                                    @endif
                                                                                     {{ $option['text'] }}
                                                                                     
                                                                                     @if($option['id'] == $response['selected_option_id'])
