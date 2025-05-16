@@ -36,13 +36,36 @@
                             </div>
                             
                             <!-- Class Filter -->
-                            <div class="col-md-3">
-                                <label for="college_class_id" class="form-label">Class</label>
+                            <div class="col-md-3 mb-3">
+                                <label for="college_class_id" class="form-label">Filter by Class</label>
                                 <select wire:model.live="college_class_id" id="college_class_id" class="form-select">
                                     <option value="">All Classes</option>
                                     @foreach($collegeClasses as $class)
                                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                                     @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Cohort Filter -->
+                            <div class="col-md-3 mb-3">
+                                <label for="cohort_id" class="form-label">Filter by Cohort</label>
+                                <select wire:model.live="cohort_id" id="cohort_id" class="form-select">
+                                    <option value="">All Cohorts</option>
+                                    @foreach($cohorts as $cohort)
+                                        <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            
+                            <!-- Results per page -->
+                            <div class="col-md-2 mb-3">
+                                <label for="perPage" class="form-label">Results per page</label>
+                                <select wire:model.live="perPage" id="perPage" class="form-select">
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
                                 </select>
                             </div>
                             

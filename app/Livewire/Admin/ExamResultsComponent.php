@@ -23,6 +23,7 @@ class ExamResultsComponent extends Component
     public $exam_id = null;
     public $search = '';
     public $college_class_id = null;
+    public $cohort_id = null;
     public $perPage = 15;
     public $sortField = 'score_percentage';
     public $sortDirection = 'desc';
@@ -47,6 +48,7 @@ class ExamResultsComponent extends Component
         'exam_id' => ['except' => null],
         'search' => ['except' => ''],
         'college_class_id' => ['except' => null],
+        'cohort_id' => ['except' => null],
         'perPage' => ['except' => 15],
     ];
     
@@ -135,6 +137,12 @@ class ExamResultsComponent extends Component
         $this->loadExamResults();
     }
     
+    public function updatedCohortId()
+    {
+        $this->resetPage();
+        $this->loadExamResults();
+    }
+    
     public function updatedPerPage()
     {
         $this->resetPage();
@@ -197,6 +205,15 @@ class ExamResultsComponent extends Component
             if ($this->college_class_id) {
                 // Get students in this college class
                 $studentIds = Student::where('college_class_id', $this->college_class_id)
+                    ->join('users', 'students.email', '=', 'users.email')
+                    ->pluck('users.id');
+                    
+                $query->whereIn('student_id', $studentIds);
+            }
+            
+            if ($this->cohort_id) {
+                // Get students in this cohort
+                $studentIds = Student::where('cohort_id', $this->cohort_id)
                     ->join('users', 'students.email', '=', 'users.email')
                     ->pluck('users.id');
                     
@@ -474,6 +491,15 @@ class ExamResultsComponent extends Component
                 $query->whereIn('student_id', $studentIds);
             }
             
+            if ($this->cohort_id) {
+                // Get students in this cohort
+                $studentIds = Student::where('cohort_id', $this->cohort_id)
+                    ->join('users', 'students.email', '=', 'users.email')
+                    ->pluck('users.id');
+                    
+                $query->whereIn('student_id', $studentIds);
+            }
+            
             // Get all results (no pagination)
             $examSessions = $query->get();
             
@@ -671,6 +697,14 @@ class ExamResultsComponent extends Component
                 $query->whereIn('student_id', $studentIds);
             }
             
+            if ($this->cohort_id) {
+                $studentIds = Student::where('cohort_id', $this->cohort_id)
+                    ->join('users', 'students.email', '=', 'users.email')
+                    ->pluck('users.id');
+                    
+                $query->whereIn('student_id', $studentIds);
+            }
+            
             // Get paginated results
             $examSessions = $query->paginate($this->perPage);
             
@@ -683,6 +717,7 @@ class ExamResultsComponent extends Component
         return view('livewire.admin.exam-results-component', [
             'exams' => $exams,
             'collegeClasses' => CollegeClass::orderBy('name')->get(),
+            'cohorts' => \App\Models\Cohort::where('is_active', true)->orderBy('name')->get(),
             'paginatedSessions' => $examSessions,
         ]);
     }
