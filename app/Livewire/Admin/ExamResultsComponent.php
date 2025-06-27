@@ -371,7 +371,12 @@ class ExamResultsComponent extends Component
     {
         try {
             $exam = Exam::find($this->exam_id);
-            $fileName = 'exam_results_' . str_replace(' ', '_', $exam->course->name ?? 'unknown') . '_' . now()->format('Y-m-d') . '.xlsx';
+            
+            // Properly sanitize the filename to remove any invalid characters
+            $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->course->name ?? 'unknown');
+            $sanitizedName = str_replace(' ', '_', $sanitizedName);
+            
+            $fileName = 'exam_results_' . $sanitizedName . '_' . now()->format('Y-m-d') . '.xlsx';
             
             return Excel::download(new ExamResultsExport(
                 $this->exam_id, 
@@ -414,7 +419,11 @@ class ExamResultsComponent extends Component
                 'stats' => $stats
             ]);
             
-            $fileName = 'exam_results_' . str_replace(' ', '_', $exam->course->name ?? 'unknown') . '_' . now()->format('Y-m-d') . '.pdf';
+            // Properly sanitize the filename to remove any invalid characters
+            $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->course->name ?? 'unknown');
+            $sanitizedName = str_replace(' ', '_', $sanitizedName);
+            
+            $fileName = 'exam_results_' . $sanitizedName . '_' . now()->format('Y-m-d') . '.pdf';
             
             return response()->streamDownload(
                 fn () => print($pdf->output()),

@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
 use App\Models\ScoredQuestion;
 use App\Models\CollegeClass;
+use Illuminate\Support\Facades\Log;
 
 class ExamResultsModule extends Component
 {
@@ -121,7 +122,7 @@ class ExamResultsModule extends Component
                     'session_id' => $session->id
                 ];
             } catch (\Exception $e) {
-                \Log::error('Error processing exam session', [
+                Log::error('Error processing exam session', [
                     'session_id' => $session->id,
                     'error' => $e->getMessage()
                 ]);
@@ -176,7 +177,11 @@ class ExamResultsModule extends Component
         
         $exam = Exam::find($this->selected_exam_id);
         $collegeClass = CollegeClass::find($this->selected_college_class_id);
-        $filename = Str::slug($exam->course->name) . '-' . $collegeClass->name . '-results.xlsx';
+        
+        // Properly sanitize class name to remove any invalid characters
+        $sanitizedClassName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $collegeClass->name);
+        
+        $filename = Str::slug($exam->course->name) . '-' . $sanitizedClassName . '-results.xlsx';
         
         return Excel::download(new ExamResultsExport($this->selected_exam_id, $this->selected_college_class_id), $filename);
     }
