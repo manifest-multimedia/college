@@ -283,7 +283,8 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 $examRoutes = [
                     'examcenter', 'examsessions', 'questionbank', 'exams.results', 
                     'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
-                    'exams.create', 'exams.edit'
+                    'exams.create', 'exams.edit', 'admin.exams.offline', 'admin.exams.offline-scores',
+                    'admin.transcripts.generation'
                 ];
                 $isExamActive = in_array(request()->route()->getName(), $examRoutes);
             @endphp
@@ -372,6 +373,44 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
+                    
+                    @can('view exams')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.exams.offline') ? 'active' : '' }}" href="{{ route('admin.exams.offline') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Offline Exams</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.exams.offline-scores') ? 'active' : '' }}" href="{{ route('admin.exams.offline-scores') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Offline Exam Scores</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.transcripts.generation') ? 'active' : '' }}" href="{{ route('admin.transcripts.generation') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Student Transcripts</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endcan
                 </div>
                 <!--end:Menu sub-->
             </div>

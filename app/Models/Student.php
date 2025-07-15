@@ -181,6 +181,14 @@ class Student extends Model
     }
 
     /**
+     * Get offline exam scores for this student
+     */
+    public function offlineExamScores()
+    {
+        return $this->hasMany(OfflineExamScore::class);
+    }
+
+    /**
      * Get current fee bill for student in specified academic year and semester
      * 
      * @param int $academicYearId

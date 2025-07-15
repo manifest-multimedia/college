@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subject extends Model
 {
-    protected $fillable = ['course_code', 'name', 'semester_id', 'year_id', 'college_class_id'];
+    protected $fillable = ['course_code', 'name', 'semester_id', 'year_id', 'college_class_id', 'credit_hours'];
+
+    protected $casts = [
+        'credit_hours' => 'decimal:1',
+    ];
 
     // Define relationships
     public function semester()

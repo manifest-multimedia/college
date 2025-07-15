@@ -102,6 +102,16 @@ class OfflineExam extends Model
     }
 
     /**
+     * Get all scores recorded for this offline exam.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function scores()
+    {
+        return $this->hasMany(OfflineExamScore::class);
+    }
+
+    /**
      * Scope a query to only include published exams.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query

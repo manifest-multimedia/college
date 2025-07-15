@@ -53,6 +53,11 @@ Route::get('/sign-up', function () {
     return redirect('https://auth.pnmtc.edu.gh/sign-up');
 })->name('signup');
 
+// Redirect to Student Registration page
+Route::get('/student-registration', function () {
+    return redirect('https://auth.pnmtc.edu.gh/student/register');
+})->name('student.registration');
+
 // Root route handling
 Route::get('/', function () {
     return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login'); // Prefer named routes
@@ -485,6 +490,16 @@ Route::middleware([
         Route::get('/exams/offline', function () {
             return view('admin.exam.offline-exams');
         })->middleware('permission:view exams')->name('exams.offline');
+        
+        // Offline Exam Scores Management
+        Route::get('/exams/offline-scores', function () {
+            return view('admin.exam.offline-scores');
+        })->middleware('permission:view exams')->name('exams.offline-scores');
+        
+        // Transcript Generation
+        Route::get('/transcripts', function () {
+            return view('admin.transcripts.generation');
+        })->middleware('permission:view exams')->name('transcripts.generation');
         
         // Exam Clearances Management
         Route::get('/exams/clearances', function () {

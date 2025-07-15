@@ -94,8 +94,8 @@ This is an example of how you properly reference tables tables which uses increm
 
 Use Laravel Tinker for checking databse structure; commands like php artisan db:show table_name do not work. Alternatively review all migrations for the related tables and models.
 
-To use Laravel Tinker first enter enter, then run commands within the console:
-- Run php artisan tinker 
-- Once we're inside tinker we can then run other commands instead of chaining commands 
+To use Laravel Tinker, run the tinker execute command in your terminal:
+
+
 
 In laravel 12 we don't need to use @livewireScripts and @livewireStyles it's part of the system by default.
