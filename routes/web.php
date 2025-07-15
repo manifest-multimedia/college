@@ -69,11 +69,19 @@ Route::middleware([
 ])->group(function () {
 
     Route::get('/portal', function () {
+        // Check if user has Student role and redirect to student dashboard
+        if (auth()->user()->hasRole('Student')) {
+            return redirect()->route('student.dashboard');
+        }
+        
+        // Otherwise, show the general dashboard for staff/admin users
         return view('dashboard');
     })->name('dashboard');
 
     // Student-only routes
     Route::middleware(['role:Student'])->group(function() {
+        Route::get('/student-dashboard', [App\Http\Controllers\StudentDashboardController::class, 'index'])->name('student.dashboard');
+        
         Route::get('/student-information', function () {
             return view('students.information');
         })->name('student.information');

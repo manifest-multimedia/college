@@ -24,7 +24,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item here show menu-accordion">
                 <!--begin:Menu link-->
-                <a href={{ route('dashboard') }} class="menu-link">
+                @hasrole('Student')
+                    <a href="{{ route('student.dashboard') }}" class="menu-link">
+                @else
+                    <a href="{{ route('dashboard') }}" class="menu-link">
+                @endhasrole
                     <span class="menu-icon">
                         <i class="ki-duotone ki-element-11 fs-2">
                             <span class="path1"></span>

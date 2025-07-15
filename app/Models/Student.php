@@ -126,7 +126,24 @@ class Student extends Model
                 'email' => $this->email,
                 'password' => Hash::make('password'),
             ]);
+            
+            // Assign Student role to newly created user
+            $studentRole = \Spatie\Permission\Models\Role::where('name', 'Student')->first();
+            if ($studentRole) {
+                $user->assignRole($studentRole);
+                Log::info("Assigned Student role to user {$user->email}");
+            } else {
+                Log::warning("Student role not found in system");
+            }
+            
+            // Link the user to this student
+            $this->user_id = $user->id;
+            $this->save();
+            
+            return $user;
         }
+        
+        return null;
     }
     public function examSessions()
     {
