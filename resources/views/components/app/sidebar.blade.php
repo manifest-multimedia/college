@@ -44,6 +44,67 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             
             </div>
             <!--end:Menu item-->
+
+            @hasrole('Student')
+            <!--begin:Student Menu Items-->
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="{{ route('student.information') }}" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-profile-circle fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">My Information</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="{{ route('courseregistration') }}" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-book fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Course Registration</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="{{ route('courseregistration.history') }}" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-calendar fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Registration History</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="{{ route('elections.active') }}" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-vote fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Elections</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+            <!--end:Student Menu Items-->
+            @else
            
             @can('view students')    
             <!--begin:Menu item-->
@@ -865,10 +926,14 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
             @endhasanyrole
+            @endhasrole
           
             <!--begin:Menu item-->
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
                 <!--begin:Menu link-->
+                @hasrole('Student')
+                <!-- Students don't need staff mail access -->
+                @else
                 <a href="{{ url('https://pnmtc.edu.gh/webmail') }}" class="menu-link" target="_blank">
                     <span class="menu-icon">
                         <i class="ki-duotone ki-sms fs-2">
@@ -878,6 +943,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </span>
                     <span class="menu-title">Staff Mail</span>
                 </a>
+                @endhasrole
                 <!--end:Menu link-->
                 
             </div>
