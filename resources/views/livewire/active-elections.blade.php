@@ -66,12 +66,17 @@
                                                             You have already voted in this election
                                                         </div>
                                                         
-                                                        {{-- @if(auth()->user()->hasRole('admin')) --}}
+                                                        @hasrole('Super Admin|Administrator')
                                                             <a href="{{ route('election.results', $election) }}" class="btn btn-info btn-sm d-block">
                                                                 <i class="fas fa-chart-bar me-1"></i>
                                                                 View Results
                                                             </a>
-                                                        {{-- @endif --}}
+                                                        @else
+                                                            <a href="{{ route('public.elections.show', $election) }}" class="btn btn-outline-info btn-sm d-block">
+                                                                <i class="fas fa-info-circle me-1"></i>
+                                                                View Details
+                                                            </a>
+                                                        @endhasrole
                                                     @else
                                                         <a href="{{ route('election.verify', $election) }}" class="btn btn-primary d-block">
                                                             <i class="fas fa-vote-yea me-2"></i>
@@ -124,9 +129,11 @@
             <div class="row mt-4">
                 <div class="col-xl-12">
                     <div class="card mb-4">
-                        <div class="card-header">
+                        <div class="card-header ">
+                            <div class="card-title" style="font-weight:normal; font-size:12px" >
                             <i class="fas fa-history me-1"></i>
                             Past Elections
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -161,12 +168,17 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    {{-- @if(auth()->user()->hasRole('admin')) --}}
+                                                    @hasrole('Super Admin|Administrator')
                                                         <a href="{{ route('election.results', $election) }}" class="btn btn-outline-info btn-sm">
                                                             <i class="fas fa-chart-bar me-1"></i>
                                                             View Results
                                                         </a>
-                                                    {{-- @endif --}}
+                                                    @else
+                                                        <a href="{{ route('public.elections.show', $election) }}" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            View Details
+                                                        </a>
+                                                    @endhasrole
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -179,7 +191,7 @@
             </div>
         @endif
         
-        {{-- @if(auth()->user()->hasRole('admin')) --}}
+        @hasrole('Super Admin|Administrator')
             <div class="row mt-2 mb-4">
                 <div class="col-12">
                     <div class="card bg-light border-0">
@@ -201,5 +213,5 @@
                     </div>
                 </div>
             </div>
-        {{-- @endif --}}
+        @endhasrole
     </div>

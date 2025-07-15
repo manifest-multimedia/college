@@ -1,4 +1,4 @@
-<x-dashboard.default title="Exam Results" >
+<x-dashboard.default title="My Information" >
 
   <livewire:student-information />
 
