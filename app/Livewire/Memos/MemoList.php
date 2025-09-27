@@ -48,8 +48,18 @@ class MemoList extends Component
         // Load departments for filter
         $this->departments = Department::orderBy('name')->get();
         
-        // Load users for filter (limit to a reasonable number or implement a search)
-        $this->users = User::orderBy('name')->limit(100)->get();
+        // Load staff users only for filter (exclude Student and Parent roles)
+        $this->users = User::whereHas('roles', function($query) {
+                $query->whereNotIn('name', ['Student', 'Parent']);
+            })
+            ->orWhere(function($query) {
+                // Also include users with legacy 'role' column (for backward compatibility)
+                $query->whereNotIn('role', ['Student', 'Parent'])
+                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+            })
+            ->orderBy('name')
+            ->limit(100)
+            ->get();
     }
 
     public function resetFilters()

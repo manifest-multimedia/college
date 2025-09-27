@@ -64,8 +64,16 @@ class CreateMemo extends Component
 
     public function loadUsers()
     {
-        // Load users, potentially excluding yourself
-        $this->users = User::where('id', '!=', Auth::id())
+        // Load staff users only (exclude Student and Parent roles)
+        $this->users = User::whereHas('roles', function($query) {
+                $query->whereNotIn('name', ['Student', 'Parent']);
+            })
+            ->orWhere(function($query) {
+                // Also include users with legacy 'role' column (for backward compatibility)
+                $query->whereNotIn('role', ['Student', 'Parent'])
+                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+            })
+            ->where('id', '!=', Auth::id())
             ->orderBy('name')
             ->get();
     }
