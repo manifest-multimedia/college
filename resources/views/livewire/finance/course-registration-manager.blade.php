@@ -3,8 +3,11 @@
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
                 <h1 class="card-title">
-                    <i class="fas fa-book"></i> Course Registration
+                    <i class="fas fa-book"></i> Course Registration Management (Admin)
                 </h1>
+                <p class="card-subtitle text-muted mb-0">
+                    Administrative interface for managing student course registrations
+                </p>
             </div>
         </div>
         <div class="card-body">

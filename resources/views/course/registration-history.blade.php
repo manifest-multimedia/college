@@ -19,10 +19,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- Course Registration History component -->
-                        Coming Soon!
-                        {{-- Uncomment the line below when the component is ready --}}
-                        {{-- <livewire:course-registration-history-manager /> --}}
+                        <livewire:student-registration-history />
                     </div>
                 </div>
             </div>
