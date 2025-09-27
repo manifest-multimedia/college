@@ -268,10 +268,6 @@ Route::middleware([
         
         Route::get('/qr-scanner', \App\Livewire\Finance\ExamTicketScanner::class)->name('finance.exam.scanner');
         
-        Route::get('/course-registration/{studentId?}', function ($studentId = null) {
-            return view('finance.course-registration', ['studentId' => $studentId]);
-        })->name('finance.course.registration');
-        
         Route::get('/payments', \App\Livewire\Finance\FeePaymentManager::class)->name('finance.payments');
         
         Route::get('/reports', \App\Livewire\Finance\FinancialReportsManager::class)->name('finance.reports');
@@ -314,14 +310,23 @@ Route::middleware([
         })->name('finance.exam.ticket.print');
     });
     
-    
+    /*
+    |--------------------------------------------------------------------------
+    | Finance Course Registration Routes (System & Student Only)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', 'role:System|Student'])->prefix('finance')->group(function () {
+        Route::get('/course-registration/{studentId?}', function ($studentId = null) {
+            return view('finance.course-registration', ['studentId' => $studentId]);
+        })->name('finance.course.registration');
+    });
 
     /*
     |--------------------------------------------------------------------------
     | Course Registration Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Student'])->group(function () {
         Route::get('/course-registration', function () {
             return view('course.registration');
         })->name('courseregistration');

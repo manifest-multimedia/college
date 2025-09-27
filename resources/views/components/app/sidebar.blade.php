@@ -578,6 +578,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    @hasrole('System')
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('finance.course.registration') ? 'active' : '' }}" href="{{ route('finance.course.registration') }}">
@@ -588,6 +589,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    @endhasrole
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('finance.reports') ? 'active' : '' }}" href="{{ route('finance.reports') }}">
@@ -604,6 +606,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             @endcanany
             
+            @hasrole('System')
             <!--begin:Menu item-->
             @php
                 $courseRegRoutes = [
@@ -660,6 +663,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
+            @endhasrole
             @php
             $electionRoutes = [
                 'elections', 'elections.active', 'election.results'
