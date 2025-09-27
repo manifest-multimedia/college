@@ -96,10 +96,43 @@ class AuthenticationService
         }
 
         if ($this->isRegular() && $this->getRegularConfig()['allow_registration']) {
-            return route('register');
+            return route('staff.register');
         }
 
         return null;
+    }
+    
+    /**
+     * Get the staff signup URL.
+     *
+     * @return string|null
+     */
+    public function getStaffSignupUrl(): ?string
+    {
+        if ($this->isAuthCentral()) {
+            return $this->getAuthCentralConfig()['signup_url'] ?? 'https://auth.pnmtc.edu.gh/sign-up';
+        }
+
+        if ($this->isRegular() && $this->getRegularConfig()['allow_registration']) {
+            return route('staff.register');
+        }
+
+        return null;
+    }
+    
+    /**
+     * Get the student signup URL.
+     *
+     * @return string|null
+     */
+    public function getStudentSignupUrl(): ?string
+    {
+        if ($this->isAuthCentral()) {
+            return $this->getAuthCentralConfig()['student_registration_url'] ?? 'https://auth.pnmtc.edu.gh/student/register';
+        }
+
+        // Students can always register via regular auth
+        return route('students.register');
     }
 
     /**
@@ -154,9 +187,10 @@ class AuthenticationService
      * Create or update user for regular authentication.
      *
      * @param array $userData
+     * @param string $userType
      * @return User
      */
-    public function createRegularUser(array $userData): User
+    public function createRegularUser(array $userData, string $userType = 'staff'): User
     {
         $user = User::create([
             'name' => $userData['name'],
@@ -164,16 +198,88 @@ class AuthenticationService
             'password' => Hash::make($userData['password']),
         ]);
 
-        // Assign default role for regular users
-        $defaultRole = $this->getRegularConfig()['default_role'] ?? 'Staff';
-        $this->syncUserRoles($user, [$defaultRole], 'regular');
+        // Assign role based on user type
+        $role = $userType === 'student' ? 'Student' : ($this->getRegularConfig()['default_role'] ?? 'Staff');
+        $this->syncUserRoles($user, [$role], 'regular');
 
         Log::info("Regular user created: {$user->email}", [
-            'default_role' => $defaultRole,
+            'user_type' => $userType,
+            'assigned_role' => $role,
             'user_id' => $user->id
         ]);
 
         return $user;
+    }
+    
+    /**
+     * Create a staff user via regular authentication.
+     *
+     * @param array $userData
+     * @return User
+     */
+    public function createStaffUser(array $userData): User
+    {
+        return $this->createRegularUser($userData, 'staff');
+    }
+    
+    /**
+     * Create a student user via regular authentication.
+     *
+     * @param array $userData
+     * @return User
+     */
+    public function createStudentUser(array $userData): User
+    {
+        $user = $this->createRegularUser($userData, 'student');
+        
+        // Create corresponding student record
+        $this->createStudentRecord($user, $userData);
+        
+        return $user;
+    }
+    
+    /**
+     * Create a student record linked to a user.
+     *
+     * @param User $user
+     * @param array $userData
+     * @return \App\Models\Student|null
+     */
+    private function createStudentRecord(User $user, array $userData): ?\App\Models\Student
+    {
+        try {
+            // Check if Student model exists
+            if (!class_exists(\App\Models\Student::class)) {
+                Log::warning("Student model not found, skipping student record creation for user: {$user->email}");
+                return null;
+            }
+
+            // Parse the name into first and last name
+            $nameParts = explode(' ', trim($userData['name']), 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = $nameParts[1] ?? '';
+
+            $student = \App\Models\Student::create([
+                'user_id' => $user->id,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => $userData['email'],
+                'status' => 'active',
+            ]);
+
+            Log::info("Student record created for user: {$user->email}", [
+                'student_id' => $student->id,
+                'user_id' => $user->id,
+            ]);
+
+            return $student;
+        } catch (\Exception $e) {
+            Log::error("Failed to create student record for user: {$user->email}", [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+            ]);
+            return null;
+        }
     }
 
     /**

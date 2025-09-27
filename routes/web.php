@@ -47,13 +47,30 @@ Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('a
 Route::middleware('guest')->group(function () {
     Route::post('/regular-login', [App\Http\Controllers\RegularAuthController::class, 'login'])->name('regular.login');
     
-    // Registration routes (only if enabled in config)
-    Route::get('/register', [App\Http\Controllers\RegularAuthController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [App\Http\Controllers\RegularAuthController::class, 'register']);
+    // Staff Registration routes (only if enabled in config)
+    Route::get('/staff/register', [App\Http\Controllers\RegularAuthController::class, 'showStaffRegistrationForm'])->name('staff.register');
+    Route::post('/staff/register', [App\Http\Controllers\RegularAuthController::class, 'registerStaff']);
+    
+    // Student Registration routes (enabled for both auth methods)
+    Route::get('/students/register', [App\Http\Controllers\RegularAuthController::class, 'showStudentRegistrationForm'])->name('students.register');
+    Route::post('/students/register', [App\Http\Controllers\RegularAuthController::class, 'registerStudent']);
+    
+    // Legacy register route - redirect to staff registration
+    Route::get('/register', function() {
+        return redirect()->route('staff.register');
+    })->name('register');
 });
 
 // Logout route (available for both auth methods)
 Route::post('/logout', [App\Http\Controllers\RegularAuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+// Password Reset Routes (only available when AUTH_METHOD=regular)
+Route::middleware('guest')->group(function () {
+    Route::get('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [App\Http\Controllers\PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/reset-password/{token}', [App\Http\Controllers\PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'reset'])->name('password.update');
+});
 
 // Link to Tutor Assessment Form:
 Route::get('/tutor-assessment', function () {
@@ -61,22 +78,20 @@ Route::get('/tutor-assessment', function () {
 });
 
 
-// Dynamic Sign-Up route based on authentication method
+// Dynamic Sign-Up route based on authentication method (defaults to staff registration)
 Route::get('/sign-up', function () {
     $authService = app(\App\Services\AuthenticationService::class);
-    $signupUrl = $authService->getSignupUrl();
     
-    if (!$signupUrl) {
+    if ($authService->isAuthCentral()) {
+        $signupUrl = $authService->getSignupUrl();
+        if ($signupUrl && filter_var($signupUrl, FILTER_VALIDATE_URL)) {
+            return redirect()->away($signupUrl);
+        }
         return redirect()->route('login')->withErrors(['signup' => 'Registration is not available.']);
     }
     
-    // If it's an external URL (AuthCentral), redirect away
-    if (filter_var($signupUrl, FILTER_VALIDATE_URL)) {
-        return redirect()->away($signupUrl);
-    }
-    
-    // If it's an internal route, redirect normally
-    return redirect($signupUrl);
+    // For regular auth, default to staff registration
+    return redirect()->route('staff.register');
 })->name('signup');
 
 // Student Registration route (AuthCentral only)

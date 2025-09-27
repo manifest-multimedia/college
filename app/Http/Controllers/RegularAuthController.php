@@ -53,6 +53,19 @@ class RegularAuthController extends Controller
         // Add remember me if requested
         $remember = $request->boolean('remember');
 
+        // Check if user exists and is an AuthCentral user
+        $user = \App\Models\User::where('email', $request->email)->first();
+        if ($user && $user->isAuthCentralUser()) {
+            Log::info('AuthCentral user attempted regular login', [
+                'email' => $request->email,
+                'ip' => $request->ip(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'email' => ['This account uses AuthCentral authentication. Please use the "Login with AuthCentral" button instead.'],
+            ]);
+        }
+
         // Attempt authentication
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
@@ -112,43 +125,54 @@ class RegularAuthController extends Controller
     }
 
     /**
-     * Show the registration form (only if registration is enabled).
+     * Show the staff registration form.
      *
      * @return \Illuminate\View\View|RedirectResponse
      */
-    public function showRegistrationForm()
+    public function showStaffRegistrationForm()
     {
         if (!$this->authService->isRegular()) {
             return redirect()->route('login')
-                ->withErrors(['registration' => 'Registration is not available with the current authentication method.']);
+                ->withErrors(['registration' => 'Staff registration is not available with the current authentication method.']);
         }
 
         $config = $this->authService->getRegularConfig();
         if (!($config['allow_registration'] ?? false)) {
             return redirect()->route('login')
-                ->withErrors(['registration' => 'Registration is currently disabled.']);
+                ->withErrors(['registration' => 'Staff registration is currently disabled.']);
         }
 
-        return view('auth.register');
+        return view('custom-auth.register', ['userType' => 'staff']);
     }
 
     /**
-     * Handle a registration request.
+     * Show the student registration form.
+     *
+     * @return \Illuminate\View\View|RedirectResponse
+     */
+    public function showStudentRegistrationForm()
+    {
+        // Student registration is available for both auth methods
+        return view('custom-auth.register', ['userType' => 'student']);
+    }
+
+    /**
+     * Handle a staff registration request.
      *
      * @param Request $request
      * @return RedirectResponse
      */
-    public function register(Request $request): RedirectResponse
+    public function registerStaff(Request $request): RedirectResponse
     {
         if (!$this->authService->isRegular()) {
             return redirect()->route('login')
-                ->withErrors(['registration' => 'Registration is not available with the current authentication method.']);
+                ->withErrors(['registration' => 'Staff registration is not available with the current authentication method.']);
         }
 
         $config = $this->authService->getRegularConfig();
         if (!($config['allow_registration'] ?? false)) {
             return redirect()->route('login')
-                ->withErrors(['registration' => 'Registration is currently disabled.']);
+                ->withErrors(['registration' => 'Staff registration is currently disabled.']);
         }
 
         // Validate the registration request
@@ -158,24 +182,84 @@ class RegularAuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        // Create the user
+        // Create the staff user
         $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password,
         ];
 
-        $user = $this->authService->createRegularUser($userData);
+        $user = $this->authService->createStaffUser($userData);
 
         // Log the user in
         Auth::login($user);
 
-        Log::info('User registered successfully', [
+        Log::info('Staff user registered successfully', [
             'user_id' => $user->id,
             'email' => $user->email,
+            'user_type' => 'staff',
             'ip' => $request->ip(),
         ]);
 
         return redirect()->route('dashboard');
+    }
+
+    /**
+     * Handle a student registration request.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function registerStudent(Request $request): RedirectResponse
+    {
+        // Validation for students
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        // Create the student user
+        $userData = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password,
+        ];
+
+        $user = $this->authService->createStudentUser($userData);
+
+        // Log the user in
+        Auth::login($user);
+
+        Log::info('Student user registered successfully', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'user_type' => 'student',
+            'ip' => $request->ip(),
+        ]);
+
+        // Redirect students to their dashboard
+        return redirect()->route('student.dashboard');
+    }
+
+    /**
+     * Show the registration form (legacy - redirects to staff registration).
+     *
+     * @return RedirectResponse
+     */
+    public function showRegistrationForm()
+    {
+        return redirect()->route('staff.register');
+    }
+
+    /**
+     * Handle a registration request (legacy - redirects to staff registration).
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function register(Request $request): RedirectResponse
+    {
+        return $this->registerStaff($request);
     }
 }

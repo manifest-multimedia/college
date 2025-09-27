@@ -28,10 +28,19 @@
             </div>
             
             @if ($authService->getSignupUrl())
-                <p class="mb-0 text-center fs-13 fw-medium text-light-dark">
-                    <span>Don't have an account?</span>
-                    <a class="text-primary link-primary" href="{{ $authService->getSignupUrl() }}">Sign up</a>
-                </p>
+                <div class="text-center">
+                    <p class="mb-2 fs-13 fw-medium text-light-dark">
+                        <span>Don't have an account?</span>
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        @if ($authService->getStaffSignupUrl())
+                            <a class="text-primary link-primary fs-13" href="{{ $authService->getStaffSignupUrl() }}">Staff Registration</a>
+                        @endif
+                        @if ($authService->getStudentSignupUrl())
+                            <a class="text-primary link-primary fs-13" href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
+                        @endif
+                    </div>
+                </div>
             @endif
         </form>
     @else
@@ -80,18 +89,31 @@
                 </div>
             </div>
 
+            <div class="mb-4 text-center">
+                <a class="text-primary link-primary fs-13" href="{{ route('password.request') }}">
+                    Forgot your password?
+                </a>
+            </div>
+
             <div class="mb-6 row">
                 <button type="submit" class="btn btn-lg btn-primary fs-11 w-100 text-primary-light">
                     Login
                 </button>
             </div>
             
-            @if ($authService->getSignupUrl())
-                <p class="mb-0 text-center fs-13 fw-medium text-light-dark">
+            <div class="text-center">
+                <p class="mb-2 fs-13 fw-medium text-light-dark">
                     <span>Don't have an account?</span>
-                    <a class="text-primary link-primary" href="{{ $authService->getSignupUrl() }}">Sign up</a>
                 </p>
-            @endif
+                <div class="d-flex justify-content-center gap-3">
+                    @if ($authService->getStaffSignupUrl())
+                        <a class="text-primary link-primary fs-13" href="{{ $authService->getStaffSignupUrl() }}">Staff Registration</a>
+                    @endif
+                    @if ($authService->getStudentSignupUrl())
+                        <a class="text-primary link-primary fs-13" href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
+                    @endif
+                </div>
+            </div>
         </form>
     @endif
 </x-backend.auth>

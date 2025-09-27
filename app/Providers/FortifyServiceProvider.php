@@ -44,8 +44,33 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
+        // Custom authentication views that won't be overwritten by Laravel updates
         Fortify::loginView(function () {
-            return view('login');
+            return view('custom-auth.login');
+        });
+
+        Fortify::registerView(function () {
+            return view('custom-auth.register', ['userType' => 'staff']);
+        });
+
+        Fortify::requestPasswordResetLinkView(function () {
+            return view('custom-auth.forgot-password');
+        });
+
+        Fortify::resetPasswordView(function ($request) {
+            return view('custom-auth.reset-password', ['request' => $request]);
+        });
+
+        Fortify::confirmPasswordView(function () {
+            return view('custom-auth.confirm-password');
+        });
+
+        Fortify::verifyEmailView(function () {
+            return view('custom-auth.verify-email');
+        });
+
+        Fortify::twoFactorChallengeView(function () {
+            return view('custom-auth.two-factor-challenge');
         });
     }
 }

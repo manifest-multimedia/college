@@ -1,8 +1,13 @@
 @php
     $authService = app(\App\Services\AuthenticationService::class);
+    $userType = $userType ?? 'staff';
+    $isStudent = $userType === 'student';
+    $title = $isStudent ? 'Student Registration' : 'Staff Registration';
+    $description = $isStudent ? 'Create your student account' : 'Create your staff account';
+    $actionUrl = $isStudent ? route('students.register') : route('staff.register');
 @endphp
 
-<x-backend.auth title="Register" description="Create your account">
+<x-backend.auth :title="$title" :description="$description">
     @if (session('status'))
         <div class="alert alert-success mb-4" role="alert">
             {{ session('status') }}
@@ -17,7 +22,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('register') }}" class="px-4 mx-auto mw-sm">
+    <form method="POST" action="{{ $actionUrl }}" class="px-4 mx-auto mw-sm">
         @csrf
 
         <div class="mb-4">
@@ -36,6 +41,8 @@
                 </div>
             @enderror
         </div>
+
+
 
         <div class="mb-4">
             <label for="email" class="form-label fs-13 fw-medium text-light-dark">Email Address</label>
@@ -108,13 +115,27 @@
 
         <div class="mb-6 row">
             <button type="submit" class="btn btn-lg btn-primary fs-11 w-100 text-primary-light">
-                Register Account
+                Register {{ $isStudent ? 'Student' : 'Staff' }} Account
             </button>
         </div>
         
-        <p class="mb-0 text-center fs-13 fw-medium text-light-dark">
-            <span>Already have an account?</span>
-            <a class="text-primary link-primary" href="{{ route('login') }}">Sign in</a>
-        </p>
+        <div class="text-center">
+            <p class="mb-2 fs-13 fw-medium text-light-dark">
+                <span>Already have an account?</span>
+                <a class="text-primary link-primary" href="{{ route('login') }}">Sign in</a>
+            </p>
+            
+            @if ($isStudent)
+                <p class="mb-0 fs-13 text-light-dark">
+                    <span>Are you staff?</span>
+                    <a class="text-primary link-primary" href="{{ route('staff.register') }}">Register as Staff</a>
+                </p>
+            @else
+                <p class="mb-0 fs-13 text-light-dark">
+                    <span>Are you a student?</span>
+                    <a class="text-primary link-primary" href="{{ route('students.register') }}">Register as Student</a>
+                </p>
+            @endif
+        </div>
     </form>
 </x-backend.auth>
