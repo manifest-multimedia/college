@@ -11,6 +11,7 @@ use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\StudentFeeBill;
 use App\Models\CourseRegistration as StudentCourseRegistrationModel;
+use Illuminate\Database\Eloquent\Collection;
 
 class StudentCourseRegistration extends Component
 {
@@ -23,10 +24,16 @@ class StudentCourseRegistration extends Component
     public $registrationMessage = '';
     public $registrationMessageType = 'danger';
     public $paymentPercentage = 0;
-    public $existingRegistrations = [];
+    public Collection $existingRegistrations;
     
     // Payment threshold for course registration (60%)
     const PAYMENT_THRESHOLD = 60;
+    
+    public function __construct()
+    {
+        parent::__construct();
+        $this->existingRegistrations = new Collection();
+    }
     
     public function mount()
     {
@@ -107,7 +114,9 @@ class StudentCourseRegistration extends Component
             ->get();
         
         // Pre-select already registered subjects
-        $this->selectedSubjects = $this->existingRegistrations->pluck('subject_id')->values()->toArray();
+        $this->selectedSubjects = $this->existingRegistrations->pluck('subject_id')->map(function ($id) {
+            return (int) $id;
+        })->toArray();
     }
     
     public function toggleSubject($subjectId)
