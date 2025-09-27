@@ -112,7 +112,7 @@ class CourseRegistrationManager extends Component
         $existingRegistrations = CourseRegistration::where('student_id', $this->studentId)
             ->where('academic_year_id', $this->academicYearId)
             ->where('semester_id', $this->semesterId)
-            ->pluck('course_id')
+            ->pluck('subject_id')
             ->toArray();
             
         $this->selectedCourses = $existingRegistrations;
@@ -144,20 +144,20 @@ class CourseRegistrationManager extends Component
                 $paymentPercentage = $feeBill ? $feeBill->payment_percentage : 0;
                 
                 // Create new registrations
-                foreach ($this->selectedCourses as $courseId) {
+                foreach ($this->selectedCourses as $subjectId) {
                     CourseRegistration::create([
                         'student_id' => $this->studentId,
-                        'course_id' => $courseId,
+                        'subject_id' => $subjectId,
                         'academic_year_id' => $this->academicYearId,
                         'semester_id' => $this->semesterId,
-                        'registration_date' => now(),
+                        'registered_at' => now(),
                         'payment_percentage_at_registration' => $paymentPercentage,
-                        'registered_by' => Auth::id(),
+                        'is_approved' => false, // Require Finance Officer approval
                     ]);
                 }
             });
             
-            session()->flash('message', 'Course registration successful for ' . count($this->selectedCourses) . ' courses.');
+            session()->flash('message', 'Course registration submitted successfully for ' . count($this->selectedCourses) . ' courses. Your registration is pending approval from the Finance Department.');
         } catch (\Exception $e) {
             session()->flash('error', 'Error registering courses: ' . $e->getMessage());
         }
@@ -172,7 +172,7 @@ class CourseRegistrationManager extends Component
         return CourseRegistration::where('student_id', $this->studentId)
             ->where('academic_year_id', $this->academicYearId)
             ->where('semester_id', $this->semesterId)
-            ->with('course')
+            ->with('subject')
             ->get();
     }
     

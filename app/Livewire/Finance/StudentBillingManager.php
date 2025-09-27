@@ -41,8 +41,7 @@ class StudentBillingManager extends Component
         'newBillSemesterId' => 'required|exists:semesters,id',
     ];
     
-    // Updated listeners to match Livewire v3 syntax
-    protected $listeners = ['refreshBillingList' => '$refresh'];
+    // Listeners not needed in Livewire v3 for simple refresh
     
     public function updatingSearch()
     {
@@ -101,7 +100,6 @@ class StudentBillingManager extends Component
             $this->closeNewBillModal();
             session()->flash('success', 'Student bill created successfully!');
             $this->dispatch('notify', ['type' => 'success', 'message' => 'Student bill created successfully!']);
-            $this->dispatch('refreshBillingList');
         } catch (\Exception $e) {
             session()->flash('error', 'Error: ' . $e->getMessage());
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()]);
@@ -143,7 +141,6 @@ class StudentBillingManager extends Component
             $this->closeBatchBillsModal();
             session()->flash('success', $billCount . ' student bills generated successfully!');
             $this->dispatch('notify', ['type' => 'success', 'message' => $billCount . ' student bills generated successfully!']);
-            $this->dispatch('refreshBillingList');
             
         } catch (\Exception $e) {
             session()->flash('error', 'Error generating batch bills: ' . $e->getMessage());
@@ -180,17 +177,12 @@ class StudentBillingManager extends Component
             ->latest()
             ->paginate(10);
         
-        $academicYears = AcademicYear::orderBy('name', 'desc')->get();
-        $semesters = Semester::orderBy('name')->get();
-        $classes = CollegeClass::orderBy('name')->get();
-        $students = Student::orderBy('first_name')->get();
-        
         return view('livewire.finance.student-billing-manager', [
             'bills' => $bills,
-            'academicYears' => $academicYears,
-            'semesters' => $semesters,
-            'classes' => $classes,
-            'students' => $students,
-        ])->layout('components.dashboard.default');
+            'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
+            'semesters' => Semester::orderBy('name')->get(),
+            'classes' => CollegeClass::orderBy('name')->get(),
+            'students' => Student::select('id', 'student_id', 'first_name', 'last_name', 'other_name')->orderBy('first_name')->get(),
+        ]);
     }
 }

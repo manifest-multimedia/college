@@ -590,6 +590,24 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
+                    @hasrole('Finance Officer|Super Admin|Administrator')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('finance.course.registration.approvals') ? 'active' : '' }}" href="{{ route('finance.course.registration.approvals') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Course Registration Approvals</span>
+                            @php
+                                $pendingCount = \App\Models\CourseRegistration::where('is_approved', false)->whereNull('rejected_at')->count();
+                            @endphp
+                            @if($pendingCount > 0)
+                                <span class="badge badge-warning ms-2">{{ $pendingCount }}</span>
+                            @endif
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasrole
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('finance.reports') ? 'active' : '' }}" href="{{ route('finance.reports') }}">

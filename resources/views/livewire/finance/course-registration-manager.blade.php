@@ -215,21 +215,52 @@
                                         <table class="table table-bordered">
                                             <thead class="thead-light">
                                                 <tr>
-                                                    <th width="15%">Code</th>
-                                                    <th width="40%">Course Title</th>
-                                                    <th width="10%">Credits</th>
-                                                    <th width="15%">Type</th>
-                                                    <th width="20%">Registration Date</th>
+                                                    <th width="12%">Code</th>
+                                                    <th width="35%">Course Title</th>
+                                                    <th width="8%">Credits</th>
+                                                    <th width="15%">Registration Date</th>
+                                                    <th width="15%">Status</th>
+                                                    <th width="15%">Approval Info</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach($registeredCourses as $registration)
                                                     <tr>
-                                                        <td>{{ $registration->course->code }}</td>
-                                                        <td>{{ $registration->course->title }}</td>
-                                                        <td>{{ $registration->course->credit_hours }}</td>
-                                                        <td>{{ $registration->course->is_elective ? 'Elective' : 'Core' }}</td>
-                                                        <td>{{ $registration->registration_date->format('d M Y') }}</td>
+                                                        <td>{{ $registration->subject->course_code ?? 'N/A' }}</td>
+                                                        <td>{{ $registration->subject->name ?? 'N/A' }}</td>
+                                                        <td>{{ $registration->subject->credit_hours ?? 'N/A' }}</td>
+                                                        <td>{{ $registration->registered_at->format('d M Y') }}</td>
+                                                        <td>
+                                                            @if($registration->is_approved)
+                                                                <span class="badge badge-success">
+                                                                    <i class="fas fa-check"></i> Approved
+                                                                </span>
+                                                            @elseif($registration->rejected_at)
+                                                                <span class="badge badge-danger">
+                                                                    <i class="fas fa-times"></i> Rejected
+                                                                </span>
+                                                            @else
+                                                                <span class="badge badge-warning">
+                                                                    <i class="fas fa-clock"></i> Pending
+                                                                </span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if($registration->is_approved && $registration->approved_at)
+                                                                <small class="text-muted">
+                                                                    Approved on<br>{{ $registration->approved_at->format('M d, Y') }}
+                                                                </small>
+                                                            @elseif($registration->rejected_at)
+                                                                <small class="text-muted">
+                                                                    Rejected on<br>{{ $registration->rejected_at->format('M d, Y') }}
+                                                                    @if($registration->rejection_reason)
+                                                                        <br><em>{{ Str::limit($registration->rejection_reason, 30) }}</em>
+                                                                    @endif
+                                                                </small>
+                                                            @else
+                                                                <small class="text-muted">Awaiting approval</small>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

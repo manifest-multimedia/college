@@ -339,6 +339,17 @@ Route::middleware([
             return view('course.registration-approvals');
         })->name('courseregistration.approvals');
     });
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Finance Officer Course Registration Approvals
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', 'role:Finance Officer|Super Admin|Administrator'])->group(function () {
+        Route::get('/finance/course-registration-approvals', function () {
+            return view('finance.course-registration-approvals');
+        })->name('finance.course.registration.approvals');
+    });
 
     /*
     |--------------------------------------------------------------------------

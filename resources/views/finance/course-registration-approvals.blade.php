@@ -1,10 +1,4 @@
-<x-dashboard.default>
-    <x-slot name="header">
-        <div class="header-left">
-            <h2 class="page-title">Course Registration Approvals</h2>
-        </div>
-    </x-slot>
-
+<x-dashboard.default title="Course Registration Approvals">
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -13,13 +7,15 @@
                         <div class="row align-items-center">
                             <div class="col">
                                 <h1 class="card-title">
-                                    <i class="fas fa-check-circle"></i> Registration Approvals
+                                    <i class="fas fa-check-circle"></i> Course Registration Approvals
                                 </h1>
+                                <p class="card-subtitle text-muted">
+                                    Review and approve student course registrations
+                                </p>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- Course Registration Approvals component -->
                         <livewire:finance.course-registration-approvals />
                     </div>
                 </div>
