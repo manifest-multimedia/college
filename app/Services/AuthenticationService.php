@@ -62,13 +62,55 @@ class AuthenticationService
     }
 
     /**
+     * Get registration configuration.
+     *
+     * @return array
+     */
+    public function getRegistrationConfig(): array
+    {
+        return config('authentication.registration', []);
+    }
+
+    /**
+     * Get security configuration.
+     *
+     * @return array
+     */
+    public function getSecurityConfig(): array
+    {
+        return config('authentication.security', []);
+    }
+
+    /**
+     * Get role mapping configuration.
+     *
+     * @return array
+     */
+    public function getRoleConfig(): array
+    {
+        return config('authentication.roles', []);
+    }
+
+    /**
+     * Get password synchronization configuration.
+     *
+     * @return array
+     */
+    public function getPasswordSyncConfig(): array
+    {
+        return config('authentication.password_sync', []);
+    }
+
+    /**
      * Get the AuthCentral login URL with callback redirect.
+     * Available regardless of current AUTH_METHOD setting for user flexibility.
      *
      * @return string
      */
     public function getAuthCentralLoginUrl(): string
     {
-        $loginUrl = $this->getAuthCentralConfig()['login_url'] ?? 'https://auth.pnmtc.edu.gh/login';
+        // Use environment variables directly as fallback for cross-mode compatibility
+        $loginUrl = config('authentication.authcentral.login_url') ?? env('AUTHCENTRAL_LOGIN_URL', 'https://auth.pnmtc.edu.gh/login');
         $callbackUrl = route('auth.callback');
         
         return $loginUrl . '?redirect_url=' . urlencode($callbackUrl);
@@ -113,7 +155,8 @@ class AuthenticationService
             return $this->getAuthCentralConfig()['signup_url'] ?? 'https://auth.pnmtc.edu.gh/sign-up';
         }
 
-        if ($this->isRegular() && $this->getRegularConfig()['allow_registration']) {
+        $regularConfig = $this->getRegularConfig();
+        if ($this->isRegular() && ($regularConfig['allow_staff_registration'] ?? $regularConfig['allow_registration'] ?? false)) {
             return route('staff.register');
         }
 
@@ -131,8 +174,13 @@ class AuthenticationService
             return $this->getAuthCentralConfig()['student_registration_url'] ?? 'https://auth.pnmtc.edu.gh/student/register';
         }
 
-        // Students can always register via regular auth
-        return route('students.register');
+        // Check if student registration is allowed
+        $regularConfig = $this->getRegularConfig();
+        if ($regularConfig['allow_student_registration'] ?? true) {
+            return route('students.register');
+        }
+
+        return null;
     }
 
     /**
@@ -156,19 +204,38 @@ class AuthenticationService
      *
      * @param array $userData
      * @param array $roles
+     * @param string|null $password Plain text password to sync (optional)
      * @return User
      */
-    public function createOrUpdateAuthCentralUser(array $userData, array $roles = []): User
+    public function createOrUpdateAuthCentralUser(array $userData, array $roles = [], ?string $password = null): User
     {
-        // Set a random password for AuthCentral users
-        $password = Hash::make(Str::random(10));
+        // Determine password handling strategy
+        if ($password) {
+            // Case 1: Password provided directly (e.g., from webhook or extended API)
+            $hashedPassword = Hash::make($password);
+            Log::info("Password synced from AuthCentral for user: {$userData['email']}");
+        } else {
+            // Case 2: No password provided (standard OAuth flow)
+            $existingUser = User::where('email', $userData['email'])->first();
+            
+            if ($existingUser && $existingUser->password) {
+                // Preserve existing password if user already exists
+                $hashedPassword = $existingUser->password;
+                Log::info("Preserving existing password for AuthCentral user: {$userData['email']}");
+            } else {
+                // New user or user without password - create a secure random password
+                // Note: User should use AuthCentral SSO or password reset to set local password
+                $hashedPassword = Hash::make(Str::random(32));
+                Log::info("Generated secure temporary password for AuthCentral user: {$userData['email']} - user should use SSO or password reset for local access");
+            }
+        }
 
         // Find or create the user
         $user = User::updateOrCreate(
             ['email' => $userData['email']],
             [
                 'name' => $userData['name'],
-                'password' => $password,
+                'password' => $hashedPassword,
             ]
         );
 
@@ -199,7 +266,10 @@ class AuthenticationService
         ]);
 
         // Assign role based on user type
-        $role = $userType === 'student' ? 'Student' : ($this->getRegularConfig()['default_role'] ?? 'Staff');
+        $roleConfig = $this->getRoleConfig();
+        $role = $userType === 'student' 
+            ? ($roleConfig['student_default'] ?? 'Student')
+            : ($roleConfig['staff_default'] ?? $this->getRegularConfig()['default_role'] ?? 'Staff');
         $this->syncUserRoles($user, [$role], 'regular');
 
         Log::info("Regular user created: {$user->email}", [
@@ -259,12 +329,13 @@ class AuthenticationService
             $firstName = $nameParts[0] ?? '';
             $lastName = $nameParts[1] ?? '';
 
+            $regularConfig = $this->getRegularConfig();
             $student = \App\Models\Student::create([
                 'user_id' => $user->id,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $userData['email'],
-                'status' => 'active',
+                'status' => $regularConfig['student_default_status'] ?? 'active',
             ]);
 
             Log::info("Student record created for user: {$user->email}", [
@@ -312,9 +383,10 @@ class AuthenticationService
 
         // If no roles were assigned, assign a default role
         if (empty($assignedRoles)) {
+            $roleConfig = $this->getRoleConfig();
             $defaultRole = $authMethod === 'regular' 
-                ? $this->getRegularConfig()['default_role'] ?? 'Staff'
-                : 'Staff';
+                ? ($roleConfig['staff_default'] ?? $this->getRegularConfig()['default_role'] ?? 'Staff')
+                : ($roleConfig['authcentral_fallback'] ?? 'Staff');
                 
             $role = Role::where('name', $defaultRole)->first();
             if ($role) {
@@ -366,5 +438,52 @@ class AuthenticationService
     public function isValidMethod(string $method): bool
     {
         return in_array($method, array_values($this->getAvailableMethods()));
+    }
+
+    /**
+     * Sync password for AuthCentral user to enable local authentication.
+     *
+     * @param string $email
+     * @param string $password Plain text password
+     * @return bool
+     */
+    public function syncAuthCentralUserPassword(string $email, string $password): bool
+    {
+        $user = User::where('email', $email)->first();
+        
+        if (!$user) {
+            Log::warning("Attempted to sync password for non-existent user: {$email}");
+            return false;
+        }
+        
+        $user->password = Hash::make($password);
+        $success = $user->save();
+        
+        if ($success) {
+            Log::info("Password synced successfully for AuthCentral user: {$email}");
+        } else {
+            Log::error("Failed to sync password for AuthCentral user: {$email}");
+        }
+        
+        return $success;
+    }
+
+    /**
+     * Check if a user likely came from AuthCentral (has random password pattern).
+     *
+     * @param User $user
+     * @return bool
+     */
+    public function isLikelyAuthCentralUser(User $user): bool
+    {
+        // This is a heuristic - AuthCentral users typically have:
+        // 1. Random password that user wouldn't know
+        // 2. May lack certain profile fields set during regular registration
+        
+        // For now, we'll check if user has roles that suggest AuthCentral origin
+        // This could be enhanced with additional metadata
+        $authCentralRoles = $this->getRoleConfig()['authcentral_roles'] ?? ['Tutor', 'Super Admin', 'Admin'];
+        
+        return $user->hasAnyRole($authCentralRoles);
     }
 }

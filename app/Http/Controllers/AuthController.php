@@ -24,16 +24,14 @@ class AuthController extends Controller
 
     public function handleCallback(Request $request)
     {
-        // Ensure AuthCentral authentication is enabled
-        if (!$this->authService->isAuthCentral()) {
-            Log::warning('AuthCentral callback received when method is not AuthCentral', [
-                'current_method' => $this->authService->getAuthMethod(),
-                'ip' => $request->ip(),
-            ]);
-            
-            return redirect()->route('login')
-                ->withErrors(['login' => 'AuthCentral authentication is not enabled.']);
-        }
+        // Log AuthCentral callback attempt for monitoring
+        Log::info('AuthCentral callback received', [
+            'current_method' => $this->authService->getAuthMethod(),
+            'ip' => $request->ip(),
+        ]);
+        
+        // Note: AuthCentral SSO is always available regardless of AUTH_METHOD setting
+        // This allows users flexibility to choose between SSO and direct email/password login
 
         // Get the token from AuthCentral
         $token = $request->get('token');
@@ -94,10 +92,14 @@ class AuthController extends Controller
                 
                 // Validate user data has required fields
                 if ($userData && isset($userData['email']) && isset($userData['name'])) {
+                    // Extract password if provided by AuthCentral (for synchronization)
+                    $password = $userData['password'] ?? null;
+                    
                     // Use AuthenticationService to create/update user
                     $user = $this->authService->createOrUpdateAuthCentralUser(
                         $userData, 
-                        is_array($roles) ? $roles : [$roles]
+                        is_array($roles) ? $roles : [$roles],
+                        $password
                     );
 
                     // Authenticate user access

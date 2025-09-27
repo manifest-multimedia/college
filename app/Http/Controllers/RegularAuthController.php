@@ -27,16 +27,8 @@ class RegularAuthController extends Controller
      */
     public function login(Request $request): RedirectResponse
     {
-        // Ensure regular authentication is enabled
-        if (!$this->authService->isRegular()) {
-            Log::warning('Regular authentication attempt when method is not regular', [
-                'current_method' => $this->authService->getAuthMethod(),
-                'ip' => $request->ip(),
-            ]);
-            
-            return redirect()->route('login')
-                ->withErrors(['login' => 'Regular authentication is not enabled.']);
-        }
+        // Email/password login is now available regardless of AUTH_METHOD setting
+        // This provides flexibility for users to choose their preferred login method
 
         // Validate the login request
         $request->validate([
@@ -53,18 +45,12 @@ class RegularAuthController extends Controller
         // Add remember me if requested
         $remember = $request->boolean('remember');
 
-        // Check if user exists and is an AuthCentral user
-        $user = \App\Models\User::where('email', $request->email)->first();
-        if ($user && $user->isAuthCentralUser()) {
-            Log::info('AuthCentral user attempted regular login', [
-                'email' => $request->email,
-                'ip' => $request->ip(),
-            ]);
-
-            throw ValidationException::withMessages([
-                'email' => ['This account uses AuthCentral authentication. Please use the "Login with AuthCentral" button instead.'],
-            ]);
-        }
+        // Log login attempt for all users (security auditing)
+        Log::info('Regular authentication attempt', [
+            'email' => $request->email,
+            'ip' => $request->ip(),
+            'method' => 'email_password',
+        ]);
 
         // Attempt authentication
         if (Auth::attempt($credentials, $remember)) {
@@ -87,14 +73,22 @@ class RegularAuthController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        // Authentication failed
+        // Authentication failed - provide helpful messaging
         Log::info('Regular authentication failed', [
             'email' => $request->email,
             'ip' => $request->ip(),
         ]);
 
+        // Check if user exists to provide better error messaging
+        $user = \App\Models\User::where('email', $request->email)->first();
+        
+        // Generic authentication failure message for security
+        // Don't reveal whether user exists or password is wrong
         throw ValidationException::withMessages([
-            'email' => ['The provided credentials do not match our records.'],
+            'email' => [
+                'Authentication failed. Please check your credentials and try again. ' .
+                'If your account was created with AuthCentral, you may also use the "Sign In with AuthCentral" option above.'
+            ],
         ]);
     }
 

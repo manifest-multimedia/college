@@ -134,3 +134,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::post('/exam-timer/status', [ExamTimerController::class, 'checkStatus']);
 Route::post('/exam-timer/extra-time', [ExamTimerController::class, 'checkExtraTime']);
 Route::post('/exam/submit', [ExamTimerController::class, 'submitExam']);
+
+/*
+|--------------------------------------------------------------------------
+| AuthCentral Password Sync API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('auth-sync')->group(function () {
+    Route::post('/password', [\App\Http\Controllers\PasswordSyncController::class, 'syncPassword']);
+    Route::get('/health', [\App\Http\Controllers\PasswordSyncController::class, 'healthCheck']);
+});
