@@ -107,4 +107,27 @@ class User extends Authenticatable
 
         return $this->departmentHeadOf()->where('departments.id', $department->id)->exists();
     }
+
+    /**
+     * Check if this user was created via AuthCentral.
+     * AuthCentral users have random passwords and typically a legacy 'role' field.
+     *
+     * @return bool
+     */
+    public function isAuthCentralUser(): bool
+    {
+        // AuthCentral users typically have a role field set and random passwords
+        // This is a heuristic - you might want to add a more definitive field if needed
+        return !empty($this->role);
+    }
+
+    /**
+     * Check if this user was created via regular authentication.
+     *
+     * @return bool
+     */
+    public function isRegularUser(): bool
+    {
+        return !$this->isAuthCentralUser();
+    }
 }

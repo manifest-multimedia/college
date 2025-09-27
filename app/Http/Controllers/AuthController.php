@@ -11,20 +11,45 @@ use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Spatie\Permission\Models\Role;
+use App\Services\AuthenticationService;
 
 class AuthController extends Controller
 {
+    protected AuthenticationService $authService;
+
+    public function __construct(AuthenticationService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     public function handleCallback(Request $request)
     {
+        // Ensure AuthCentral authentication is enabled
+        if (!$this->authService->isAuthCentral()) {
+            Log::warning('AuthCentral callback received when method is not AuthCentral', [
+                'current_method' => $this->authService->getAuthMethod(),
+                'ip' => $request->ip(),
+            ]);
+            
+            return redirect()->route('login')
+                ->withErrors(['login' => 'AuthCentral authentication is not enabled.']);
+        }
+
         // Get the token from AuthCentral
         $token = $request->get('token');
+
+        if (!$token) {
+            Log::error('AuthCentral callback received without token');
+            return redirect()->route('login')
+                ->withErrors(['login' => 'Authentication failed: No token received.']);
+        }
 
         // Initialize Guzzle client
         $client = new Client();
 
         try {
             // Send the request to AuthCentral with the Bearer token
-            $response = $client->request('GET', 'https://auth.pnmtc.edu.gh/api/user', [
+            $response = $client->request('GET', $this->authService->getAuthCentralApiUrl(), [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
@@ -69,23 +94,20 @@ class AuthController extends Controller
                 
                 // Validate user data has required fields
                 if ($userData && isset($userData['email']) && isset($userData['name'])) {
-                    // Set a random password if the user doesn't exist in College
-                    $password = Hash::make(Str::random(10));
-
-                    // Find or create the user in College's local database using email
-                    $user = User::updateOrCreate(
-                        ['email' => $userData['email']],
-                        [
-                            'name' => $userData['name'],
-                            'password' => $password,
-                        ]
+                    // Use AuthenticationService to create/update user
+                    $user = $this->authService->createOrUpdateAuthCentralUser(
+                        $userData, 
+                        is_array($roles) ? $roles : [$roles]
                     );
-
-                    // Sync Spatie roles
-                    $this->syncUserRoles($user, is_array($roles) ? $roles : [$roles]);
 
                     // Authenticate user access
                     Auth::login($user);
+
+                    Log::info('AuthCentral authentication successful', [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'ip' => $request->ip(),
+                    ]);
 
                     // Redirect to the intended page or dashboard if no redirect URI is provided
                     return redirect($request->input('redirect_uri') ?? route('dashboard'));
@@ -108,34 +130,5 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Sync user roles based on the roles provided by AuthCentral.
-     *
-     * @param User $user
-     * @param array $authCentralRoles
-     * @return void
-     */
-    protected function syncUserRoles(User $user, array $authCentralRoles): void
-    {
-        // Remove any existing roles
-        $user->syncRoles([]);
 
-        // Assign new roles
-        foreach ($authCentralRoles as $roleName) {
-            $role = Role::where('name', $roleName)->first();
-            if ($role) {
-                $user->assignRole($role);
-                Log::info("User {$user->email} assigned role: {$roleName}");
-            } else {
-                Log::warning("Role {$roleName} not found in system for user {$user->email}.");
-            }
-        }
-
-        // If no roles were assigned, assign a default role
-        if (empty($user->getRoleNames())) {
-            $defaultRole = 'Staff';
-            $user->assignRole($defaultRole);
-            Log::warning("No valid roles found for user {$user->email}. Assigned default role: {$defaultRole}");
-        }
-    }
 }

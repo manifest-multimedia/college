@@ -40,7 +40,20 @@ Route::get('/extra-time', function () {
 })->name('extra-time');
 
 
+// Authentication Routes
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
+
+// Regular Authentication Routes (only available when AUTH_METHOD=regular)
+Route::middleware('guest')->group(function () {
+    Route::post('/regular-login', [App\Http\Controllers\RegularAuthController::class, 'login'])->name('regular.login');
+    
+    // Registration routes (only if enabled in config)
+    Route::get('/register', [App\Http\Controllers\RegularAuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [App\Http\Controllers\RegularAuthController::class, 'register']);
+});
+
+// Logout route (available for both auth methods)
+Route::post('/logout', [App\Http\Controllers\RegularAuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // Link to Tutor Assessment Form:
 Route::get('/tutor-assessment', function () {
@@ -48,14 +61,38 @@ Route::get('/tutor-assessment', function () {
 });
 
 
-// Redirect to Sign-Up page
+// Dynamic Sign-Up route based on authentication method
 Route::get('/sign-up', function () {
-    return redirect('https://auth.pnmtc.edu.gh/sign-up');
+    $authService = app(\App\Services\AuthenticationService::class);
+    $signupUrl = $authService->getSignupUrl();
+    
+    if (!$signupUrl) {
+        return redirect()->route('login')->withErrors(['signup' => 'Registration is not available.']);
+    }
+    
+    // If it's an external URL (AuthCentral), redirect away
+    if (filter_var($signupUrl, FILTER_VALIDATE_URL)) {
+        return redirect()->away($signupUrl);
+    }
+    
+    // If it's an internal route, redirect normally
+    return redirect($signupUrl);
 })->name('signup');
 
-// Redirect to Student Registration page
+// Student Registration route (AuthCentral only)
 Route::get('/student-registration', function () {
-    return redirect('https://auth.pnmtc.edu.gh/student/register');
+    $authService = app(\App\Services\AuthenticationService::class);
+    
+    if (!$authService->isAuthCentral()) {
+        return redirect()->route('login')->withErrors(['registration' => 'Student registration is only available with AuthCentral.']);
+    }
+    
+    $registrationUrl = $authService->getStudentRegistrationUrl();
+    if ($registrationUrl) {
+        return redirect()->away($registrationUrl);
+    }
+    
+    return redirect()->route('login')->withErrors(['registration' => 'Student registration is not available.']);
 })->name('student.registration');
 
 // Root route handling
