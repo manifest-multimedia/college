@@ -172,6 +172,31 @@ Route::middleware([
             return view('questionbank', compact('exam_id'));
         })->name('questionbank.with.slug');
         
+        // Enhanced Question Set Management Routes
+        Route::get('/question-sets', function () {
+            return view('question-sets');
+        })->name('question.sets');
+        
+        Route::get('/question-sets/create', function () {
+            return view('question-sets.create');
+        })->name('question.sets.create');
+        
+        Route::get('/question-sets/{id}', function ($id) {
+            return view('question-sets.show', compact('id'));
+        })->name('question.sets.show');
+        
+        Route::get('/question-sets/{id}/edit', function ($id) {
+            return view('question-sets.edit', compact('id'));
+        })->name('question.sets.edit');
+        
+        Route::get('/question-sets/{id}/questions', function ($id) {
+            return view('question-sets.questions', compact('id'));
+        })->name('question.sets.questions');
+        
+        Route::get('/question-import-export', function () {
+            return view('question-import-export');
+        })->name('question.import.export');
+        
         Route::get('track-responses', function () {
             return view('exams.track-responses');
         })->name('track-responses');

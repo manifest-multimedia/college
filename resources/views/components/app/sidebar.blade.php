@@ -429,7 +429,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     'examcenter', 'examsessions', 'questionbank', 'exams.results', 
                     'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
                     'exams.create', 'exams.edit', 'admin.exams.offline', 'admin.exams.offline-scores',
-                    'admin.transcripts.generation'
+                    'admin.transcripts.generation', 'question.sets', 'question.sets.create', 
+                    'question.sets.show', 'question.sets.edit', 'question.sets.questions', 
+                    'question.import.export'
                 ];
                 $isExamActive = in_array(request()->route()->getName(), $examRoutes);
             @endphp
@@ -476,6 +478,28 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Question Bank</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('question.sets*') ? 'active' : '' }}" href="{{ route('question.sets') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Question Sets</span>
+                            <span class="badge badge-light-success">Enhanced</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('question.import.export') ? 'active' : '' }}" href="{{ route('question.import.export') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Import/Export</span>
+                            <span class="badge badge-light-info">CSV</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
