@@ -608,6 +608,25 @@ Route::middleware([
         Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy']);
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Asset Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth', 'role:Auditor|System|Super Admin'])->prefix('admin')->name('admin.')->group(function () {
+        // Asset Management
+        Route::resource('assets', App\Http\Controllers\AssetController::class);
+        Route::resource('asset-categories', App\Http\Controllers\AssetCategoryController::class);
+        
+        // Asset Settings (System and Super Admin only)
+        Route::middleware(['role:System|Super Admin'])->group(function () {
+            Route::get('asset-settings', [App\Http\Controllers\AssetSettingController::class, 'index'])->name('asset-settings.index');
+            Route::post('asset-settings', [App\Http\Controllers\AssetSettingController::class, 'store'])->name('asset-settings.store');
+            Route::patch('asset-settings/prefix', [App\Http\Controllers\AssetSettingController::class, 'updatePrefix'])->name('asset-settings.update-prefix');
+            Route::delete('asset-settings/{assetSetting}', [App\Http\Controllers\AssetSettingController::class, 'destroy'])->name('asset-settings.destroy');
+        });
+    });
+
 });
 
 /*

@@ -342,6 +342,86 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
             @endhasrole
+            
+            <!-- Asset Management Module -->
+            @hasanyrole(['Auditor', 'System', 'Super Admin'])
+            <!--begin:Menu item-->
+            @php
+                $assetRoutes = [
+                    'admin.assets.index', 'admin.assets.create', 'admin.assets.edit', 
+                    'admin.assets.show', 'admin.asset-categories.index', 'admin.asset-categories.create',
+                    'admin.asset-categories.edit', 'admin.asset-settings.index'
+                ];
+                $isAssetActive = in_array(request()->route()->getName(), $assetRoutes);
+            @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isAssetActive ? 'show' : '' }}">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-simple-3 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Asset Management</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion {{ $isAssetActive ? 'show' : '' }}">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.assets.index') ? 'active' : '' }}" href="{{ route('admin.assets.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">All Assets</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    @hasanyrole(['System', 'Super Admin'])
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.assets.create') ? 'active' : '' }}" href="{{ route('admin.assets.create') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Add New Asset</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.asset-categories.index') ? 'active' : '' }}" href="{{ route('admin.asset-categories.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Asset Categories</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.asset-settings.index') ? 'active' : '' }}" href="{{ route('admin.asset-settings.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Asset Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasanyrole
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            @endhasanyrole
+            
             @canany(['view exams', 'create exams', 'edit exams', 'grade exams'])
             <!--begin:Menu item-->
             @php
