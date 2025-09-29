@@ -39,10 +39,17 @@ class QuestionBank extends Component
     public function loadQuestions()
     {
         if ($this->exam_id) {
-            $this->questions = Question::where('exam_id', $this->exam_id)
-                ->with('options')
-                ->get()
-                ->toArray(); // Convert to array for Livewire compatibility
+            // Get questions from question sets associated with this exam (new approach)
+            $exam = Exam::find($this->exam_id);
+            if ($exam) {
+                $questionSetIds = $exam->questionSets()->pluck('question_sets.id');
+                $this->questions = Question::whereIn('question_set_id', $questionSetIds)
+                    ->with('options')
+                    ->get()
+                    ->toArray(); // Convert to array for Livewire compatibility
+            } else {
+                $this->questions = [];
+            }
         } else {
             $this->questions = [];
         }
@@ -92,14 +99,26 @@ class QuestionBank extends Component
         $this->validate();
 
         foreach ($this->questions as $index => $questionData) {
+            // Get the question set for this exam
+            $exam = Exam::find($this->exam_id);
+            $questionSetId = $exam ? $exam->questionSets()->first()?->id : null;
+            
+            if (!$questionSetId) {
+                session()->flash('error', 'No question set found for this exam. Please create a question set first.');
+                return;
+            }
+            
             $question = Question::updateOrCreate(
                 ['id' => $questionData['id'] ?? null],
                 [
-                    'exam_id' => $this->exam_id,
+                    'question_set_id' => $questionSetId,
+                    'exam_id' => null, // Questions now belong to sets, not directly to exams
                     'question_text' => $questionData['question_text'],
                     'exam_section' => $questionData['exam_section'],
-                    'marks' => $questionData['marks'] ?? 1,
+                    'mark' => $questionData['marks'] ?? 1, // Note: field name is 'mark' not 'marks'
                     'explanation' => $questionData['explanation'],
+                    'type' => 'MCQ', // Default type
+                    'difficulty_level' => 'medium', // Default difficulty
                 ]
             );
 
