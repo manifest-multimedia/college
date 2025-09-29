@@ -1,150 +1,194 @@
-<x-dashboard.default>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Asset Settings') }}
-            </h2>
-            <a href="{{ route('admin.assets.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                Back to Assets
-            </a>
-        </div>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <!-- Flash Messages -->
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    {{ session('success') }}
+<x-dashboard.default title="Asset Settings">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title d-flex justify-content-between align-items-center w-100">
+                        <h3 class="card-title fw-bold text-gray-800">
+                            <i class="fas fa-cogs me-2"></i>Asset Settings
+                        </h3>
+                        <div>
+                            <a href="{{ route('admin.assets.index') }}" class="btn btn-sm btn-light-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Assets
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            @endif
+                <div class="card-body">
+                    <!-- Flash Messages -->
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
 
-            @if (session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    {{ session('error') }}
-                </div>
-            @endif
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
 
-            <!-- Asset Tag Prefix Setting -->
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Asset Tag Configuration</h3>
-                    <p class="mt-1 text-sm text-gray-600">Configure the prefix used for auto-generated asset tags.</p>
-                </div>
-                <div class="p-6">
-                    <form method="POST" action="{{ route('admin.asset-settings.update-prefix') }}">
-                        @csrf
-                        @method('PATCH')
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label for="asset_tag_prefix" class="block text-sm font-medium text-gray-700">Asset Tag Prefix</label>
-                                <input type="text" name="asset_tag_prefix" id="asset_tag_prefix" 
-                                       value="{{ old('asset_tag_prefix', \App\Models\AssetSetting::getValue('asset_tag_prefix', 'COL-')) }}"
-                                       maxlength="10" required
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                <p class="mt-1 text-xs text-gray-500">Example: COL- will generate tags like COL-0001, COL-0002, etc.</p>
-                                @error('asset_tag_prefix')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div class="flex items-end">
-                                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                    Update Prefix
-                                </button>
+                    <!-- Asset Tag Prefix Setting -->
+                    <div class="row mb-8">
+                        <div class="col-12">
+                            <div class="card border border-gray-300">
+                                <div class="card-header bg-light-primary">
+                                    <div class="card-title m-0">
+                                        <h4 class="fw-bold text-primary mb-0">
+                                            <i class="fas fa-tag me-2"></i>Asset Tag Configuration
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-4">Configure the prefix used for auto-generated asset tags.</p>
+                                    
+                                    <form method="POST" action="{{ route('admin.asset-settings.update-prefix') }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="asset_tag_prefix" class="form-label required fw-semibold">Asset Tag Prefix</label>
+                                                <input type="text" name="asset_tag_prefix" id="asset_tag_prefix" 
+                                                       value="{{ old('asset_tag_prefix', \App\Models\AssetSetting::getValue('asset_tag_prefix', 'COL-')) }}"
+                                                       maxlength="10" required
+                                                       class="form-control form-control-solid @error('asset_tag_prefix') is-invalid @enderror">
+                                                <div class="form-text">Example: COL- will generate tags like COL-0001, COL-0002, etc.</div>
+                                                @error('asset_tag_prefix')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-6 d-flex align-items-end mb-3">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-1"></i>Update Prefix
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </form>
-                </div>
-            </div>
+                    </div>
 
-            <!-- All Settings -->
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">All Asset Settings</h3>
-                    <p class="mt-1 text-sm text-gray-600">Manage all asset-related configuration settings.</p>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse($settings as $setting)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $setting->key }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $setting->value }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $setting->description ?? 'No description' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        @if($setting->key !== 'asset_tag_prefix')
-                                            <form method="POST" action="{{ route('admin.asset-settings.destroy', $setting) }}" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure?')">Delete</button>
+                    <!-- All Settings -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border border-gray-300">
+                                <div class="card-header bg-light-info">
+                                    <div class="card-title m-0">
+                                        <h4 class="fw-bold text-info mb-0">
+                                            <i class="fas fa-list me-2"></i>All Asset Settings
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-4">Manage all asset-related configuration settings.</p>
+                                    
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover align-middle gs-0 gy-3">
+                                            <thead class="table-dark">
+                                                <tr class="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
+                                                    <th class="min-w-150px">Setting Key</th>
+                                                    <th class="min-w-150px">Value</th>
+                                                    <th class="min-w-200px">Description</th>
+                                                    <th class="min-w-100px text-end">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="text-gray-600 fw-semibold">
+                                                @forelse($settings as $setting)
+                                                    <tr>
+                                                        <td class="text-dark fw-bold">{{ $setting->key }}</td>
+                                                        <td><code class="bg-light p-1 rounded">{{ $setting->value }}</code></td>
+                                                        <td class="text-gray-600">{{ $setting->description ?? 'No description' }}</td>
+                                                        <td class="text-end">
+                                                            @if($setting->key !== 'asset_tag_prefix')
+                                                                <form method="POST" action="{{ route('admin.asset-settings.destroy', $setting) }}" class="d-inline">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="btn btn-sm btn-light-danger" title="Delete Setting" onclick="return confirm('Are you sure you want to delete this setting?')">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
                                             </form>
                                         @else
                                             <span class="text-gray-400 text-xs">System setting</span>
                                         @endif
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">No settings found.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="4" class="text-center py-5">
+                                                            <div class="text-muted">
+                                                                <i class="fas fa-cogs fa-2x mb-3 d-block"></i>
+                                                                <h5 class="fw-bold">No Custom Settings Found</h5>
+                                                                <p class="mb-0">Add your first custom asset setting below.</p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Add New Setting -->
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Add New Setting</h3>
-                    <p class="mt-1 text-sm text-gray-600">Create a new configuration setting for the asset management module.</p>
-                </div>
-                <div class="p-6">
-                    <form method="POST" action="{{ route('admin.asset-settings.store') }}">
-                        @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label for="key" class="block text-sm font-medium text-gray-700">Setting Key</label>
-                                <input type="text" name="key" id="key" value="{{ old('key') }}" required
-                                       placeholder="e.g., depreciation_rate"
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('key')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <label for="value" class="block text-sm font-medium text-gray-700">Setting Value</label>
-                                <input type="text" name="value" id="value" value="{{ old('value') }}" required
-                                       placeholder="e.g., 0.10"
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('value')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                                <input type="text" name="description" id="description" value="{{ old('description') }}"
-                                       placeholder="e.g., Annual depreciation rate"
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('description')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
+                    <!-- Add New Setting -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border border-gray-300">
+                                <div class="card-header bg-light-success">
+                                    <div class="card-title m-0">
+                                        <h4 class="fw-bold text-success mb-0">
+                                            <i class="fas fa-plus-circle me-2"></i>Add New Setting
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-4">Create a new configuration setting for the asset management module.</p>
+                                    
+                                    <form method="POST" action="{{ route('admin.asset-settings.store') }}">
+                                        @csrf
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="key" class="form-label required fw-semibold">Setting Key</label>
+                                                <input type="text" name="key" id="key" value="{{ old('key') }}" required
+                                                       placeholder="e.g., depreciation_rate"
+                                                       class="form-control form-control-solid @error('key') is-invalid @enderror">
+                                                @error('key')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="value" class="form-label required fw-semibold">Setting Value</label>
+                                                <input type="text" name="value" id="value" value="{{ old('value') }}" required
+                                                       placeholder="e.g., 0.10"
+                                                       class="form-control form-control-solid @error('value') is-invalid @enderror">
+                                                @error('value')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="description" class="form-label fw-semibold">Description</label>
+                                                <input type="text" name="description" id="description" value="{{ old('description') }}"
+                                                       placeholder="e.g., Annual depreciation rate"
+                                                       class="form-control form-control-solid @error('description') is-invalid @enderror">
+                                                @error('description')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-plus-circle me-1"></i>Add Setting
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                                Add Setting
-                            </button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

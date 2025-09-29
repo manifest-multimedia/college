@@ -31,7 +31,7 @@ class AssetSettingController extends Controller
             'Prefix used for auto-generated asset tags'
         );
 
-        return redirect()->route('asset-settings.index')
+        return redirect()->route('admin.asset-settings.index')
             ->with('success', 'Asset tag prefix updated successfully.');
     }
 
@@ -52,7 +52,7 @@ class AssetSettingController extends Controller
             $validated['description'] ?? null
         );
 
-        return redirect()->route('asset-settings.index')
+        return redirect()->route('admin.asset-settings.index')
             ->with('success', 'Setting saved successfully.');
     }
 
@@ -63,13 +63,13 @@ class AssetSettingController extends Controller
     {
         // Prevent deletion of critical settings
         if ($assetSetting->key === 'asset_tag_prefix') {
-            return redirect()->route('asset-settings.index')
+            return redirect()->route('admin.asset-settings.index')
                 ->with('error', 'Cannot delete the asset tag prefix setting.');
         }
 
         $assetSetting->delete();
 
-        return redirect()->route('asset-settings.index')
+        return redirect()->route('admin.asset-settings.index')
             ->with('success', 'Setting deleted successfully.');
     }
 }
