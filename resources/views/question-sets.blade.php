@@ -46,10 +46,10 @@
 
             <!--begin::Content-->
 
-                <!--begin::Content container-->
-                <div class="card-body p-6">
-                    @livewire('question-bank')
-              
+            <!--begin::Content container-->
+            <div class="card-body p-6">
+                @livewire('question-bank')
+
             </div>
             <!--end::Content-->
         </div>

@@ -9,6 +9,7 @@ use App\Models\Option;
 use App\Models\QuestionSet;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 
 
@@ -20,7 +21,7 @@ class QuestionBank extends Component
     public $question_sets = [];
     public $subjects = [];
     public $subject_id;
-    public $filtered_question_sets = [];
+    public $filtered_question_sets;
     public $createNewSet = false;
     public $newSetName = '';
     public $newSetDescription = '';
@@ -86,10 +87,22 @@ class QuestionBank extends Component
         $this->mode = $mode;
         $this->questionSetId = $questionSetId;
         
+        // Initialize collections
+        $this->filtered_question_sets = collect();
+        
         // Load initial data
         $this->loadSubjects();
         $this->loadAllQuestionSets();
         $this->applyQuestionSetFilter();
+        
+        // Debug: Log the counts
+        Log::info('QuestionBank Mount Debug:', [
+            'subjects_count' => count($this->subjects),
+            'question_sets_count' => count($this->question_sets),
+            'filtered_sets_count' => $this->filtered_question_sets->count(),
+            'mode' => $this->mode,
+            'viewingQuestionSet' => $this->viewingQuestionSet
+        ]);
         
         // If we have a questionSetId, load it
         if ($this->questionSetId) {
@@ -106,15 +119,18 @@ class QuestionBank extends Component
         switch ($this->mode) {
             case 'create_set':
                 $this->viewMode = 'create_set';
+                $this->viewingQuestionSet = false;
                 break;
             case 'show_set':
             case 'edit_set':
             case 'manage_questions':
                 $this->viewMode = 'questions';
+                $this->viewingQuestionSet = true;
                 break;
             default:
                 // For question sets view, ensure we show sets
                 $this->viewMode = 'sets';
+                $this->viewingQuestionSet = false;
                 break;
         }
     }
@@ -646,7 +662,7 @@ class QuestionBank extends Component
         return view('livewire.question-bank-enhanced', [
             'exams' => $exams, 
             'questions' => $this->questions,
-            'filteredQuestionSets' => $this->filtered_question_sets,
+            'filteredQuestionSets' => $this->getQuestionSets(),
             'subjects' => $this->subjects,
             'currentQuestionSet' => $currentQuestionSet,
             'questionSetStats' => $questionSetStats,
