@@ -1,0 +1,14 @@
+Question Bank Migration Backup Summary
+=====================================
+Backup Date: Dwo 29 F-Ɛ 2025 17:32:46 GMT
+Backup Directory: storage/backups/questionbank_migration_20250929_173238
+
+Table Record Counts:
+  questions:  records
+  options:  records
+  exams:  records
+  exam_sessions:  records
+  responses:  records
+  subjects:  records
+  users:  records
+  students:  records

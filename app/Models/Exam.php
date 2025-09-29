@@ -59,11 +59,78 @@ class Exam extends Model
     }
 
     /**
-     * Questions associated with this exam.
+     * Questions associated directly with this exam (backward compatibility).
      */
     public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+
+    /**
+     * Question sets associated with this exam (new feature).
+     */
+    public function questionSets()
+    {
+        return $this->belongsToMany(QuestionSet::class, 'exam_question_set')
+            ->withPivot(['shuffle_questions', 'questions_to_pick'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get all questions for this exam (from both direct questions and question sets).
+     */
+    public function allQuestions()
+    {
+        // Get direct questions
+        $directQuestions = $this->questions();
+        
+        // Get questions from question sets
+        $questionSetIds = $this->questionSets()->pluck('question_sets.id');
+        $setQuestions = Question::whereIn('question_set_id', $questionSetIds);
+        
+        // Union both queries
+        return $directQuestions->union($setQuestions);
+    }
+
+    /**
+     * Get dynamic questions for an exam session based on question set configuration.
+     */
+    public function generateSessionQuestions($shuffle = true)
+    {
+        $sessionQuestions = collect();
+        
+        // First, get questions directly assigned to the exam (backward compatibility)
+        $directQuestions = $this->questions()->with('options')->get();
+        if ($directQuestions->isNotEmpty()) {
+            $sessionQuestions = $sessionQuestions->merge($directQuestions);
+        }
+        
+        // Then, get questions from question sets
+        foreach ($this->questionSets as $questionSet) {
+            $setQuestions = $questionSet->questions()->with('options')->get();
+            
+            // Check if we need to pick a specific number of questions
+            $questionsToPick = $questionSet->pivot->questions_to_pick;
+            
+            if ($questionsToPick && $questionsToPick < $setQuestions->count()) {
+                // Pick random questions from this set
+                $setQuestions = $setQuestions->random($questionsToPick);
+            }
+            
+            // Shuffle if configured
+            if ($questionSet->pivot->shuffle_questions) {
+                $setQuestions = $setQuestions->shuffle();
+            }
+            
+            $sessionQuestions = $sessionQuestions->merge($setQuestions);
+        }
+        
+        // Final shuffle if requested
+        if ($shuffle) {
+            $sessionQuestions = $sessionQuestions->shuffle();
+        }
+        
+        return $sessionQuestions->values(); // Reset array keys
     }
 
     /**

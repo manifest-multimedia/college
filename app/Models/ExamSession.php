@@ -59,6 +59,32 @@ class ExamSession extends Model
     }
 
     /**
+     * Questions assigned to this exam session (new feature for dynamic question selection).
+     */
+    public function sessionQuestions()
+    {
+        return $this->hasMany(ExamSessionQuestion::class)->orderBy('display_order');
+    }
+
+    /**
+     * Get the questions for this session (supports both legacy and new question set approach).
+     */
+    public function getQuestionsAttribute()
+    {
+        // Check if this session has specific question assignments
+        if ($this->sessionQuestions()->exists()) {
+            // Use dynamically assigned questions
+            return $this->sessionQuestions()
+                ->with('question.options')
+                ->get()
+                ->pluck('question');
+        }
+        
+        // Fallback to exam's questions (backward compatibility)
+        return $this->exam->questions()->with('options')->get();
+    }
+
+    /**
      * Scored questions for this session.
      */
     public function scoredQuestions()
