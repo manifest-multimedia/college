@@ -43,14 +43,13 @@
                 <!--end::Toolbar container-->
             </div>
             <!--end::Toolbar-->
-            
+
             <!--begin::Content-->
-            <div id="kt_app_content" class="app-content flex-column-fluid">
+
                 <!--begin::Content container-->
-                        <div class="card-body p-6">
-                        @livewire('question-bank')
-                </div>
-                <!--end::Content container-->
+                <div class="card-body p-6">
+                    @livewire('question-bank')
+              
             </div>
             <!--end::Content-->
         </div>

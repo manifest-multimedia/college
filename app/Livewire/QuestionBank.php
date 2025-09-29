@@ -85,7 +85,11 @@ class QuestionBank extends Component
         $this->exam_id = $exam_id;
         $this->mode = $mode;
         $this->questionSetId = $questionSetId;
-        $this->subjects = Subject::all();
+        
+        // Load initial data
+        $this->loadSubjects();
+        $this->loadAllQuestionSets();
+        $this->applyQuestionSetFilter();
         
         // If we have a questionSetId, load it
         if ($this->questionSetId) {
@@ -93,6 +97,8 @@ class QuestionBank extends Component
             if ($this->selectedQuestionSet) {
                 $this->subject_id = $this->selectedQuestionSet->course_id;
                 $this->viewMode = 'questions';
+                $this->question_set_id = $this->questionSetId;
+                $this->loadQuestions();
             }
         }
         
@@ -105,6 +111,10 @@ class QuestionBank extends Component
             case 'edit_set':
             case 'manage_questions':
                 $this->viewMode = 'questions';
+                break;
+            default:
+                // For question sets view, ensure we show sets
+                $this->viewMode = 'sets';
                 break;
         }
     }
@@ -143,6 +153,7 @@ class QuestionBank extends Component
 
     public function updatedSubjectId()
     {
+        $this->applyQuestionSetFilter();
         $this->applyQuestionSetFilter();
         $this->question_set_id = null;
         $this->questions = [];
@@ -572,6 +583,19 @@ class QuestionBank extends Component
         $this->loadQuestions();
     }
     
+    public function getQuestionSets()
+    {
+        // Ensure we have loaded question sets
+        if (empty($this->question_sets)) {
+            $this->loadAllQuestionSets();
+        }
+        
+        // Apply current filter
+        $this->applyQuestionSetFilter();
+        
+        return $this->filtered_question_sets;
+    }
+
     public function getQuestionSetStatistics($questionSetId)
     {
         $questionSet = QuestionSet::find($questionSetId);
