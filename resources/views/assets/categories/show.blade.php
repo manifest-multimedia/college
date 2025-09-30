@@ -355,12 +355,56 @@
                                 <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
                                     <!--begin::Table head-->
                                     <thead>
-                                        <tr class="fw-bold text-muted">
-                                            <th class="min-w-150px">Asset Tag</th>
-                                            <th class="min-w-140px">Name</th>
-                                            <th class="min-w-120px">State</th>
-                                            <th class="min-w-120px">Location</th>
-                                            <th class="min-w-100px text-end">Actions</th>
+                                        <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                            <th class="min-w-150px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-tag fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                    </i>
+                                                    Asset Tag
+                                                </div>
+                                            </th>
+                                            <th class="min-w-140px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-abstract-26 fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Asset Name
+                                                </div>
+                                            </th>
+                                            <th class="min-w-120px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-status fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Status
+                                                </div>
+                                            </th>
+                                            <th class="min-w-120px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-geolocation fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Location
+                                                </div>
+                                            </th>
+                                            <th class="min-w-100px text-end px-4 py-3">
+                                                <div class="d-flex align-items-center justify-content-end">
+                                                    <i class="ki-duotone ki-setting-3 fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                        <span class="path4"></span>
+                                                        <span class="path5"></span>
+                                                    </i>
+                                                    Actions
+                                                </div>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <!--end::Table head-->

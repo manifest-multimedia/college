@@ -350,13 +350,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 $assetRoutes = [
                     'admin.assets.index', 'admin.assets.create', 'admin.assets.edit', 
                     'admin.assets.show', 'admin.asset-categories.index', 'admin.asset-categories.create',
-                    'admin.asset-categories.edit', 'admin.asset-settings.index'
+                    'admin.asset-categories.edit', 'admin.asset-categories.show', 'admin.asset-settings.index'
                 ];
                 $isAssetActive = in_array(request()->route()->getName(), $assetRoutes);
             @endphp
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isAssetActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
-                <span class="menu-link">
+                <span class="menu-link {{ $isAssetActive ? 'active' : '' }}">
                     <span class="menu-icon">
                         <i class="ki-duotone ki-chart-simple-3 fs-2">
                             <span class="path1"></span>
@@ -373,11 +373,21 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <div class="menu-sub menu-sub-accordion {{ $isAssetActive ? 'show' : '' }}">
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('admin.assets.index') ? 'active' : '' }}" href="{{ route('admin.assets.index') }}">
+                        <a class="menu-link {{ request()->routeIs(['admin.assets.index', 'admin.assets.show']) ? 'active' : '' }}" href="{{ route('admin.assets.index') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">All Assets</span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-element-11 fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                </i>All Assets
+                                @if(request()->routeIs('admin.assets.show'))
+                                    <span class="badge badge-light-primary badge-sm ms-2">Viewing</span>
+                                @endif
+                            </span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -385,22 +395,44 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     @hasanyrole(['System', 'Super Admin'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('admin.assets.create') ? 'active' : '' }}" href="{{ route('admin.assets.create') }}">
+                        <a class="menu-link {{ request()->routeIs(['admin.assets.create', 'admin.assets.edit']) ? 'active' : '' }}" href="{{ route('admin.assets.create') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Add New Asset</span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-plus fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>Add New Asset
+                                @if(request()->routeIs('admin.assets.edit'))
+                                    <span class="badge badge-light-warning badge-sm ms-2">Editing</span>
+                                @endif
+                            </span>
                         </a>
                     </div>
                     <!--end:Menu item-->
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('admin.asset-categories.index') ? 'active' : '' }}" href="{{ route('admin.asset-categories.index') }}">
+                        <a class="menu-link {{ request()->routeIs(['admin.asset-categories.index', 'admin.asset-categories.show', 'admin.asset-categories.create', 'admin.asset-categories.edit']) ? 'active' : '' }}" href="{{ route('admin.asset-categories.index') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Asset Categories</span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-category fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                </i>Asset Categories
+                                @if(request()->routeIs('admin.asset-categories.show'))
+                                    <span class="badge badge-light-info badge-sm ms-2">Viewing</span>
+                                @elseif(request()->routeIs('admin.asset-categories.edit'))
+                                    <span class="badge badge-light-warning badge-sm ms-2">Editing</span>
+                                @elseif(request()->routeIs('admin.asset-categories.create'))
+                                    <span class="badge badge-light-success badge-sm ms-2">Creating</span>
+                                @endif
+                            </span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -411,7 +443,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Asset Settings</span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-setting-3 fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                    <span class="path5"></span>
+                                </i>Asset Settings
+                            </span>
                         </a>
                     </div>
                     <!--end:Menu item-->

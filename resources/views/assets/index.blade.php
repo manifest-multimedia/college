@@ -187,34 +187,84 @@
                                     <thead>
                                         <!--begin::Table row-->
                                         <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                            <th class="min-w-125px">
-                                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'asset_tag', 'direction' => request('sort') == 'asset_tag' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-muted text-hover-primary">
+                                            <th class="min-w-150px px-4 py-3">
+                                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'asset_tag', 'direction' => request('sort') == 'asset_tag' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-muted text-hover-primary d-flex align-items-center">
+                                                    <i class="ki-duotone ki-tag fs-3 me-2">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                    </i>
                                                     Asset Tag
                                                     @if(request('sort') == 'asset_tag')
-                                                        <i class="ki-duotone ki-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }} fs-5 text-primary"></i>
+                                                        <i class="ki-duotone ki-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }} fs-5 text-primary ms-1"></i>
                                                     @endif
                                                 </a>
                                             </th>
-                                            <th class="min-w-125px">
-                                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-muted text-hover-primary">
-                                                    Name
+                                            <th class="min-w-150px px-4 py-3">
+                                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-muted text-hover-primary d-flex align-items-center">
+                                                    <i class="ki-duotone ki-abstract-26 fs-3 me-2">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Asset Name
                                                     @if(request('sort') == 'name')
-                                                        <i class="ki-duotone ki-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }} fs-5 text-primary"></i>
+                                                        <i class="ki-duotone ki-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }} fs-5 text-primary ms-1"></i>
                                                     @endif
                                                 </a>
                                             </th>
-                                            <th class="min-w-125px">Category</th>
-                                            <th class="min-w-125px">State</th>
-                                            <th class="min-w-125px">Location</th>
-                                            <th class="min-w-125px">
-                                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => request('sort') == 'created_at' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-muted text-hover-primary">
-                                                    Created
+                                            <th class="min-w-140px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-category fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                        <span class="path4"></span>
+                                                    </i>
+                                                    Category
+                                                </div>
+                                            </th>
+                                            <th class="min-w-120px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-status fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Status
+                                                </div>
+                                            </th>
+                                            <th class="min-w-140px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-geolocation fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Location
+                                                </div>
+                                            </th>
+                                            <th class="min-w-130px px-4 py-3">
+                                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => request('sort') == 'created_at' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-muted text-hover-primary d-flex align-items-center">
+                                                    <i class="ki-duotone ki-calendar fs-3 me-2">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Date Created
                                                     @if(request('sort') == 'created_at')
-                                                        <i class="ki-duotone ki-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }} fs-5 text-primary"></i>
+                                                        <i class="ki-duotone ki-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }} fs-5 text-primary ms-1"></i>
                                                     @endif
                                                 </a>
                                             </th>
-                                            <th class="text-end min-w-100px">Actions</th>
+                                            <th class="text-end min-w-120px px-4 py-3">
+                                                <div class="d-flex align-items-center justify-content-end">
+                                                    <i class="ki-duotone ki-setting-3 fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                        <span class="path4"></span>
+                                                        <span class="path5"></span>
+                                                    </i>
+                                                    Actions
+                                                </div>
+                                            </th>
                                         </tr>
                                         <!--end::Table row-->
                                     </thead>
@@ -222,18 +272,27 @@
                                     <!--begin::Table body-->
                                     <tbody class="text-gray-600 fw-semibold">
                                         @forelse($assets as $asset)
-                                            <tr>
+                                            <tr class="border-bottom border-gray-200">
                                                 <!--begin::Asset Tag-->
-                                                <td>
-                                                    <a href="{{ route('admin.assets.show', $asset) }}" class="text-dark fw-bold text-hover-primary fs-6">
-                                                        {{ $asset->asset_tag }}
+                                                <td class="px-4 py-4">
+                                                    <a href="{{ route('admin.assets.show', $asset) }}" class="text-dark fw-bold text-hover-primary fs-6 d-flex align-items-center">
+                                                        <div class="symbol symbol-45px me-3">
+                                                            <div class="symbol-label bg-light-primary">
+                                                                <i class="ki-duotone ki-tag fs-2 text-primary">
+                                                                    <span class="path1"></span>
+                                                                    <span class="path2"></span>
+                                                                    <span class="path3"></span>
+                                                                </i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="fw-bold">{{ $asset->asset_tag }}</div>
                                                     </a>
                                                 </td>
                                                 <!--end::Asset Tag-->
                                                 <!--begin::Name-->
-                                                <td>
+                                                <td class="px-4 py-4">
                                                     <div class="d-flex flex-column">
-                                                        <span class="text-gray-800 fw-bold mb-1">{{ $asset->name }}</span>
+                                                        <span class="text-gray-800 fw-bold fs-6 mb-1">{{ $asset->name }}</span>
                                                         @if($asset->serial_number)
                                                             <span class="text-muted fs-7">SN: {{ $asset->serial_number }}</span>
                                                         @endif
@@ -241,16 +300,32 @@
                                                 </td>
                                                 <!--end::Name-->
                                                 <!--begin::Category-->
-                                                <td>
+                                                <td class="px-4 py-4">
                                                     @if($asset->category)
-                                                        <span class="badge badge-light-info">{{ $asset->category->name }}</span>
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-category fs-3 me-2 text-info">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                                <span class="path4"></span>
+                                                            </i>
+                                                            <span class="badge badge-light-info fs-7 fw-bold">{{ $asset->category->name }}</span>
+                                                        </div>
                                                     @else
-                                                        <span class="text-muted">Uncategorized</span>
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-category fs-3 me-2 text-muted">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                                <span class="path4"></span>
+                                                            </i>
+                                                            <span class="text-muted fs-7">Uncategorized</span>
+                                                        </div>
                                                     @endif
                                                 </td>
                                                 <!--end::Category-->
                                                 <!--begin::State-->
-                                                <td>
+                                                <td class="px-4 py-4">
                                                     @php
                                                         $stateColors = [
                                                             'new' => 'success',
@@ -261,23 +336,60 @@
                                                             'lost' => 'danger'
                                                         ];
                                                         $color = $stateColors[$asset->state] ?? 'secondary';
+                                                        $stateIcons = [
+                                                            'new' => 'ki-check-circle',
+                                                            'in_use' => 'ki-play-circle',
+                                                            'damaged' => 'ki-cross-circle',
+                                                            'repaired' => 'ki-wrench',
+                                                            'disposed' => 'ki-trash',
+                                                            'lost' => 'ki-search'
+                                                        ];
+                                                        $icon = $stateIcons[$asset->state] ?? 'ki-question-circle';
                                                     @endphp
-                                                    <span class="badge badge-light-{{ $color }}">{{ ucfirst(str_replace('_', ' ', $asset->state)) }}</span>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="ki-duotone {{ $icon }} fs-3 me-2 text-{{ $color }}">
+                                                            <span class="path1"></span>
+                                                            <span class="path2"></span>
+                                                        </i>
+                                                        <span class="badge badge-light-{{ $color }} fs-7 fw-bold">{{ ucfirst(str_replace('_', ' ', $asset->state)) }}</span>
+                                                    </div>
                                                 </td>
                                                 <!--end::State-->
                                                 <!--begin::Location-->
-                                                <td>
-                                                    <span class="text-dark fw-bold">{{ $asset->location ?? 'N/A' }}</span>
+                                                <td class="px-4 py-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="ki-duotone ki-geolocation fs-3 me-2 text-muted">
+                                                            <span class="path1"></span>
+                                                            <span class="path2"></span>
+                                                        </i>
+                                                        <span class="text-dark fw-semibold fs-6">{{ $asset->location ?? 'N/A' }}</span>
+                                                    </div>
                                                 </td>
                                                 <!--end::Location-->
                                                 <!--begin::Created-->
-                                                <td>
-                                                    <span class="text-muted">{{ $asset->created_at->format('M j, Y') }}</span>
+                                                <td class="px-4 py-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="ki-duotone ki-calendar fs-3 me-2 text-muted">
+                                                            <span class="path1"></span>
+                                                            <span class="path2"></span>
+                                                        </i>
+                                                        <div class="d-flex flex-column">
+                                                            <span class="text-muted fw-semibold fs-7">{{ $asset->created_at->format('M j, Y') }}</span>
+                                                            <span class="text-muted fs-8">{{ $asset->created_at->format('g:i A') }}</span>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <!--end::Created-->
                                                 <!--begin::Action-->
-                                                <td class="text-end">
+                                                <td class="text-end px-4 py-4">
                                                     <a href="#" class="btn btn-light btn-active-light-primary btn-flex btn-center btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                        <i class="ki-duotone ki-setting-3 fs-3 me-1">
+                                                            <span class="path1"></span>
+                                                            <span class="path2"></span>
+                                                            <span class="path3"></span>
+                                                            <span class="path4"></span>
+                                                            <span class="path5"></span>
+                                                        </i>
                                                         Actions
                                                         <i class="ki-duotone ki-down fs-5 ms-1"></i>
                                                     </a>
@@ -309,15 +421,26 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="7" class="text-center py-10">
+                                                <td colspan="7" class="text-center py-20">
                                                     <div class="text-center">
-                                                        <div class="d-flex flex-center">
-                                                            <i class="ki-duotone ki-files fs-1 text-muted mb-5">
+                                                        <div class="d-flex flex-center mb-5">
+                                                            <i class="ki-duotone ki-chart-simple-3 fs-1x text-muted">
                                                                 <span class="path1"></span>
                                                                 <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                                <span class="path4"></span>
                                                             </i>
                                                         </div>
-                                                        <div class="fs-6 text-muted">No assets found</div>
+                                                        <h4 class="fs-5 fw-bold text-gray-800 mb-3">No Assets Found</h4>
+                                                        <p class="fs-6 text-muted mb-5">Get started by adding your first asset to the inventory system.</p>
+                                                        @hasanyrole(['System', 'Super Admin'])
+                                                        <a href="{{ route('admin.assets.create') }}" class="btn btn-sm btn-primary">
+                                                            <i class="ki-duotone ki-plus fs-3 me-1">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                            </i>Add First Asset
+                                                        </a>
+                                                        @endhasanyrole
                                                     </div>
                                                 </td>
                                             </tr>
@@ -352,4 +475,49 @@
         <!--end::Content wrapper-->
     </div>
     <!--end::Main-->
+
+    <!--begin::Custom styles-->
+    @push('styles')
+    <style>
+        /* Enhanced table hover effects */
+        #kt_assets_table tbody tr:hover {
+            background-color: #f8f9fa !important;
+            transform: translateY(-1px);
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 6px 0 rgba(0,0,0,0.08);
+        }
+
+        /* Smooth transitions for table elements */
+        #kt_assets_table tbody tr {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Better badge styling */
+        #kt_assets_table .badge {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        /* Enhanced symbol styling */
+        #kt_assets_table .symbol .symbol-label {
+            transition: all 0.2s ease-in-out;
+        }
+
+        #kt_assets_table tbody tr:hover .symbol .symbol-label {
+            transform: scale(1.1);
+        }
+
+        /* Icon animations */
+        #kt_assets_table i.ki-duotone {
+            transition: all 0.2s ease-in-out;
+        }
+
+        #kt_assets_table tbody tr:hover i.ki-duotone {
+            transform: scale(1.1);
+        }
+    </style>
+    @endpush
+    <!--end::Custom styles-->
 </x-dashboard.default>

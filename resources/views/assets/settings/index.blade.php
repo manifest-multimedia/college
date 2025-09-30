@@ -72,7 +72,7 @@
                     </div>
 
                     <!-- All Settings -->
-                    <div class="row">
+                    <div class="row mb-8">
                         <div class="col-12">
                             <div class="card border border-gray-300">
                                 <div class="card-header bg-light-info">

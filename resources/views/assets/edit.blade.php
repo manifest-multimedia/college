@@ -60,157 +60,218 @@
                         <!--end::Card header-->
                         <!--begin::Card body-->
                         <div class="card-body pt-0">
-
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6">
-                    <form method="POST" action="{{ route('admin.assets.update', $asset) }}">
-                        @csrf
-                        @method('PATCH')
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Asset Tag (Read-only) -->
-                            <div>
-                                <label for="asset_tag" class="block text-sm font-medium text-gray-700">Asset Tag</label>
-                                <input type="text" id="asset_tag" value="{{ $asset->asset_tag }}" readonly
-                                       class="mt-1 bg-gray-100 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                <p class="mt-1 text-xs text-gray-500">Asset tags cannot be changed after creation.</p>
-                            </div>
-
-                            <!-- Name -->
-                            <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700">Asset Name *</label>
-                                <input type="text" name="name" id="name" value="{{ old('name', $asset->name) }}" required
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('name')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Category -->
-                            <div>
-                                <label for="category_id" class="block text-sm font-medium text-gray-700">Category</label>
-                                <select name="category_id" id="category_id" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <option value="">Select a category</option>
-                                    @foreach($categories as $category)
-                                        <option value="{{ $category->id }}" {{ old('category_id', $asset->category_id) == $category->id ? 'selected' : '' }}>
-                                            {{ $category->full_path }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('category_id')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Location -->
-                            <div>
-                                <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
-                                <input type="text" name="location" id="location" value="{{ old('location', $asset->location) }}"
-                                       placeholder="e.g., Room 101, Building A"
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('location')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- State -->
-                            <div>
-                                <label for="state" class="block text-sm font-medium text-gray-700">State *</label>
-                                <select name="state" id="state" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <option value="new" {{ old('state', $asset->state) == 'new' ? 'selected' : '' }}>New</option>
-                                    <option value="in_use" {{ old('state', $asset->state) == 'in_use' ? 'selected' : '' }}>In Use</option>
-                                    <option value="damaged" {{ old('state', $asset->state) == 'damaged' ? 'selected' : '' }}>Damaged</option>
-                                    <option value="repaired" {{ old('state', $asset->state) == 'repaired' ? 'selected' : '' }}>Repaired</option>
-                                    <option value="disposed" {{ old('state', $asset->state) == 'disposed' ? 'selected' : '' }}>Disposed</option>
-                                    <option value="lost" {{ old('state', $asset->state) == 'lost' ? 'selected' : '' }}>Lost</option>
-                                </select>
-                                @error('state')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Purchase Date -->
-                            <div>
-                                <label for="purchase_date" class="block text-sm font-medium text-gray-700">Purchase Date</label>
-                                <input type="date" name="purchase_date" id="purchase_date" 
-                                       value="{{ old('purchase_date', $asset->purchase_date ? $asset->purchase_date->format('Y-m-d') : '') }}"
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('purchase_date')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Purchase Price -->
-                            <div>
-                                <label for="purchase_price" class="block text-sm font-medium text-gray-700">Purchase Price</label>
-                                <div class="mt-1 relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">$</span>
+                            <!-- Flash Messages -->
+                            @if (session('success'))
+                                <div class="alert alert-dismissible alert-success d-flex flex-column flex-sm-row p-5 mb-10">
+                                    <i class="ki-duotone ki-check fs-2hx text-success me-4 mb-5 mb-sm-0">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+                                        <h4 class="mb-2 text-dark">Success!</h4>
+                                        <span class="text-dark">{{ session('success') }}</span>
                                     </div>
-                                    <input type="number" step="0.01" min="0" name="purchase_price" id="purchase_price" 
-                                           value="{{ old('purchase_price', $asset->purchase_price) }}"
-                                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
-                                           placeholder="0.00">
+                                    <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+                                        <i class="ki-duotone ki-cross fs-1 text-success"><span class="path1"></span><span class="path2"></span></i>
+                                    </button>
                                 </div>
-                                @error('purchase_price')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            @endif
 
-                            <!-- Current Value -->
-                            <div>
-                                <label for="current_value" class="block text-sm font-medium text-gray-700">Current Value</label>
-                                <div class="mt-1 relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">$</span>
+                            @if (session('error'))
+                                <div class="alert alert-dismissible alert-danger d-flex flex-column flex-sm-row p-5 mb-10">
+                                    <i class="ki-duotone ki-cross-circle fs-2hx text-danger me-4 mb-5 mb-sm-0">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+                                        <h4 class="mb-2 text-dark">Error!</h4>
+                                        <span class="text-dark">{{ session('error') }}</span>
                                     </div>
-                                    <input type="number" step="0.01" min="0" name="current_value" id="current_value" 
-                                           value="{{ old('current_value', $asset->current_value) }}"
-                                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
-                                           placeholder="0.00">
+                                    <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+                                        <i class="ki-duotone ki-cross fs-1 text-danger"><span class="path1"></span><span class="path2"></span></i>
+                                    </button>
                                 </div>
-                                @error('current_value')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
+                            @endif
 
-                        <!-- Description -->
-                        <div class="mt-6">
-                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="description" rows="3" 
-                                      class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{ old('description', $asset->description) }}</textarea>
-                            @error('description')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                            <form method="POST" action="{{ route('admin.assets.update', $asset) }}" class="form">
+                                @csrf
+                                @method('PATCH')
 
-                        <!-- Notes -->
-                        <div class="mt-6">
-                            <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="notes" id="notes" rows="3" 
-                                      class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{ old('notes', $asset->notes) }}</textarea>
-                            @error('notes')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                                <div class="row mb-7">
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Asset Tag</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <input type="text" class="form-control form-control-solid bg-light" value="{{ $asset->asset_tag }}" readonly>
+                                        <!--end::Input-->
+                                        <div class="text-muted fs-7 mt-1">Asset tags cannot be changed after creation.</div>
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="required fs-6 fw-semibold mb-2">Asset Name</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <input type="text" class="form-control form-control-solid @error('name') is-invalid @enderror" name="name" value="{{ old('name', $asset->name) }}" required placeholder="Enter asset name">
+                                        <!--end::Input-->
+                                        @error('name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
 
-                        <!-- Submit Buttons -->
-                        <div class="flex justify-end mt-6 space-x-3">
-                            <a href="{{ route('admin.assets.show', $asset) }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-                                Cancel
-                            </a>
-                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Update Asset
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+                                <div class="row mb-7">
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Category</label>
+                                        <!--end::Label-->
+                                        <!--begin::Select-->
+                                        <select name="category_id" class="form-select form-select-solid @error('category_id') is-invalid @enderror" data-control="select2" data-placeholder="Select a category">
+                                            <option value="">Select a category</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}" {{ old('category_id', $asset->category_id) == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->full_path }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <!--end::Select-->
+                                        @error('category_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Location</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <input type="text" class="form-control form-control-solid @error('location') is-invalid @enderror" name="location" value="{{ old('location', $asset->location) }}" placeholder="e.g., Room 101, Building A">
+                                        <!--end::Input-->
+                                        @error('location')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row mb-7">
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="required fs-6 fw-semibold mb-2">State</label>
+                                        <!--end::Label-->
+                                        <!--begin::Select-->
+                                        <select name="state" class="form-select form-select-solid @error('state') is-invalid @enderror" required data-control="select2" data-placeholder="Select asset state">
+                                            <option value="new" {{ old('state', $asset->state) == 'new' ? 'selected' : '' }}>New</option>
+                                            <option value="in_use" {{ old('state', $asset->state) == 'in_use' ? 'selected' : '' }}>In Use</option>
+                                            <option value="damaged" {{ old('state', $asset->state) == 'damaged' ? 'selected' : '' }}>Damaged</option>
+                                            <option value="repaired" {{ old('state', $asset->state) == 'repaired' ? 'selected' : '' }}>Repaired</option>
+                                            <option value="disposed" {{ old('state', $asset->state) == 'disposed' ? 'selected' : '' }}>Disposed</option>
+                                            <option value="lost" {{ old('state', $asset->state) == 'lost' ? 'selected' : '' }}>Lost</option>
+                                        </select>
+                                        <!--end::Select-->
+                                        @error('state')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Purchase Date</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <input type="date" class="form-control form-control-solid @error('purchase_date') is-invalid @enderror" name="purchase_date" value="{{ old('purchase_date', $asset->purchase_date ? $asset->purchase_date->format('Y-m-d') : '') }}">
+                                        <!--end::Input-->
+                                        @error('purchase_date')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row mb-7">
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Purchase Price</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input group-->
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="ki-duotone ki-dollar fs-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                    <span class="path3"></span>
+                                                </i>
+                                            </span>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-solid @error('purchase_price') is-invalid @enderror" name="purchase_price" value="{{ old('purchase_price', $asset->purchase_price) }}" placeholder="0.00">
+                                        </div>
+                                        <!--end::Input group-->
+                                        @error('purchase_price')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Current Value</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input group-->
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="ki-duotone ki-dollar fs-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                    <span class="path3"></span>
+                                                </i>
+                                            </span>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-solid @error('current_value') is-invalid @enderror" name="current_value" value="{{ old('current_value', $asset->current_value) }}" placeholder="0.00">
+                                        </div>
+                                        <!--end::Input group-->
+                                        @error('current_value')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row mb-7">
+                                    <div class="col-12 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Description</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <textarea class="form-control form-control-solid @error('description') is-invalid @enderror" name="description" rows="3" placeholder="Enter asset description">{{ old('description', $asset->description) }}</textarea>
+                                        <!--end::Input-->
+                                        @error('description')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row mb-7">
+                                    <div class="col-12 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Notes</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <textarea class="form-control form-control-solid @error('notes') is-invalid @enderror" name="notes" rows="3" placeholder="Enter any additional notes">{{ old('notes', $asset->notes) }}</textarea>
+                                        <!--end::Input-->
+                                        @error('notes')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!--begin::Actions-->
+                                <div class="text-center pt-15">
+                                    <a href="{{ route('admin.assets.show', $asset) }}" class="btn btn-light me-3">
+                                        <i class="ki-duotone ki-arrow-left fs-2">
+                                            <span class="path1"></span>
+                                            <span class="path2"></span>
+                                        </i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ki-duotone ki-check fs-2">
+                                            <span class="path1"></span>
+                                            <span class="path2"></span>
+                                        </i>Update Asset
+                                    </button>
+                                </div>
+                                <!--end::Actions-->
+                            </form>
                         </div>
                         <!--end::Card body-->
                     </div>
