@@ -1066,6 +1066,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     
+                    @hasrole('System')
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('admin.branding.index') ? 'active' : '' }}" href="{{ route('admin.branding.index') }}">
@@ -1077,11 +1078,12 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                     <span class="path1"></span>
                                     <span class="path2"></span>
                                 </i>
-                                Institution Branding
+                                Branding
                             </span>
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    @endhasrole
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
