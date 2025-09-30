@@ -52,9 +52,9 @@
                 </div>
               </div>
                   <!-- Button -->
-                  <a href="{{ route('exams.create') }}" class="btn btn-sm btn-success">
+                  <a href="{{ route('exams.create-ajax') }}" class="btn btn-sm btn-success">
                   
-                  Create a New Exam</a>
+                  Create a New Exam (AJAX)</a>
                 </div>
               </div>
               
@@ -67,7 +67,7 @@
                     <tr>
                         <td colspan="6" class="text-center">
                             <div class="pt-10 pb-10fs-6 fw-bold">No exams found.<br />
-                                <a class="mt-5 btn btn-sm btn-success" href="{{ route('exams.create') }}">Create a New Exam</a>
+                                <a class="mt-5 btn btn-sm btn-success" href="{{ route('exams.create-ajax') }}">Create a New Exam (AJAX)</a>
                             </div>
                         </td>
                     </tr>

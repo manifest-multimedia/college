@@ -9,21 +9,25 @@ class Exam extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'date' => 'datetime',
+        'enable_proctoring' => 'boolean',
+    ];
+
     protected $fillable = [
-        'title',
-        'description',
         'course_id',
-        'academic_year_id',
-        'semester_id',
-        'status',
-        'date',
-        'time',
-        'duration',
-        'password',
         'user_id',
+        'type',
+        'type_id',
+        'duration',
         'questions_per_session',
+        'passing_percentage',
+        'clearance_threshold',
+        'password',
+        'status',
         'slug',
-        'exam_type',
     ];
 
     /**

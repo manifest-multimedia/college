@@ -160,6 +160,14 @@ Route::middleware([
         Route::get('/create-exam', function () {
             return view('exams.create');
         })->name('exams.create');
+        
+        // AJAX Exam Management Routes
+        Route::get('/create-exam-ajax', [App\Http\Controllers\ExamController::class, 'create'])->name('exams.create-ajax');
+        Route::post('/exams', [App\Http\Controllers\ExamController::class, 'store'])->name('exams.store');
+        Route::get('/exams/get-courses', [App\Http\Controllers\ExamController::class, 'getCourses'])->name('exams.get-courses');
+        Route::get('/exams/get-question-sets', [App\Http\Controllers\ExamController::class, 'getQuestionSets'])->name('exams.get-question-sets');
+        Route::get('/exams/generate-password', [App\Http\Controllers\ExamController::class, 'generatePassword'])->name('exams.generate-password');
+        Route::post('/exams/validate-form', [App\Http\Controllers\ExamController::class, 'validateForm'])->name('exams.validate-form');
 
         Route::get('/question-bank', function () {
             return view('questionbank');
