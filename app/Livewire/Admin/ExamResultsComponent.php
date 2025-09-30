@@ -250,39 +250,76 @@ class ExamResultsComponent extends Component
                 // Get all responses with their questions and options
                 $responses = $session->responses;
                 
+                // Check if this session has defined session questions for proper ordering
+                $sessionQuestions = $session->sessionQuestions()->with('question.options')->get();
+                $hasSessionQuestions = $sessionQuestions->isNotEmpty();
+                
                 // Create a collection of processed responses so we can sort/limit them
                 $processedResponses = collect();
                 
-                // Process each response to calculate metrics
-                foreach ($responses as $response) {
-                    $question = $response->question;
-                    if (!$question) continue;
-                    
-                    // Find the correct option
-                    $correctOption = $question->options->where('is_correct', true)->first();
-                    
-                    // Question mark value (default to 1 if not specified)
-                    $questionMark = $question->mark ?? 1;
-                    
-                    // Check if the answer is correct
-                    $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
-                    $isAttempted = !is_null($response->selected_option);
-                    
-                    // Add to processed responses collection with relevant metrics
-                    $processedResponses->push([
-                        'response' => $response,
-                        'is_correct' => $isCorrect,
-                        'is_attempted' => $isAttempted,
-                        'mark_value' => $questionMark
-                    ]);
+                if ($hasSessionQuestions) {
+                    // Use session question order to ensure consistent results calculation
+                    foreach ($sessionQuestions as $sessionQuestion) {
+                        $question = $sessionQuestion->question;
+                        if (!$question) continue;
+                        
+                        // Find the response for this specific session question
+                        $response = $responses->where('question_id', $question->id)->first();
+                        
+                        // Find the correct option
+                        $correctOption = $question->options->where('is_correct', true)->first();
+                        
+                        // Question mark value (default to 1 if not specified)
+                        $questionMark = $question->mark ?? 1;
+                        
+                        // Check if the answer is correct (only if there was a response)
+                        $isCorrect = ($response && $correctOption && $response->selected_option == $correctOption->id);
+                        $isAttempted = ($response && !is_null($response->selected_option));
+                        
+                        // Add to processed responses collection with relevant metrics
+                        $processedResponses->push([
+                            'response' => $response,
+                            'question' => $question,
+                            'session_question' => $sessionQuestion,
+                            'is_correct' => $isCorrect,
+                            'is_attempted' => $isAttempted,
+                            'mark_value' => $questionMark
+                        ]);
+                    }
+                } else {
+                    // Fallback to original approach for backward compatibility
+                    foreach ($responses as $response) {
+                        $question = $response->question;
+                        if (!$question) continue;
+                        
+                        // Find the correct option
+                        $correctOption = $question->options->where('is_correct', true)->first();
+                        
+                        // Question mark value (default to 1 if not specified)
+                        $questionMark = $question->mark ?? 1;
+                        
+                        // Check if the answer is correct
+                        $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
+                        $isAttempted = !is_null($response->selected_option);
+                        
+                        // Add to processed responses collection with relevant metrics
+                        $processedResponses->push([
+                            'response' => $response,
+                            'question' => $question,
+                            'session_question' => null,
+                            'is_correct' => $isCorrect,
+                            'is_attempted' => $isAttempted,
+                            'mark_value' => $questionMark
+                        ]);
+                    }
                 }
                 
                 // Log the original counts for debugging
                 $originalAttempted = $processedResponses->where('is_attempted', true)->count();
                 
-                // Only take the configured number of questions per session
-                // This ensures we don't count extra questions from shuffling
-                $limitedResponses = $processedResponses->take($questionsPerSession);
+                // For session-based questions, we already have the correct number
+                // For legacy questions, limit to questionsPerSession
+                $limitedResponses = $hasSessionQuestions ? $processedResponses : $processedResponses->take($questionsPerSession);
                 
                 // Now calculate the metrics from the limited responses
                 $totalQuestions = $limitedResponses->count(); // This should match questionsPerSession

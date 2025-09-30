@@ -355,56 +355,55 @@ class OnlineExamination extends Component
     public function loadQuestions()
     {
         try {
-            // Get the number of questions per session from the exam configuration or use 140 as fallback
-            $questionsPerSession = $this->exam->questions_per_session ?? 140;
-    
-            // Retrieve existing responses for this exam session
-            $existingResponses = Response::where('exam_session_id', $this->examSession->id)->get();
-            $answeredQuestionIds = $existingResponses->pluck('question_id')->toArray();
-    
-            // Get previously answered questions
-            $answeredQuestions = collect([]);
-            if (!empty($answeredQuestionIds)) {
-                $answeredQuestions = $this->exam->questions()
-                    ->whereIn('id', $answeredQuestionIds)
-                    ->get();
-    
-                Log::info('Prioritizing previously answered questions', [
+            // Check if this session already has defined questions from question sets
+            $existingSessionQuestions = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
+                ->orderBy('display_order')
+                ->with('question.options')
+                ->get();
+
+            if ($existingSessionQuestions->isNotEmpty()) {
+                // Use the existing session questions for consistency
+                Log::info('Loading existing session questions', [
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
-                    'answered_count' => $answeredQuestions->count(),
+                    'existing_count' => $existingSessionQuestions->count(),
                 ]);
-            }
-    
-            // Calculate how many additional random questions are needed
-            $additionalQuestionsNeeded = max(0, $questionsPerSession - $answeredQuestions->count());
-    
-            // Get additional random questions, excluding already answered ones
-            $randomQuestions = collect([]);
-            if ($additionalQuestionsNeeded > 0) {
-                $randomQuestions = $this->exam->questions()
-                    ->whereNotIn('id', $answeredQuestionIds)
-                    ->inRandomOrder()
-                    ->take($additionalQuestionsNeeded)
-                    ->get();
-    
-                Log::info('Loaded random questions', [
+                
+                $examQuestions = $existingSessionQuestions->pluck('question');
+            } else {
+                // Generate new session questions using question sets
+                Log::info('Generating new session questions from question sets', [
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
-                    'random_count' => $randomQuestions->count(),
+                    'exam_has_question_sets' => $this->exam->questionSets()->exists(),
+                    'exam_has_direct_questions' => $this->exam->questions()->exists()
+                ]);
+                
+                // Use the exam model's generateSessionQuestions method which handles question sets properly
+                $examQuestions = $this->exam->generateSessionQuestions(true); // true for shuffling
+                
+                // Limit to questions_per_session if configured
+                $questionsPerSession = $this->exam->questions_per_session ?? $examQuestions->count();
+                if ($examQuestions->count() > $questionsPerSession) {
+                    $examQuestions = $examQuestions->take($questionsPerSession);
+                }
+                
+                // Store these questions in exam_session_questions for consistency across page loads
+                $displayOrder = 1;
+                foreach ($examQuestions as $question) {
+                    \App\Models\ExamSessionQuestion::create([
+                        'exam_session_id' => $this->examSession->id,
+                        'question_id' => $question->id,
+                        'display_order' => $displayOrder++
+                    ]);
+                }
+                
+                Log::info('Session questions generated and stored', [
+                    'session_id' => $this->examSession->id,
+                    'total_questions' => $examQuestions->count(),
+                    'questions_per_session' => $questionsPerSession
                 ]);
             }
-    
-            // Combine answered and random questions, ensuring both are collections
-            $examQuestions = $answeredQuestions->concat($randomQuestions)->shuffle();
-    
-            // Log question selection details for debugging
-            Log::info('Exam questions loaded', [
-                'session_id' => $this->examSession->id,
-                'total_questions' => $examQuestions->count(),
-                'previously_answered' => $answeredQuestions->count(),
-                'random_questions' => $randomQuestions->count(),
-            ]);
     
             // Map the questions to the format expected by the view
             $this->questions = $examQuestions->map(function ($question) {
@@ -419,15 +418,44 @@ class OnlineExamination extends Component
                 ];
             })->values()->toArray();
     
+            Log::info('Questions loaded successfully', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'final_question_count' => count($this->questions),
+                'has_question_sets' => $this->exam->questionSets()->exists(),
+                'question_set_count' => $this->exam->questionSets()->count()
+            ]);
+    
         } catch (\Exception $e) {
             Log::error('Error loading exam questions', [
                 'error' => $e->getMessage(),
                 'student_id' => $this->student->student_id ?? null,
                 'exam_id' => $this->exam->id ?? null,
+                'trace' => $e->getTraceAsString()
             ]);
     
-            // Ensure questions is an empty array on error
-            $this->questions = [];
+            // Fallback: if there's an error with question sets, try loading direct questions
+            try {
+                $fallbackQuestions = $this->exam->questions()->with('options')->get();
+                $this->questions = $fallbackQuestions->map(function ($question) {
+                    return [
+                        'id' => $question->id,
+                        'question' => $question->question_text,
+                        'options' => $question->options->toArray(),
+                        'marks' => $question->mark,
+                    ];
+                })->toArray();
+                
+                Log::info('Using fallback direct questions', [
+                    'session_id' => $this->examSession->id,
+                    'fallback_count' => count($this->questions)
+                ]);
+            } catch (\Exception $fallbackError) {
+                Log::error('Fallback question loading also failed', [
+                    'error' => $fallbackError->getMessage()
+                ]);
+                $this->questions = [];
+            }
         }
     }
     public function storeResponse($questionId, $answer)
