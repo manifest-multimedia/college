@@ -89,32 +89,99 @@
                                         <table class="table table-striped table-hover align-middle gs-0 gy-3">
                                             <thead class="table-dark">
                                                 <tr class="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
-                                                    <th class="min-w-150px">Setting Key</th>
-                                                    <th class="min-w-150px">Value</th>
-                                                    <th class="min-w-200px">Description</th>
-                                                    <th class="min-w-100px text-end">Actions</th>
+                                                    <th class="min-w-150px px-4 py-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-key fs-3 me-2 text-gray-400">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                            </i>
+                                                            Setting Key
+                                                        </div>
+                                                    </th>
+                                                    <th class="min-w-150px px-4 py-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-code fs-3 me-2 text-gray-400">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                                <span class="path4"></span>
+                                                            </i>
+                                                            Value
+                                                        </div>
+                                                    </th>
+                                                    <th class="min-w-200px px-4 py-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-information fs-3 me-2 text-gray-400">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                            </i>
+                                                            Description
+                                                        </div>
+                                                    </th>
+                                                    <th class="min-w-100px text-end px-4 py-3">
+                                                        <div class="d-flex align-items-center justify-content-end">
+                                                            <i class="ki-duotone ki-setting-3 fs-3 me-2 text-gray-400">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                                <span class="path4"></span>
+                                                                <span class="path5"></span>
+                                                            </i>
+                                                            Actions
+                                                        </div>
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody class="text-gray-600 fw-semibold">
                                                 @forelse($settings as $setting)
-                                                    <tr>
-                                                        <td class="text-dark fw-bold">{{ $setting->key }}</td>
-                                                        <td><code class="bg-light p-1 rounded">{{ $setting->value }}</code></td>
-                                                        <td class="text-gray-600">{{ $setting->description ?? 'No description' }}</td>
-                                                        <td class="text-end">
+                                                    <tr class="border-bottom border-gray-200">
+                                                        <td class="px-4 py-4">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="symbol symbol-35px me-3">
+                                                                    <div class="symbol-label bg-light-info">
+                                                                        <i class="ki-duotone ki-key fs-3 text-info">
+                                                                            <span class="path1"></span>
+                                                                            <span class="path2"></span>
+                                                                        </i>
+                                                                    </div>
+                                                                </div>
+                                                                <span class="text-dark fw-bold fs-6">{{ $setting->key }}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-4 py-4">
+                                                            <code class="bg-light-primary text-primary p-2 rounded fs-7 fw-bold">{{ $setting->value }}</code>
+                                                        </td>
+                                                        <td class="px-4 py-4">
+                                                            <span class="text-gray-700 fs-6">{{ $setting->description ?? 'No description' }}</span>
+                                                        </td>
+                                                        <td class="text-end px-4 py-4">
                                                             @if($setting->key !== 'asset_tag_prefix')
                                                                 <form method="POST" action="{{ route('admin.asset-settings.destroy', $setting) }}" class="d-inline">
                                                                     @csrf
                                                                     @method('DELETE')
                                                                     <button type="submit" class="btn btn-sm btn-light-danger" title="Delete Setting" onclick="return confirm('Are you sure you want to delete this setting?')">
-                                                                        <i class="fas fa-trash"></i>
+                                                                        <i class="ki-duotone ki-trash fs-4">
+                                                                            <span class="path1"></span>
+                                                                            <span class="path2"></span>
+                                                                            <span class="path3"></span>
+                                                                            <span class="path4"></span>
+                                                                            <span class="path5"></span>
+                                                                        </i>
                                                                     </button>
-                                            </form>
-                                        @else
-                                            <span class="text-gray-400 text-xs">System setting</span>
-                                        @endif
-                                    </td>
-                                </tr>
+                                                                </form>
+                                                            @else
+                                                                <div class="d-flex align-items-center justify-content-end">
+                                                                    <i class="ki-duotone ki-shield-tick fs-4 me-2 text-success">
+                                                                        <span class="path1"></span>
+                                                                        <span class="path2"></span>
+                                                                        <span class="path3"></span>
+                                                                    </i>
+                                                                    <span class="badge badge-light-success fs-8 fw-bold">System setting</span>
+                                                                </div>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
                                                 @empty
                                                     <tr>
                                                         <td colspan="4" class="text-center py-5">

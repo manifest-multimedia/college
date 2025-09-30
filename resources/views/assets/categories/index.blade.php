@@ -41,62 +41,178 @@
                         <table class="table table-striped table-hover align-middle gs-0 gy-3">
                             <thead class="table-dark">
                                 <tr class="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
-                                    <th class="min-w-150px">Name</th>
-                                    <th class="min-w-200px">Description</th>
-                                    <th class="min-w-150px">Parent Category</th>
-                                    <th class="min-w-100px text-center">Assets Count</th>
-                                    <th class="min-w-125px">Created</th>
-                                    <th class="min-w-100px text-end">Actions</th>
+                                    <th class="min-w-150px px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-tag fs-3 me-2 text-gray-400">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                                <span class="path3"></span>
+                                            </i>
+                                            Name
+                                        </div>
+                                    </th>
+                                    <th class="min-w-200px px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-information fs-3 me-2 text-gray-400">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                                <span class="path3"></span>
+                                            </i>
+                                            Description
+                                        </div>
+                                    </th>
+                                    <th class="min-w-150px px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-abstract-26 fs-3 me-2 text-gray-400">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Parent Category
+                                        </div>
+                                    </th>
+                                    <th class="min-w-100px text-center px-4 py-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="ki-duotone ki-chart fs-3 me-2 text-gray-400">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Assets Count
+                                        </div>
+                                    </th>
+                                    <th class="min-w-125px px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="ki-duotone ki-calendar fs-3 me-2 text-gray-400">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Created
+                                        </div>
+                                    </th>
+                                    <th class="min-w-100px text-end px-4 py-3">
+                                        <div class="d-flex align-items-center justify-content-end">
+                                            <i class="ki-duotone ki-setting-3 fs-3 me-2 text-gray-400">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                                <span class="path3"></span>
+                                                <span class="path4"></span>
+                                                <span class="path5"></span>
+                                            </i>
+                                            Actions
+                                        </div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="text-gray-600 fw-semibold">
                                 @forelse($categories as $category)
-                                    <tr>
-                                        <td class="text-dark fw-bold">
-                                            <a href="{{ route('admin.asset-categories.show', $category) }}" class="text-primary text-hover-primary text-decoration-none fw-bold">
-                                                {{ $category->name }}
-                                            </a>
-                                            @if($category->hasChildren())
-                                                <br><span class="badge badge-light-info badge-sm mt-1">
-                                                    {{ $category->children->count() }} subcategories
-                                                </span>
-                                            @endif
+                                    <tr class="border-bottom border-gray-200">
+                                        <td class="px-4 py-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="symbol symbol-35px me-3">
+                                                    <div class="symbol-label bg-light-primary">
+                                                        <i class="ki-duotone ki-tag fs-3 text-primary">
+                                                            <span class="path1"></span>
+                                                            <span class="path2"></span>
+                                                            <span class="path3"></span>
+                                                        </i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ route('admin.asset-categories.show', $category) }}" class="text-dark fw-bold text-hover-primary d-block fs-6 text-decoration-none">
+                                                        {{ $category->name }}
+                                                    </a>
+                                                    @if($category->hasChildren())
+                                                        <div class="mt-1">
+                                                            <span class="badge badge-light-info badge-sm">
+                                                                <i class="ki-duotone ki-abstract-26 fs-7 me-1">
+                                                                    <span class="path1"></span>
+                                                                    <span class="path2"></span>
+                                                                </i>
+                                                                {{ $category->children->count() }} subcategories
+                                                            </span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td>
-                                            <span class="text-gray-600">{{ Str::limit($category->description, 50) ?: 'No description' }}</span>
+                                        <td class="px-4 py-4">
+                                            <span class="text-gray-700 fs-6">{{ Str::limit($category->description, 50) ?: 'No description' }}</span>
                                         </td>
-                                        <td>
+                                        <td class="px-4 py-4">
                                             @if($category->parent)
-                                                <span class="badge badge-light-secondary">{{ $category->parent->name }}</span>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-abstract-26 fs-4 me-2 text-secondary">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    <span class="badge badge-light-secondary fs-7 fw-bold">{{ $category->parent->name }}</span>
+                                                </div>
                                             @else
-                                                <span class="text-muted">Root Category</span>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-home-2 fs-4 me-2 text-success">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    <span class="badge badge-light-success fs-7 fw-bold">Root Category</span>
+                                                </div>
                                             @endif
                                         </td>
-                                        <td class="text-center">
-                                            <span class="badge badge-light-primary fs-7 fw-bold">{{ $category->assets->count() }}</span>
+                                        <td class="text-center px-4 py-4">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <i class="ki-duotone ki-chart fs-4 me-2 text-primary">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                <span class="badge badge-light-primary fs-6 fw-bold px-3 py-2">{{ $category->assets->count() }}</span>
+                                            </div>
                                         </td>
-                                        <td>
-                                            <span class="text-muted">{{ $category->created_at->format('M j, Y') }}</span>
+                                        <td class="px-4 py-4">
+                                            <div class="d-flex align-items-center">
+                                                <i class="ki-duotone ki-calendar fs-4 me-2 text-muted">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                <span class="text-gray-600 fs-6">{{ $category->created_at->format('M j, Y') }}</span>
+                                            </div>
                                         </td>
-                                        <td class="text-end">
+                                        <td class="text-end px-4 py-4">
                                             <div class="btn-group" role="group">
                                                 <a href="{{ route('admin.asset-categories.show', $category) }}" class="btn btn-sm btn-light-primary" title="View Details">
-                                                    <i class="fas fa-eye"></i>
+                                                    <i class="ki-duotone ki-eye fs-4">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                    </i>
                                                 </a>
                                                 @hasanyrole(['System', 'Super Admin'])
                                                 <a href="{{ route('admin.asset-categories.edit', $category) }}" class="btn btn-sm btn-light-warning" title="Edit Category">
-                                                    <i class="fas fa-edit"></i>
+                                                    <i class="ki-duotone ki-notepad-edit fs-4">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
                                                 </a>
                                                 @if(!$category->hasChildren() && $category->assets->count() === 0)
                                                     <form method="POST" action="{{ route('admin.asset-categories.destroy', $category) }}" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-sm btn-light-danger" title="Delete Category" onclick="return confirm('Are you sure you want to delete this category?')">
-                                                            <i class="fas fa-trash"></i>
+                                                            <i class="ki-duotone ki-trash fs-4">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                                <span class="path4"></span>
+                                                                <span class="path5"></span>
+                                                            </i>
                                                         </button>
                                                     </form>
                                                 @else
-                                                    <span class="text-gray-400 text-xs">Cannot delete</span>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="ki-duotone ki-shield-cross fs-4 me-1 text-danger">
+                                                            <span class="path1"></span>
+                                                            <span class="path2"></span>
+                                                            <span class="path3"></span>
+                                                        </i>
+                                                        <span class="badge badge-light-danger fs-8 fw-bold">Protected</span>
+                                                    </div>
                                                 @endif
                                                 @endhasanyrole
                                             </div>

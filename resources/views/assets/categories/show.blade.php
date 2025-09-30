@@ -409,23 +409,34 @@
                                     </thead>
                                     <!--end::Table head-->
                                     <!--begin::Table body-->
-                                    <tbody>
+                                    <tbody class="text-gray-600 fw-semibold">
                                         @foreach($assetCategory->assets->take(20) as $asset)
-                                        <tr>
-                                            <td>
-                                                <a href="{{ route('admin.assets.show', $asset) }}" class="text-dark fw-bold text-hover-primary d-block fs-6">{{ $asset->asset_tag }}</a>
+                                        <tr class="border-bottom border-gray-200">
+                                            <td class="px-4 py-4">
+                                                <a href="{{ route('admin.assets.show', $asset) }}" class="text-dark fw-bold text-hover-primary d-flex align-items-center fs-6">
+                                                    <div class="symbol symbol-35px me-3">
+                                                        <div class="symbol-label bg-light-primary">
+                                                            <i class="ki-duotone ki-tag fs-3 text-primary">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                                <span class="path3"></span>
+                                                            </i>
+                                                        </div>
+                                                    </div>
+                                                    {{ $asset->asset_tag }}
+                                                </a>
                                             </td>
-                                            <td>
+                                            <td class="px-4 py-4">
                                                 <div class="d-flex align-items-center">
                                                     <div class="d-flex justify-content-start flex-column">
                                                         <span class="text-dark fw-bold d-block fs-6">{{ $asset->name }}</span>
                                                         @if($asset->serial_number)
-                                                            <span class="text-muted fw-semibold text-muted d-block fs-7">SN: {{ $asset->serial_number }}</span>
+                                                            <span class="text-muted fw-semibold d-block fs-7">SN: {{ $asset->serial_number }}</span>
                                                         @endif
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td class="px-4 py-4">
                                                 @php
                                                     $stateColors = [
                                                         'new' => 'success',
@@ -436,11 +447,32 @@
                                                         'lost' => 'danger'
                                                     ];
                                                     $color = $stateColors[$asset->state] ?? 'secondary';
+                                                    $stateIcons = [
+                                                        'new' => 'ki-check-circle',
+                                                        'in_use' => 'ki-play-circle',
+                                                        'damaged' => 'ki-cross-circle',
+                                                        'repaired' => 'ki-wrench',
+                                                        'disposed' => 'ki-trash',
+                                                        'lost' => 'ki-search'
+                                                    ];
+                                                    $icon = $stateIcons[$asset->state] ?? 'ki-question-circle';
                                                 @endphp
-                                                <span class="badge badge-light-{{ $color }}">{{ ucfirst(str_replace('_', ' ', $asset->state)) }}</span>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone {{ $icon }} fs-3 me-2 text-{{ $color }}">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    <span class="badge badge-light-{{ $color }} fs-7 fw-bold">{{ ucfirst(str_replace('_', ' ', $asset->state)) }}</span>
+                                                </div>
                                             </td>
-                                            <td>
-                                                <span class="text-dark fw-bold d-block fs-6">{{ $asset->location ?? 'N/A' }}</span>
+                                            <td class="px-4 py-4">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-geolocation fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    <span class="text-dark fw-semibold fs-6">{{ $asset->location ?? 'N/A' }}</span>
+                                                </div>
                                             </td>
                                             <td>
                                                 <div class="d-flex justify-content-end flex-shrink-0">
