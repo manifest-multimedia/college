@@ -60,12 +60,23 @@
 
             <div class="mb-4">
                 <label for="password" class="form-label fs-13 fw-medium text-light-dark">Password</label>
-                <input type="password" 
-                       class="form-control @error('password') is-invalid @enderror" 
-                       id="password" 
-                       name="password" 
-                       required 
-                       autocomplete="current-password">
+                <div style="position: relative;">
+                    <input type="password" 
+                           class="form-control @error('password') is-invalid @enderror" 
+                           id="password" 
+                           name="password" 
+                           required 
+                           autocomplete="current-password"
+                           style="padding-right: 3rem;">
+                    <button type="button" 
+                            class="password-toggle" 
+                            onclick="togglePassword()"
+                            style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; transition: color 0.3s ease;"
+                            onmouseover="this.style.color='var(--brand-primary, #007bff)'" 
+                            onmouseout="this.style.color='#9ca3af'">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
                 @error('password')
                     <div class="invalid-feedback">
                         {{ $message }}

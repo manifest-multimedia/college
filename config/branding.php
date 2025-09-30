@@ -88,11 +88,6 @@ return [
             'description' => 'Clean and simple authentication design',
             'preview' => '/images/themes/default-preview.png',
         ],
-        'mhtia' => [
-            'name' => 'MHTIA Theme',
-            'description' => 'Professional institutional design with enhanced branding',
-            'preview' => '/images/themes/mhtia-preview.png',
-        ],
         'mhtia-gradient' => [
             'name' => 'MHTIA Original',
             'description' => 'Authentic MHTIA design with gradient background and card layout',

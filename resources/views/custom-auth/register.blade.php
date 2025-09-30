@@ -5,8 +5,20 @@
     $title = $isStudent ? 'Student Registration' : 'Staff Registration';
     $description = $isStudent ? 'Create your student account' : 'Create your staff account';
     $actionUrl = $isStudent ? route('students.register') : route('staff.register');
+    
+    $theme = config('branding.auth_theme', 'default');
+    $themeView = "custom-auth.themes.{$theme}.register";
+    
+    // Check if theme-specific register view exists, fallback to default component
+    if (!view()->exists($themeView)) {
+        // Fallback to component-based registration
+        $useComponent = true;
+    } else {
+        $useComponent = false;
+    }
 @endphp
 
+@if($useComponent)
 <x-backend.auth :title="$title" :description="$description">
     @if (session('status'))
         <div class="alert alert-success mb-4" role="alert">
@@ -139,3 +151,6 @@
         </div>
     </form>
 </x-backend.auth>
+@else
+    @include($themeView, compact('userType', 'isStudent', 'title', 'description', 'actionUrl'))
+@endif

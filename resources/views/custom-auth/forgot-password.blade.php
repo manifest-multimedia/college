@@ -1,3 +1,16 @@
+@php
+    $theme = config('branding.auth_theme', 'default');
+    $themeView = "custom-auth.themes.{$theme}.forgot-password";
+    
+    // Check if theme-specific view exists, fallback to component
+    if (!view()->exists($themeView)) {
+        $useComponent = true;
+    } else {
+        $useComponent = false;
+    }
+@endphp
+
+@if($useComponent)
 <x-backend.auth title="Reset Password" description="Enter your email to receive a password reset link">
     @if (session('status'))
         <div class="alert alert-success mb-4" role="alert">
@@ -49,3 +62,6 @@
         </p>
     </form>
 </x-backend.auth>
+@else
+    @include($themeView)
+@endif

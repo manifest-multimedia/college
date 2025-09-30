@@ -299,6 +299,38 @@
         autoSlideInterval = setInterval(autoSlide, slideTime);
     </script>
 
+    <script>
+        function togglePassword() {
+            const passwordField = document.querySelector('input[name="password"]');
+            const toggleIcon = document.querySelector('.password-toggle i');
+            
+            if (passwordField && toggleIcon) {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    toggleIcon.className = 'fas fa-eye-slash';
+                } else {
+                    passwordField.type = 'password';
+                    toggleIcon.className = 'fas fa-eye';
+                }
+            }
+        }
+
+        function togglePasswordField(inputName) {
+            const passwordField = document.querySelector(`input[name="${inputName}"]`);
+            const toggleIcon = document.querySelector(`.password-toggle[data-target="${inputName}"] i`);
+            
+            if (passwordField && toggleIcon) {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    toggleIcon.className = 'fas fa-eye-slash';
+                } else {
+                    passwordField.type = 'password';
+                    toggleIcon.className = 'fas fa-eye';
+                }
+            }
+        }
+    </script>
+
     <script src="js/main.js"></script>
 </body>
 
