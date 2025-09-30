@@ -11,7 +11,6 @@ use App\Models\QuestionSet;
 use App\Models\Question;
 use App\Models\Option;
 use App\Imports\QuestionSetImport;
-use App\Imports\RawDataImport;
 
 class QuestionSetImportController extends Controller
 {
@@ -47,9 +46,17 @@ class QuestionSetImportController extends Controller
             $path = $file->store('temp-imports');
             $fullPath = Storage::path($path);
 
-            // Read first few rows to detect columns (using raw import to get actual headers)
-            $data = Excel::toArray(new RawDataImport(), $fullPath);
-            $rows = $data[0] ?? [];
+            // Read Excel file directly without any transformations
+            $data = Excel::toArray([], $fullPath)[0] ?? [];
+            $rows = $data;
+            
+            // Debug: Log the first few rows to see what we're getting
+            Log::info('Excel data detection', [
+                'total_rows' => count($rows),
+                'first_row' => $rows[0] ?? [],
+                'second_row' => $rows[1] ?? [],
+                'third_row' => $rows[2] ?? []
+            ]);
             
             $columns = [];
             $sampleData = [];
@@ -195,9 +202,18 @@ class QuestionSetImportController extends Controller
         $errors = [];
 
         try {
-            // Use RawDataImport to get raw data that matches our column mapping indices
-            $data = Excel::toArray(new RawDataImport(), $fullPath);
-            $rows = $data[0] ?? [];
+            // Read Excel file directly without any transformations
+            $data = Excel::toArray([], $fullPath)[0] ?? [];
+            $rows = $data;
+            
+            // Debug: Log sample of data being processed
+            Log::info('Excel preview processing', [
+                'total_rows' => count($rows),
+                'header_row' => $rows[0] ?? [],
+                'column_mapping' => $columnMapping,
+                'sample_data_row' => $rows[1] ?? []
+            ]);
+            
             $lineNumber = 2;
 
             foreach ($rows as $index => $row) {
@@ -296,24 +312,36 @@ class QuestionSetImportController extends Controller
 
         $errors = [];
 
+        // Build options array maintaining correct index positions
+        $options = [];
+        $rawOptions = [
+            0 => ['text' => trim($optionOne), 'label' => 'A'],
+            1 => ['text' => trim($optionTwo), 'label' => 'B'], 
+            2 => ['text' => trim($optionThree), 'label' => 'C'],
+            3 => ['text' => trim($optionFour), 'label' => 'D']
+        ];
+        
+        // Only include non-empty options but keep their original indices
+        foreach ($rawOptions as $index => $option) {
+            if (!empty($option['text'])) {
+                $options[$index] = $option;
+            }
+        }
+
         // Validate required fields only for non-empty rows
         if (empty(trim($questionText))) {
-            $errors[] = "Line {$lineNumber}: Question text is required";
+            $questionPreview = $this->formatQuestionPreview('(Missing Question Text)', $options, $correctOption);
+            $errors[] = "Line {$lineNumber}: Question text is required\n{$questionPreview}";
         }
 
         if (empty(trim($correctOption))) {
-            $errors[] = "Line {$lineNumber}: Correct option is required";
+            $questionPreview = $this->formatQuestionPreview($questionText, $options, '(Missing)');
+            $errors[] = "Line {$lineNumber}: Correct option is required\n{$questionPreview}";
         }
 
-        // Build options array
-        $options = [];
-        if (!empty(trim($optionOne))) $options[] = ['text' => trim($optionOne), 'label' => 'A'];
-        if (!empty(trim($optionTwo))) $options[] = ['text' => trim($optionTwo), 'label' => 'B'];
-        if (!empty(trim($optionThree))) $options[] = ['text' => trim($optionThree), 'label' => 'C'];
-        if (!empty(trim($optionFour))) $options[] = ['text' => trim($optionFour), 'label' => 'D'];
-
         if (count($options) < 2) {
-            $errors[] = "Line {$lineNumber}: At least 2 options are required";
+            $questionPreview = $this->formatQuestionPreview($questionText, $options, $correctOption);
+            $errors[] = "Line {$lineNumber}: At least 2 options are required\n{$questionPreview}";
         }
 
         $correctIndex = $this->determineCorrectOption($correctOption, $options);
@@ -328,7 +356,9 @@ class QuestionSetImportController extends Controller
                 'option_texts' => $optionTexts,
                 'line' => $lineNumber
             ]);
-            $errors[] = "Line {$lineNumber}: Invalid correct option: {$correctOption}";
+            
+            $questionPreview = $this->formatQuestionPreview($questionText, $options, $correctOption);
+            $errors[] = "Line {$lineNumber}: Invalid correct option: {$correctOption}\n{$questionPreview}";
         }
 
         if (!empty($errors)) {
@@ -494,17 +524,8 @@ class QuestionSetImportController extends Controller
     {
         $correctOption = strtolower(trim($correctOption));
 
-        // Check for option labels (A, B, C, D) - but only if that option exists
-        if (in_array($correctOption, ['a', 'b', 'c', 'd'])) {
-            $labelMap = ['a' => 0, 'b' => 1, 'c' => 2, 'd' => 3];
-            $index = $labelMap[$correctOption] ?? null;
-            // Only return the index if the option actually exists
-            if ($index !== null && isset($options[$index])) {
-                return $index;
-            }
-        }
-
-        // Check for option names (option_one, option_two, etc.) - but only if that option exists
+        // Primary validation: Check for option column names (option_one, option_two, etc.)
+        // This is the main format used in Excel imports
         $nameMap = [
             'option_one' => 0,
             'option one' => 0,
@@ -516,13 +537,26 @@ class QuestionSetImportController extends Controller
             'option four' => 3,
         ];
 
-        $index = $nameMap[$correctOption] ?? null;
-        // Only return the index if the option actually exists
-        if ($index !== null && isset($options[$index])) {
-            return $index;
+        // If correct_option specifies a column name, check if that option exists and has content
+        if (isset($nameMap[$correctOption])) {
+            $index = $nameMap[$correctOption];
+            // Return the index if the option exists and has non-empty content
+            if (isset($options[$index]) && !empty(trim($options[$index]['text']))) {
+                return $index;
+            }
         }
 
-        // Check if the correct option matches any of the option texts exactly
+        // Fallback: Check for option labels (A, B, C, D) - but only if that option exists
+        if (in_array($correctOption, ['a', 'b', 'c', 'd'])) {
+            $labelMap = ['a' => 0, 'b' => 1, 'c' => 2, 'd' => 3];
+            $index = $labelMap[$correctOption];
+            // Only return the index if the option actually exists and has content
+            if (isset($options[$index]) && !empty(trim($options[$index]['text']))) {
+                return $index;
+            }
+        }
+
+        // Final fallback: Check if the correct option matches any of the option texts exactly
         foreach ($options as $index => $option) {
             if (strtolower(trim($option['text'])) === $correctOption) {
                 return $index;
@@ -530,5 +564,39 @@ class QuestionSetImportController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Format question preview for error messages
+     */
+    private function formatQuestionPreview($questionText, $options, $correctOption)
+    {
+        $preview = "Question: " . (strlen($questionText) > 80 ? substr($questionText, 0, 80) . '...' : $questionText) . "\n";
+        
+        if (!empty($options)) {
+            $preview .= "Available Options:\n";
+            $optionNames = ['option_one', 'option_two', 'option_three', 'option_four'];
+            // Sort by index to show in proper order
+            ksort($options);
+            foreach ($options as $index => $option) {
+                $columnName = isset($optionNames[$index]) ? $optionNames[$index] : "option_" . ($index + 1);
+                $preview .= "  {$option['label']}. ({$columnName}) {$option['text']}\n";
+            }
+        } else {
+            $preview .= "Available Options: None provided\n";
+        }
+        
+        $preview .= "Correct Option Column Specified: {$correctOption}";
+        
+        // Show which option the correct_option points to
+        $nameMap = [
+            'option_one' => 0, 'option_two' => 1, 'option_three' => 2, 'option_four' => 3,
+        ];
+        if (isset($nameMap[strtolower($correctOption)]) && isset($options[$nameMap[strtolower($correctOption)]])) {
+            $correctIndex = $nameMap[strtolower($correctOption)];
+            $preview .= " → Points to: {$options[$correctIndex]['text']}";
+        }
+        
+        return $preview;
     }
 }
