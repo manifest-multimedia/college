@@ -35,22 +35,22 @@
             background: linear-gradient(135deg, #0ea5e9 0%, #1e40af 25%, #3730a3 50%, #f59e0b 100%);
             background-attachment: fixed;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
             padding: 2rem;
             position: relative;
             overflow-x: hidden;
-            overflow-y: auto;
+            overflow-y: hidden;
         }
 
         /* Decorative background shapes */
         body::before {
             content: '';
-            position: absolute;
-            top: -20%;
-            left: -20%;
-            width: 60%;
-            height: 120%;
+            position: fixed;
+            top: -20vh;
+            left: -20vw;
+            width: 60vw;
+            height: 120vh;
             background: linear-gradient(45deg, #f59e0b 0%, #eab308 100%);
             border-radius: 0 100% 0 0;
             z-index: 1;
@@ -58,11 +58,11 @@
 
         body::after {
             content: '';
-            position: absolute;
-            bottom: -10%;
-            right: -10%;
-            width: 40%;
-            height: 80%;
+            position: fixed;
+            bottom: -10vh;
+            right: -10vw;
+            width: 40vw;
+            height: 80vh;
             background: linear-gradient(225deg, #1e293b 0%, #0f172a 100%);
             border-radius: 100% 0 0 0;
             z-index: 1;
@@ -75,10 +75,8 @@
             max-width: 1200px;
             min-height: 600px;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
         }
 
         /* Left side - Institution branding */
@@ -90,6 +88,7 @@
             align-items: flex-start;
             padding: 2rem;
             color: white;
+            min-height: 600px;
         }
 
         .institution-logo {
@@ -356,15 +355,31 @@
         }
 
         /* Responsive Design */
+        @media (max-width: 1400px) {
+            body {
+                align-items: flex-start;
+                overflow-y: auto;
+                padding: 1rem;
+            }
+            
+            .login-container {
+                align-items: flex-start;
+                margin-top: 2rem;
+                margin-bottom: 2rem;
+            }
+        }
+        
         @media (max-width: 1024px) {
             body {
                 align-items: flex-start;
+                overflow-y: auto;
                 padding: 1rem;
             }
             
             .login-container {
                 flex-direction: column;
                 gap: 2rem;
+                align-items: center;
                 margin-top: 1rem;
                 margin-bottom: 1rem;
             }
@@ -380,6 +395,7 @@
                 text-align: center;
                 padding: 2rem 1rem;
                 align-items: center;
+                min-height: auto;
             }
             
             .institution-name {
@@ -390,6 +406,7 @@
         @media (max-width: 768px) {
             body {
                 padding: 0.5rem;
+                overflow-y: auto;
             }
             
             .login-side {
@@ -408,6 +425,7 @@
         @media (max-width: 480px) {
             body {
                 padding: 0.25rem;
+                overflow-y: auto;
             }
             
             .login-container {
