@@ -153,17 +153,14 @@
                                                 <i class="bi bi-pencil-square me-1"></i> Manage Questions
                                             </button>
                                             
-                                            <div class="btn-group w-100" role="group">
-                                                <button class="btn btn-outline-secondary btn-sm" 
-                                                    wire:click="duplicateQuestionSet({{ $set->id }})">
-                                                    <i class="bi bi-copy"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger btn-sm" 
-                                                    wire:click="deleteQuestionSet({{ $set->id }})" 
-                                                    wire:confirm="Are you sure you want to delete this question set?">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
+                                                                        <div class="btn-group w-100" role="group">
+                                <a href="{{ route('question.sets.import', $set->id) }}" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-upload me-1"></i>Import
+                                </a>
+                                <a href="{{ route('question.sets.questions.create', $set->id) }}" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-plus me-1"></i>Add Question
+                                </a>
+                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -198,7 +195,7 @@
                     @endif
                 </div>
                 <div>
-                    <span class=\"badge bg-secondary\">{{ count($questions) }} Questions</span>\n                </div>
+                    <span class="badge bg-secondary">{{ count($questions) }} Questions</span>
             </div>
             <div class="card-body">
                 @if($currentQuestionSet)
@@ -238,7 +235,21 @@
                         
                         <!-- Bulk Operations -->
                         <div class="col-md-6">
-                                                        <div class=\"btn-group w-100\" role=\"group\">\n                                <button class=\"btn {{ $bulkMode ? 'btn-warning' : 'btn-outline-secondary' }}\" \n                                    wire:click=\"toggleBulkMode\">\n                                    <i class=\"bi bi-check2-square\"></i> Bulk\n                                </button>\n                                <button class=\"btn btn-outline-info\" wire:click=\"$toggle('showStatistics')\">\n                                    <i class=\"bi bi-bar-chart\"></i> Stats\n                                </button>\n                                <button class=\"btn btn-outline-warning\" wire:click=\"$toggle('showQuestionImport')\">\n                                    <i class=\"bi bi-upload\"></i> Import\n                                </button>\n                                <button class=\"btn btn-outline-success\" wire:click=\"addQuestion\">\n                                    <i class=\"bi bi-plus-circle\"></i> Add\n                                </button>\n                            </div>
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn {{ $bulkMode ? 'btn-warning' : 'btn-outline-secondary' }}" 
+                                    wire:click="toggleBulkMode">
+                                    <i class="bi bi-check2-square"></i> Bulk
+                                </button>
+                                <button class="btn btn-outline-info" wire:click="$toggle('showStatistics')">
+                                    <i class="bi bi-bar-chart"></i> Stats
+                                </button>
+                                <a href="{{ route('question.sets.import', $question_set_id) }}" class="btn btn-outline-warning">
+                                    <i class="bi bi-upload"></i> Import
+                                </a>
+                                <a href="{{ route('question.sets.questions.create', $question_set_id) }}" class="btn btn-outline-success">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </a>
+                            </div>
                         </div>
                     </div>
                     
@@ -394,16 +405,7 @@
                 @endif
                 
                           
-                @if($showQuestionImport && $question_set_id)
-                    <label class="form-label fw-bold">Default Question Type:</label>
-                    <select class="form-select" wire:model="selectedQuestionType">
-                        @foreach($questionTypes as $type => $label)
-                            <option value="{{ $type }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    <small class="text-muted">This will be applied to new questions you add.</small>
-                </div>
-                @endif 
+ 
                 @forelse($questions as $index => $question)
                     <div class="p-4 mb-4 w-full rounded border bg-white shadow-sm {{ $bulkMode && in_array($question['id'] ?? null, $selectedQuestions) ? 'border-warning bg-warning bg-opacity-10' : '' }}">
                         <div class="d-flex">

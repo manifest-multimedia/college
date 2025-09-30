@@ -169,11 +169,32 @@ class QuestionBank extends Component
 
     public function updatedSubjectId()
     {
-        $this->applyQuestionSetFilter();
-        $this->applyQuestionSetFilter();
         $this->question_set_id = null;
         $this->questions = [];
+        $this->selectedQuestions = [];
         $this->viewingQuestionSet = false;
+        $this->applyQuestionSetFilter();
+    }
+
+    public function updatedSearchTerm()
+    {
+        if ($this->viewingQuestionSet && $this->question_set_id) {
+            $this->loadQuestions();
+        }
+    }
+
+    public function updatedFilterType()
+    {
+        if ($this->viewingQuestionSet && $this->question_set_id) {
+            $this->loadQuestions();
+        }
+    }
+
+    public function updatedFilterDifficulty()
+    {
+        if ($this->viewingQuestionSet && $this->question_set_id) {
+            $this->loadQuestions();
+        }
     }
 
     public function viewQuestionSet($setId)

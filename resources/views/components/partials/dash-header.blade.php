@@ -61,15 +61,10 @@
                             <!--begin::Item-->
                             <div class="d-flex align-items-stretch me-2 me-lg-4">
                                 <!--begin::Search-->
-                                <div id="kt_header_search"
-                                    class="header-search d-flex align-items-center w-lg-250px"
-                                    data-kt-search-keypress="true" data-kt-search-min-length="2"
-                                    data-kt-search-enter="enter" data-kt-search-layout="menu"
-                                    data-kt-search-responsive="lg" data-kt-menu-trigger="auto"
-                                    data-kt-menu-permanent="true" data-kt-menu-placement="bottom-end">
-                                    <!--begin::Tablet and mobile search toggle-->
-                                    <div data-kt-search-element="toggle"
-                                        class="search-toggle-mobile d-flex d-lg-none align-items-center">
+                                <div id="kt_header_search_disabled"
+                                    class="header-search d-flex align-items-center w-lg-250px">
+                                    <!--begin::Tablet and mobile search toggle (disabled)-->
+                                    <div class="search-toggle-mobile d-flex d-lg-none align-items-center">
                                         <div
                                             class="bg-white bg-opacity-10 d-flex btn btn-icon btn-borderless btn-color-white btn-active-primary">
                                             <i class="text-white ki-duotone ki-magnifier fs-1">
@@ -78,7 +73,7 @@
                                             </i>
                                         </div>
                                     </div>
-                                    <!--end::Tablet and mobile search toggle-->
+                                    <!--end::Tablet and mobile search toggle (disabled)-->
                                     <!--begin::Form(use d-none d-lg-block classes for responsive search)-->
                                     {{-- <form data-kt-search-element="form"
                                         class="mb-2 d-none d-lg-block w-100 position-relative mb-lg-0"

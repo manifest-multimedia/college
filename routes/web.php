@@ -193,8 +193,22 @@ Route::middleware([
             return view('question-sets.questions', compact('id'));
         })->name('question.sets.questions');
         
+        // Question Set Bulk Import Routes
+        Route::get('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'index'])->name('question.sets.import');
+        Route::post('/question-sets/{id}/import/columns', [App\Http\Controllers\QuestionSetImportController::class, 'detectColumns'])->name('question.sets.import.columns');
+        Route::post('/question-sets/{id}/import/preview', [App\Http\Controllers\QuestionSetImportController::class, 'preview'])->name('question.sets.import.preview');
+        Route::post('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'import'])->name('question.sets.import.process');
+        
+        // Individual Question Management Routes
+        Route::get('/question-sets/{id}/questions/create', [App\Http\Controllers\QuestionSetQuestionController::class, 'create'])->name('question.sets.questions.create');
+        Route::post('/question-sets/{id}/questions', [App\Http\Controllers\QuestionSetQuestionController::class, 'store'])->name('question.sets.questions.store');
+        Route::get('/question-sets/{id}/questions/{questionId}/edit', [App\Http\Controllers\QuestionSetQuestionController::class, 'edit'])->name('question.sets.questions.edit');
+        Route::get('/question-sets/{id}/questions/{questionId}', [App\Http\Controllers\QuestionSetQuestionController::class, 'show'])->name('question.sets.questions.show');
+        Route::put('/question-sets/{id}/questions/{questionId}', [App\Http\Controllers\QuestionSetQuestionController::class, 'update'])->name('question.sets.questions.update');
+        Route::delete('/question-sets/{id}/questions/{questionId}', [App\Http\Controllers\QuestionSetQuestionController::class, 'destroy'])->name('question.sets.questions.destroy');
+        
         Route::get('/question-import-export', function () {
-            return view('question-import-export');
+            return redirect()->route('question.sets')->with('info', 'Please select a question set first, then use the Import button to import questions.');
         })->name('question.import.export');
         
         Route::get('track-responses', function () {
