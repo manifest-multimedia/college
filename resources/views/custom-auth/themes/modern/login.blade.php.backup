@@ -1,0 +1,555 @@
+@php
+    $authService = app(\App\Services\AuthenticationService::class);
+@endphp
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ config('branding.institution.name', config('app.name')) }} - Login</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset(config('branding.logo.favicon', '/favicon.ico')) }}">
+
+    <style>
+        :root {
+            --primary-color: {{ config('branding.colors.primary', '#3B82F6') }};
+            --secondary-color: {{ config('branding.colors.secondary', '#64748B') }};
+            --accent-color: {{ config('branding.colors.accent', '#10B981') }};
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            z-index: 1;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        .glass-card {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-circle {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .institution-name {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .institution-tagline {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+        }
+
+        .glass-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .glass-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .glass-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-btn-primary {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .glass-btn-primary:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .glass-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        .glass-divider::before,
+        .glass-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-divider span {
+            padding: 0 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .glass-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .glass-checkbox input {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .glass-checkbox input:checked {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-checkbox input:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .glass-checkbox label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .glass-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .glass-link:hover {
+            color: white;
+        }
+
+        .registration-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .registration-links p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .registration-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .registration-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin: 0 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .alert {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .alert-success {
+            border-left: 4px solid rgba(16, 185, 129, 0.8);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .alert-danger {
+            border-left: 4px solid rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .glass-card {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .institution-name {
+                font-size: 1.5rem;
+            }
+
+            .login-title {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="modern-container">
+        <!-- Floating Background Shapes -->
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+
+        <!-- Main Glass Card -->
+        <div class="glass-card">
+            <!-- Institution Branding -->
+            <div class="logo-container">
+                <div class="logo-circle">
+                    @php
+                        $authLogo = config('branding.logo.auth') ?? config('branding.logo.primary');
+                    @endphp
+                    
+                    @if($authLogo && $authLogo !== '/images/logos/default-logo.svg')
+                        <img src="{{ asset($authLogo) }}" alt="Logo" style="width: 40px; height: 40px; object-fit: contain; filter: brightness(0) invert(1);">
+                    @else
+                        <i class="fas fa-graduation-cap" style="font-size: 1.75rem; color: white;"></i>
+                    @endif
+                </div>
+                
+                <h1 class="institution-name">
+                    {{ config('branding.institution.name', config('app.name')) }}
+                </h1>
+                
+                <p class="institution-tagline">
+                    Modern Academic Management
+                </p>
+            </div>
+
+            <!-- Login Header -->
+            <div class="login-header">
+                <h2 class="login-title">Welcome Back</h2>
+                <p class="login-subtitle">Sign in to continue your journey</p>
+            </div>
+
+            <!-- Status Messages -->
+            @if (session('status'))
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>{{ session('status') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
+            <!-- AuthCentral SSO -->
+            <div class="glass-form-group">
+                <a href="{{ $authService->getAuthCentralLoginUrl() }}" class="glass-btn glass-btn-primary text-decoration-none">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Continue with AuthCentral SSO
+                </a>
+                <p class="text-center mt-2 mb-0" style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem;">
+                    Single Sign-On - Quick & Secure
+                </p>
+            </div>
+
+            <!-- Divider -->
+            <div class="glass-divider">
+                <span>OR</span>
+            </div>
+
+            <!-- Email/Password Form -->
+            <form method="POST" action="{{ route('regular.login') }}">
+                @csrf
+
+                <div class="glass-form-group">
+                    <label for="email" class="glass-label">Email Address</label>
+                    <input type="email" 
+                           class="glass-input @error('email') is-invalid @enderror" 
+                           id="email" 
+                           name="email" 
+                           value="{{ old('email') }}" 
+                           required 
+                           autofocus 
+                           placeholder="Enter your email address">
+                </div>
+
+                <div class="glass-form-group">
+                    <label for="password" class="glass-label">Password</label>
+                    <input type="password" 
+                           class="glass-input @error('password') is-invalid @enderror" 
+                           id="password" 
+                           name="password" 
+                           required 
+                           placeholder="Enter your password">
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="glass-checkbox">
+                        <input type="checkbox" name="remember" id="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="{{ route('password.request') }}" class="glass-link">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <button type="submit" class="glass-btn mb-3">
+                    <i class="fas fa-envelope"></i>
+                    Sign In with Email
+                </button>
+            </form>
+
+            <!-- Registration Links -->
+            <div class="registration-links">
+                <p>Don't have an account?</p>
+                <div>
+                    @if ($authService->getStaffSignupUrl())
+                        <a href="{{ $authService->getStaffSignupUrl() }}">Staff Registration</a>
+                    @endif
+                    @if ($authService->getStudentSignupUrl())
+                        <a href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Footer Links -->
+            @if(config('branding.institution.website_url') || config('branding.institution.support_email'))
+                <div class="footer-links">
+                    @if(config('branding.institution.website_url'))
+                        <a href="{{ config('branding.institution.website_url') }}" target="_blank">
+                            <i class="fas fa-globe"></i>Website
+                        </a>
+                    @endif
+                    @if(config('branding.institution.support_email'))
+                        <a href="mailto:{{ config('branding.institution.support_email') }}">
+                            <i class="fas fa-envelope"></i>Support
+                        </a>
+                    @endif
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

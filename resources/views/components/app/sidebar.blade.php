@@ -996,7 +996,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 $settingsRoutes = [
                     'settings.general', 'settings.users', 'settings.roles', 
                     'settings.permissions', 'settings.backup', 'settings.departments',
-                    'settings.user-departments'
+                    'settings.user-departments', 'admin.branding.index'
                 ];
                 $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
             @endphp
@@ -1068,6 +1068,23 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.branding.index') ? 'active' : '' }}" href="{{ route('admin.branding.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-colorfilter fs-6 me-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                                Institution Branding
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('settings.departments') ? 'active' : '' }}" href="{{ route('settings.departments') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
@@ -1100,7 +1117,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 @hasrole('Student')
                 <!-- Students don't need staff mail access -->
                 @else
-                <a href="{{ url('https://pnmtc.edu.gh/webmail') }}" class="menu-link" target="_blank">
+                <a href="{{ config('branding.institution.staff_mail_url', 'https://mail.google.com') }}" class="menu-link" target="_blank">
                     <span class="menu-icon">
                         <i class="ki-duotone ki-sms fs-2">
                             <span class="path1"></span>

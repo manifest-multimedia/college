@@ -2,13 +2,29 @@
 <html lang="en">
 
 <head>
-    <title>AuthCentral - {{ $title }} </title>
+    <title>{{ config('branding.institution.name', config('app.name')) }} - {{ $title }} </title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="shuffle-for-bootstrap.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset(config('branding.logo.favicon', '/favicon.ico')) }}">
+
+    <!-- Brand Colors as CSS Variables -->
+    <style>
+        :root {
+            @foreach(config('branding.colors', []) as $name => $color)
+            --brand-{{ $name }}: {{ $color }};
+            @endforeach
+        }
+    </style>
+
+    <!-- Theme-specific CSS -->
+    @if(file_exists(public_path("css/themes/" . config('branding.auth_theme', 'default') . "/auth.css")))
+        <link rel="stylesheet" href="{{ asset('css/themes/' . config('branding.auth_theme', 'default') . '/auth.css') }}">
+    @endif
     <style>
         html, body {
             height: 100%;
@@ -139,8 +155,8 @@
     </style>
 </head>
 
-<body>
-    <div class="main-wrapper" style="background-image: url('{{ asset('images/pattern-light.png') }}')">
+<body class="theme-{{ config('branding.auth_theme', 'default') }}">
+    <div class="main-wrapper auth-background-{{ config('branding.auth_theme', 'default') }}" style="background-image: url('{{ asset('images/pattern-light.png') }}')">
         <!-- Fixed background for testimonials side -->
         <div class="testimonial-bg"></div>
         
@@ -152,8 +168,20 @@
             <div class="form-side">
                 <div class="form-content">
                     <div class="text-center">
-                        <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset('images/pnmtc-logo.png') }}"
-                            alt="">
+                        @php
+                            $authLogo = config('branding.logo.auth') ?? config('branding.logo.primary');
+                            $institutionName = config('branding.institution.name', config('app.name'));
+                        @endphp
+                        
+                        @if($authLogo && $authLogo !== '/images/logos/default-logo.svg')
+                            <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset($authLogo) }}" alt="{{ $institutionName }} Logo">
+                        @else
+                            <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset('images/pnmtc-logo.png') }}" alt="{{ $institutionName }} Logo">
+                        @endif
+                        
+                        <h1 class="mb-2 font-heading fs-6 fw-bold" style="color: var(--brand-primary, #007bff);">
+                            {{ $institutionName }}
+                        </h1>
                         <h2 class="mb-4 font-heading fs-7">{{ $description }}</h2>
                         
                         <!-- Error messages moved to individual pages -->

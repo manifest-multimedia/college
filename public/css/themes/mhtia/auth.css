@@ -1,0 +1,44 @@
+/* MHTIA Professional Theme Styles */
+.theme-mhtia {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.theme-mhtia .auth-background-mhtia {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.theme-mhtia .auth-card-mhtia {
+    border-radius: 0.75rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.theme-mhtia .institution-name {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Professional gradient buttons */
+.theme-mhtia .btn-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.theme-mhtia .btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced form inputs */
+.theme-mhtia input[type="email"],
+.theme-mhtia input[type="password"] {
+    transition: all 0.2s ease;
+}
+
+.theme-mhtia input[type="email"]:focus,
+.theme-mhtia input[type="password"]:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}

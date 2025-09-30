@@ -5,11 +5,28 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('branding.institution.name', config('app.name')) }}</title>
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="{{ asset(config('branding.logo.favicon', '/favicon.ico')) }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+        <!-- Brand Colors as CSS Variables -->
+        <style>
+            :root {
+                @foreach(config('branding.colors', []) as $name => $color)
+                --brand-{{ $name }}: {{ $color }};
+                @endforeach
+            }
+        </style>
+
+        <!-- Theme-specific CSS -->
+        @if(file_exists(public_path("css/themes/" . config('branding.auth_theme', 'default') . "/auth.css")))
+            <link rel="stylesheet" href="{{ asset('css/themes/' . config('branding.auth_theme', 'default') . '/auth.css') }}">
+        @endif
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -17,7 +34,7 @@
         <!-- Styles -->
         @livewireStyles
     </head>
-    <body>
+    <body class="theme-{{ config('branding.auth_theme', 'default') }}">
         <div class="font-sans text-gray-900 antialiased">
             {{ $slot }}
         </div>

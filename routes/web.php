@@ -499,6 +499,18 @@ Route::middleware([
 
     /*
     |--------------------------------------------------------------------------
+    | Institution Branding Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('admin')->group(function () {
+        Route::get('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'index'])->name('admin.branding.index');
+        Route::post('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'update'])->name('admin.branding.update');
+        Route::get('/branding/preview', [App\Http\Controllers\Admin\BrandingController::class, 'preview'])->name('admin.branding.preview');
+        Route::post('/branding/upload-logo', [App\Http\Controllers\Admin\BrandingController::class, 'uploadLogo'])->name('admin.branding.upload-logo');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Academics Module Routes 'permission:manage-academics'
     |--------------------------------------------------------------------------
     */

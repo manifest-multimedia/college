@@ -6,4 +6,5 @@ return [
     App\Providers\FortifyServiceProvider::class,
     App\Providers\JetstreamServiceProvider::class,
     App\Providers\AISenseiServiceProvider::class,
+    App\Providers\ThemeServiceProvider::class,
 ];

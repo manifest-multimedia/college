@@ -1,0 +1,17 @@
+/* Default Theme Styles */
+.theme-default {
+    background-color: #f3f4f6;
+}
+
+.theme-default .auth-background-default {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+}
+
+.theme-default .auth-card-default {
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.theme-default .institution-name {
+    color: var(--brand-primary, #3b82f6);
+}
