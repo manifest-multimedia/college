@@ -10,11 +10,18 @@ class Asset extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Temporary storage for original data during updates.
+     * This property is not saved to the database.
+     */
+    public $_original_data;
+
     protected $fillable = [
         'asset_tag',
         'name',
         'description',
         'category_id',
+        'department_id',
         'location',
         'purchase_date',
         'purchase_price',
@@ -32,6 +39,28 @@ class Asset extends Model
         'purchase_price' => 'decimal:2',
         'current_value' => 'decimal:2',
     ];
+
+    /**
+     * Get the model's attributes.
+     * Exclude _original_data from being treated as a database attribute.
+     */
+    public function getAttributes()
+    {
+        $attributes = parent::getAttributes();
+        unset($attributes['_original_data']);
+        return $attributes;
+    }
+
+    /**
+     * Convert the model's attributes to an array.
+     * Exclude _original_data from array conversion.
+     */
+    public function attributesToArray()
+    {
+        $attributes = parent::attributesToArray();
+        unset($attributes['_original_data']);
+        return $attributes;
+    }
 
     protected static function boot()
     {
@@ -66,13 +95,16 @@ class Asset extends Model
                 $asset->updated_by = auth()->id();
             }
 
-            // Store original data for history
+            // Store original data for history (not saved to database)
             $asset->_original_data = $asset->getOriginal();
         });
 
         static::updated(function ($asset) {
             if (isset($asset->_original_data)) {
                 $changes = $asset->getChanges();
+                // Remove _original_data from changes if it somehow got included
+                unset($changes['_original_data']);
+                
                 if (!empty($changes)) {
                     AssetHistory::logAction(
                         $asset->id,
@@ -82,6 +114,9 @@ class Asset extends Model
                         $asset->updated_by
                     );
                 }
+                
+                // Clean up temporary data
+                unset($asset->_original_data);
             }
         });
 
@@ -125,6 +160,14 @@ class Asset extends Model
     public function category()
     {
         return $this->belongsTo(AssetCategory::class);
+    }
+
+    /**
+     * Get the department that this asset belongs to.
+     */
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 
     /**

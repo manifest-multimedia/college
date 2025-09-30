@@ -50,4 +50,12 @@ class Department extends Model
             ->withPivot('is_head')
             ->wherePivot('is_head', true);
     }
+
+    /**
+     * Get the assets that belong to this department.
+     */
+    public function assets()
+    {
+        return $this->hasMany(Asset::class);
+    }
 }

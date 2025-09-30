@@ -147,6 +147,19 @@
                                                 <!--end::Input group-->
                                                 <!--begin::Input group-->
                                                 <div class="mb-10">
+                                                    <label class="form-label fs-6 fw-semibold">Department:</label>
+                                                    <select name="department_id" class="form-select form-select-solid fw-bold" data-kt-select2="true" data-placeholder="Select department" data-allow-clear="true">
+                                                        <option></option>
+                                                        @foreach($departments as $department)
+                                                            <option value="{{ $department->id }}" {{ request('department_id') == $department->id ? 'selected' : '' }}>
+                                                                {{ $department->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <!--end::Input group-->
+                                                <!--begin::Input group-->
+                                                <div class="mb-10">
                                                     <label class="form-label fs-6 fw-semibold">State:</label>
                                                     <select name="state" class="form-select form-select-solid fw-bold" data-kt-select2="true" data-placeholder="Select state" data-allow-clear="true">
                                                         <option></option>
@@ -221,6 +234,15 @@
                                                         <span class="path4"></span>
                                                     </i>
                                                     Category
+                                                </div>
+                                            </th>
+                                            <th class="min-w-130px px-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="ki-duotone ki-office-bag fs-3 me-2 text-muted">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                    </i>
+                                                    Department
                                                 </div>
                                             </th>
                                             <th class="min-w-120px px-4 py-3">
@@ -324,6 +346,27 @@
                                                     @endif
                                                 </td>
                                                 <!--end::Category-->
+                                                <!--begin::Department-->
+                                                <td class="px-4 py-4">
+                                                    @if($asset->department)
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-office-bag fs-3 me-2 text-warning">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                            </i>
+                                                            <span class="badge badge-light-warning fs-7 fw-bold">{{ $asset->department->name }}</span>
+                                                        </div>
+                                                    @else
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="ki-duotone ki-office-bag fs-3 me-2 text-muted">
+                                                                <span class="path1"></span>
+                                                                <span class="path2"></span>
+                                                            </i>
+                                                            <span class="text-muted fs-7">Unassigned</span>
+                                                        </div>
+                                                    @endif
+                                                </td>
+                                                <!--end::Department-->
                                                 <!--begin::State-->
                                                 <td class="px-4 py-4">
                                                     @php

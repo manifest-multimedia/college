@@ -392,7 +392,6 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     
-                    @hasanyrole(['System', 'Super Admin'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs(['admin.assets.create', 'admin.assets.edit']) ? 'active' : '' }}" href="{{ route('admin.assets.create') }}">
@@ -455,7 +454,6 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
-                    @endhasanyrole
                 </div>
                 <!--end:Menu sub-->
             </div>

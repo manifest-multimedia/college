@@ -84,11 +84,11 @@ class AssetSeeder extends Seeder
         }
 
         // Create default asset settings
-        AssetSetting::create([
-            'key' => 'asset_tag_prefix',
-            'value' => 'COL-',
-            'description' => 'Prefix used for auto-generated asset tags',
-        ]);
+        // AssetSetting::create([
+        //     'key' => 'asset_tag_prefix',
+        //     'value' => 'COL-',
+        //     'description' => 'Prefix used for auto-generated asset tags',
+        // ]);
 
         AssetSetting::create([
             'key' => 'default_depreciation_rate',

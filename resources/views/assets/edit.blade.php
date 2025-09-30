@@ -141,6 +141,27 @@
                                     </div>
                                     <div class="col-md-6 fv-row">
                                         <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Department</label>
+                                        <!--end::Label-->
+                                        <!--begin::Select-->
+                                        <select name="department_id" class="form-select form-select-solid @error('department_id') is-invalid @enderror" data-control="select2" data-placeholder="Select a department">
+                                            <option value="">Select a department</option>
+                                            @foreach($departments as $department)
+                                                <option value="{{ $department->id }}" {{ old('department_id', $asset->department_id) == $department->id ? 'selected' : '' }}>
+                                                    {{ $department->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <!--end::Select-->
+                                        @error('department_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row mb-7">
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
                                         <label class="fs-6 fw-semibold mb-2">Location</label>
                                         <!--end::Label-->
                                         <!--begin::Input-->
@@ -150,7 +171,8 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                </div>
+
+                                    <div class="col-md-6 fv-row">
 
                                 <div class="row mb-7">
                                     <div class="col-md-6 fv-row">

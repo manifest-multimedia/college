@@ -25,6 +25,7 @@ class StoreAssetRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category_id' => 'nullable|exists:asset_categories,id',
+            'department_id' => 'nullable|exists:departments,id',
             'location' => 'nullable|string|max:255',
             'purchase_date' => 'nullable|date|before_or_equal:today',
             'purchase_price' => 'nullable|numeric|min:0|max:9999999.99',

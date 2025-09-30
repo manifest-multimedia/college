@@ -16,7 +16,7 @@ class AssetController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Asset::with(['category', 'createdBy', 'updatedBy']);
+        $query = Asset::with(['category', 'department', 'createdBy', 'updatedBy']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -33,6 +33,11 @@ class AssetController extends Controller
             $query->withCategory($request->category_id);
         }
 
+        // Filter by department
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
         // Sort
         $sortField = $request->get('sort', 'created_at');
         $sortDirection = $request->get('direction', 'desc');
@@ -40,8 +45,9 @@ class AssetController extends Controller
 
         $assets = $query->paginate(20);
         $categories = AssetCategory::all();
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
 
-        return view('assets.index', compact('assets', 'categories'));
+        return view('assets.index', compact('assets', 'categories', 'departments'));
     }
 
     /**
@@ -50,7 +56,8 @@ class AssetController extends Controller
     public function create()
     {
         $categories = AssetCategory::all();
-        return view('assets.create', compact('categories'));
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        return view('assets.create', compact('categories', 'departments'));
     }
 
     /**
@@ -69,7 +76,7 @@ class AssetController extends Controller
      */
     public function show(Asset $asset)
     {
-        $asset->load(['category', 'createdBy', 'updatedBy', 'histories.user']);
+        $asset->load(['category', 'department', 'createdBy', 'updatedBy', 'histories.user']);
         
         return view('assets.show', compact('asset'));
     }
@@ -80,7 +87,8 @@ class AssetController extends Controller
     public function edit(Asset $asset)
     {
         $categories = AssetCategory::all();
-        return view('assets.edit', compact('asset', 'categories'));
+        $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+        return view('assets.edit', compact('asset', 'categories', 'departments'));
     }
 
         /**

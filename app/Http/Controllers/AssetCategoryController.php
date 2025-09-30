@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\AssetCategory;
+use App\Http\Requests\StoreAssetCategoryRequest;
+use App\Http\Requests\UpdateAssetCategoryRequest;
 use Illuminate\Http\Request;
 
 class AssetCategoryController extends Controller
@@ -31,17 +33,11 @@ class AssetCategoryController extends Controller
     /**
      * Store a newly created asset category in storage.
      */
-    public function store(Request $request)
+    public function store(StoreAssetCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:asset_categories',
-            'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:asset_categories,id',
-        ]);
+        AssetCategory::create($request->validated());
 
-        AssetCategory::create($validated);
-
-        return redirect()->route('asset-categories.index')
+        return redirect()->route('admin.asset-categories.index')
             ->with('success', 'Asset category created successfully.');
     }
 
@@ -67,17 +63,11 @@ class AssetCategoryController extends Controller
     /**
      * Update the specified asset category in storage.
      */
-    public function update(Request $request, AssetCategory $assetCategory)
+    public function update(UpdateAssetCategoryRequest $request, AssetCategory $assetCategory)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:asset_categories,name,' . $assetCategory->id,
-            'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:asset_categories,id|not_in:' . $assetCategory->id,
-        ]);
+        $assetCategory->update($request->validated());
 
-        $assetCategory->update($validated);
-
-        return redirect()->route('asset-categories.show', $assetCategory)
+        return redirect()->route('admin.asset-categories.show', $assetCategory)
             ->with('success', 'Asset category updated successfully.');
     }
 
@@ -88,18 +78,18 @@ class AssetCategoryController extends Controller
     {
         // Check if category has assets or children
         if ($assetCategory->assets()->exists()) {
-            return redirect()->route('asset-categories.index')
+            return redirect()->route('admin.asset-categories.index')
                 ->with('error', 'Cannot delete category that has assets assigned to it.');
         }
 
         if ($assetCategory->children()->exists()) {
-            return redirect()->route('asset-categories.index')
+            return redirect()->route('admin.asset-categories.index')
                 ->with('error', 'Cannot delete category that has child categories.');
         }
 
         $assetCategory->delete();
 
-        return redirect()->route('asset-categories.index')
+        return redirect()->route('admin.asset-categories.index')
             ->with('success', 'Asset category deleted successfully.');
     }
 }

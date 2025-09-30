@@ -86,6 +86,12 @@
                                     </dd>
                                 </div>
                                 <div>
+                                    <dt class="text-sm font-medium text-gray-500">Department</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">
+                                        {{ $asset->department ? $asset->department->name : 'Unassigned' }}
+                                    </dd>
+                                </div>
+                                <div>
                                     <dt class="text-sm font-medium text-gray-500">State</dt>
                                     <dd class="mt-1">
                                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-{{ $asset->state_badge_color }}-100 text-{{ $asset->state_badge_color }}-800">

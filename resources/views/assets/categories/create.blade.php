@@ -66,59 +66,110 @@
                         <!--end::Card header-->
                         <!--begin::Card body-->
                         <div class="card-body pt-0">
-                    <form method="POST" action="{{ route('admin.asset-categories.store') }}">
-                        @csrf
+                            <!-- Flash Messages -->
+                            @if (session('success'))
+                                <div class="alert alert-dismissible alert-success d-flex flex-column flex-sm-row p-5 mb-10">
+                                    <i class="ki-duotone ki-check fs-2hx text-success me-4 mb-5 mb-sm-0">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+                                        <h4 class="mb-2 text-dark">Success!</h4>
+                                        <span class="text-dark">{{ session('success') }}</span>
+                                    </div>
+                                    <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+                                        <i class="ki-duotone ki-cross fs-1 text-success"><span class="path1"></span><span class="path2"></span></i>
+                                    </button>
+                                </div>
+                            @endif
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Name -->
-                            <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700">Category Name *</label>
-                                <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                                       class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
-                                @error('name')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            @if (session('error'))
+                                <div class="alert alert-dismissible alert-danger d-flex flex-column flex-sm-row p-5 mb-10">
+                                    <i class="ki-duotone ki-cross-circle fs-2hx text-danger me-4 mb-5 mb-sm-0">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+                                        <h4 class="mb-2 text-dark">Error!</h4>
+                                        <span class="text-dark">{{ session('error') }}</span>
+                                    </div>
+                                    <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+                                        <i class="ki-duotone ki-cross fs-1 text-danger"><span class="path1"></span><span class="path2"></span></i>
+                                    </button>
+                                </div>
+                            @endif
 
-                            <!-- Parent Category -->
-                            <div>
-                                <label for="parent_id" class="block text-sm font-medium text-gray-700">Parent Category</label>
-                                <select name="parent_id" id="parent_id" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <option value="">No Parent (Root Category)</option>
-                                    @foreach($categories as $category)
-                                        <option value="{{ $category->id }}" {{ old('parent_id') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->full_path }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('parent_id')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            <form method="POST" action="{{ route('admin.asset-categories.store') }}" class="form">
+                                @csrf
+
+                                <div class="row mb-7">
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="required fs-6 fw-semibold mb-2">Category Name</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <input type="text" class="form-control form-control-solid @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="Enter category name" required />
+                                        <!--end::Input-->
+                                        @error('name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Parent Category</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <select class="form-select form-select-solid @error('parent_id') is-invalid @enderror" name="parent_id" data-control="select2" data-placeholder="Select parent category">
+                                            <option value="">No Parent (Root Category)</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}" {{ old('parent_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->full_path }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <!--end::Input-->
+                                        @error('parent_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row mb-7">
+                                    <div class="col-12 fv-row">
+                                        <!--begin::Label-->
+                                        <label class="fs-6 fw-semibold mb-2">Description</label>
+                                        <!--end::Label-->
+                                        <!--begin::Input-->
+                                        <textarea class="form-control form-control-solid @error('description') is-invalid @enderror" name="description" rows="3" placeholder="Enter category description">{{ old('description') }}</textarea>
+                                        <!--end::Input-->
+                                        @error('description')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!--begin::Actions-->
+                                <div class="text-center pt-15">
+                                    <a href="{{ route('admin.asset-categories.index') }}" class="btn btn-light me-3">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <span class="indicator-label">Create Category</span>
+                                        <span class="indicator-progress">Please wait...
+                                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                                    </button>
+                                </div>
+                                <!--end::Actions-->
+                            </form>
                         </div>
-
-                        <!-- Description -->
-                        <div class="mt-6">
-                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="description" rows="3" 
-                                      class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">{{ old('description') }}</textarea>
-                            @error('description')
-                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Submit Buttons -->
-                        <div class="flex justify-end mt-6 space-x-3">
-                            <a href="{{ route('admin.asset-categories.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-                                Cancel
-                            </a>
-                            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                                Create Category
-                            </button>
-                        </div>
-                    </form>
+                        <!--end::Card body-->
+                    </div>
+                    <!--end::Card-->
                 </div>
+                <!--end::Content container-->
             </div>
+            <!--end::Content-->
         </div>
+        <!--end::Content wrapper-->
     </div>
+    <!--end::Main-->
 </x-dashboard.default>
