@@ -44,10 +44,7 @@ class ExamCenterWidget extends Component
                     'course.collegeClass', 
                     'course.semester', 
                     'course.year', 
-                    'questions' => function($query) {
-                        // Just select count to optimize performance
-                        $query->select('exam_id');
-                    }
+                    'questionSets.questions' // Load question sets with their questions for calculation
                 ])
                     ->when(
                         $this->search,
@@ -70,10 +67,7 @@ class ExamCenterWidget extends Component
                         'course.collegeClass', 
                         'course.semester', 
                         'course.year', 
-                        'questions' => function($query) {
-                            // Just select count to optimize performance
-                            $query->select('exam_id');
-                        }
+                        'questionSets.questions' // Load question sets with their questions for calculation
                     ])
                     ->when(
                         $this->search,

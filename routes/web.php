@@ -156,13 +156,9 @@ Route::middleware([
         })->name('examcenter');
 
         Route::get('/exam-sessions', \App\Livewire\ExamSessions::class)->name('examsessions');
-
-        Route::get('/create-exam', function () {
-            return view('exams.create');
-        })->name('exams.create');
         
-        // AJAX Exam Management Routes
-        Route::get('/create-exam-ajax', [App\Http\Controllers\ExamController::class, 'create'])->name('exams.create-ajax');
+        // Exam Management Routes
+        Route::get('/create-exam', [App\Http\Controllers\ExamController::class, 'create'])->name('exams.create');
         Route::post('/exams', [App\Http\Controllers\ExamController::class, 'store'])->name('exams.store');
         Route::get('/exams/get-courses', [App\Http\Controllers\ExamController::class, 'getCourses'])->name('exams.get-courses');
         Route::get('/exams/get-question-sets', [App\Http\Controllers\ExamController::class, 'getQuestionSets'])->name('exams.get-question-sets');

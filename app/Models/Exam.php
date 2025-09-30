@@ -97,6 +97,41 @@ class Exam extends Model
     }
 
     /**
+     * Calculate total questions count for this exam (from both direct questions and question sets).
+     * This respects the 'questions_to_pick' configuration in the pivot table.
+     */
+    public function getTotalQuestionsCountAttribute()
+    {
+        $totalQuestions = 0;
+        
+        // Add direct questions count (backward compatibility)
+        $totalQuestions += $this->questions()->count();
+        
+        // Add questions from question sets
+        foreach ($this->questionSets as $questionSet) {
+            $questionsToPick = $questionSet->pivot->questions_to_pick;
+            
+            if ($questionsToPick && $questionsToPick > 0) {
+                // Use the configured number of questions to pick
+                $totalQuestions += $questionsToPick;
+            } else {
+                // If no specific number configured, use all questions from the set
+                $totalQuestions += $questionSet->questions()->count();
+            }
+        }
+        
+        return $totalQuestions;
+    }
+
+    /**
+     * Scope to add questions count from question sets
+     */
+    public function scopeWithQuestionsCount($query)
+    {
+        return $query->withCount(['questions', 'questionSets']);
+    }
+
+    /**
      * Get dynamic questions for an exam session based on question set configuration.
      */
     public function generateSessionQuestions($shuffle = true)
