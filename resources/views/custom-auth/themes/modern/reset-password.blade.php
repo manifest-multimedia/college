@@ -1,11 +1,7 @@
-@php
-    $authService = app(\App\Services\AuthenticationService::class);
-@endphp
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{{ config('branding.institution.name', config('app.name')) }} - Login</title>
+    <title>{{ config('branding.institution.name', config('app.name')) }} - Reset Password</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -45,25 +41,25 @@
         body::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
+            top: -40%;
+            left: -40%;
+            width: 180%;
+            height: 180%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+            animation: rotate 35s linear infinite;
             z-index: 1;
         }
 
         body::after {
             content: '';
             position: absolute;
-            top: 10%;
-            right: 10%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+            top: 15%;
+            right: 15%;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
             border-radius: 50%;
-            animation: pulse 4s ease-in-out infinite;
+            animation: pulse 7s ease-in-out infinite;
             z-index: 1;
         }
 
@@ -73,15 +69,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 0.4; }
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.3); opacity: 0.2; }
         }
 
         .auth-container {
             position: relative;
             z-index: 10;
             width: 100%;
-            max-width: 380px;
+            max-width: 420px;
         }
 
         .glass-card {
@@ -125,7 +121,7 @@
         }
 
         .institution-name {
-            font-size: 1.375rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: white;
             margin-bottom: 0.125rem;
@@ -148,73 +144,15 @@
             font-weight: 600;
             color: white;
             margin-bottom: 0.125rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
         .welcome-subtitle {
             font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.8);
-        }
-
-        .sso-section {
-            margin-bottom: 1rem;
-        }
-
-        .sso-btn {
-            width: 100%;
-            padding: 0.65rem 1rem;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25);
-        }
-
-        .sso-btn:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        .sso-description {
-            text-align: center;
-            font-size: 0.7rem;
-            margin-top: 0.375rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .divider {
-            text-align: center;
-            margin: 1rem 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .divider span {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0 0.75rem;
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.8);
-            position: relative;
-            backdrop-filter: blur(10px);
         }
 
         .form-group {
@@ -235,24 +173,35 @@
 
         .form-control {
             width: 100%;
-            padding: 0.625rem 0.75rem;
+            padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
             font-family: inherit;
             backdrop-filter: blur(10px);
         }
 
         .form-control.has-icon {
-            padding-right: 2.5rem;
+            padding-right: 3rem;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
         }
 
         .password-toggle {
             position: absolute;
-            right: 0.75rem;
+            right: 1rem;
             top: 50%;
             transform: translateY(-50%);
             background: none;
@@ -272,62 +221,14 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
-
-        .form-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .form-check {
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .form-check-input {
-            margin: 0;
-            accent-color: var(--primary-color);
-        }
-
-        .form-check-label {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin: 0;
-        }
-
-        .forgot-link {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-link:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
         .submit-btn {
             width: 100%;
-            padding: 0.65rem 1rem;
-            background: rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            font-size: 0.8rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -335,84 +236,86 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25);
+            margin-top: 1rem;
         }
 
         .submit-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
         }
 
-        .registration-section {
+        .login-section {
             text-align: center;
             margin-top: 1rem;
         }
 
-        .registration-text {
+        .login-text {
             font-size: 0.8rem;
-            margin-bottom: 0.375rem;
             color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.25rem;
         }
 
-        .registration-links {
-            display: flex;
-            justify-content: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .registration-link {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .registration-link:hover {
+        .login-link {
             color: white;
-            text-decoration: underline;
-        }
-
-        .support-section {
-            text-align: center;
-            margin-top: 0.875rem;
-        }
-
-        .support-link {
-            color: rgba(255, 255, 255, 0.6);
             text-decoration: none;
-            font-size: 0.7rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.375rem;
-            transition: color 0.3s ease;
         }
 
-        .support-link:hover {
+        .login-link:hover {
             color: rgba(255, 255, 255, 0.8);
+            text-decoration: underline;
+            transform: translateX(-2px);
         }
 
         /* Status Messages */
         .alert {
             margin-bottom: 0.875rem;
-            padding: 0.625rem 0.875rem;
-            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
             font-size: 0.8rem;
         }
 
         .alert-success {
-            background: #d1fae5;
-            border: 1px solid #10b981;
-            color: #065f46;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            backdrop-filter: blur(10px);
         }
 
         .alert-danger {
-            background: #fee2e2;
-            border: 1px solid #ef4444;
-            color: #991b1b;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            backdrop-filter: blur(10px);
+        }
+
+        .invalid-feedback {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            color: #ef4444;
+        }
+
+        .security-note {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .security-note p {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+            line-height: 1.4;
         }
 
         /* Responsive Design */
@@ -423,16 +326,11 @@
             }
             
             .institution-name {
-                font-size: 1.25rem;
+                font-size: 1.125rem;
             }
             
             .welcome-title {
                 font-size: 1rem;
-            }
-            
-            .registration-links {
-                flex-direction: column;
-                gap: 0.375rem;
             }
         }
     </style>
@@ -470,37 +368,31 @@
 
             <!-- Welcome Section -->
             <div class="welcome-section">
-                <h2 class="welcome-title">Welcome Back</h2>
-                <p class="welcome-subtitle">Sign in to continue your journey</p>
+                <h2 class="welcome-title">
+                    <i class="fas fa-shield-alt"></i>
+                    Set New Password
+                </h2>
+                <p class="welcome-subtitle">Enter your new password below</p>
             </div>
 
-            {{-- AuthCentral SSO Login Option --}}
-            @if($authService->getAuthCentralLoginUrl())
-                <div class="sso-section">
-                    <a href="{{ $authService->getAuthCentralLoginUrl() }}" class="sso-btn">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Continue with AuthCentral SSO
-                    </a>
-                    <p class="sso-description">Single Sign-On - Quick & Secure</p>
-                </div>
+            <!-- Security Note -->
+            <div class="security-note">
+                <p><i class="fas fa-info-circle"></i> Choose a strong password with at least 8 characters, including letters, numbers, and symbols.</p>
+            </div>
 
-                {{-- Divider --}}
-                <div class="divider">
-                    <span>OR</span>
-                </div>
-            @endif
-
-            {{-- Email/Password Login Form --}}
-            <form method="POST" action="{{ route('regular.login') }}">
+            {{-- Password Reset Form --}}
+            <form method="POST" action="{{ route('password.update') }}">
                 @csrf
-                
+
+                <input type="hidden" name="token" value="{{ $request->route('token') }}">
+
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
                     <input type="email" 
                            class="form-control @error('email') is-invalid @enderror" 
                            id="email" 
                            name="email" 
-                           value="{{ old('email') }}" 
+                           value="{{ $request->email ?? old('email') }}" 
                            required 
                            autofocus 
                            autocomplete="username"
@@ -513,15 +405,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
+                    <label for="password" class="form-label">New Password</label>
                     <div class="password-field">
                         <input type="password" 
                                class="form-control has-icon @error('password') is-invalid @enderror" 
                                id="password" 
                                name="password" 
                                required 
-                               autocomplete="current-password"
-                               placeholder="Enter your password">
+                               autocomplete="new-password"
+                               placeholder="Enter your new password">
                         <button type="button" class="password-toggle" onclick="togglePassword('password')">
                             <i class="fas fa-eye" id="password-eye"></i>
                         </button>
@@ -533,42 +425,39 @@
                     @enderror
                 </div>
 
-                <div class="form-row">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                        <label class="form-check-label" for="remember">
-                            Remember me
-                        </label>
+                <div class="form-group">
+                    <label for="password_confirmation" class="form-label">Confirm New Password</label>
+                    <div class="password-field">
+                        <input type="password" 
+                               class="form-control has-icon @error('password_confirmation') is-invalid @enderror" 
+                               id="password_confirmation" 
+                               name="password_confirmation" 
+                               required 
+                               autocomplete="new-password"
+                               placeholder="Confirm your new password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation')">
+                            <i class="fas fa-eye" id="password_confirmation-eye"></i>
+                        </button>
                     </div>
-                    <a class="forgot-link" href="{{ route('password.request') }}">
-                        Forgot password?
-                    </a>
+                    @error('password_confirmation')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
                 </div>
 
                 <button type="submit" class="submit-btn">
-                    <i class="fas fa-envelope"></i>
-                    Sign In with Email
+                    <i class="fas fa-check"></i>
+                    Reset Password
                 </button>
             </form>
 
-            {{-- Registration Links --}}
-            <div class="registration-section">
-                <p class="registration-text">Don't have an account?</p>
-                <div class="registration-links">
-                    @if ($authService->getStaffSignupUrl())
-                        <a class="registration-link" href="{{ $authService->getStaffSignupUrl() }}">Staff Registration</a>
-                    @endif
-                    @if ($authService->getStudentSignupUrl())
-                        <a class="registration-link" href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Support Link --}}
-            <div class="support-section">
-                <a class="support-link" href="mailto:{{ config('branding.support.email', 'support@college.edu') }}">
-                    <i class="fas fa-envelope"></i>
-                    Support
+            {{-- Back to Login --}}
+            <div class="login-section">
+                <p class="login-text">Remember your password?</p>
+                <a class="login-link" href="{{ route('login') }}">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Login
                 </a>
             </div>
         </div>
