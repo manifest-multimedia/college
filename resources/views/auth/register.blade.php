@@ -1,4 +1,17 @@
 @php
+    $theme = config('branding.auth_theme', 'default');
+    $themeView = "custom-auth.themes.{$theme}.register";
+    
+    // Check if theme-specific view exists, fallback to component
+    if (!view()->exists($themeView)) {
+        $useComponent = true;
+    } else {
+        $useComponent = false;
+    }
+@endphp
+
+@if($useComponent)
+@php
     $authService = app(\App\Services\AuthenticationService::class);
 @endphp
 
@@ -118,3 +131,6 @@
         </p>
     </form>
 </x-backend.auth>
+@else
+    @include($themeView)
+@endif

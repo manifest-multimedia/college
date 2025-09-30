@@ -1,11 +1,17 @@
 @php
     $theme = config('branding.auth_theme', 'default');
-    $themeView = "auth.themes.{$theme}.login";
+    $themeView = "custom-auth.themes.{$theme}.login";
     
-    // Check if theme-specific login view exists, fallback to default
+    // Check if theme-specific view exists, fallback to component
     if (!view()->exists($themeView)) {
-        $themeView = 'auth.themes.default.login';
+        $useComponent = true;
+    } else {
+        $useComponent = false;
     }
 @endphp
 
-@include($themeView)
+@if($useComponent)
+    @include('custom-auth.login')
+@else
+    @include($themeView)
+@endif
