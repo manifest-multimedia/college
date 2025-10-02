@@ -29,14 +29,9 @@ class StudentCourseRegistration extends Component
     // Payment threshold for course registration (60%)
     const PAYMENT_THRESHOLD = 60;
     
-    public function __construct()
-    {
-        parent::__construct();
-        $this->existingRegistrations = new Collection();
-    }
-    
     public function mount()
     {
+        $this->existingRegistrations = new Collection();
         // Get the logged-in user's student record
         $user = Auth::user();
         $this->student = Student::where('user_id', $user->id)->first();
