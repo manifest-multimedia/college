@@ -624,7 +624,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             @endcanany
             
-            @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports'])
+            {{-- @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports']) --}}
             <!--begin:Menu item-->
             @php
                 $financeRoutes = [
@@ -764,7 +764,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
-            @endcanany
+            {{-- @endcanany --}}
             
             @hasrole('System')
             <!--begin:Menu item-->
