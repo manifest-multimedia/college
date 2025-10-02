@@ -167,4 +167,34 @@ class CollegeClassController extends Controller
 
         return view('academics.classes.index', compact('classes', 'currentSemester'));
     }
+
+    /**
+     * Add students to a class
+     */
+    public function addStudents(Request $request, CollegeClass $class)
+    {
+        $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id'
+        ]);
+
+        foreach ($request->student_ids as $studentId) {
+            // Add student to class if not already enrolled
+            $class->students()->syncWithoutDetaching([$studentId]);
+        }
+
+        return redirect()->route('academics.classes.show', $class)
+            ->with('success', 'Students added to class successfully.');
+    }
+
+    /**
+     * Remove a student from a class
+     */
+    public function removeStudent(CollegeClass $class, $studentId)
+    {
+        $class->students()->detach($studentId);
+
+        return redirect()->route('academics.classes.show', $class)
+            ->with('success', 'Student removed from class successfully.');
+    }
 }

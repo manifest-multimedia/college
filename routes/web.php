@@ -532,6 +532,10 @@ Route::middleware([
             // College Classes
             Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
             Route::post('/classes/filter', [App\Http\Controllers\CollegeClassController::class, 'filter'])->name('classes.filter');
+            
+            // Class Student Management
+            Route::post('/classes/{class}/students/add', [App\Http\Controllers\CollegeClassController::class, 'addStudents'])->name('classes.students.add');
+            Route::delete('/classes/{class}/students/{student}', [App\Http\Controllers\CollegeClassController::class, 'removeStudent'])->name('classes.students.remove');
 
             // Cohorts
             Route::resource('cohorts', App\Http\Controllers\CohortController::class);
