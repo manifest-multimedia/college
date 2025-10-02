@@ -176,7 +176,7 @@
                         @if($authLogo && $authLogo !== '/images/logos/default-logo.svg')
                             <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset($authLogo) }}" alt="{{ $institutionName }} Logo">
                         @else
-                            <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset('images/pnmtc-logo.png') }}" alt="{{ $institutionName }} Logo">
+                            <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset('images/mhtia-white.png') }}" alt="{{ $institutionName }} Logo">
                         @endif
                         
                         <h1 class="mb-2 font-heading fs-6 fw-bold" style="color: var(--brand-primary, #007bff);">

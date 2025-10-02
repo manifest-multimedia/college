@@ -48,7 +48,7 @@
                             <!--end::Aside toggle-->
                             <!--begin::Logo-->
                             <a href="{{ url('/') }}">
-                                <img alt="Logo" src="{{ asset('images/app-logo.png') }}"
+                                <img alt="Logo" src="{{ asset('images/mhtia-white.png') }}"
                                     class="h-25px h-lg-30px d-none d-md-block" />
                                 <img alt="Logo" src="assets/media/logos/default-small.svg"
                                     class="h-25px d-block d-md-none" />

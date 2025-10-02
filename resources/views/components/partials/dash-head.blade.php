@@ -31,7 +31,7 @@ License: For each use you must have a valid license purchased only from above li
     <link rel="canonical" href="http://preview.keenthemes.comdashboards/school.html" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="shortcut icon" href="{{ asset('images/app-logo.png') }}" />
+    <link rel="shortcut icon" href="{{ asset('images/mhtia-white.png') }}" />
     <!--begin::Fonts(mandatory for all pages)-->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
     <!--end::Fonts-->
