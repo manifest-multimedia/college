@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('course_id');
-            $table->foreign('course_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->unsignedInteger('course_id');
+            $table->foreign('course_id')->references('id')->on('subjects')->onDelete('cascade');
             $table->unsignedBigInteger('created_by');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('restrict');
             $table->decimal('total_marks', 8, 2);
