@@ -460,7 +460,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             @endhasanyrole
             
-            @canany(['view exams', 'create exams', 'edit exams', 'grade exams'])
+            {{-- @canany(['view exams', 'create exams', 'edit exams', 'grade exams']) --}}
             <!--begin:Menu item-->
             @php
                 $examRoutes = [
@@ -622,7 +622,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
-            @endcanany
+            {{-- @endcanany --}}
             
             {{-- @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports']) --}}
             <!--begin:Menu item-->
