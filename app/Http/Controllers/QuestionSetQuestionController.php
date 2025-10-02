@@ -61,72 +61,107 @@ class QuestionSetQuestionController extends Controller
      */
     public function store(Request $request, $questionSetId)
     {
-        $request->validate([
-            'question_text' => 'required|string|min:5',
-            'question_type' => 'required|in:multiple_choice,true_false,short_answer',
-            'difficulty_level' => 'required|in:easy,medium,hard',
-            'marks' => 'required|integer|min:1|max:100',
-            'explanation' => 'nullable|string',
-            'exam_section' => 'nullable|string|max:255',
-            'options' => 'required|array|min:2',
-            'options.*' => 'required|string|min:1',
-            'correct_option' => 'required|integer|min:0',
-        ], [
-            'question_text.required' => 'Question text is required',
-            'question_text.min' => 'Question text must be at least 5 characters',
-            'options.required' => 'At least 2 options are required',
-            'options.min' => 'At least 2 options are required',
-            'options.*.required' => 'All options must have text',
-            'correct_option.required' => 'Please select the correct option',
-        ]);
+        // Get all questions data
+        $questionsData = json_decode($request->input('questions'), true) ?: [];
+        
+        // Add current form data if not empty
+        if ($request->filled('question_text')) {
+            $currentQuestion = [
+                'question_text' => $request->input('question_text'),
+                'question_type' => $request->input('question_type'),
+                'difficulty_level' => 'medium', // Default
+                'marks' => $request->input('marks'),
+                'explanation' => $request->input('explanation'),
+                'exam_section' => $request->input('exam_section'),
+                'options' => [],
+                'correct_options' => []
+            ];
+            
+            // Get options and correct answers from form
+            $options = array_filter($request->input('options', []), fn($opt) => !empty(trim($opt)));
+            $correctOptions = $request->input('correct_options', []);
+            
+            $currentQuestion['options'] = array_values($options);
+            $currentQuestion['correct_options'] = array_map('intval', $correctOptions);
+            
+            $questionsData[] = $currentQuestion;
+        }
+        
+        // Validate we have at least one question
+        if (empty($questionsData)) {
+            return response()->json(['error' => 'No questions provided.'], 422);
+        }
+        
+        // Custom validation rules
+        foreach ($questionsData as $index => $question) {
+            if (empty($question['question_text'])) {
+                return response()->json(['error' => "Question text is required for question " . ($index + 1)], 422);
+            }
+            
+            if (strlen($question['question_text']) < 5) {
+                return response()->json(['error' => "Question text must be at least 5 characters for question " . ($index + 1)], 422);
+            }
+            
+            if (count($question['options']) < 2) {
+                return response()->json(['error' => "At least 2 options are required for question " . ($index + 1)], 422);
+            }
+            
+            if (empty($question['correct_options'])) {
+                return response()->json(['error' => "Please select at least one correct answer for question " . ($index + 1)], 422);
+            }
+            
+            foreach ($question['correct_options'] as $optionIndex) {
+                if (!isset($question['options'][$optionIndex])) {
+                    return response()->json(['error' => "Invalid correct option selected for question " . ($index + 1)], 422);
+                }
+            }
+        }
 
         $questionSet = QuestionSet::find($questionSetId);
         if (!$questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
-        // Validate correct option index
-        $correctOptionIndex = $request->input('correct_option');
-        $options = $request->input('options');
-        
-        if ($correctOptionIndex >= count($options)) {
-            return response()->json(['error' => 'Invalid correct option selected.'], 422);
-        }
-
         try {
             DB::beginTransaction();
 
-            $question = Question::create([
-                'question_set_id' => $questionSetId,
-                'question_text' => $request->input('question_text'),
-                'type' => $request->input('question_type'),
-                'difficulty_level' => $request->input('difficulty_level'),
-                'mark' => $request->input('marks'),
-                'explanation' => $request->input('explanation'),
-                'exam_section' => $request->input('exam_section'),
-            ]);
-
-            // Create options
-            foreach ($options as $index => $optionText) {
-                Option::create([
-                    'question_id' => $question->id,
-                    'option_text' => $optionText,
-                    'is_correct' => $index === $correctOptionIndex,
+            $createdQuestions = [];
+            
+            foreach ($questionsData as $questionData) {
+                $question = Question::create([
+                    'question_set_id' => $questionSetId,
+                    'question_text' => $questionData['question_text'],
+                    'type' => $questionData['question_type'],
+                    'difficulty_level' => $questionData['difficulty_level'] ?? 'medium',
+                    'mark' => $questionData['marks'],
+                    'explanation' => $questionData['explanation'] ?? null,
+                    'exam_section' => $questionData['exam_section'] ?? null,
                 ]);
+                
+                // Create options
+                foreach ($questionData['options'] as $index => $optionText) {
+                    Option::create([
+                        'question_id' => $question->id,
+                        'option_text' => $optionText,
+                        'is_correct' => in_array($index, $questionData['correct_options']),
+                    ]);
+                }
+                
+                $createdQuestions[] = $question->id;
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Question created successfully!',
-                'question_id' => $question->id
+                'message' => count($createdQuestions) . ' question(s) created successfully!',
+                'question_ids' => $createdQuestions
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Question creation error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create question: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to create questions: ' . $e->getMessage()], 500);
         }
     }
 
@@ -144,7 +179,8 @@ class QuestionSetQuestionController extends Controller
             'exam_section' => 'nullable|string|max:255',
             'options' => 'required|array|min:2',
             'options.*' => 'required|string|min:1',
-            'correct_option' => 'required|integer|min:0',
+            'correct_options' => 'required|array|min:1',
+            'correct_options.*' => 'required|integer|min:0',
         ]);
 
         $questionSet = QuestionSet::find($questionSetId);
@@ -157,12 +193,14 @@ class QuestionSetQuestionController extends Controller
             return response()->json(['error' => 'Question not found.'], 404);
         }
 
-        // Validate correct option index
-        $correctOptionIndex = $request->input('correct_option');
+        // Validate correct options
+        $correctOptions = $request->input('correct_options');
         $options = $request->input('options');
         
-        if ($correctOptionIndex >= count($options)) {
-            return response()->json(['error' => 'Invalid correct option selected.'], 422);
+        foreach ($correctOptions as $optionIndex) {
+            if ($optionIndex >= count($options)) {
+                return response()->json(['error' => 'Invalid correct option selected.'], 422);
+            }
         }
 
         try {
@@ -184,7 +222,7 @@ class QuestionSetQuestionController extends Controller
                 Option::create([
                     'question_id' => $question->id,
                     'option_text' => $optionText,
-                    'is_correct' => $index === $correctOptionIndex,
+                    'is_correct' => in_array($index, $correctOptions),
                 ]);
             }
 
@@ -258,13 +296,13 @@ class QuestionSetQuestionController extends Controller
             return response()->json(['error' => 'Question not found.'], 404);
         }
 
-        $correctOptionIndex = null;
         $options = [];
+        $correctOptions = [];
 
         foreach ($question->options as $index => $option) {
             $options[] = $option->option_text;
             if ($option->is_correct) {
-                $correctOptionIndex = $index;
+                $correctOptions[] = $index;
             }
         }
 
@@ -279,7 +317,7 @@ class QuestionSetQuestionController extends Controller
                 'explanation' => $question->explanation,
                 'exam_section' => $question->exam_section,
                 'options' => $options,
-                'correct_option' => $correctOptionIndex
+                'correct_options' => $correctOptions
             ]
         ]);
     }

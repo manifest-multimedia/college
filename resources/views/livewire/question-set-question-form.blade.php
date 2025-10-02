@@ -143,21 +143,19 @@
                                         <div class="card mb-3">
                                             <div class="card-body">
                                                 <div class="row align-items-center">
-                                                    <!-- Correct Answer Radio -->
-                                                    <div class="col-md-1">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input @error('correctOption') is-invalid @enderror" 
-                                                                   type="radio" name="correctOption" 
-                                                                   id="correct{{ $index }}" 
-                                                                   value="{{ $index }}" 
-                                                                   wire:model="correctOption">
-                                                            <label class="form-check-label" for="correct{{ $index }}">
-                                                                <span class="badge bg-secondary">{{ chr(65 + $index) }}</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Option Text -->
+                                    <!-- Correct Answer Checkbox -->
+                                    <div class="col-md-1">
+                                        <div class="form-check">
+                                            <input class="form-check-input @error('correctOptions') is-invalid @enderror" 
+                                                   type="checkbox"
+                                                   id="correct{{ $index }}" 
+                                                   wire:click="toggleCorrectOption({{ $index }})"
+                                                   @if(in_array($index, $correctOptions)) checked @endif>
+                                            <label class="form-check-label" for="correct{{ $index }}">
+                                                <span class="badge bg-secondary">{{ chr(65 + $index) }}</span>
+                                            </label>
+                                        </div>
+                                    </div>                                                    <!-- Option Text -->
                                                     <div class="col-md-10">
                                                         <input type="text" class="form-control @error('options.'.$index) is-invalid @enderror" 
                                                                wire:model="options.{{ $index }}" 
@@ -188,7 +186,7 @@
                                 
                                 <small class="text-muted">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    Select the radio button next to the correct answer. Minimum 2 options required.
+                                    Select one or more checkboxes to mark the correct answers. Minimum 2 options required.
                                 </small>
                             </div>
                         @endif
@@ -218,7 +216,7 @@
                         </div>
 
                         <!-- Form Actions -->
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
                                 <button type="button" class="btn btn-outline-secondary me-2" wire:click="resetForm">
                                     <i class="bi bi-arrow-clockwise me-1"></i>Reset
@@ -227,18 +225,73 @@
                                     <i class="bi bi-x-lg me-1"></i>Cancel
                                 </a>
                             </div>
-                            <button type="submit" class="btn btn-primary" 
-                                    wire:loading.attr="disabled" wire:target="save">
-                                <span wire:loading.remove wire:target="save">
-                                    <i class="bi bi-{{ $isEditing ? 'check-lg' : 'plus-lg' }} me-1"></i>
-                                    {{ $isEditing ? 'Update Question' : 'Create Question' }}
-                                </span>
-                                <span wire:loading wire:target="save">
-                                    <i class="bi bi-hourglass-split me-1"></i>
-                                    {{ $isEditing ? 'Updating...' : 'Creating...' }}
-                                </span>
-                            </button>
+                            <div class="d-flex gap-2">
+                                @if(!$isEditing)
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            wire:click="addAnotherQuestion"
+                                            wire:loading.attr="disabled" 
+                                            wire:target="addAnotherQuestion">
+                                        <span wire:loading.remove wire:target="addAnotherQuestion">
+                                            <i class="bi bi-plus-lg me-1"></i>Add Another Question
+                                        </span>
+                                        <span wire:loading wire:target="addAnotherQuestion">
+                                            <i class="bi bi-hourglass-split me-1"></i>Adding...
+                                        </span>
+                                    </button>
+                                @endif
+                                <button type="submit" class="btn btn-primary" 
+                                        wire:loading.attr="disabled" wire:target="save,createAllQuestions">
+                                    <span wire:loading.remove wire:target="save,createAllQuestions">
+                                        <i class="bi bi-{{ $isEditing ? 'check-lg' : 'plus-lg' }} me-1"></i>
+                                        {{ $isEditing ? 'Update Question' : 'Save All Questions' }}
+                                    </span>
+                                    <span wire:loading wire:target="save,createAllQuestions">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        {{ $isEditing ? 'Updating...' : 'Saving...' }}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
+
+                        @if(!$isEditing && count($questions) > 0)
+                            <div class="mt-4">
+                                <h5>Added Questions</h5>
+                                @foreach($questions as $index => $questionData)
+                                    <div class="card mt-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <h6 class="card-title">Question {{ $index + 1 }}</h6>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                        wire:click="removeQuestion({{ $index }})">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                            <p>{{ $questionData['questionText'] }}</p>
+                                            <div class="small text-muted">
+                                                <span class="me-3">Type: {{ ucfirst($questionData['questionType']) }}</span>
+                                                <span class="me-3">Difficulty: {{ ucfirst($questionData['difficultyLevel']) }}</span>
+                                                <span>Marks: {{ $questionData['marks'] }}</span>
+                                            </div>
+                                            @if($questionData['questionType'] === 'multiple_choice')
+                                                <div class="mt-2">
+                                                    @foreach($questionData['options'] as $optIndex => $option)
+                                                        @if(!empty(trim($option)))
+                                                            <div class="form-check disabled">
+                                                                <input class="form-check-input" type="checkbox" disabled 
+                                                                       @if(in_array($optIndex, $questionData['correctOptions'])) checked @endif>
+                                                                <label class="form-check-label">
+                                                                    {{ chr(65 + $optIndex) }}. {{ $option }}
+                                                                </label>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </form>
                 </div>
             </div>

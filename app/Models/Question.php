@@ -106,11 +106,19 @@ class Question extends Model
     }
 
     /**
-     * Get the correct option for this question
+     * Get the correct options for this question
+     */
+    public function getCorrectOptionsAttribute()
+    {
+        return $this->options()->where('is_correct', true)->get();
+    }
+
+    /**
+     * Get the correct option for this question (legacy support)
      */
     public function getCorrectOptionAttribute()
     {
-        return $this->options()->where('is_correct', true)->first();
+        return $this->correctOptions->first();
     }
 
     /**

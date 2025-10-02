@@ -49,18 +49,27 @@
             </div>
 
             @forelse($questions as $index => $question)
-               <div class="p-10 mb-4 w-full rounded d-flex border-light">
-
-
+               <div class="p-4 mb-4 w-full rounded d-flex border bg-white shadow-sm">
                 {{-- Question No --}}
-                <div class="p-5 rounded border me-3 d-flex align-items-center justify-content-center bg-light"  style="width: 80px; height: 80px; border-radius: 50%; background-color: #f0f0f0;">
-                  Q  {{ $index + 1 }}
+                <div class="me-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(145deg, #f8f9fa, #e9ecef); border: 2px solid #dee2e6; flex-shrink: 0;">
+                    <span class="fw-bold text-primary">{{ $index + 1 }}</span>
                 </div>
                 <div class="flex-grow-1">
-                <div class="p-10 mb-4 rounded border bg-light">
+                <div class="p-4 rounded border bg-light">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-primary px-3 py-2">Question {{ $index + 1 }}</span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" wire:click.prevent="saveQuestion({{ $index }})">
+                                <i class="bi bi-save me-1"></i>Save
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="openConfirmModal({{ $question['id'] }})">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
                     <div class="mb-3">
-                        <label for="question{{ $index }}" class="form-label">Question Text:</label>
-                        <textarea rows="7" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question"></textarea>
+                        <label for="question{{ $index }}" class="form-label fw-bold">Question Text:</label>
+                        <textarea rows="4" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter your question here..."></textarea>
                     </div>
 
                     <div class="row">
@@ -75,29 +84,45 @@
                     </div>
 
                     <!-- Options Section -->
-                    <div>
-                        <label class="form-label">Options:</label>
+                    <div class="mt-4">
+                        <label class="form-label fw-bold mb-3">
+                            <i class="bi bi-list-check me-1"></i>Answer Options:
+                        </label>
                         @foreach($question['options'] as $optIndex => $option)
-                            <div class="mb-2 input-group">
-                                <input type="text" class="form-control" wire:model="questions.{{ $index }}.options.{{ $optIndex }}.option_text" placeholder="Option {{ $optIndex + 1 }}">
-                                
-             <span class="input-group-text">
-                 <input type="checkbox" wire:model="questions.{{ $index }}.options.{{ $optIndex }}.is_correct" {{ $option['is_correct'] ? 'checked' : '' }}>
-                 <label class="form-check-label ms-1">Correct</label>
-             </span>
-                                
-                                <button class="btn btn-danger" wire:click.prevent="removeOption({{ $index }}, {{ $optIndex }})">Remove Option</button>
+                            <div class="mb-3 input-group">
+                                <span class="input-group-text bg-light">
+                                    {{ chr(65 + $optIndex) }}.
+                                </span>
+                                <input type="text" class="form-control" wire:model="questions.{{ $index }}.options.{{ $optIndex }}.option_text" placeholder="Enter option {{ chr(65 + $optIndex) }}">
+                                <div class="input-group-text bg-light">
+                                    <div class="form-check mb-0">
+                                        <input type="checkbox" class="form-check-input" wire:model="questions.{{ $index }}.options.{{ $optIndex }}.is_correct" {{ $option['is_correct'] ? 'checked' : '' }}>
+                                        <label class="form-check-label ms-1">Correct</label>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-danger" wire:click.prevent="removeOption({{ $index }}, {{ $optIndex }})">
+                                    <i class="bi bi-trash me-1"></i>Remove
+                                </button>
                             </div>
                         @endforeach
-                        <button class="mt-2 btn btn-success btn-sm" wire:click.prevent="addOption({{ $index }})">Add Option</button>
-                       
-
+                        <button class="btn btn-outline-success" wire:click.prevent="addOption({{ $index }})">
+                            <i class="bi bi-plus-circle me-1"></i>Add Option
+                        </button>
                     </div>
 
-                    <!-- Delete Question Button -->
-                    <div class="mt-3 text-end">
-                        <button class="btn btn-primary btn-sm" wire:click.prevent="saveQuestion({{ $index }})">Save Question</button>
-                        <button class="btn btn-dark btn-sm" onclick="openConfirmModal({{ $question['id'] }})">Delete Question</button>
+                    <!-- Question Actions -->
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <button class="btn btn-outline-secondary" wire:click.prevent="resetQuestion({{ $index }})">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                        </button>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" wire:click.prevent="saveQuestion({{ $index }})">
+                                <i class="bi bi-save me-1"></i>Save Changes
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="openConfirmModal({{ $question['id'] }})">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
                 </div>

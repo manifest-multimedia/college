@@ -52,5 +52,6 @@ License: For each use you must have a valid license purchased only from above li
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 </head>

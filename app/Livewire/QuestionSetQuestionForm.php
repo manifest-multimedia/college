@@ -27,11 +27,13 @@ class QuestionSetQuestionForm extends Component
     
     // Options
     public $options = [];
-    public $correctOption = 0;
+    public $correctOptions = [];
     
     // UI state
     public $isEditing = false;
     public $isSaving = false;
+    public $addingMultiple = false;  // Flag for adding multiple questions
+    public $questions = [];          // Array to store multiple questions
     
     protected $rules = [
         'questionText' => 'required|string|min:5',
@@ -97,12 +99,12 @@ class QuestionSetQuestionForm extends Component
         
         // Load options
         $this->options = [];
-        $this->correctOption = 0;
+        $this->correctOptions = [];
         
         foreach ($this->question->options as $index => $option) {
             $this->options[] = $option->option_text;
             if ($option->is_correct) {
-                $this->correctOption = $index;
+                $this->correctOptions[] = $index;
             }
         }
         
@@ -115,7 +117,7 @@ class QuestionSetQuestionForm extends Component
     private function initializeNewQuestion()
     {
         $this->options = ['', '', '', '']; // 4 empty options by default
-        $this->correctOption = 0;
+        $this->correctOptions = [];
     }
 
     public function addOption()
@@ -131,10 +133,15 @@ class QuestionSetQuestionForm extends Component
             unset($this->options[$index]);
             $this->options = array_values($this->options); // Re-index array
             
-            // Adjust correct option if necessary
-            if ($this->correctOption >= count($this->options)) {
-                $this->correctOption = count($this->options) - 1;
-            }
+            // Remove from correct options if it was selected
+            $this->correctOptions = array_values(array_filter($this->correctOptions, function($i) use ($index) {
+                return $i !== $index;
+            }));
+            
+            // Adjust indices of correct options after the removed index
+            $this->correctOptions = array_map(function($i) use ($index) {
+                return $i > $index ? $i - 1 : $i;
+            }, $this->correctOptions);
         }
     }
 
@@ -145,17 +152,29 @@ class QuestionSetQuestionForm extends Component
         
         // If options were updated, ensure correct option is valid
         if (str_starts_with($propertyName, 'options.')) {
-            $this->validateCorrectOption();
+            $this->validateCorrectOptions();
+        }
+    }
+    
+    public function toggleCorrectOption($index)
+    {
+        if (in_array($index, $this->correctOptions)) {
+            $this->correctOptions = array_values(array_filter($this->correctOptions, fn($i) => $i !== $index));
+        } else {
+            $this->correctOptions[] = $index;
+            sort($this->correctOptions);
         }
     }
 
-    private function validateCorrectOption()
+    private function validateCorrectOptions()
     {
         $nonEmptyOptions = array_filter($this->options, fn($option) => !empty(trim($option)));
+        $optionCount = count($nonEmptyOptions);
         
-        if ($this->correctOption >= count($nonEmptyOptions)) {
-            $this->correctOption = count($nonEmptyOptions) - 1;
-        }
+        // Filter out any invalid indices from correctOptions
+        $this->correctOptions = array_values(array_filter($this->correctOptions, function($index) use ($optionCount) {
+            return $index < $optionCount;
+        }));
     }
 
     public function save()
@@ -164,8 +183,16 @@ class QuestionSetQuestionForm extends Component
         $this->options = array_filter($this->options, fn($option) => !empty(trim($option)));
         $this->options = array_values($this->options); // Re-index
         
-        // Validate correct option after filtering
-        $this->validateCorrectOption();
+        // Validate correct options after filtering
+        $this->validateCorrectOptions();
+        
+        // Add validation rule to ensure at least one correct option is selected
+        $this->rules['correctOptions'] = ['required', 'array', 'min:1'];
+        $this->rules['correctOptions.*'] = ['integer', 'min:0', 'lt:'.count($this->options)];
+        
+        $this->messages['correctOptions.required'] = 'Please select at least one correct answer';
+        $this->messages['correctOptions.min'] = 'Please select at least one correct answer';
+        $this->messages['correctOptions.*.lt'] = 'Invalid correct answer selected';
         
         $this->validate();
         
@@ -234,9 +261,91 @@ class QuestionSetQuestionForm extends Component
                 Option::create([
                     'question_id' => $question->id,
                     'option_text' => trim($optionText),
-                    'is_correct' => $index === $this->correctOption,
+                    'is_correct' => in_array($index, $this->correctOptions),
                 ]);
             }
+        }
+    }
+    
+    public function addAnotherQuestion()
+    {
+        // Save current question state
+        $this->questions[] = [
+            'questionText' => $this->questionText,
+            'questionType' => $this->questionType,
+            'difficultyLevel' => $this->difficultyLevel,
+            'marks' => $this->marks,
+            'explanation' => $this->explanation,
+            'examSection' => $this->examSection,
+            'options' => $this->options,
+            'correctOptions' => $this->correctOptions,
+        ];
+        
+        // Reset form for new question
+        $this->resetQuestionForm();
+    }
+    
+    private function resetQuestionForm()
+    {
+        $this->questionText = '';
+        $this->questionType = 'multiple_choice';
+        $this->difficultyLevel = 'medium';
+        $this->marks = 1;
+        $this->explanation = '';
+        $this->examSection = '';
+        $this->options = ['', '', '', ''];
+        $this->correctOptions = [];
+    }
+    
+    public function removeQuestion($index)
+    {
+        unset($this->questions[$index]);
+        $this->questions = array_values($this->questions);
+    }
+    
+    public function createAllQuestions()
+    {
+        try {
+            DB::beginTransaction();
+            
+            // Save current question first
+            if (!empty(trim($this->questionText))) {
+                $this->addAnotherQuestion();
+            }
+            
+            // Create all saved questions
+            foreach ($this->questions as $questionData) {
+                $question = Question::create([
+                    'question_set_id' => $this->questionSetId,
+                    'question_text' => $questionData['questionText'],
+                    'type' => $questionData['questionType'],
+                    'difficulty_level' => $questionData['difficultyLevel'],
+                    'mark' => $questionData['marks'],
+                    'explanation' => $questionData['explanation'],
+                    'exam_section' => $questionData['examSection'],
+                ]);
+                
+                // Create options for the question
+                foreach ($questionData['options'] as $index => $optionText) {
+                    if (!empty(trim($optionText))) {
+                        Option::create([
+                            'question_id' => $question->id,
+                            'option_text' => trim($optionText),
+                            'is_correct' => in_array($index, $questionData['correctOptions']),
+                        ]);
+                    }
+                }
+            }
+            
+            DB::commit();
+            
+            session()->flash('success', count($this->questions) . ' questions created successfully!');
+            return redirect()->route('question.sets.questions', $this->questionSetId);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Question save error: ' . $e->getMessage());
+            session()->flash('error', 'Error saving questions: ' . $e->getMessage());
         }
     }
 

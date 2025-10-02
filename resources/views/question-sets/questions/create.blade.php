@@ -114,7 +114,7 @@
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="correct_option" 
+                                                <input class="form-check-input" type="checkbox" name="correct_options[]" 
                                                        value="1" id="correct_1">
                                                 <label class="form-check-label" for="correct_1">Correct</label>
                                             </div>
@@ -136,7 +136,7 @@
                                         </div>
                                         <div class="col-md-2">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="correct_option" 
+                                                <input class="form-check-input" type="checkbox" name="correct_options[]" 
                                                        value="2" id="correct_2">
                                                 <label class="form-check-label" for="correct_2">Correct</label>
                                             </div>
@@ -170,13 +170,22 @@
                             </div>
                             
                             <!-- Action Buttons -->
-                            <div class="d-flex justify-content-end">
-                                <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
                                     <i class="bi bi-x-circle me-1"></i>Cancel
                                 </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle me-1"></i>Create Question
+                                <button type="button" class="btn btn-outline-primary" id="addAnotherBtn">
+                                    <i class="bi bi-plus-circle me-1"></i>Add Another Question
                                 </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-1"></i>Save All Questions
+                                </button>
+                            </div>
+
+                            <!-- Added Questions List -->
+                            <div id="addedQuestionsContainer" class="mt-4" style="display: none;">
+                                <h5>Added Questions</h5>
+                                <div id="addedQuestionsList" class="list-group mt-3"></div>
                             </div>
                         </form>
                         
@@ -206,8 +215,16 @@
     @push('scripts')
     <script>
     $(document).ready(function() {
+        // Set up CSRF token for AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         let optionCount = 2;
         const maxOptions = 6;
+        let addedQuestions = [];
         
         // Handle question type change
         $('#question_type').change(function() {
@@ -233,7 +250,96 @@
             updateRemoveButtons();
         });
         
-        // Form submission
+        // Add another question button
+        $('#addAnotherBtn').click(function() {
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Get current question data
+            const questionData = {
+                question_text: $('#question').val().trim(),
+                question_type: $('#question_type').val(),
+                difficulty_level: 'medium', // You might want to add a field for this
+                marks: $('#marks').val(),
+                explanation: $('#explanation').val().trim(),
+                exam_section: $('#exam_section').val().trim(),
+                options: [],
+                correct_options: []
+            };
+            
+            // Collect options and correct answers
+            $('.option-group').each(function(index) {
+                const optionText = $(this).find('input[type="text"]').val().trim();
+                if (optionText) {
+                    questionData.options.push(optionText);
+                    if ($(this).find('input[type="checkbox"]').is(':checked')) {
+                        questionData.correct_options.push(index);
+                    }
+                }
+            });
+            
+            // Add to list
+            addedQuestions.push(questionData);
+            
+            // Update display
+            updateAddedQuestionsList();
+            
+            // Reset form
+            $('#questionForm')[0].reset();
+            $('#question').focus();
+            
+            // Show success message
+            showSuccess('Question added successfully. You can add another or save all questions.');
+        });
+
+        function updateAddedQuestionsList() {
+            const container = $('#addedQuestionsContainer');
+            const list = $('#addedQuestionsList');
+            list.empty();
+            
+            if (addedQuestions.length > 0) {
+                container.show();
+                
+                addedQuestions.forEach((q, index) => {
+                    const item = $(`
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Question ${index + 1}</h6>
+                                    <p class="mb-1">${q.question_text}</p>
+                                    <small>Type: ${q.question_type}, Marks: ${q.marks}</small>
+                                    
+                                    <div class="mt-2">
+                                        <strong>Options:</strong>
+                                        <ul class="mb-0">
+                                            ${q.options.map((opt, i) => `
+                                                <li>${opt} ${q.correct_options.includes(i) ? '<span class="badge bg-success">Correct</span>' : ''}</li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-question" data-index="${index}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                    list.append(item);
+                });
+            } else {
+                container.hide();
+            }
+        }
+        
+        // Remove question button
+        $(document).on('click', '.remove-question', function() {
+            const index = $(this).data('index');
+            addedQuestions.splice(index, 1);
+            updateAddedQuestionsList();
+        });
+
+        // Form submission - now handles multiple questions
         $('#questionForm').submit(function(e) {
             e.preventDefault();
             
@@ -241,8 +347,10 @@
                 return;
             }
             
-            const formData = $(this).serialize();
-            
+            // Prepare form data
+            const formData = new FormData(this);
+            formData.append('questions', JSON.stringify(addedQuestions));
+
             showLoading();
             hideMessages();
             
@@ -250,6 +358,8 @@
                 url: '{{ route('question.sets.questions.store', $questionSetId) }}',
                 method: 'POST',
                 data: formData,
+                processData: false,
+                contentType: false,
                 success: function(response) {
                     hideLoading();
                     
@@ -343,7 +453,7 @@
                         </div>
                         <div class="col-md-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="correct_option" 
+                                <input class="form-check-input" type="checkbox" name="correct_options[]" 
                                        value="${number}" id="correct_${number}">
                                 <label class="form-check-label" for="correct_${number}">Correct</label>
                             </div>
@@ -379,8 +489,9 @@
                 return false;
             }
             
-            if (!correctOption) {
-                showError(['Please select the correct answer']);
+            const correctOptions = $('input[name="correct_options[]"]:checked');
+            if (correctOptions.length === 0) {
+                showError(['Please select at least one correct answer']);
                 return false;
             }
             
