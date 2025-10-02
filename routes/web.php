@@ -134,7 +134,7 @@ Route::middleware([
     });
 
     // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin)
-    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin'])->group(function () {
+    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin|System'])->group(function () {
         Route::get('exam-results', function () {
             return view('exams.correct-data');
         })->name('exam.results');
@@ -144,6 +144,12 @@ Route::middleware([
         })->name('exam.result.import');
 
         Route::get('/edit-exam/{exam_slug}', ExamEdit::class)->name('exams.edit');
+
+        Route::get('/exams/results', function () {
+            return view('exams.results');
+        })->middleware('role:System|Academic Officer|Administrator|Lecturer')->name('exams.results');
+
+        Route::get('/exams/{exam}', \App\Livewire\ExamDetail::class)->name('exams.show');
 
         Route::get('/exam-center', function () {
             return view('examcenter');
@@ -305,11 +311,6 @@ Route::middleware([
     Route::get('/exam-response-tracker', function () {
         return view('exams.response-tracker');
     })->middleware('role:Super Admin')->name('exam.response.tracker');
-
-    // Exam Results - System Role Access Only
-    Route::get('/exams/results', function () {
-        return view('exams.results');
-    })->middleware(['auth', 'role:System|Academic Officer|Administrator|Lecturer'])->name('exams.results');
 
     /*
     |--------------------------------------------------------------------------
