@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register Role and Permission observers for AuthCentral sync
+        \Spatie\Permission\Models\Role::observe(\App\Observers\RoleObserver::class);
+        \Spatie\Permission\Models\Permission::observe(\App\Observers\PermissionObserver::class);
     }
 }
