@@ -1,4 +1,4 @@
-<x-dashboard.content-card>
+<x-dashboard>
     <div class="container-fluid">
         <!-- Search and Create Button -->
         <div class="row mb-4">
@@ -121,4 +121,4 @@
             </div>
         </div>
     </div>
-</x-dashboard.content-card>
+</x-dashboard>
