@@ -295,7 +295,7 @@ Route::middleware([
     })->name('supportcenter');
 
     Route::get('/staffmail', function () {
-        return redirect()->away('https://pnmtc.edu.gh/webmail');
+        return redirect()->away('https://mail.hostinger.com/');
     })->name('staffmail');
 
     Route::get('/reset-pass', function () {
