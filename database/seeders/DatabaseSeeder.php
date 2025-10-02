@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
-            StudentData::class,
+            // StudentData::class,
             AssetSeeder::class,
         ]);
     }
