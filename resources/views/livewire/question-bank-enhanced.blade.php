@@ -108,9 +108,9 @@
                     @endif
 
                     <!-- Question Sets Cards Grid -->
-                    <div class="row g-4">
+                    <div class="row g-4 py-3">
                         @forelse($filteredQuestionSets as $set)
-                            <div class="col-md-4 col-lg-3">
+                            <div class="col-md-4 col-lg-3 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header p-3 {{ match($set->difficulty_level) {
                                         'easy' => 'bg-success-subtle',
@@ -180,7 +180,7 @@
     @else
         <!-- Question Set Questions View -->
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center pt-5">
                 <div>
                     <button class="btn btn-sm btn-outline-secondary me-2" wire:click="backToQuestionSets">
                         <i class="bi bi-arrow-left me-1"></i> Back to Sets
@@ -222,7 +222,7 @@
                 <div class="mb-4">
                     <div class="row g-3">
                         <!-- Search and Filters -->
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="input-group">
                                 <input type="text" class="form-control" placeholder="Search questions..." 
                                     wire:model.live="searchTerm">
@@ -233,26 +233,6 @@
                             </div>
                         </div>
                         
-                        <!-- Bulk Operations -->
-                        <div class="col-md-6">
-                            <div class="btn-group w-100" role="group">
-                                <button class="btn {{ $bulkMode ? 'btn-warning' : 'btn-outline-secondary' }}" 
-                                    wire:click="toggleBulkMode">
-                                    <i class="bi bi-check2-square"></i> Bulk
-                                </button>
-                                <button class="btn btn-outline-info" wire:click="$toggle('showStatistics')">
-                                    <i class="bi bi-bar-chart"></i> Stats
-                                </button>
-                                <a href="{{ route('question.sets.import', $question_set_id) }}" class="btn btn-outline-warning">
-                                    <i class="bi bi-upload"></i> Import
-                                </a>
-                                <a href="{{ route('question.sets.questions.create', $question_set_id) }}" class="btn btn-outline-success">
-                                    <i class="bi bi-plus-circle"></i> Add
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
                     @if($showAdvancedFilters)
                         <div class="mt-3 p-3 bg-light rounded">
                             <div class="row g-3">
@@ -282,6 +262,26 @@
                             </div>
                         </div>
                     @endif
+                        <!-- Bulk Operations -->
+                        <div class="col-md-12">
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn {{ $bulkMode ? 'btn-warning' : 'btn-outline-secondary' }}" 
+                                    wire:click="toggleBulkMode">
+                                    <i class="bi bi-check2-square"></i> Bulk
+                                </button>
+                                <button class="btn btn-outline-info" wire:click="$toggle('showStatistics')">
+                                    <i class="bi bi-bar-chart"></i> Stats
+                                </button>
+                                <a href="{{ route('question.sets.import', $question_set_id) }}" class="btn btn-outline-warning">
+                                    <i class="bi bi-upload"></i> Import
+                                </a>
+                                <a href="{{ route('question.sets.questions.create', $question_set_id) }}" class="btn btn-outline-success">
+                                    <i class="bi bi-plus-circle"></i> Add
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
                 </div>
                 
                 <!-- Question Set Statistics -->
@@ -407,17 +407,18 @@
                           
  
                 @forelse($questions as $index => $question)
-                    <div class="p-4 mb-4 w-full rounded border bg-white shadow-sm {{ $bulkMode && in_array($question['id'] ?? null, $selectedQuestions) ? 'border-warning bg-warning bg-opacity-10' : '' }}">
+                    <div class="p-4 mb-4 w-full rounded border bg-white shadow-sm hover:shadow-md transition-shadow {{ $bulkMode && in_array($question['id'] ?? null, $selectedQuestions) ? 'border-warning bg-warning bg-opacity-10' : '' }}">
                         <div class="d-flex">
                             @if($bulkMode)
                                 <div class="me-3 d-flex justify-content-center align-items-center">
                                     <input type="checkbox" class="form-check-input" 
-                                        wire:model="selectedQuestions" 
-                                        value="{{ $question['id'] ?? '' }}"
-                                        {{ isset($question['id']) ? '' : 'disabled' }}>
+                                        wire:model.live="selectedQuestions" 
+                                        value="{{ $question['id'] }}"
+                                        {{ !isset($question['id']) ? 'disabled' : '' }}
+                                        id="question-{{ $question['id'] ?? 'new' }}">
                                 </div>
                             @endif
-                            <div class="me-3 d-flex justify-content-center align-items-center rounded-circle bg-primary text-white" style="width: 50px; height: 50px">
+                            <div class="me-4 d-flex justify-content-center align-items-center rounded-circle bg-primary text-white" style="width: 48px; height: 48px; min-width: 48px; font-size: 1.1rem">
                                 <span class="fw-bold">{{ $index + 1 }}</span>
                             </div>
                             <div class="flex-grow-1">
