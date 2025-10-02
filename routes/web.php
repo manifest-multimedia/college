@@ -530,6 +530,8 @@ Route::middleware([
             Route::patch('/semesters/{semester}/toggle-active', [App\Http\Controllers\SemesterController::class, 'toggleActive'])->name('semesters.toggle-active');
 
             // College Classes
+                    // Year Management (Livewire)
+                    Route::get('/years', \App\Livewire\Academics\YearManager::class)->name('years.index');
             Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
             Route::post('/classes/filter', [App\Http\Controllers\CollegeClassController::class, 'filter'])->name('classes.filter');
             

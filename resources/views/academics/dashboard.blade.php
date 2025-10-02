@@ -45,6 +45,19 @@
                             <!-- Quick Access Cards -->
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="fas fa-layer-group me-1"></i> Years
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Manage academic years (e.g., Year 1, Year 2, Year 3) for programs.</p>
+                                        <a href="{{ route('academics.years.index') }}" class="btn btn-outline-secondary">Manage</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
                                     <div class="card-header bg-primary text-white">
                                         <h5 class="card-title mb-0">
                                             <i class="fas fa-calendar-alt me-1"></i> Academic Years
