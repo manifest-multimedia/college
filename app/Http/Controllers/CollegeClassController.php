@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CollegeClass;
 use App\Models\Semester;
-use App\Models\Course;
 use App\Models\User;
 use App\Services\AcademicsService;
 use Illuminate\Http\Request;
@@ -13,7 +12,7 @@ use Illuminate\Support\Str;
 class CollegeClassController extends Controller
 {
     protected $academicsService;
-    
+
     /**
      * Constructor
      */
@@ -22,7 +21,7 @@ class CollegeClassController extends Controller
         // $this->middleware(['auth', 'permission:manage-academics']);
         $this->academicsService = $academicsService;
     }
-    
+
     /**
      * Display a listing of college classes.
      */
@@ -30,13 +29,13 @@ class CollegeClassController extends Controller
     {
         // Default to current semester if set
         $currentSemester = $this->academicsService->getCurrentSemester();
-        
+
         $classes = CollegeClass::when($currentSemester, function ($query) use ($currentSemester) {
-                $query->where('semester_id', $currentSemester->id);
-            })
-            ->with(['semester.academicYear', 'course', 'instructor'])
+            $query->where('semester_id', $currentSemester->id);
+        })
+            ->with(['semester.academicYear', 'instructor'])
             ->paginate(10);
-        
+
         return view('academics.classes.index', compact('classes', 'currentSemester'));
     }
 
@@ -46,12 +45,11 @@ class CollegeClassController extends Controller
     public function create()
     {
         $semesters = Semester::with('academicYear')->get();
-        $courses = Course::all();
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('name', 'instructor');
         })->get();
-        
-        return view('academics.classes.create', compact('semesters', 'courses', 'instructors'));
+
+        return view('academics.classes.create', compact('semesters', 'instructors'));
     }
 
     /**
@@ -63,22 +61,20 @@ class CollegeClassController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'semester_id' => 'required|exists:semesters,id',
-            'course_id' => 'required|exists:courses,id',
             'instructor_id' => 'nullable|exists:users,id',
         ]);
-        
+
         $collegeClass = CollegeClass::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
             'semester_id' => $validated['semester_id'],
-            'course_id' => $validated['course_id'],
             'instructor_id' => $validated['instructor_id'],
             'is_active' => true,
             'is_deleted' => false,
             'created_by' => auth()->id(),
         ]);
-        
+
         return redirect()->route('academics.classes.index')
             ->with('success', 'College class created successfully.');
     }
@@ -88,11 +84,11 @@ class CollegeClassController extends Controller
      */
     public function show(CollegeClass $class)
     {
-        $class->load(['semester.academicYear', 'course', 'instructor', 'students']);
-        
+        $class->load(['semester.academicYear', 'instructor', 'students']);
+
         // Get student grades for this class
         $studentGrades = $class->studentGrades()->with(['student', 'grade'])->get();
-        
+
         return view('academics.classes.show', compact('class', 'studentGrades'));
     }
 
@@ -102,12 +98,11 @@ class CollegeClassController extends Controller
     public function edit(CollegeClass $class)
     {
         $semesters = Semester::with('academicYear')->get();
-        $courses = Course::all();
         $instructors = User::whereHas('roles', function ($query) {
             $query->where('name', 'instructor');
         })->get();
-        
-        return view('academics.classes.edit', compact('class', 'semesters', 'courses', 'instructors'));
+
+        return view('academics.classes.edit', compact('class', 'semesters', 'instructors'));
     }
 
     /**
@@ -119,19 +114,17 @@ class CollegeClassController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'semester_id' => 'required|exists:semesters,id',
-            'course_id' => 'required|exists:courses,id',
             'instructor_id' => 'nullable|exists:users,id',
         ]);
-        
+
         $class->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
             'semester_id' => $validated['semester_id'],
-            'course_id' => $validated['course_id'],
             'instructor_id' => $validated['instructor_id'],
         ]);
-        
+
         return redirect()->route('academics.classes.index')
             ->with('success', 'College class updated successfully.');
     }
@@ -146,32 +139,32 @@ class CollegeClassController extends Controller
             return redirect()->route('academics.classes.index')
                 ->with('error', 'Cannot delete college class with associated student grades.');
         }
-        
+
         // Check if the class has any students assigned to it
         if ($class->students()->count() > 0) {
             return redirect()->route('academics.classes.index')
                 ->with('error', 'Cannot delete college class with assigned students.');
         }
-        
+
         $class->delete();
-        
+
         return redirect()->route('academics.classes.index')
             ->with('success', 'College class deleted successfully.');
     }
-    
+
     /**
      * Filter classes by semester
      */
     public function filter(Request $request)
     {
         $semesterId = $request->semester_id;
-        
+
         $classes = CollegeClass::where('semester_id', $semesterId)
-            ->with(['semester.academicYear', 'course', 'instructor'])
+            ->with(['semester.academicYear', 'instructor'])
             ->paginate(10);
-        
+
         $currentSemester = Semester::find($semesterId);
-        
+
         return view('academics.classes.index', compact('classes', 'currentSemester'));
     }
 }

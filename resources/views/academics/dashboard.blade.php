@@ -75,7 +75,7 @@
                                 <div class="card h-100">
                                     <div class="card-header bg-info text-white">
                                         <h5 class="card-title mb-0">
-                                            <i class="fas fa-chalkboard me-1"></i> Classes
+                                            <i class="fas fa-chalkboard me-1"></i> Programs
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -99,6 +99,20 @@
                                 </div>
                             </div>
                             
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="card-title mb-0">
+                                            <i class="fas fa-book me-1"></i> Courses
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>Create and manage courses offered by the institution.</p>
+                                        <a href="{{ route('academics.courses.index') }}" class="btn btn-outline-primary">Manage</a>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-danger text-white">

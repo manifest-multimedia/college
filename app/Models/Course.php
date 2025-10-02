@@ -3,14 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Course extends Model
 {
-    // protected $table = 'courses';
-
     protected $fillable = [
         'name',
         'description',
@@ -20,26 +18,68 @@ class Course extends Model
         'course_code',
     ];
 
-    /*************  ✨ Codeium Command ⭐  *************/
+    protected $casts = [
+        'is_deleted' => 'boolean',
+    ];
+
+    /**
+     * Validation rules for course creation/updating
+     */
+    public static $rules = [
+        'name' => 'required|string|min:3|max:255',
+        'course_code' => [
+            'required',
+            'string',
+            'min:2',
+            'max:10',
+            'regex:/^[A-Z]{2,4}\d{3,4}$/', // Matches format like "CS101", "MAT201", "COMP3301"
+            'unique:courses,course_code',
+        ],
+        'description' => 'nullable|string|max:1000',
+    ];
+
+    /**
+     * Custom error messages for validation rules
+     */
+    public static $messages = [
+        'course_code.regex' => 'Course code must be in the format of 2-4 capital letters followed by 3-4 numbers (e.g., CS101, MAT201, COMP3301)',
+    ];
+
     /**
      * Get the users associated with the course.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    /******  41bd788f-d860-4739-8b4d-73cb92a36659  *******/
-    public function users()
+    public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)
+            ->withTimestamps();
     }
 
     /**
      * Get the exams for this course
      */
-    public function exams()
+    public function exams(): HasMany
     {
         return $this->hasMany(Exam::class);
     }
-    
+
+    /**
+     * Get the registrations for this course
+     */
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(CourseRegistration::class);
+    }
+
+    /**
+     * Get the students registered for this course
+     */
+    public function students(): BelongsToMany
+    {
+        return $this->belongsToMany(Student::class, 'course_registrations')
+            ->withPivot(['academic_year_id', 'semester_id', 'is_approved', 'registered_at'])
+            ->withTimestamps();
+    }
+
     /**
      * Get all classes for this course
      */
@@ -47,7 +87,7 @@ class Course extends Model
     {
         return $this->hasMany(CollegeClass::class);
     }
-    
+
     /**
      * Get active classes for this course
      */
@@ -55,7 +95,7 @@ class Course extends Model
     {
         return $this->collegeClasses()->where('status', 'active');
     }
-    
+
     /**
      * Get the user who created this course
      */
@@ -63,7 +103,7 @@ class Course extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    
+
     /**
      * Check if course has any active classes
      */

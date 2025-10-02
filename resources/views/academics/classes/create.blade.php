@@ -56,20 +56,6 @@
                                         @enderror
                                     </div>
                                     
-                                    <div class="mb-3">
-                                        <label for="course_id" class="form-label">Course</label>
-                                        <select class="form-select @error('course_id') is-invalid @enderror" id="course_id" name="course_id" required>
-                                            <option value="">Select Course</option>
-                                            @foreach($courses as $course)
-                                                <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>
-                                                    {{ $course->name }} ({{ $course->course_code ?? 'No Code' }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('course_id')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
                                     
                                     <div class="mb-3">
                                         <label for="instructor_id" class="form-label">Instructor</label>

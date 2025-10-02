@@ -1,17 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\ReportGenerator;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\WelcomeEmail;
-use Illuminate\Support\Facades\Request;
+use App\Livewire\ExamEdit;
 use App\Models\Exam;
 use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\FileUploadController;
-use App\Livewire\ExamEdit;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/mcq', function () {
     return redirect('https://docs.google.com/spreadsheets/d/1wJg55f1q6OjNj05yy47cL5RlcBOIM4hSCN7GINM-3To/edit?usp=sharing');
@@ -19,17 +16,15 @@ Route::get('/mcq', function () {
 
 Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file.upload');
 
-
 Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
 
     $exam = Exam::where('slug', $slug)->first();
+
     return view('frontend.exam', [
         'examPassword' => $exam->password,
-        'student_id' => $student_id
+        'student_id' => $student_id,
     ]);
 })->name('exams');
-
-
 
 Route::get('/take-exam', function () {
     return view('frontend.take-exam');
@@ -39,24 +34,23 @@ Route::get('/extra-time', function () {
     return view('exams.extra-time');
 })->name('extra-time');
 
-
 // Authentication Routes
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 
 // Regular Authentication Routes (only available when AUTH_METHOD=regular)
 Route::middleware('guest')->group(function () {
     Route::post('/regular-login', [App\Http\Controllers\RegularAuthController::class, 'login'])->name('regular.login');
-    
+
     // Staff Registration routes (only if enabled in config)
     Route::get('/staff/register', [App\Http\Controllers\RegularAuthController::class, 'showStaffRegistrationForm'])->name('staff.register');
     Route::post('/staff/register', [App\Http\Controllers\RegularAuthController::class, 'registerStaff']);
-    
+
     // Student Registration routes (enabled for both auth methods)
     Route::get('/students/register', [App\Http\Controllers\RegularAuthController::class, 'showStudentRegistrationForm'])->name('students.register');
     Route::post('/students/register', [App\Http\Controllers\RegularAuthController::class, 'registerStudent']);
-    
+
     // Legacy register route - redirect to staff registration
-    Route::get('/register', function() {
+    Route::get('/register', function () {
         return redirect()->route('staff.register');
     })->name('register');
 });
@@ -74,22 +68,22 @@ Route::middleware('guest')->group(function () {
 
 // Link to Tutor Assessment Form:
 Route::get('/tutor-assessment', function () {
-    return redirect()->away("https://forms.gle/9EpmJY9fTDT6QaUw9");
+    return redirect()->away('https://forms.gle/9EpmJY9fTDT6QaUw9');
 });
-
 
 // Dynamic Sign-Up route based on authentication method (defaults to staff registration)
 Route::get('/sign-up', function () {
     $authService = app(\App\Services\AuthenticationService::class);
-    
+
     if ($authService->isAuthCentral()) {
         $signupUrl = $authService->getSignupUrl();
         if ($signupUrl && filter_var($signupUrl, FILTER_VALIDATE_URL)) {
             return redirect()->away($signupUrl);
         }
+
         return redirect()->route('login')->withErrors(['signup' => 'Registration is not available.']);
     }
-    
+
     // For regular auth, default to staff registration
     return redirect()->route('staff.register');
 })->name('signup');
@@ -97,16 +91,16 @@ Route::get('/sign-up', function () {
 // Student Registration route (AuthCentral only)
 Route::get('/student-registration', function () {
     $authService = app(\App\Services\AuthenticationService::class);
-    
-    if (!$authService->isAuthCentral()) {
+
+    if (! $authService->isAuthCentral()) {
         return redirect()->route('login')->withErrors(['registration' => 'Student registration is only available with AuthCentral.']);
     }
-    
+
     $registrationUrl = $authService->getStudentRegistrationUrl();
     if ($registrationUrl) {
         return redirect()->away($registrationUrl);
     }
-    
+
     return redirect()->route('login')->withErrors(['registration' => 'Student registration is not available.']);
 })->name('student.registration');
 
@@ -125,22 +119,22 @@ Route::middleware([
         if (auth()->user()->hasRole('Student')) {
             return redirect()->route('student.dashboard');
         }
-        
+
         // Otherwise, show the general dashboard for staff/admin users
         return view('dashboard');
     })->name('dashboard');
 
     // Student-only routes
-    Route::middleware(['role:Student'])->group(function() {
+    Route::middleware(['role:Student'])->group(function () {
         Route::get('/student-dashboard', [App\Http\Controllers\StudentDashboardController::class, 'index'])->name('student.dashboard');
-        
+
         Route::get('/student-information', function () {
             return view('students.information');
         })->name('student.information');
     });
 
     // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin)
-    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin'])->group(function() {
+    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin'])->group(function () {
         Route::get('exam-results', function () {
             return view('exams.correct-data');
         })->name('exam.results');
@@ -148,7 +142,7 @@ Route::middleware([
         Route::get('/import-results', function () {
             return view('exams.result-import');
         })->name('exam.result.import');
-        
+
         Route::get('/edit-exam/{exam_slug}', ExamEdit::class)->name('exams.edit');
 
         Route::get('/exam-center', function () {
@@ -156,7 +150,7 @@ Route::middleware([
         })->name('examcenter');
 
         Route::get('/exam-sessions', \App\Livewire\ExamSessions::class)->name('examsessions');
-        
+
         // Exam Management Routes
         Route::get('/create-exam', [App\Http\Controllers\ExamController::class, 'create'])->name('exams.create');
         Route::post('/exams', [App\Http\Controllers\ExamController::class, 'store'])->name('exams.store');
@@ -175,34 +169,34 @@ Route::middleware([
 
             return view('questionbank', compact('exam_id'));
         })->name('questionbank.with.slug');
-        
+
         // Enhanced Question Set Management Routes
         Route::get('/question-sets', function () {
             return view('question-sets');
         })->name('question.sets');
-        
+
         Route::get('/question-sets/create', function () {
             return view('question-sets.create');
         })->name('question.sets.create');
-        
+
         Route::get('/question-sets/{id}', function ($id) {
             return view('question-sets.show', compact('id'));
         })->name('question.sets.show');
-        
+
         Route::get('/question-sets/{id}/edit', function ($id) {
             return view('question-sets.edit', compact('id'));
         })->name('question.sets.edit');
-        
+
         Route::get('/question-sets/{id}/questions', function ($id) {
             return view('question-sets.questions', compact('id'));
         })->name('question.sets.questions');
-        
+
         // Question Set Bulk Import Routes
         Route::get('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'index'])->name('question.sets.import');
         Route::post('/question-sets/{id}/import/columns', [App\Http\Controllers\QuestionSetImportController::class, 'detectColumns'])->name('question.sets.import.columns');
         Route::post('/question-sets/{id}/import/preview', [App\Http\Controllers\QuestionSetImportController::class, 'preview'])->name('question.sets.import.preview');
         Route::post('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'import'])->name('question.sets.import.process');
-        
+
         // Individual Question Management Routes
         Route::get('/question-sets/{id}/questions/create', [App\Http\Controllers\QuestionSetQuestionController::class, 'create'])->name('question.sets.questions.create');
         Route::post('/question-sets/{id}/questions', [App\Http\Controllers\QuestionSetQuestionController::class, 'store'])->name('question.sets.questions.store');
@@ -210,11 +204,11 @@ Route::middleware([
         Route::get('/question-sets/{id}/questions/{questionId}', [App\Http\Controllers\QuestionSetQuestionController::class, 'show'])->name('question.sets.questions.show');
         Route::put('/question-sets/{id}/questions/{questionId}', [App\Http\Controllers\QuestionSetQuestionController::class, 'update'])->name('question.sets.questions.update');
         Route::delete('/question-sets/{id}/questions/{questionId}', [App\Http\Controllers\QuestionSetQuestionController::class, 'destroy'])->name('question.sets.questions.destroy');
-        
+
         Route::get('/question-import-export', function () {
             return redirect()->route('question.sets')->with('info', 'Please select a question set first, then use the Import button to import questions.');
         })->name('question.import.export');
-        
+
         Route::get('track-responses', function () {
             return view('exams.track-responses');
         })->name('track-responses');
@@ -223,9 +217,9 @@ Route::middleware([
             return view('courses.import');
         })->name('courses.import');
     });
-    
+
     // Administrator routes
-    Route::middleware(['role:Administrator|Super Admin|Academic Officer'])->group(function() {
+    Route::middleware(['role:Administrator|Super Admin|Academic Officer'])->group(function () {
         Route::get('/students', function () {
             return view('students');
         })->name('students');
@@ -241,10 +235,10 @@ Route::middleware([
         Route::get('/students/{student}/edit', function ($student) {
             return view('students.edit', ['studentId' => $student]);
         })->name('students.edit');
-        
+
         Route::delete('/students/{student}', [\App\Http\Controllers\StudentController::class, 'destroy'])
             ->name('students.destroy');
-        
+
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
         // Settings Routes
@@ -268,13 +262,14 @@ Route::middleware([
             Route::get('/backup', function () {
                 return view('settings.backup');
             })->name('settings.backup');
-            
+
             // Backup download route
             Route::get('/backup/download/{path}', function ($path) {
                 $fullPath = Storage::disk('local')->path($path);
                 if (Storage::disk('local')->exists($path)) {
                     return response()->download($fullPath, basename($path));
                 }
+
                 return back()->with('error', 'Backup file not found.');
             })->name('settings.backup.download')->where('path', '.*');
 
@@ -282,7 +277,7 @@ Route::middleware([
             Route::get('/departments', function () {
                 return view('settings.departments');
             })->name('settings.departments');
-            
+
             Route::get('/user-departments', function () {
                 return view('settings.user-departments');
             })->name('settings.user-departments');
@@ -353,58 +348,58 @@ Route::middleware([
             return view('finance.billing');
         })->name('finance.billing');
 
-        Route::get('/manager', function(){
+        Route::get('/manager', function () {
             return view('test-view');
         })->name('manafter');
 
         Route::get('/exam-clearance', function () {
             return view('finance.exam-clearance');
         })->name('finance.exam.clearance');
-        
+
         Route::get('/qr-scanner', \App\Livewire\Finance\ExamTicketScanner::class)->name('finance.exam.scanner');
-        
+
         Route::get('/payments', \App\Livewire\Finance\FeePaymentManager::class)->name('finance.payments');
-        
+
         Route::get('/reports', \App\Livewire\Finance\FinancialReportsManager::class)->name('finance.reports');
-        
+
         Route::get('/fee-types', \App\Livewire\Finance\FeeTypesManager::class)->name('finance.fee.types');
-        
+
         Route::get('/fee-structure', \App\Livewire\Finance\FeeStructureManager::class)->name('finance.fee.structure');
-        
-        Route::get('/exam-tickets-manager',function(){
+
+        Route::get('/exam-tickets-manager', function () {
             return view('finance.exam-tickets-manager');
         })->name('finance.exam.tickets.manager');
-        
+
         Route::get('/exam-tickets/{clearanceId}', function ($clearanceId) {
             return view('finance.exam-tickets', ['clearanceId' => $clearanceId]);
         })->name('finance.exam.tickets');
-        
+
         // Legacy payment routes
         Route::get('/payment/record/{billId}', function ($billId) {
             return view('finance.payment-record', ['billId' => $billId]);
         })->name('payment.record');
-        
+
         Route::get('/bill/details/{billId}', function ($billId) {
             return view('finance.bill-details', ['billId' => $billId]);
         })->name('bill.details');
-        
+
         Route::get('/bill/view/{id}', function ($id) {
             return view('finance.bill-details', ['billId' => $id]);
         })->name('finance.bill.view');
-        
+
         Route::get('/bill/print/{billId}', function ($billId) {
             return view('finance.bill-print', ['billId' => $billId]);
         })->name('bill.print');
-        
+
         Route::get('/exam-tickets/{clearanceId}', function ($clearanceId) {
             return view('finance.exam-tickets', ['clearanceId' => $clearanceId]);
         })->name('finance.exam.tickets');
-        
+
         Route::get('/ticket/print/{ticketId}', function ($ticketId) {
             return view('finance.ticket-print', ['ticketId' => $ticketId]);
         })->name('finance.exam.ticket.print');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Finance Course Registration Routes (System & Student Only)
@@ -425,16 +420,16 @@ Route::middleware([
         Route::get('/course-registration', function () {
             return view('course.registration');
         })->name('courseregistration');
-        
+
         Route::get('/course-registration/history', function () {
             return view('course.registration-history');
         })->name('courseregistration.history');
-        
+
         Route::get('/course-registration/approvals', function () {
             return view('course.registration-approvals');
         })->name('courseregistration.approvals');
     });
-    
+
     /*
     |--------------------------------------------------------------------------
     | Finance Officer Course Registration Approvals
@@ -455,7 +450,7 @@ Route::middleware([
         Route::get('/tickets', function () {
             return view('support.tickets');
         })->name('support.tickets');
-        
+
         Route::get('/knowledgebase', function () {
             return view('support.knowledgebase');
         })->name('support.knowledgebase');
@@ -470,28 +465,28 @@ Route::middleware([
         Route::get('/general', function () {
             return view('settings.general');
         })->name('settings.general');
-        
+
         Route::get('/users', function () {
             return view('settings.users');
         })->name('settings.users');
-        
+
         Route::get('/roles', function () {
             return view('settings.roles');
         })->name('settings.roles');
-        
+
         Route::get('/permissions', function () {
             return view('settings.permissions');
         })->name('settings.permissions');
-        
+
         Route::get('/backup', function () {
             return view('settings.backup');
         })->name('settings.backup');
-        
+
         // Department Management Routes
         Route::get('/departments', function () {
             return view('settings.departments');
         })->name('settings.departments');
-        
+
         Route::get('/user-departments', function () {
             return view('settings.user-departments');
         })->name('settings.user-departments');
@@ -515,57 +510,58 @@ Route::middleware([
     |--------------------------------------------------------------------------
     */
     Route::middleware(['auth:sanctum'])->prefix('academics')->name('academics.')
-    ->group(function () {
+        ->group(function () {
 
-        // Dashboard
-        Route::get('/', function () {
-            return view('academics.dashboard');
-        })->name('dashboard');
+            // Dashboard
+            Route::get('/', function () {
+                return view('academics.dashboard');
+            })->name('dashboard');
 
-        
-        // Settings
-        Route::get('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'index'])->name('settings.index');
+            // Settings
+            Route::get('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'index'])->name('settings.index');
 
-        Route::post('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'update'])->name('settings.update');
-        
-        // Academic Years
-        Route::resource('academic-years', App\Http\Controllers\AcademicYearController::class);
-        
-        // Semesters
-        Route::resource('semesters', App\Http\Controllers\SemesterController::class);
-        Route::patch('/semesters/{semester}/toggle-active', [App\Http\Controllers\SemesterController::class, 'toggleActive'])->name('semesters.toggle-active');
-        
-        // College Classes
-        Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
-        Route::post('/classes/filter', [App\Http\Controllers\CollegeClassController::class, 'filter'])->name('classes.filter');
-        
-        // Cohorts
-        Route::resource('cohorts', App\Http\Controllers\CohortController::class);
-        
-        // Grade Types
-        Route::resource('grades', App\Http\Controllers\GradeController::class);
-        
-        // Student Grades
-        Route::resource('student-grades', App\Http\Controllers\StudentGradeController::class);
-        Route::post('/student-grades/filter', [App\Http\Controllers\StudentGradeController::class, 'filter'])->name('student-grades.filter');
-        Route::get('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchCreate'])->name('classes.batch-grades');
-        Route::post('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchStore'])->name('classes.batch-grades.store');
+            Route::post('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'update'])->name('settings.update');
 
-        // Exam Types
-        Route::get('/exam-types', App\Livewire\Academics\ExamTypeManager::class)->name('exam-types');
+            // Academic Years
+            Route::resource('academic-years', App\Http\Controllers\AcademicYearController::class);
 
-        // Subjects/Courses Management
-        Route::get('/courses', \App\Livewire\Academics\SubjectsManager::class)->name('academics.courses');
+            // Semesters
+            Route::resource('semesters', App\Http\Controllers\SemesterController::class);
+            Route::patch('/semesters/{semester}/toggle-active', [App\Http\Controllers\SemesterController::class, 'toggleActive'])->name('semesters.toggle-active');
 
-        // Year migration command (for admins only)
-        Route::post('/migrate-year-data', function () {
-            if (auth()->user()->hasRole('admin')) {
-                Artisan::call('academics:migrate-year-data');
-                return back()->with('success', 'Year data migration completed.');
-            }
-            return back()->with('error', 'Unauthorized operation.');
-        })->name('migrate-year-data');
-    });
+            // College Classes
+            Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
+            Route::post('/classes/filter', [App\Http\Controllers\CollegeClassController::class, 'filter'])->name('classes.filter');
+
+            // Cohorts
+            Route::resource('cohorts', App\Http\Controllers\CohortController::class);
+
+            // Grade Types
+            Route::resource('grades', App\Http\Controllers\GradeController::class);
+
+            // Student Grades
+            Route::resource('student-grades', App\Http\Controllers\StudentGradeController::class);
+            Route::post('/student-grades/filter', [App\Http\Controllers\StudentGradeController::class, 'filter'])->name('student-grades.filter');
+            Route::get('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchCreate'])->name('classes.batch-grades');
+            Route::post('/classes/{class}/batch-grades', [App\Http\Controllers\StudentGradeController::class, 'batchStore'])->name('classes.batch-grades.store');
+
+            // Exam Types
+            Route::get('/exam-types', App\Livewire\Academics\ExamTypeManager::class)->name('exam-types');
+
+            // Subjects/Courses Management
+            Route::get('/courses', \App\Livewire\Academics\SubjectsManager::class)->name('courses.index');
+
+            // Year migration command (for admins only)
+            Route::post('/migrate-year-data', function () {
+                if (auth()->user()->hasRole('admin')) {
+                    Artisan::call('academics:migrate-year-data');
+
+                    return back()->with('success', 'Year data migration completed.');
+                }
+
+                return back()->with('error', 'Unauthorized operation.');
+            })->name('migrate-year-data');
+        });
 
     /*
     |--------------------------------------------------------------------------
@@ -577,12 +573,12 @@ Route::middleware([
         Route::get('/email', \App\Livewire\Communication\SendEmail::class)->name('communication.email');
         Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
         Route::get('/ai-sensei', \App\Livewire\Communication\AISenseiChat::class)->name('communication.ai-sensei');
-        
+
         // SMS Contact Groups and Contacts Management
         Route::get('/contact-groups', \App\Livewire\Communication\ContactGroups::class)->name('communication.contact-groups');
         Route::get('/contacts/{groupId?}', \App\Livewire\Communication\Contacts::class)->name('communication.contacts');
         Route::get('/sms-logs', \App\Livewire\Communication\SmsLogs::class)->name('communication.sms-logs');
-        
+
         // Document preview and download routes
         Route::get('/chat/document/preview/{path}', [\App\Http\Controllers\Communication\ChatDocumentPreviewController::class, 'preview'])
             ->name('chat.document.preview')
@@ -600,13 +596,13 @@ Route::middleware([
     Route::middleware(['auth:sanctum'])->prefix('memos')->group(function () {
         // Main memo listing and dashboard
         Route::get('/', \App\Livewire\Memos\MemoList::class)->name('memos');
-        
+
         // Create new memo
         Route::get('/create', \App\Livewire\Memos\CreateMemo::class)->name('memo.create');
-        
+
         // View memo details
         Route::get('/{id}', \App\Livewire\Memos\ViewMemo::class)->name('memo.view');
-        
+
         // Edit memo (only for draft memos)
         Route::get('/{id}/edit', \App\Livewire\Memos\CreateMemo::class)->name('memo.edit');
     });
@@ -621,22 +617,22 @@ Route::middleware([
         Route::get('/exams/offline', function () {
             return view('admin.exam.offline-exams');
         })->middleware('permission:view exams')->name('exams.offline');
-        
+
         // Offline Exam Scores Management
         Route::get('/exams/offline-scores', function () {
             return view('admin.exam.offline-scores');
         })->middleware('permission:view exams')->name('exams.offline-scores');
-        
+
         // Transcript Generation
         Route::get('/transcripts', function () {
             return view('admin.transcripts.generation');
         })->middleware('permission:view exams')->name('transcripts.generation');
-        
+
         // Exam Clearances Management
         Route::get('/exams/clearances', function () {
             return view('admin.exam.clearances');
         })->name('clearances.index');
-        
+
         // Entry Tickets Management
         Route::get('/exams/tickets', function () {
             return view('admin.exam.tickets');
@@ -672,7 +668,7 @@ Route::middleware([
         // Asset Management
         Route::resource('assets', App\Http\Controllers\AssetController::class);
         Route::resource('asset-categories', App\Http\Controllers\AssetCategoryController::class);
-        
+
         // Asset Settings (Auditor, System and Super Admin)
         Route::get('asset-settings', [App\Http\Controllers\AssetSettingController::class, 'index'])->name('asset-settings.index');
         Route::post('asset-settings', [App\Http\Controllers\AssetSettingController::class, 'store'])->name('asset-settings.store');
@@ -694,10 +690,10 @@ Route::middleware([
 Route::prefix('public/elections')->name('public.elections.')->group(function () {
     // View all active elections
     Route::get('/', \App\Livewire\PublicElections::class)->name('index');
-    
+
     // View single election details
     Route::get('/{election}', \App\Livewire\PublicElectionDetails::class)->name('show');
-    
+
     // Public verification and voting routes
     Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('verify');
     Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('vote');

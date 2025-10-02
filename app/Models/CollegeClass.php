@@ -12,22 +12,26 @@ class CollegeClass extends Model
     protected $fillable = [
         'name',
         'description',
-        'course_id',
         'instructor_id',
         'semester_id',
         'room',
         'schedule',
         'status',
         'max_students',
+        'is_active',
+        'is_deleted',
+        'created_by',
+        'slug',
     ];
 
-    /**
-     * Get the course that this class belongs to
-     */
-    public function course(): BelongsTo
-    {
-        return $this->belongsTo(Course::class);
-    }
+    // Course relationship removed - classes are now independent entities
+    // /**
+    //  * Get the course that this class belongs to
+    //  */
+    // public function course(): BelongsTo
+    // {
+    //     return $this->belongsTo(Course::class);
+    // }
 
     /**
      * Get the instructor for this class
@@ -56,7 +60,15 @@ class CollegeClass extends Model
     }
 
     /**
-     * Get all grades for this class
+     * Get all student grades for this class
+     */
+    public function studentGrades(): HasMany
+    {
+        return $this->hasMany(StudentGrade::class, 'college_class_id');
+    }
+
+    /**
+     * Get all grades for this class (legacy method)
      */
     public function grades(): HasMany
     {
