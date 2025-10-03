@@ -290,9 +290,17 @@ Route::middleware([
         });
     });
 
-    // Routes available to all authenticated users
-    Route::get('/support-center', function () {
-        return redirect()->away('https://desk.zoho.eu/support/pnmtc');
+    // Support Center and Knowledge Base Routes
+    Route::middleware(['auth:sanctum'])->prefix('support')->group(function () {
+        Route::get('/tickets', App\Livewire\SupportTickets::class)->name('support.tickets');
+        Route::get('/tickets/{ticketId}', App\Livewire\TicketDetail::class)->name('support.ticket.detail');
+        Route::get('/knowledge-base', App\Livewire\KnowledgeBase::class)->name('support.knowledge-base');
+        Route::get('/knowledgebase', App\Livewire\KnowledgeBase::class)->name('support.knowledgebase'); // Alias for backward compatibility
+    });
+
+    // Legacy support center redirect (keep for backward compatibility)
+    Route::middleware(['auth:sanctum'])->get('/support-center', function () {
+        return redirect()->route('support.tickets');
     })->name('supportcenter');
 
     Route::get('/staffmail', function () {
@@ -447,16 +455,7 @@ Route::middleware([
     | Support Center Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum'])->prefix('support')->group(function () {
-        Route::get('/tickets', function () {
-            return view('support.tickets');
-        })->name('support.tickets');
-
-        Route::get('/knowledgebase', function () {
-            return view('support.knowledgebase');
-        })->name('support.knowledgebase');
-    });
-
+    
     /*
     |--------------------------------------------------------------------------
     | Settings Routes
