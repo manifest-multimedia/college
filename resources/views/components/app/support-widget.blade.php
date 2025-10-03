@@ -1,4 +1,4 @@
-<div class="col-xl-4">
+<div class="col-6">
     <!--begin::Engage widget 5-->
     <div class="card bg-primary h-xl-100">
         <!--begin::Body-->
