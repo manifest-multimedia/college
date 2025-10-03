@@ -12,12 +12,11 @@
         </div>
         <!-- End Dashboard Counters -->
 
+        <!-- Dashboard Content Section -->
         <div class="row g-5 gx-xl-10 mt-5">
 
-
+            <!-- Left Column - Icon Cards -->
             <div class="col-xl-8">
-
-                <!-- Dashboard Cards Section -->
                 <div class="row g-5">
                     
                     <x-dashboard.icon-card 
@@ -49,19 +48,19 @@
                     />
 
                 </div>
-                <!-- End Dashboard Cards Section -->
-
             </div>
+            <!-- End Left Column -->
 
+            <!-- Right Column - Support Widget -->
+            <div class="col-xl-4">
+                @if (Route::currentRouteName() == 'dashboard')
+                    <x-app.support-widget />
+                @endif
+            </div>
+            <!-- End Right Column -->
 
-            <!--end::Col-->
-            <!--begin::Col-->
-            {{-- if Route is dashbaord --}}
-            @if (Route::currentRouteName() == 'dashboard')
-                <x-app.support-widget />
-            @endif
-            <!--end::Col-->
         </div>
+        <!-- End Dashboard Content Section -->
     </div>
 
 

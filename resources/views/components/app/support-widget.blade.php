@@ -1,4 +1,4 @@
-<div class="col-6">
+
     <!--begin::Engage widget 5-->
     <div class="card bg-primary h-xl-100">
         <!--begin::Body-->
@@ -6,8 +6,8 @@
             <!--begin::Heading-->
             <div class="m-0">
                 <!--begin::Title-->
-                <h1 class="mb-9 text-center text-white fw-semibold lh-lg">Need help with anything?
-                    <span class="fw-bolder">Request help from IT Manager</span>
+                <h1 class="mb-9 text-center text-white fw-semibold lh-lg">Need help?
+                    <p class="fw-bolder">Contact Support</p>
                 </h1>
                 <!--end::Title-->
                 <!--begin::Illustration-->
@@ -18,9 +18,9 @@
             </div>
             <!--end::Heading-->
             <!--begin::Links-->
-            <div class="text-center">
+            <div class="flex-wrap gap-2 d-flex justify-content-center align-items-center">
                 <!--begin::Link-->
-                <a class="btn btn-sm btn-success btn-color-white me-2"
+                <a class="btn btn-sm btn-success btn-color-white"
                     data-bs-target="#kt_modal_support_request"
                     data-bs-toggle="modal"
                     href="javascript:void(0);">Request Support</a>
@@ -37,4 +37,3 @@
         <!--end::Body-->
     </div>
     <!--end::Engage widget 5-->
-</div>
