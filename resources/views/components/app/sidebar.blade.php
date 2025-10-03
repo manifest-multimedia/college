@@ -944,7 +944,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             @php
                 $supportRoutes = [
-                    'support.tickets', 'support.knowledgebase'
+                    'support.tickets', 'support.knowledgebase', 'support.kb-admin'
                 ];
                 $isSupportActive = in_array(request()->route()->getName(), $supportRoutes);
             @endphp
@@ -982,6 +982,18 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-title">Knowledge Base</span>
                         </a>
                     </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item - KB Admin (restricted to System, IT Manager, Super Admin)-->
+                    @hasanyrole('System|IT Manager|Super Admin')
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('support.kb-admin') ? 'active' : '' }}" href="{{ route('support.kb-admin') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">KB Admin</span>
+                        </a>
+                    </div>
+                    @endhasanyrole
                     <!--end:Menu item-->
                 </div>
                 <!--end:Menu sub-->

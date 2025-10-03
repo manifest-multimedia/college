@@ -296,6 +296,11 @@ Route::middleware([
         Route::get('/tickets/{ticketId}', App\Livewire\TicketDetail::class)->name('support.ticket.detail');
         Route::get('/knowledge-base', App\Livewire\KnowledgeBase::class)->name('support.knowledge-base');
         Route::get('/knowledgebase', App\Livewire\KnowledgeBase::class)->name('support.knowledgebase'); // Alias for backward compatibility
+        
+        // KB Admin - Restricted to System, IT Manager, and Super Admin
+        Route::middleware(['role:System|IT Manager|Super Admin'])->group(function () {
+            Route::get('/kb-admin', App\Livewire\KnowledgeBaseAdmin::class)->name('support.kb-admin');
+        });
     });
 
     // Legacy support center redirect (keep for backward compatibility)
