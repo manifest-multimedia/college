@@ -114,7 +114,7 @@
                         <label class="col-lg-4 fw-semibold text-muted">Start Date</label>
                         <div class="col-lg-8">
                             <span class="fw-bold fs-6 text-gray-800">
-                                {{ $exam->start_date ? \Carbon\Carbon::parse($exam->start_date)->format('M d, Y h:i A') : 'Not set' }}
+                                {{ $exam->start_date?->format('M d, Y h:i A') ?? 'Not set' }}
                             </span>
                         </div>
                     </div>
@@ -123,7 +123,7 @@
                         <label class="col-lg-4 fw-semibold text-muted">End Date</label>
                         <div class="col-lg-8">
                             <span class="fw-bold fs-6 text-gray-800">
-                                {{ $exam->end_date ? \Carbon\Carbon::parse($exam->end_date)->format('M d, Y h:i A') : 'Not set' }}
+                                {{ $exam->end_date?->format('M d, Y h:i A') ?? 'Not set' }}
                             </span>
                         </div>
                     </div>
@@ -313,7 +313,7 @@
                         </div>
 
                         <div class="modal-footer px-0 pb-0">
-                            <button type="button" class="btn btn-light" wire:click="cancelEditing">Cancel</button>
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="cancelEditing">Cancel</button>
                             <button type="submit" class="btn btn-primary">
                                 <span class="indicator-label">Save Changes</span>
                             </button>
@@ -344,7 +344,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" wire:click="cancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="cancelDelete">Cancel</button>
                     <button type="button" class="btn btn-danger" wire:click="deleteExam">Delete Exam</button>
                 </div>
             </div>

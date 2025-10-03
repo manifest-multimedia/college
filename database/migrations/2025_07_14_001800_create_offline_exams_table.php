@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Determine if the migration should run.
+     */
+    public function shouldRun(): bool
+    {
+        return !Schema::hasTable('offline_exams');
+    }
+
+    /**
      * Run the migrations.
      */
     public function up(): void

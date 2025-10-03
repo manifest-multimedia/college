@@ -28,6 +28,8 @@ class Exam extends Model
         'password',
         'status',
         'slug',
+        'start_date',
+        'end_date',
     ];
 
     /**

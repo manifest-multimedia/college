@@ -141,6 +141,8 @@ class ExamController extends Controller
                 'status' => 'upcoming', // Use valid enum value instead of 'draft'
                 'passing_percentage' => $request->passing_mark ?: 50.00,
                 'clearance_threshold' => (int)($request->passing_mark ?: 50),
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
             ]);
 
             // Attach question sets with their configurations
