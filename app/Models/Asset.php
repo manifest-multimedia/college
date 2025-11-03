@@ -22,6 +22,7 @@ class Asset extends Model
         'description',
         'category_id',
         'department_id',
+        'office_id',
         'location',
         'purchase_date',
         'purchase_price',
@@ -168,6 +169,14 @@ class Asset extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Get the office that this asset belongs to.
+     */
+    public function office()
+    {
+        return $this->belongsTo(Office::class);
     }
 
     /**

@@ -58,4 +58,12 @@ class Department extends Model
     {
         return $this->hasMany(Asset::class);
     }
+
+    /**
+     * Get all offices for this department.
+     */
+    public function offices()
+    {
+        return $this->hasMany(Office::class);
+    }
 }

@@ -999,6 +999,24 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
+
+            <!--begin:Menu item - Office Management (restricted to System, IT Manager, Super Admin)-->
+            @hasanyrole('System|IT Manager|Super Admin')
+            <div class="menu-item">
+                <a class="menu-link {{ request()->routeIs('offices') ? 'active' : '' }}" href="{{ route('offices') }}">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-office-bag fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Office Management</span>
+                </a>
+            </div>
+            @endhasanyrole
+            <!--end:Menu item-->
             
             @hasanyrole('Super Admin|Administrator')
             <!--begin:Menu item-->
