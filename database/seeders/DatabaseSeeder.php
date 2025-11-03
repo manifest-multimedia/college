@@ -21,8 +21,8 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
-            // StudentData::lass,
             AssetSeeder::class,
+            AdminSeeder::class,
         ]);
     }
 }
