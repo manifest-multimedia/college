@@ -22,3 +22,4 @@ yarn-error.log
 /.zed
 deploy.php
 deployOld.php
+deploy-pnmtc.php
