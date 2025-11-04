@@ -89,9 +89,9 @@ return [
             'preview' => '/images/themes/default-preview.png',
         ],
         'mhtia-gradient' => [
-            'name' => 'MHTIA Original',
-            'description' => 'Authentic MHTIA design with gradient background and card layout',
-            'preview' => '/images/themes/mhtia-gradient-preview.png',
+            'name' => 'College Original',
+            'description' => 'Authentic College design with gradient background and card layout',
+            'preview' => '/images/themes/college-gradient-preview.png',
         ],
         'modern' => [
             'name' => 'Modern Theme',
