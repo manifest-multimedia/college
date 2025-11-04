@@ -1,58 +1,66 @@
+<div>
 <x-dashboard.default>
-    <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Office Management</h4>
-            <button wire:click="openCreateModal" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Add New Office
-            </button>
+    {{-- Page Header --}}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Office Management</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Office Management</li>
+                </ol>
+            </nav>
         </div>
-    </x-slot>
+        <button wire:click="openCreateModal" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Office
+        </button>
+    </div>
 
-    <div>
-        @if (session()->has('message'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('message') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+    {{-- Success/Error Messages --}}
+    @if (session()->has('message'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('message') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-        @if (session()->has('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+    @if (session()->has('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-        <!-- Filters -->
-        <div class="card mb-3">
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Search</label>
-                        <input type="text" wire:model.live="search" class="form-control" placeholder="Search offices...">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Department</label>
-                        <select wire:model.live="filterDepartment" class="form-select">
-                            <option value="">All Departments</option>
-                            @foreach($departments as $dept)
-                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Status</label>
-                        <select wire:model.live="filterStatus" class="form-select">
-                            <option value="">All Statuses</option>
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
-                        </select>
-                    </div>
+    {{-- Filters Card --}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" wire:model.live="search" class="form-control" placeholder="Search offices...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Department</label>
+                    <select wire:model.live="filterDepartment" class="form-select">
+                        <option value="">All Departments</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select wire:model.live="filterStatus" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Offices Table -->
+        {{-- Offices Table --}}
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
@@ -98,7 +106,7 @@
                                             <button wire:click="delete({{ $office->id }})" 
                                                     class="btn btn-outline-danger" 
                                                     title="Delete"
-                                                    onclick="return confirm('Are you sure you want to delete this office?')">
+                                                    wire:confirm="Are you sure you want to delete this office?">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -119,9 +127,9 @@
             </div>
         </div>
 
-        <!-- Create/Edit Modal -->
+        {{-- Create/Edit Modal --}}
         @if($showModal)
-            <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+            <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -196,7 +204,6 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-backdrop fade show"></div>
         @endif
-    </div>
 </x-dashboard.default>
+</div>

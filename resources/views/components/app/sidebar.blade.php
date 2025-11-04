@@ -1018,7 +1018,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endhasanyrole
             <!--end:Menu item-->
             
-            @hasanyrole('Super Admin|Administrator')
+            @hasanyrole('System|Super Admin|Administrator')
             <!--begin:Menu item-->
             @php
                 $settingsRoutes = [

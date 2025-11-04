@@ -25,6 +25,23 @@ class Office extends Model
     ];
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($office) {
+            // Convert empty strings to null for nullable fields
+            $office->code = $office->code ?: null;
+            $office->location = $office->location ?: null;
+            $office->phone = $office->phone ?: null;
+            $office->email = $office->email ?: null;
+            $office->description = $office->description ?: null;
+        });
+    }
+
+    /**
      * Get the department that owns the office.
      */
     public function department()

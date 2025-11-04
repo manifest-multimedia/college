@@ -248,7 +248,7 @@ Route::middleware([
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
         // Settings Routes
-        Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('settings')->group(function () {
+        Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('settings')->group(function () {
             Route::get('/general', function () {
                 return view('settings.general');
             })->name('settings.general');
@@ -471,7 +471,7 @@ Route::middleware([
     | Settings Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('settings')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('settings')->group(function () {
         Route::get('/general', function () {
             return view('settings.general');
         })->name('settings.general');
