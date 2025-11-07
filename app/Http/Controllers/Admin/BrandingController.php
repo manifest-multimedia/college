@@ -300,23 +300,32 @@ class BrandingController extends Controller
                 'size' => $file->getSize()
             ]);
             
+            // Determine the correct upload path based on environment
+            $logoDir = $this->getLogoUploadPath();
+            
+            Log::info('Using upload path', ['path' => $logoDir]);
+            
             // Create logos directory if it doesn't exist
-            $logoDir = public_path('images/logos');
             if (!File::exists($logoDir)) {
-                $created = File::makeDirectory($logoDir, 0755, true);
+                $created = File::makeDirectory($logoDir, 0775, true);
                 Log::info('Created logos directory', ['path' => $logoDir, 'success' => $created]);
             }
 
             // Check if directory is writable
             if (!is_writable($logoDir)) {
-                Log::error('Logos directory is not writable', ['path' => $logoDir]);
+                Log::error('Logos directory is not writable', [
+                    'path' => $logoDir,
+                    'permissions' => substr(sprintf('%o', fileperms($logoDir)), -4),
+                    'owner' => function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($logoDir))['name'] ?? 'unknown' : 'unknown',
+                    'group' => function_exists('posix_getgrgid') ? posix_getgrgid(filegroup($logoDir))['name'] ?? 'unknown' : 'unknown'
+                ]);
                 throw new \Exception('Upload directory is not writable. Please check permissions.');
             }
 
             // Generate filename with timestamp to avoid conflicts
             $extension = $file->getClientOriginalExtension();
             $filename = $logoType . '-logo-' . time() . '.' . $extension;
-            $path = '/images/logos/' . $filename;
+            $webPath = '/images/logos/' . $filename;
             
             Log::info('Moving file', ['from' => $file->getPathname(), 'to' => $logoDir . '/' . $filename]);
             
@@ -327,19 +336,22 @@ class BrandingController extends Controller
                 throw new \Exception('Failed to move uploaded file to destination.');
             }
 
-            Log::info('File moved successfully', ['path' => $logoDir . '/' . $filename]);
+            // Set proper file permissions
+            $fullPath = $logoDir . '/' . $filename;
+            chmod($fullPath, 0664);
+
+            Log::info('File moved successfully', ['path' => $fullPath]);
 
             // Verify file was created
-            $fullPath = $logoDir . '/' . $filename;
             if (!File::exists($fullPath)) {
                 throw new \Exception('File was not created at the expected location.');
             }
 
             // Update .env file
             $envKey = 'COLLEGE_LOGO_' . strtoupper($logoType);
-            $this->updateEnvFile([$envKey => $path]);
+            $this->updateEnvFile([$envKey => $webPath]);
 
-            Log::info('Updated env file', ['key' => $envKey, 'value' => $path]);
+            Log::info('Updated env file', ['key' => $envKey, 'value' => $webPath]);
 
             // Test if .env file is still valid after update
             try {
@@ -413,5 +425,35 @@ class BrandingController extends Controller
         }
 
         return $value;
+    }
+
+    /**
+     * Get the correct logo upload path based on environment and deployment structure
+     */
+    protected function getLogoUploadPath(): string
+    {
+        $publicImagesPath = public_path('images');
+        $logoPath = public_path('images/logos');
+        
+        // Check if we're in a deployment structure with shared directories
+        if (is_link($publicImagesPath)) {
+            // Follow the symlink to get the real shared directory
+            $realPath = readlink($publicImagesPath);
+            $logoPath = $realPath . '/logos';
+            Log::info('Detected symlinked images directory', [
+                'symlink' => $publicImagesPath,
+                'real_path' => $realPath,
+                'logo_path' => $logoPath
+            ]);
+        } elseif (app()->environment('production')) {
+            // In production, try to use shared directory if it exists
+            $sharedPath = base_path('../shared/public/images/logos');
+            if (file_exists(dirname($sharedPath))) {
+                $logoPath = $sharedPath;
+                Log::info('Using production shared directory', ['path' => $logoPath]);
+            }
+        }
+        
+        return $logoPath;
     }
 }
