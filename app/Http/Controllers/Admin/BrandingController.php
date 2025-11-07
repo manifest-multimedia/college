@@ -293,33 +293,77 @@ class BrandingController extends Controller
             $logoType = $request->logo_type;
             $file = $request->file('logo');
             
+            Log::info('Logo upload started', [
+                'logo_type' => $logoType,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize()
+            ]);
+            
             // Create logos directory if it doesn't exist
             $logoDir = public_path('images/logos');
             if (!File::exists($logoDir)) {
-                File::makeDirectory($logoDir, 0755, true);
+                $created = File::makeDirectory($logoDir, 0755, true);
+                Log::info('Created logos directory', ['path' => $logoDir, 'success' => $created]);
             }
 
-            // Generate filename
-            $filename = $logoType . '-logo.' . $file->getClientOriginalExtension();
+            // Check if directory is writable
+            if (!is_writable($logoDir)) {
+                Log::error('Logos directory is not writable', ['path' => $logoDir]);
+                throw new \Exception('Upload directory is not writable. Please check permissions.');
+            }
+
+            // Generate filename with timestamp to avoid conflicts
+            $extension = $file->getClientOriginalExtension();
+            $filename = $logoType . '-logo-' . time() . '.' . $extension;
             $path = '/images/logos/' . $filename;
             
+            Log::info('Moving file', ['from' => $file->getPathname(), 'to' => $logoDir . '/' . $filename]);
+            
             // Move file
-            $file->move($logoDir, $filename);
+            $moved = $file->move($logoDir, $filename);
+            
+            if (!$moved) {
+                throw new \Exception('Failed to move uploaded file to destination.');
+            }
+
+            Log::info('File moved successfully', ['path' => $logoDir . '/' . $filename]);
+
+            // Verify file was created
+            $fullPath = $logoDir . '/' . $filename;
+            if (!File::exists($fullPath)) {
+                throw new \Exception('File was not created at the expected location.');
+            }
 
             // Update .env file
             $envKey = 'COLLEGE_LOGO_' . strtoupper($logoType);
             $this->updateEnvFile([$envKey => $path]);
 
-            // Clear configuration cache
-            Cache::forget('config');
-            Artisan::call('config:clear');
+            Log::info('Updated env file', ['key' => $envKey, 'value' => $path]);
+
+            // Test if .env file is still valid after update
+            try {
+                // Clear configuration cache
+                Cache::forget('config');
+                Artisan::call('config:clear');
+                
+                // Verify the new configuration can be loaded
+                config('branding.logo.' . $logoType);
+            } catch (\Exception $configException) {
+                Log::error('Configuration became invalid after env update', ['error' => $configException->getMessage()]);
+                throw new \Exception('Configuration update failed. The .env file may be corrupted.');
+            }
 
             return redirect()->back()->with('success', ucfirst($logoType) . ' logo uploaded successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Logo upload validation failed', ['errors' => $e->validator->errors()]);
             return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
-            Log::error('Logo upload failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to upload logo. Please try again or contact support.');
+            Log::error('Logo upload failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'logo_type' => $request->logo_type ?? 'unknown'
+            ]);
+            return redirect()->back()->with('error', 'Failed to upload logo: ' . $e->getMessage());
         }
     }
 
@@ -336,16 +380,38 @@ class BrandingController extends Controller
                 // Remove the line if value is null
                 $envContent = preg_replace("/^{$key}=.*$/m", '', $envContent);
             } else {
+                // Properly escape and quote the value
+                $escapedValue = $this->formatEnvValue($value);
+                
                 if (preg_match("/^{$key}=.*$/m", $envContent)) {
                     // Update existing key
-                    $envContent = preg_replace("/^{$key}=.*$/m", "{$key}={$value}", $envContent);
+                    $envContent = preg_replace("/^{$key}=.*$/m", "{$key}={$escapedValue}", $envContent);
                 } else {
                     // Add new key
-                    $envContent .= "\n{$key}={$value}";
+                    $envContent .= "\n{$key}={$escapedValue}";
                 }
             }
         }
 
         File::put($envFile, $envContent);
+    }
+
+    /**
+     * Format a value for .env file
+     */
+    protected function formatEnvValue($value): string
+    {
+        // If value already has quotes, return as is
+        if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
+            (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+            return $value;
+        }
+
+        // If value contains spaces, quotes, or special characters, wrap in double quotes
+        if (preg_match('/[\s"\'#\\\\]/', $value)) {
+            return '"' . str_replace('"', '\\"', $value) . '"';
+        }
+
+        return $value;
     }
 }
