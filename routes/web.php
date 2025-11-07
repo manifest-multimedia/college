@@ -310,7 +310,9 @@ Route::middleware([
 
     // Office Management - Restricted to System, IT Manager, and Super Admin
     Route::middleware(['auth:sanctum', 'role:System|IT Manager|Super Admin'])->group(function () {
-        Route::get('/offices', App\Livewire\OfficeManager::class)->name('offices');
+        Route::get('/offices', function () {
+            return view('offices');
+        })->name('offices');
     });
 
     // Legacy support center redirect (keep for backward compatibility)
