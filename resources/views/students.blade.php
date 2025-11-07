@@ -1,4 +1,4 @@
-<x-dashboard.default title="Exam Center" pageActions="examcenter">
+<x-dashboard.default title="Student Information" pageActions="students">
 
     <div class="pb-20 mb-10 row">
 

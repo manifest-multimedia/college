@@ -53,6 +53,17 @@
             
 
                 @break
+
+            @case('students')
+            <div class="float-end">
+                <a href="{{ route('students.create') }}" class="btn btn-sm btn-success me-2"
+                    ><i class="fas fa-plus me-2"></i>Add Student</a>
+                <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary"
+                    ><i class="fas fa-file-import me-2"></i>Import Students</a>
+            </div>
+                @break
+
+
             @default
                 
           @endswitch
