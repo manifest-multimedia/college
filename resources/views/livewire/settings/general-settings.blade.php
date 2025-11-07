@@ -38,6 +38,18 @@
                         </div>
                         
                         <div class="mb-4">
+                            <label for="schoolNamePrefix" class="form-label fw-bold">School Name Prefix</label>
+                            <input type="text" wire:model="schoolNamePrefix" id="schoolNamePrefix" class="form-control @error('schoolNamePrefix') is-invalid @enderror" placeholder="PNMTC or PNMTC/DA or PNMTC-DA" maxlength="15">
+                            <div class="form-text">
+                                This prefix will be used for generating Student IDs (e.g., PNMTC/DA20250001). 
+                                Allowed characters: letters, numbers, hyphens (-), and forward slashes (/). Will be converted to uppercase.
+                            </div>
+                            @error('schoolNamePrefix')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-4">
                             <label for="schoolEmail" class="form-label fw-bold">School Email</label>
                             <input type="email" wire:model="schoolEmail" id="schoolEmail" class="form-control @error('schoolEmail') is-invalid @enderror">
                             @error('schoolEmail')

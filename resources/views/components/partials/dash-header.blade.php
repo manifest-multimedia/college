@@ -48,9 +48,9 @@
                             <!--end::Aside toggle-->
                             <!--begin::Logo-->
                             <a href="{{ url('/') }}">
-                                <img alt="Logo" src="{{ asset('images/app-logo.png') }}"
+                                <img alt="Logo" src="{{ asset(config('branding.logo.app', config('branding.logo.primary', '/images/app-logo.png'))) }}"
                                     class="h-25px h-lg-30px d-none d-md-block" />
-                                <img alt="Logo" src="{{ asset('images/app-logo.png') }}"
+                                <img alt="Logo" src="{{ asset(config('branding.logo.app', config('branding.logo.primary', '/images/app-logo.png'))) }}"
                                     class="h-25px d-block d-md-none" />
                             </a>
                             <!--end::Logo-->

@@ -350,6 +350,10 @@ Route::middleware([
         Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
         Route::get('/elections/{election}/candidates/{position}', \App\Livewire\ElectionCandidateManager::class)->name('election.candidates');
         Route::get('/elections/{election}/results', \App\Livewire\ElectionResultsDashboard::class)->name('election.results');
+        // Election Results Archive
+        Route::get('/elections/results-archive', function () {
+            return view('elections.results-archive');
+        })->name('elections.results.archive');
     });
 
     // Student Voting Routes
@@ -519,6 +523,13 @@ Route::middleware([
         Route::post('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'update'])->name('admin.branding.update');
         Route::get('/branding/preview', [App\Http\Controllers\Admin\BrandingController::class, 'preview'])->name('admin.branding.preview');
         Route::post('/branding/upload-logo', [App\Http\Controllers\Admin\BrandingController::class, 'uploadLogo'])->name('admin.branding.upload-logo');
+        
+        // Individual section updates
+        Route::post('/branding/update-theme', [App\Http\Controllers\Admin\BrandingController::class, 'updateTheme'])->name('admin.branding.update-theme');
+        Route::post('/branding/update-institution', [App\Http\Controllers\Admin\BrandingController::class, 'updateInstitution'])->name('admin.branding.update-institution');
+        Route::post('/branding/update-urls', [App\Http\Controllers\Admin\BrandingController::class, 'updateUrls'])->name('admin.branding.update-urls');
+        Route::post('/branding/update-colors', [App\Http\Controllers\Admin\BrandingController::class, 'updateColors'])->name('admin.branding.update-colors');
+        Route::post('/branding/update-theme-settings', [App\Http\Controllers\Admin\BrandingController::class, 'updateThemeSettings'])->name('admin.branding.update-theme-settings');
     });
 
     /*

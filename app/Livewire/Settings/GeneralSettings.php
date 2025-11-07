@@ -15,6 +15,7 @@ class GeneralSettings extends Component
 
     public $settings = [];
     public $schoolName;
+    public $schoolNamePrefix;
     public $schoolEmail;
     public $schoolPhone;
     public $schoolAddress;
@@ -45,6 +46,7 @@ class GeneralSettings extends Component
             $dbSettings = DB::table('settings')
                 ->whereIn('key', [
                     'school_name',
+                    'school_name_prefix',
                     'school_email',
                     'school_phone',
                     'school_address',
@@ -72,6 +74,7 @@ class GeneralSettings extends Component
             
             // Set component properties
             $this->schoolName = $dbSettings['school_name'] ?? config('app.name');
+            $this->schoolNamePrefix = $dbSettings['school_name_prefix'] ?? 'STU';
             $this->schoolEmail = $dbSettings['school_email'] ?? '';
             $this->schoolPhone = $dbSettings['school_phone'] ?? '';
             $this->schoolAddress = $dbSettings['school_address'] ?? '';
@@ -97,6 +100,7 @@ class GeneralSettings extends Component
     {
         // Set default values for first-time setup
         $this->schoolName = config('app.name');
+        $this->schoolNamePrefix = 'STU';
         $this->schoolEmail = '';
         $this->schoolPhone = '';
         $this->schoolAddress = '';
@@ -110,6 +114,7 @@ class GeneralSettings extends Component
     {
         $this->validate([
             'schoolName' => 'required|string|max:100',
+            'schoolNamePrefix' => 'required|string|max:15|regex:/^[A-Za-z0-9\-\/]+$/',
             'schoolEmail' => 'required|email',
             'schoolPhone' => 'required|string|max:20',
             'schoolAddress' => 'required|string',
@@ -136,6 +141,7 @@ class GeneralSettings extends Component
             
             // Update or create settings
             $this->updateSetting('school_name', $this->schoolName);
+            $this->updateSetting('school_name_prefix', strtoupper($this->schoolNamePrefix));
             $this->updateSetting('school_email', $this->schoolEmail);
             $this->updateSetting('school_phone', $this->schoolPhone);
             $this->updateSetting('school_address', $this->schoolAddress);

@@ -10,6 +10,7 @@ use Livewire\WithFileUploads;
 use App\Models\CollegeClass;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -177,7 +178,11 @@ class StudentCreateForm extends Component
     private function generateStudentId()
     {
         $year = now()->year;
-        $prefix = 'STU';
+        
+        // Get prefix from settings, default to 'STU'
+        $prefix = DB::table('settings')
+            ->where('key', 'school_name_prefix')
+            ->value('value') ?? 'STU';
         
         // Get the last student ID for this year
         $lastStudent = Student::where('student_id', 'like', $prefix . $year . '%')

@@ -458,8 +458,8 @@
             <!-- Institution Branding -->
             <div class="institution-header">
                 <div class="institution-logo">
-                    @if(config('branding.logo.login'))
-                        <img src="{{ asset(config('branding.logo.login')) }}" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
+                    @if(config('branding.logo.auth') || config('branding.logo.primary'))
+                        <img src="{{ asset(config('branding.logo.auth', config('branding.logo.primary'))) }}" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
                     @else
                         <i class="fas fa-graduation-cap"></i>
                     @endif

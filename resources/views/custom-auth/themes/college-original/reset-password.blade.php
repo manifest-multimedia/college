@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{{ config('branding.theme_settings.show_institution_name', true) ? config('branding.institution.name', config('app.name')) . ' - ' : '' }}Login</title>
+    <title>{{ config('branding.theme_settings.show_institution_name', true) ? config('branding.institution.name', config('app.name')) . ' - ' : '' }}Reset Password</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -132,9 +132,9 @@
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
 
-        /* Right side - Login form */
+        /* Right side - Reset Password form */
         .login-side {
-            flex: 0 0 450px;
+            flex: 0 0 500px;
             background: white;
             padding: 3rem;
             border-radius: 24px;
@@ -161,78 +161,6 @@
         .login-subtitle {
             font-size: 1rem;
             color: #6b7280;
-        }
-
-        /* SSO Button */
-        .sso-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .sso-btn {
-            width: 100%;
-            padding: 1rem 1.5rem;
-            background: white;
-            color: #6366f1;
-            border: 2px solid #f3f4f6;
-            border-radius: 16px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .sso-btn:hover {
-            background: #f8fafc;
-            border-color: #6366f1;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
-            color: #6366f1;
-            text-decoration: none;
-        }
-
-        .sso-icon {
-            width: 24px;
-            height: 24px;
-            background: #6366f1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .sso-icon i {
-            color: white;
-            font-size: 12px;
-        }
-
-        /* Divider */
-        .divider {
-            text-align: center;
-            margin: 1.5rem 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e5e7eb;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 1rem;
-            font-size: 0.9rem;
-            color: #9ca3af;
-            position: relative;
         }
 
         /* Form Styles */
@@ -271,26 +199,6 @@
             color: #6366f1 !important;
         }
 
-        .form-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .forgot-link {
-            color: #6366f1;
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-link:hover {
-            color: #4f46e5;
-            text-decoration: underline;
-        }
-
         .submit-btn {
             width: 100%;
             padding: 1rem 1.5rem;
@@ -303,6 +211,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            margin-bottom: 1.5rem;
         }
 
         .submit-btn:hover {
@@ -311,25 +220,16 @@
             box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
         }
 
-        .registration-section {
+        .back-to-login {
             text-align: center;
-            margin-top: 1.5rem;
         }
 
-        .registration-text {
+        .back-to-login-text {
             font-size: 0.95rem;
-            margin-bottom: 0.75rem;
             color: #6b7280;
         }
 
-        .registration-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .registration-link {
+        .back-to-login-link {
             color: #6366f1;
             text-decoration: none;
             font-size: 0.95rem;
@@ -337,7 +237,7 @@
             transition: color 0.3s ease;
         }
 
-        .registration-link:hover {
+        .back-to-login-link:hover {
             color: #4f46e5;
             text-decoration: underline;
         }
@@ -395,7 +295,7 @@
             .login-side {
                 flex: none;
                 width: 100%;
-                max-width: 450px;
+                max-width: 500px;
                 margin-left: 0;
             }
             
@@ -456,16 +356,18 @@
     </style>
     
     <script>
-        function togglePassword() {
-            const passwordField = document.querySelector('input[name="password"]');
-            const toggleIcon = document.querySelector('.password-toggle i');
+        function togglePassword(inputName) {
+            const passwordField = document.querySelector(`input[name="${inputName}"]`);
+            const toggleIcon = document.querySelector(`.password-toggle[data-target="${inputName}"] i`);
             
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                toggleIcon.className = 'fas fa-eye-slash';
-            } else {
-                passwordField.type = 'password';
-                toggleIcon.className = 'fas fa-eye';
+            if (passwordField && toggleIcon) {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    toggleIcon.className = 'fas fa-eye-slash';
+                } else {
+                    passwordField.type = 'password';
+                    toggleIcon.className = 'fas fa-eye';
+                }
             }
         }
     </script>
@@ -476,8 +378,8 @@
         <!-- Left Side - Institution Branding -->
         <div class="branding-side">
             <div class="institution-logo">
-                @if(config('branding.logo.login'))
-                    <img src="{{ asset(config('branding.logo.login')) }}" alt="Logo">
+                @if(config('branding.logo.auth') || config('branding.logo.white'))
+                    <img src="{{ asset(config('branding.logo.auth', config('branding.logo.white', config('branding.logo.primary')))) }}" alt="Logo">
                 @else
                     <i class="fas fa-graduation-cap"></i>
                 @endif
@@ -488,7 +390,7 @@
             @endif
         </div>
 
-        <!-- Right Side - Login Form -->
+        <!-- Right Side - Reset Password Form -->
         <div class="login-side">
             @if (session('status'))
                 <div class="alert alert-success" role="alert">
@@ -505,38 +407,24 @@
             @endif
 
             <div class="login-header">
-                <h2 class="login-title">Sign In</h2>
-                <p class="login-subtitle">Sign in to your account</p>
+                <h2 class="login-title">Reset Password</h2>
+                <p class="login-subtitle">Enter your new password</p>
             </div>
 
-            {{-- AuthCentral SSO Login Option --}}
-            @if($authService->isAuthCentral() || config('branding.features.show_sso', true))
-                <div class="sso-section">
-                    <a href="{{ $authService->getAuthCentralLoginUrl() ?? '#' }}" class="sso-btn">
-                        <div class="sso-icon">
-                            <i class="fas fa-user-shield"></i>
-                        </div>
-                        Sign in with AuthCentral
-                    </a>
-                </div>
-
-                <div class="divider">
-                    <span>Or with email</span>
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('regular.login') }}">
+            <form method="POST" action="{{ route('password.update') }}">
                 @csrf
+
+                <input type="hidden" name="token" value="{{ $request->route('token') }}">
                 
                 <div class="form-group">
                     <input type="email" 
                            class="form-control @error('email') is-invalid @enderror" 
                            name="email" 
-                           value="{{ old('email') }}" 
+                           value="{{ old('email', $request->email) }}" 
                            required 
                            autofocus 
                            autocomplete="username"
-                           placeholder="Email">
+                           placeholder="Email Address">
                     @error('email')
                         <div class="invalid-feedback">
                             {{ $message }}
@@ -550,12 +438,13 @@
                                class="form-control @error('password') is-invalid @enderror" 
                                name="password" 
                                required 
-                               autocomplete="current-password"
-                               placeholder="Password"
+                               autocomplete="new-password"
+                               placeholder="New Password"
                                style="padding-right: 3rem;">
                         <button type="button" 
                                 class="password-toggle" 
-                                onclick="togglePassword()"
+                                data-target="password"
+                                onclick="togglePassword('password')"
                                 style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem;">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -567,28 +456,40 @@
                     @enderror
                 </div>
 
-                <div class="form-row">
-                    <div></div>
-                    <a class="forgot-link" href="{{ route('password.request') }}">
-                        Forgot Password ?
-                    </a>
+                <div class="form-group">
+                    <div style="position: relative;">
+                        <input type="password" 
+                               class="form-control @error('password_confirmation') is-invalid @enderror" 
+                               name="password_confirmation" 
+                               required 
+                               autocomplete="new-password"
+                               placeholder="Confirm New Password"
+                               style="padding-right: 3rem;">
+                        <button type="button" 
+                                class="password-toggle" 
+                                data-target="password_confirmation"
+                                onclick="togglePassword('password_confirmation')"
+                                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    @error('password_confirmation')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
                 </div>
 
                 <button type="submit" class="submit-btn">
-                    Sign In
+                    Reset Password
                 </button>
             </form>
 
-            <div class="registration-section">
-                <p class="registration-text">Don't have an account?</p>
-                <div class="registration-links">
-                    @if ($authService->getStaffSignupUrl())
-                        <a class="registration-link" href="{{ $authService->getStaffSignupUrl() }}">Staff Registration</a>
-                    @endif
-                    @if ($authService->getStudentSignupUrl())
-                        <a class="registration-link" href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
-                    @endif
-                </div>
+            <div class="back-to-login">
+                <p class="back-to-login-text">
+                    <span>Remember your password?</span>
+                    <a class="back-to-login-link" href="{{ route('login') }}">Back to login</a>
+                </p>
             </div>
         </div>
     </div>

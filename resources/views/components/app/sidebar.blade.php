@@ -872,7 +872,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('election.results') ? 'active' : '' }}" href="{{ route('election.results', ['election' => 1]) }}">
+                        <a class="menu-link {{ request()->routeIs('elections.results.archive') ? 'active' : '' }}" href="{{ route('elections.results.archive') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -927,7 +927,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     <!--begin:Menu item-->
                     <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('election.results') ? 'active' : '' }}" href="{{ route('election.results', ['election' => 1]) }}">
+                        <a class="menu-link {{ request()->routeIs('elections.results.archive') ? 'active' : '' }}" href="{{ route('elections.results.archive') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
@@ -1096,20 +1096,16 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     
                     @hasrole('System')
                     <!--begin:Menu item-->
-                    {{-- <div class="menu-item">
+                    <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('admin.branding.index') ? 'active' : '' }}" href="{{ route('admin.branding.index') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">
-                                <i class="ki-duotone ki-colorfilter fs-6 me-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                                Branding
+                               Branding
                             </span>
                         </a>
-                    </div> --}}
+                    </div>
                     <!--end:Menu item-->
                     @endhasrole
                     

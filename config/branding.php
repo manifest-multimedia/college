@@ -28,8 +28,9 @@ return [
     'logo' => [
         'primary' => env('COLLEGE_LOGO_PRIMARY', '/images/logos/default-logo.svg'),
         'white' => env('COLLEGE_LOGO_WHITE', '/images/logos/default-logo-white.svg'),
-        'favicon' => env('COLLEGE_FAVICON', '/images/logos/favicon.ico'),
+        'favicon' => env('COLLEGE_FAVICON', '/favicon.ico'),
         'auth' => env('COLLEGE_LOGO_AUTH', null), // Falls back to primary if null
+        'app' => env('COLLEGE_LOGO_APP', null), // App-wide logo, falls back to primary if null
     ],
 
     /*
@@ -88,7 +89,7 @@ return [
             'description' => 'Clean and simple authentication design',
             'preview' => '/images/themes/default-preview.png',
         ],
-        'mhtia-gradient' => [
+        'college-original' => [
             'name' => 'College Original',
             'description' => 'Authentic College design with gradient background and card layout',
             'preview' => '/images/themes/college-gradient-preview.png',

@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{{ config('branding.theme_settings.show_institution_name', true) ? config('branding.institution.name', config('app.name')) . ' - ' : '' }}{{ $title ?? 'Register' }}</title>
+    <title>{{ config('branding.theme_settings.show_institution_name', true) ? config('branding.institution.name', config('app.name')) . ' - ' : '' }}Reset Password</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -132,9 +132,9 @@
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
 
-        /* Right side - Registration form */
+        /* Right side - Reset Password form */
         .login-side {
-            flex: 0 0 500px;
+            flex: 0 0 450px;
             background: white;
             padding: 3rem;
             border-radius: 24px;
@@ -161,6 +161,14 @@
         .login-subtitle {
             font-size: 1rem;
             color: #6b7280;
+        }
+
+        .reset-description {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
         }
 
         /* Form Styles */
@@ -191,14 +199,6 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
-        .password-toggle {
-            transition: color 0.3s ease;
-        }
-
-        .password-toggle:hover {
-            color: #6366f1 !important;
-        }
-
         .submit-btn {
             width: 100%;
             padding: 1rem 1.5rem;
@@ -211,6 +211,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            margin-bottom: 1.5rem;
         }
 
         .submit-btn:hover {
@@ -219,25 +220,16 @@
             box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
         }
 
-        .login-link {
+        .back-to-login {
             text-align: center;
-            margin-top: 1.5rem;
         }
 
-        .login-text {
+        .back-to-login-text {
             font-size: 0.95rem;
-            margin-bottom: 0.75rem;
             color: #6b7280;
         }
 
-        .login-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .login-link-item {
+        .back-to-login-link {
             color: #6366f1;
             text-decoration: none;
             font-size: 0.95rem;
@@ -245,7 +237,7 @@
             transition: color 0.3s ease;
         }
 
-        .login-link-item:hover {
+        .back-to-login-link:hover {
             color: #4f46e5;
             text-decoration: underline;
         }
@@ -268,25 +260,6 @@
             background: #fee2e2;
             border: 1px solid #ef4444;
             color: #991b1b;
-        }
-
-        .form-check {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-check-input {
-            width: auto;
-            margin: 0;
-            margin-top: 0.2rem;
-        }
-
-        .form-check-label {
-            font-size: 0.95rem;
-            color: #6b7280;
-            line-height: 1.4;
         }
 
         /* Responsive Design */
@@ -322,7 +295,7 @@
             .login-side {
                 flex: none;
                 width: 100%;
-                max-width: 500px;
+                max-width: 450px;
                 margin-left: 0;
             }
             
@@ -381,21 +354,6 @@
             }
         }
     </style>
-    
-    <script>
-        function togglePassword(inputName) {
-            const passwordField = document.querySelector(`input[name="${inputName}"]`);
-            const toggleIcon = document.querySelector(`.password-toggle[data-target="${inputName}"] i`);
-            
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                toggleIcon.className = 'fas fa-eye-slash';
-            } else {
-                passwordField.type = 'password';
-                toggleIcon.className = 'fas fa-eye';
-            }
-        }
-    </script>
 </head>
 
 <body>
@@ -403,8 +361,8 @@
         <!-- Left Side - Institution Branding -->
         <div class="branding-side">
             <div class="institution-logo">
-                @if(config('branding.logo.login'))
-                    <img src="{{ asset(config('branding.logo.login')) }}" alt="Logo">
+                @if(config('branding.logo.auth') || config('branding.logo.white'))
+                    <img src="{{ asset(config('branding.logo.auth', config('branding.logo.white', config('branding.logo.primary')))) }}" alt="Logo">
                 @else
                     <i class="fas fa-graduation-cap"></i>
                 @endif
@@ -415,7 +373,7 @@
             @endif
         </div>
 
-        <!-- Right Side - Registration Form -->
+        <!-- Right Side - Reset Password Form -->
         <div class="login-side">
             @if (session('status'))
                 <div class="alert alert-success" role="alert">
@@ -432,35 +390,24 @@
             @endif
 
             <div class="login-header">
-                <h2 class="login-title">{{ $title ?? 'Register' }}</h2>
-                <p class="login-subtitle">{{ $description ?? 'Create your account' }}</p>
+                <h2 class="login-title">Reset Password</h2>
+                <p class="login-subtitle">Enter your email to receive a password reset link</p>
             </div>
 
-            <form method="POST" action="{{ $actionUrl ?? route('register') }}">
+            <div class="reset-description">
+                {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+            </div>
+
+            <form method="POST" action="{{ route('password.email') }}">
                 @csrf
                 
-                <div class="form-group">
-                    <input type="text" 
-                           class="form-control @error('name') is-invalid @enderror" 
-                           name="name" 
-                           value="{{ old('name') }}" 
-                           required 
-                           autofocus 
-                           autocomplete="name"
-                           placeholder="Full Name">
-                    @error('name')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
-                </div>
-
                 <div class="form-group">
                     <input type="email" 
                            class="form-control @error('email') is-invalid @enderror" 
                            name="email" 
                            value="{{ old('email') }}" 
                            required 
+                           autofocus 
                            autocomplete="username"
                            placeholder="Email Address">
                     @error('email')
@@ -470,93 +417,16 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <div style="position: relative;">
-                        <input type="password" 
-                               class="form-control @error('password') is-invalid @enderror" 
-                               name="password" 
-                               required 
-                               autocomplete="new-password"
-                               placeholder="Password"
-                               style="padding-right: 3rem;">
-                        <button type="button" 
-                                class="password-toggle" 
-                                data-target="password"
-                                onclick="togglePassword('password')"
-                                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem;">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    @error('password')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <div style="position: relative;">
-                        <input type="password" 
-                               class="form-control @error('password_confirmation') is-invalid @enderror" 
-                               name="password_confirmation" 
-                               required 
-                               autocomplete="new-password"
-                               placeholder="Confirm Password"
-                               style="padding-right: 3rem;">
-                        <button type="button" 
-                                class="password-toggle" 
-                                data-target="password_confirmation"
-                                onclick="togglePassword('password_confirmation')"
-                                style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem;">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    @error('password_confirmation')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
-                </div>
-
-                @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-                    <div class="form-group">
-                        <div class="form-check">
-                            <input class="form-check-input @error('terms') is-invalid @enderror" 
-                                   type="checkbox" 
-                                   name="terms" 
-                                   id="terms" 
-                                   required>
-                            <label class="form-check-label" for="terms">
-                                {!! __('I agree to the :terms_of_service and :privacy_policy', [
-                                        'terms_of_service' => '<a target="_blank" href="'.route('terms.show').'" class="login-link-item">'.__('Terms of Service').'</a>',
-                                        'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="login-link-item">'.__('Privacy Policy').'</a>',
-                                ]) !!}
-                            </label>
-                            @error('terms')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-                        </div>
-                    </div>
-                @endif
-
                 <button type="submit" class="submit-btn">
-                    Register {{ ($isStudent ?? false) ? 'Student' : 'Staff' }} Account
+                    Email Password Reset Link
                 </button>
             </form>
 
-            <div class="login-link">
-                <p class="login-text">Already have an account?</p>
-                <div class="login-links">
-                    <a class="login-link-item" href="{{ route('login') }}">Sign in</a>
-                    
-                    @if (($isStudent ?? false))
-                        <a class="login-link-item" href="{{ route('staff.register') }}">Register as Staff</a>
-                    @else
-                        <a class="login-link-item" href="{{ route('students.register') }}">Register as Student</a>
-                    @endif
-                </div>
+            <div class="back-to-login">
+                <p class="back-to-login-text">
+                    <span>Remember your password?</span>
+                    <a class="back-to-login-link" href="{{ route('login') }}">Back to login</a>
+                </p>
             </div>
         </div>
     </div>
