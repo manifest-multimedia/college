@@ -22,7 +22,12 @@ class StudentDetails extends Component
     {
         try {
             $this->student = Student::with(['CollegeClass', 'Cohort', 'User.roles'])
-                ->findOrFail($this->studentId);
+                ->find($this->studentId);
+            
+            if (!$this->student) {
+                session()->flash('error', 'Student not found.');
+            }
+            
             $this->loading = false;
         } catch (\Exception $e) {
             Log::error('Error loading student: ' . $e->getMessage());

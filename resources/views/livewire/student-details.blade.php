@@ -13,6 +13,7 @@
         </div>
     @endif
 
+    @if($student)
     <div class="d-flex justify-content-end mb-5">
         <a href="{{ route('students.edit', $student->id) }}" class="btn btn-primary">
             <i class="fas fa-edit me-2"></i>Edit Student
@@ -210,4 +211,16 @@
             </div>
         </div>
     </div>
+    @else
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-10">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle fs-2 mb-3"></i>
+                <h4>Student not found</h4>
+                <p>The student information could not be loaded. Please try again or contact support if the problem persists.</p>
+                <a href="{{ route('students') }}" class="btn btn-primary">Back to Students</a>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

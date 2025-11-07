@@ -230,8 +230,13 @@ Route::middleware([
             return view('students');
         })->name('students');
 
-        // Student Import Route
+        // Student Import Route (must be before {student} route)
         Route::get('/students/import', [App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
+
+        // Student Create Route (must be before {student} route)
+        Route::get('/students/create', function () {
+            return view('students.create');
+        })->name('students.create');
 
         // Student individual routes
         Route::get('/students/{student}', function ($student) {
