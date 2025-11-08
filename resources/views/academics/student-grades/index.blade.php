@@ -43,7 +43,7 @@
                                         @foreach($semesters as $semester)
                                             <option value="{{ $semester->id }}" 
                                                 {{ $currentSemester && $currentSemester->id == $semester->id ? 'selected' : '' }}>
-                                                {{ $semester->name }} ({{ $semester->academicYear->name }})
+                                                {{ $semester->name }} @if($semester->academicYear)({{ $semester->academicYear->name }})@endif
                                             </option>
                                         @endforeach
                                     </select>
@@ -73,20 +73,35 @@
                                     @forelse($grades as $grade)
                                         <tr>
                                             <td>
-                                                {{ $grade->student->first_name }} {{ $grade->student->last_name }}<br>
-                                                <small class="text-muted">{{ $grade->student->student_id }}</small>
+                                                @if($grade->student)
+                                                    {{ $grade->student->first_name ?? 'N/A' }} {{ $grade->student->last_name ?? 'N/A' }}<br>
+                                                    <small class="text-muted">{{ $grade->student->student_id ?? 'N/A' }}</small>
+                                                @else
+                                                    N/A<br>
+                                                    <small class="text-muted">N/A</small>
+                                                @endif
                                             </td>
                                             <td>
-                                                {{ $grade->collegeClass->course->title }}<br>
-                                                <small class="text-muted">{{ $grade->collegeClass->name }}</small>
+                                                @if($grade->collegeClass && $grade->collegeClass->course)
+                                                    {{ $grade->collegeClass->course->title }}<br>
+                                                    <small class="text-muted">{{ $grade->collegeClass->name }}</small>
+                                                @else
+                                                    N/A<br>
+                                                    <small class="text-muted">N/A</small>
+                                                @endif
                                             </td>
                                             <td>
-                                                <span class="badge bg-info">{{ $grade->grade->letter }}</span>
-                                                <small>({{ $grade->grade->value }})</small>
+                                                @if($grade->grade)
+                                                    <span class="badge bg-info">{{ $grade->grade->letter }}</span>
+                                                    <small>({{ $grade->grade->value }})</small>
+                                                @else
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                    <small>(N/A)</small>
+                                                @endif
                                             </td>
                                             <td>{{ Str::limit($grade->comments, 30) ?: 'N/A' }}</td>
-                                            <td>{{ $grade->gradedBy->name ?? 'System' }}</td>
-                                            <td>{{ $grade->updated_at->format('M d, Y') }}</td>
+                                            <td>{{ $grade->gradedBy?->name ?? 'System' }}</td>
+                                            <td>{{ $grade->updated_at ? $grade->updated_at->format('M d, Y') : 'N/A' }}</td>
                                             <td>
                                                 <div class="btn-group" role="group">
                                                     <a href="{{ route('academics.student-grades.show', $grade) }}" class="btn btn-sm btn-info">
