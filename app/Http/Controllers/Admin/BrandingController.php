@@ -72,8 +72,7 @@ class BrandingController extends Controller
                 'AUTH_THEME' => $request->auth_theme,
             ]);
 
-            Cache::forget('config');
-            Artisan::call('config:clear');
+            $this->refreshConfiguration();
 
             return redirect()->back()->with('success', 'Authentication theme updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -106,8 +105,7 @@ class BrandingController extends Controller
                 'INSTITUTION_ADDRESS' => $request->address ? '"' . $request->address . '"' : null,
             ]);
 
-            Cache::forget('config');
-            Artisan::call('config:clear');
+            $this->refreshConfiguration();
 
             return redirect()->back()->with('success', 'Institution information updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -136,8 +134,7 @@ class BrandingController extends Controller
                 'INSTITUTION_WEBSITE_URL' => $request->website_url,
             ]);
 
-            Cache::forget('config');
-            Artisan::call('config:clear');
+            $this->refreshConfiguration();
 
             return redirect()->back()->with('success', 'URL configuration updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -172,8 +169,7 @@ class BrandingController extends Controller
                 'DANGER_COLOR' => $request->danger_color,
             ]);
 
-            Cache::forget('config');
-            Artisan::call('config:clear');
+            $this->refreshConfiguration();
 
             return redirect()->back()->with('success', 'Color scheme updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -202,8 +198,7 @@ class BrandingController extends Controller
                 'ENABLE_AUTH_ANIMATIONS' => $request->enable_animations ? 'true' : 'false',
             ]);
 
-            Cache::forget('config');
-            Artisan::call('config:clear');
+            $this->refreshConfiguration();
 
             return redirect()->back()->with('success', 'Theme settings updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -266,9 +261,7 @@ class BrandingController extends Controller
             ]);
 
             // Clear configuration cache
-            Cache::forget('config');
-            
-            Artisan::call('config:clear');
+            $this->refreshConfiguration();
 
             return redirect()->back()->with('success', 'Branding configuration updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -370,9 +363,8 @@ class BrandingController extends Controller
 
             // Test if .env file is still valid after update
             try {
-                // Clear configuration cache
-                Cache::forget('config');
-                Artisan::call('config:clear');
+                // Clear and regenerate configuration cache
+                $this->refreshConfiguration();
                 
                 // Verify the new configuration can be loaded
                 config('branding.logo.' . $logoType);
@@ -470,5 +462,21 @@ class BrandingController extends Controller
         }
         
         return $logoPath;
+    }
+
+    /**
+     * Refresh configuration cache for both development and production environments
+     */
+    protected function refreshConfiguration(): void
+    {
+        Cache::forget('config');
+        Artisan::call('config:clear');
+        
+        // In production environments, we need to regenerate the config cache
+        // since Laravel caches configuration for performance
+        if (app()->environment('production')) {
+            Artisan::call('config:cache');
+            Log::info('Configuration cache regenerated for production environment');
+        }
     }
 }
