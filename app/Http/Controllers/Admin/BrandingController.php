@@ -188,14 +188,18 @@ class BrandingController extends Controller
         try {
             $request->validate([
                 'card_style' => 'required|string|in:elevated,flat,bordered',
-                'show_institution_name' => 'boolean',
-                'enable_animations' => 'boolean',
+                'show_institution_name' => 'nullable|in:0,1',
+                'enable_animations' => 'nullable|in:0,1',
             ]);
+
+            // Convert string values to proper boolean strings for environment
+            $showInstitutionName = $request->show_institution_name == '1' ? 'true' : 'false';
+            $enableAnimations = $request->enable_animations == '1' ? 'true' : 'false';
 
             $this->updateEnvFile([
                 'AUTH_CARD_STYLE' => $request->card_style,
-                'SHOW_INSTITUTION_NAME' => $request->show_institution_name ? 'true' : 'false',
-                'ENABLE_AUTH_ANIMATIONS' => $request->enable_animations ? 'true' : 'false',
+                'SHOW_INSTITUTION_NAME' => $showInstitutionName,
+                'ENABLE_AUTH_ANIMATIONS' => $enableAnimations,
             ]);
 
             $this->refreshConfiguration();
@@ -231,11 +235,16 @@ class BrandingController extends Controller
                 'success_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
                 'warning_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
                 'danger_color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
-                'show_institution_name' => 'boolean',
-                'show_background_pattern' => 'boolean',
-                'enable_animations' => 'boolean',
+                'show_institution_name' => 'nullable|in:0,1',
+                'show_background_pattern' => 'nullable|in:0,1',
+                'enable_animations' => 'nullable|in:0,1',
                 'card_style' => 'required|string|in:elevated,flat,bordered',
             ]);
+
+            // Convert checkbox values to proper boolean strings
+            $showInstitutionName = $request->show_institution_name == '1' ? 'true' : 'false';
+            $showBackgroundPattern = $request->show_background_pattern == '1' ? 'true' : 'false';
+            $enableAnimations = $request->enable_animations == '1' ? 'true' : 'false';
 
             // Update .env file
             $this->updateEnvFile([
@@ -254,9 +263,9 @@ class BrandingController extends Controller
                 'SUCCESS_COLOR' => $request->success_color,
                 'WARNING_COLOR' => $request->warning_color,
                 'DANGER_COLOR' => $request->danger_color,
-                'SHOW_INSTITUTION_NAME' => $request->show_institution_name ? 'true' : 'false',
-                'SHOW_BACKGROUND_PATTERN' => $request->show_background_pattern ? 'true' : 'false',
-                'ENABLE_AUTH_ANIMATIONS' => $request->enable_animations ? 'true' : 'false',
+                'SHOW_INSTITUTION_NAME' => $showInstitutionName,
+                'SHOW_BACKGROUND_PATTERN' => $showBackgroundPattern,
+                'ENABLE_AUTH_ANIMATIONS' => $enableAnimations,
                 'AUTH_CARD_STYLE' => $request->card_style,
             ]);
 
