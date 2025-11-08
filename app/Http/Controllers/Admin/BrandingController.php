@@ -305,13 +305,27 @@ class BrandingController extends Controller
             
             Log::info('Using upload path', ['path' => $logoDir]);
             
-            // Create logos directory if it doesn't exist
-            if (!File::exists($logoDir)) {
-                $created = File::makeDirectory($logoDir, 0775, true);
-                Log::info('Created logos directory', ['path' => $logoDir, 'success' => $created]);
+        // Create the directory if it doesn't exist
+        if (!file_exists($logoDir)) {
+            if (!mkdir($logoDir, 0775, true)) {
+                Log::error('Failed to create upload directory', ['path' => $logoDir]);
+                return redirect()->back()->with('error', 'Failed to create upload directory.');
             }
+            // Try to set permissions, but don't fail if it doesn't work
+            @chmod($logoDir, 0775);
+            @chgrp($logoDir, 'www-data');
+        }
 
-            // Check if directory is writable
+        // Ensure directory is writable
+        if (!is_writable($logoDir)) {
+            Log::error('Upload directory is not writable', [
+                'path' => $logoDir,
+                'permissions' => substr(sprintf('%o', fileperms($logoDir)), -4),
+                'owner' => function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($logoDir))['name'] ?? 'unknown' : 'unknown',
+                'group' => function_exists('posix_getgrgid') ? posix_getgrgid(filegroup($logoDir))['name'] ?? 'unknown' : 'unknown'
+            ]);
+            return redirect()->back()->with('error', 'Upload directory is not writable. Please check permissions.');
+        }            // Check if directory is writable
             if (!is_writable($logoDir)) {
                 Log::error('Logos directory is not writable', [
                     'path' => $logoDir,
@@ -336,9 +350,10 @@ class BrandingController extends Controller
                 throw new \Exception('Failed to move uploaded file to destination.');
             }
 
-            // Set proper file permissions
+            // Set proper file permissions and ownership (use @ to suppress errors in production)
             $fullPath = $logoDir . '/' . $filename;
-            chmod($fullPath, 0664);
+            @chmod($fullPath, 0664);
+            @chgrp($fullPath, 'www-data');
 
             Log::info('File moved successfully', ['path' => $fullPath]);
 
