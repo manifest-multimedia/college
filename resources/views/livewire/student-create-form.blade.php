@@ -280,7 +280,7 @@
                                 @error('student_id_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Leave blank to auto-generate (e.g., STU2025000)</div>
+                                <div class="form-text">Leave blank to auto-generate (e.g., PNMTC/DA/RM/22/23/001)</div>
                             </div>
 
                             <!-- Program -->
@@ -309,6 +309,24 @@
                                 @error('cohort_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                            </div>
+
+                            <!-- Academic Year -->
+                            <div class="col-md-4">
+                                <label class="form-label">Academic Year <span class="text-danger">*</span></label>
+                                <select wire:model="academic_year_id" class="form-select @error('academic_year_id') is-invalid @enderror" required>
+                                    <option value="">Select Academic Year</option>
+                                    @foreach ($academicYears as $academicYear)
+                                        <option value="{{ $academicYear->id }}" 
+                                            @if($academicYear->is_current) selected @endif>
+                                            {{ $academicYear->name }} @if($academicYear->is_current) (Current) @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('academic_year_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Used for generating Student ID</div>
                             </div>
 
                             <!-- Status -->

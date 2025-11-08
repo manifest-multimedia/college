@@ -41,8 +41,8 @@
                             <label for="schoolNamePrefix" class="form-label fw-bold">School Name Prefix</label>
                             <input type="text" wire:model="schoolNamePrefix" id="schoolNamePrefix" class="form-control @error('schoolNamePrefix') is-invalid @enderror" placeholder="PNMTC or PNMTC/DA or PNMTC-DA" maxlength="15">
                             <div class="form-text">
-                                This prefix will be used for generating Student IDs (e.g., PNMTC/DA20250001). 
-                                Allowed characters: letters, numbers, hyphens (-), and forward slashes (/). Will be converted to uppercase.
+                                This prefix will be used for generating Student IDs (e.g., PNMTC/DA/RM/22/23/001). 
+                                Format: PREFIX/PROGRAM_CODE/ACADEMIC_YEAR/SEQUENCE_NUMBER. Allowed characters: letters, numbers, hyphens (-), and forward slashes (/). Will be converted to uppercase.
                             </div>
                             @error('schoolNamePrefix')
                                 <div class="invalid-feedback">{{ $message }}</div>

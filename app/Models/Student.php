@@ -33,6 +33,7 @@ class Student extends Model
         'marital_status',
         'college_class_id',
         'cohort_id',
+        'academic_year_id',
         'status',
         'user_id',
     ];
@@ -73,6 +74,11 @@ class Student extends Model
     public function cohort()
     {
         return $this->belongsTo(Cohort::class);
+    }
+
+    public function academicYear()
+    {
+        return $this->belongsTo(AcademicYear::class);
     }
 
     public function guardians()

@@ -8,6 +8,7 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\CollegeClass;
+use App\Services\StudentIdGenerationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,7 @@ class StudentCreateForm extends Component
     public $student_id_number;
     public $college_class_id;
     public $cohort_id;
+    public $academic_year_id;
     public $status = 'Active';
     
     // Photo
@@ -51,6 +53,7 @@ class StudentCreateForm extends Component
     
     public $classes = [];
     public $cohorts = [];
+    public $academicYears = [];
     public $statuses = ['Active', 'Inactive', 'Pending', 'Graduated'];
     public $genders = ['Male', 'Female', 'Other'];
     public $religions = ['Christianity', 'Islam', 'Traditional', 'Other', 'None'];
@@ -76,6 +79,7 @@ class StudentCreateForm extends Component
         'residential_address' => 'nullable|string|max:255',
         'college_class_id' => 'required|integer|exists:college_classes,id',
         'cohort_id' => 'required|integer|exists:cohorts,id',
+        'academic_year_id' => 'required|integer|exists:academic_years,id',
         'status' => 'required|string|in:Active,Inactive,Pending,Graduated',
         'photo' => 'nullable|image|max:2048',
     ];
@@ -90,6 +94,15 @@ class StudentCreateForm extends Component
         try {
             $this->classes = CollegeClass::orderBy('name')->get();
             $this->cohorts = Cohort::orderBy('name')->get();
+            $this->academicYears = \App\Models\AcademicYear::orderBy('name')->get();
+            
+            // Set current academic year as default if not set
+            if (empty($this->academic_year_id)) {
+                $currentAcademicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+                if ($currentAcademicYear) {
+                    $this->academic_year_id = $currentAcademicYear->id;
+                }
+            }
         } catch (\Exception $e) {
             Log::error('Error loading dropdowns: ' . $e->getMessage());
         }
@@ -102,7 +115,13 @@ class StudentCreateForm extends Component
         try {
             // Auto-generate student ID if not provided
             if (empty($this->student_id_number)) {
-                $this->student_id_number = $this->generateStudentId();
+                $studentIdService = new StudentIdGenerationService();
+                $this->student_id_number = $studentIdService->generateStudentId(
+                    $this->first_name,
+                    $this->last_name,
+                    $this->college_class_id,
+                    $this->academic_year_id
+                );
             }
             
             // Handle photo upload
@@ -132,6 +151,7 @@ class StudentCreateForm extends Component
             $student->residential_address = $this->residential_address;
             $student->college_class_id = $this->college_class_id;
             $student->cohort_id = $this->cohort_id;
+            $student->academic_year_id = $this->academic_year_id;
             $student->status = $this->status;
             
             if ($photoPath) {

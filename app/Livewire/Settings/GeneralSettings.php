@@ -74,7 +74,7 @@ class GeneralSettings extends Component
             
             // Set component properties
             $this->schoolName = $dbSettings['school_name'] ?? config('app.name');
-            $this->schoolNamePrefix = $dbSettings['school_name_prefix'] ?? 'STU';
+            $this->schoolNamePrefix = $dbSettings['school_name_prefix'] ?? 'PNMTC/DA';
             $this->schoolEmail = $dbSettings['school_email'] ?? '';
             $this->schoolPhone = $dbSettings['school_phone'] ?? '';
             $this->schoolAddress = $dbSettings['school_address'] ?? '';
