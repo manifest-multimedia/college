@@ -44,7 +44,7 @@
                                     </tr>
                                     <tr>
                                         <th>Program</th>
-                                        <td>{{ $studentGrade->student->program->name ?? 'N/A' }}</td>
+                                        <td>{{ $studentGrade->student && $studentGrade->student->program ? $studentGrade->student->program->name : 'N/A' }}</td>
                                     </tr>
                                 </table>
                             </div>
@@ -53,15 +53,24 @@
                                 <table class="table table-bordered">
                                     <tr>
                                         <th width="30%">Course</th>
-                                        <td>{{ $studentGrade->collegeClass->course->title }}</td>
+                                        <td>{{ $studentGrade->collegeClass && $studentGrade->collegeClass->course ? $studentGrade->collegeClass->course->title : 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Class</th>
-                                        <td>{{ $studentGrade->collegeClass->name }}</td>
+                                        <td>{{ $studentGrade->collegeClass ? $studentGrade->collegeClass->name : 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Semester</th>
-                                        <td>{{ $studentGrade->collegeClass->semester->name }} ({{ $studentGrade->collegeClass->semester->academicYear->name }})</td>
+                                        <td>
+                                            @if($studentGrade->collegeClass && $studentGrade->collegeClass->semester)
+                                                {{ $studentGrade->collegeClass->semester->name }}
+                                                @if($studentGrade->collegeClass->semester->academicYear)
+                                                    ({{ $studentGrade->collegeClass->semester->academicYear->name }})
+                                                @endif
+                                            @else
+                                                N/A
+                                            @endif
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
@@ -74,12 +83,16 @@
                                     <tr>
                                         <th width="30%">Letter Grade</th>
                                         <td>
-                                            <span class="badge bg-info fs-6">{{ $studentGrade->grade->letter }}</span>
+                                            @if($studentGrade->grade)
+                                                <span class="badge bg-info fs-6">{{ $studentGrade->grade->letter }}</span>
+                                            @else
+                                                <span class="badge bg-secondary fs-6">N/A</span>
+                                            @endif
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>Grade Value</th>
-                                        <td>{{ $studentGrade->grade->value }}</td>
+                                        <td>{{ $studentGrade->grade ? $studentGrade->grade->value : 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Comments</th>
@@ -92,7 +105,7 @@
                                 <table class="table table-bordered">
                                     <tr>
                                         <th width="30%">Graded By</th>
-                                        <td>{{ $studentGrade->gradedBy->name ?? 'System' }}</td>
+                                        <td>{{ $studentGrade->gradedBy?->name ?? 'System' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Graded On</th>
