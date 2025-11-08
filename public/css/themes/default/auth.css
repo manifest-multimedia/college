@@ -15,3 +15,78 @@
 .theme-default .institution-name {
     color: var(--brand-primary, #3b82f6);
 }
+
+/* Button Styles */
+.theme-default .btn-primary {
+    background-color: var(--brand-primary, #007bff);
+    border-color: var(--brand-primary, #007bff);
+    color: white;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.theme-default .btn-primary:hover {
+    background-color: var(--brand-primary, #0056b3);
+    border-color: var(--brand-primary, #0056b3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-default .btn-outline-primary {
+    background-color: transparent;
+    border-color: var(--brand-primary, #007bff);
+    color: var(--brand-primary, #007bff);
+    font-weight: 500;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s ease-in-out;
+    border-width: 1px;
+}
+
+.theme-default .btn-outline-primary:hover,
+.theme-default .btn-outline-primary:focus {
+    background-color: var(--brand-primary, #007bff);
+    border-color: var(--brand-primary, #007bff);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-default .btn-outline-primary:active {
+    background-color: var(--brand-primary, #0056b3);
+    border-color: var(--brand-primary, #0056b3);
+    color: white;
+}
+
+/* Form Controls */
+.theme-default .form-control {
+    border-radius: 0.5rem;
+    border-color: #d1d5db;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.theme-default .form-control:focus {
+    border-color: var(--brand-primary, #007bff);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Links */
+.theme-default .link-primary {
+    color: var(--brand-primary, #007bff);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.theme-default .link-primary:hover {
+    color: var(--brand-primary, #0056b3);
+    text-decoration: underline;
+}
+
+/* Form Check */
+.theme-default .form-check-input:checked {
+    background-color: var(--brand-primary, #007bff);
+    border-color: var(--brand-primary, #007bff);
+}

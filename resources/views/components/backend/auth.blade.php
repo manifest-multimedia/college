@@ -177,9 +177,11 @@
                             <img class="img-fluid auth-logo" style="height: 150px;" src="{{ asset($authLogo) }}" alt="{{ $institutionName }} Logo">
                            @endif
                         
-                        <h1 class="mb-2 font-heading fs-6 fw-bold" style="color: var(--brand-primary, #007bff);">
-                            {{ $institutionName }}
-                        </h1>
+                        @if(config('branding.theme_settings.show_institution_name', true))
+                            <h1 class="mb-2 font-heading fs-6 fw-bold" style="color: var(--brand-primary, #007bff);">
+                                {{ $institutionName }}
+                            </h1>
+                        @endif
                         <h2 class="mb-4 font-heading fs-7">{{ $description }}</h2>
                         
                         <!-- Error messages moved to individual pages -->
