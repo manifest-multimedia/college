@@ -117,9 +117,15 @@ class StudentImport extends Component
                 $this->importResults['sync_output'] = Artisan::output();
             }
 
-            session()->flash('success', 'Students imported successfully: ' . 
+            $message = 'Students imported successfully: ' . 
                 $this->importResults['created'] . ' created, ' . 
-                $this->importResults['updated'] . ' updated.');
+                $this->importResults['updated'] . ' updated';
+            
+            if (isset($this->importResults['ids_generated']) && $this->importResults['ids_generated'] > 0) {
+                $message .= ', ' . $this->importResults['ids_generated'] . ' student IDs generated automatically';
+            }
+            
+            session()->flash('success', $message . '.');
             
             Log::channel('daily')->info('Student import completed', $this->importResults);
             

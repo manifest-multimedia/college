@@ -172,6 +172,12 @@
                                 <span>Skipped:</span>
                                 <span class="fw-bold {{ $importResults['skipped'] > 0 ? 'text-warning' : 'text-muted' }}">{{ $importResults['skipped'] }}</span>
                             </div>
+                            @if(isset($importResults['ids_generated']) && $importResults['ids_generated'] > 0)
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Student IDs Generated:</span>
+                                <span class="fw-bold text-info">{{ $importResults['ids_generated'] }}</span>
+                            </div>
+                            @endif
                         </div>
                         
                         @if(isset($importResults['sync_output']))
@@ -203,14 +209,19 @@
                     
                     <h5>Expected Excel Columns</h5>
                     <ul>
-                        <li><strong>Student ID</strong>: Unique identifier for each student</li>
-                        <li><strong>First Name</strong>: Student's first name</li>
-                        <li><strong>Last Name</strong>: Student's last name</li>
+                        <li><strong>Student ID</strong>: Unique identifier (optional - will be auto-generated if missing)</li>
+                        <li><strong>First Name</strong>: Student's first name (required for ID generation)</li>
+                        <li><strong>Last Name</strong>: Student's last name (required for ID generation)</li>
                         <li><strong>Other Name(s)</strong>: Middle names or other names</li>
                         <li><strong>Email</strong>: Required for user account creation</li>
                         <li><strong>Mobile Number</strong>: Contact number</li>
                         <li>... and other demographic information</li>
                     </ul>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Automatic ID Generation:</strong> If Student ID is missing, the system will automatically generate one using the format: PNMTC/DA/[PROGRAM]/[YEAR]/[NUMBER] based on the selected program and alphabetical ordering.
+                    </div>
                     
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>

@@ -3,7 +3,9 @@
 namespace App\Imports;
 
 use App\Models\Student;
+use App\Services\StudentIdGenerationService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -15,12 +17,14 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
     protected $programId;
     protected $cohortId;
     protected $columnMapping;
+    protected $studentIdService;
     protected $importStats = [
         'total' => 0,
         'created' => 0,
         'updated' => 0,
         'failed' => 0,
         'skipped' => 0,
+        'ids_generated' => 0,
     ];
 
     /**
@@ -34,6 +38,7 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
     {
         $this->programId = $programId;
         $this->cohortId = $cohortId;
+        $this->studentIdService = new StudentIdGenerationService();
         
         // Default column mapping (Excel column => Database field)
         $defaultMapping = [
@@ -76,6 +81,36 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
                 $studentData['college_class_id'] = $this->programId;
                 $studentData['cohort_id'] = $this->cohortId;
                 
+                // Generate student ID if not provided
+                if (empty($studentData['student_id']) && 
+                    !empty($studentData['first_name']) && 
+                    !empty($studentData['last_name'])) {
+                    
+                    try {
+                        $studentData['student_id'] = $this->studentIdService->generateStudentId(
+                            $studentData['first_name'],
+                            $studentData['last_name'],
+                            $this->programId,
+                            null // Use current academic year
+                        );
+                        $this->importStats['ids_generated']++;
+                        
+                        Log::info('Generated student ID during import', [
+                            'student_name' => $studentData['first_name'] . ' ' . $studentData['last_name'],
+                            'generated_id' => $studentData['student_id'],
+                            'program_id' => $this->programId
+                        ]);
+                        
+                    } catch (\Exception $e) {
+                        Log::error('Failed to generate student ID during import', [
+                            'student_name' => $studentData['first_name'] . ' ' . $studentData['last_name'],
+                            'program_id' => $this->programId,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Continue without ID - will be handled by validation
+                    }
+                }
+                
                 // Check if student exists (by student ID or email)
                 $existingStudent = null;
                 if (!empty($studentData['student_id'])) {
@@ -97,7 +132,7 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
                 }
             } catch (\Exception $e) {
                 $this->importStats['failed']++;
-                \Log::error("Student import error: " . $e->getMessage(), [
+                Log::error("Student import error: " . $e->getMessage(), [
                     'row' => json_encode($row)
                 ]);
             }
