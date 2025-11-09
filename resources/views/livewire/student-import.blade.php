@@ -69,6 +69,20 @@
                             </div>
                         </div>
                         
+                        <div class="mb-3">
+                            <label for="academicYearId" class="form-label">Academic Year</label>
+                            <select id="academicYearId" class="form-select @error('academicYearId') is-invalid @enderror" wire:model="academicYearId">
+                                <option value="">Use Current Academic Year</option>
+                                @foreach ($academicYears as $academicYear)
+                                    <option value="{{ $academicYear->id }}">{{ $academicYear->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('academicYearId')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Select the academic year for student ID generation. If not selected, the current academic year will be used.</small>
+                        </div>
+                        
                         <div class="mb-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="syncUsers" wire:model="syncUsers">
@@ -220,7 +234,7 @@
                     
                     <div class="alert alert-info">
                         <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Automatic ID Generation:</strong> If Student ID is missing, the system will automatically generate one using the format: PNMTC/DA/[PROGRAM]/[YEAR]/[NUMBER] based on the selected program and alphabetical ordering.
+                        <strong>Automatic ID Generation:</strong> If Student ID is missing, the system will automatically generate one using the format: PNMTC/DA/[PROGRAM]/[YEAR]/[NUMBER] based on the selected program, academic year, and alphabetical ordering.
                     </div>
                     
                     <div class="alert alert-warning">

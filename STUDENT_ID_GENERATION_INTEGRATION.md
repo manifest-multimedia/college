@@ -37,12 +37,12 @@ The integration follows the existing StudentIdGenerationService business logic e
 ## Usage Flow
 
 1. **Upload Excel File**: Upload file with student data (student_id column optional)
-2. **Select Program/Cohort**: Choose target program and cohort for students
+2. **Select Program/Cohort/Academic Year**: Choose target program, cohort, and academic year for students
 3. **Process Import**: System processes each student row
 4. **ID Generation**: For students without student_id:
    - Checks for required fields (first_name, last_name)
    - Calls StudentIdGenerationService.generateStudentId()
-   - Uses selected program and current academic year
+   - Uses selected program and academic year (or current if not specified)
    - Generates ID following business rules
    - Logs generation for tracking
 5. **Results Display**: Shows statistics including IDs generated
@@ -132,7 +132,7 @@ The ID generation uses existing configuration:
 1. Prepare Excel file with student data (student_id column optional)
 2. Ensure first_name and last_name are populated for students needing IDs
 3. Go to Student Import page in CIS system
-4. Select Excel file, program, and cohort
+4. Select Excel file, program, cohort, and academic year (optional)
 5. Click Import Students
 6. Review results showing created/updated students and IDs generated
 7. Check logs for detailed generation information if needed

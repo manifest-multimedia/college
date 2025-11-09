@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Cohort;
 use App\Models\CollegeClass;
+use App\Models\AcademicYear;
 use App\Imports\StudentImporter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
@@ -18,6 +19,7 @@ class StudentImport extends Component
     public $file;
     public $programId;
     public $cohortId;
+    public $academicYearId;
     public $syncUsers = true;
     public $columnMapping = [];
     public $importResults = null;
@@ -70,6 +72,7 @@ class StudentImport extends Component
         'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
         'programId' => 'required|exists:college_classes,id',
         'cohortId' => 'required|exists:cohorts,id',
+        'academicYearId' => 'nullable|exists:academic_years,id',
         'syncUsers' => 'boolean',
     ];
 
@@ -80,11 +83,18 @@ class StudentImport extends Component
         'file.max' => 'The file size must not exceed 10MB',
         'programId.required' => 'Please select a program',
         'cohortId.required' => 'Please select a cohort',
+        'academicYearId.exists' => 'Please select a valid academic year',
     ];
 
     public function mount()
     {
         $this->columnMapping = $this->defaultColumnMapping;
+        
+        // Set current academic year as default
+        $currentAcademicYear = AcademicYear::where('is_current', true)->first();
+        if ($currentAcademicYear) {
+            $this->academicYearId = $currentAcademicYear->id;
+        }
     }
 
     public function updated($propertyName)
@@ -103,7 +113,8 @@ class StudentImport extends Component
             $importer = new StudentImporter(
                 $this->programId,
                 $this->cohortId,
-                $this->columnMapping
+                $this->columnMapping,
+                $this->academicYearId
             );
 
             Excel::import($importer, $this->file);
@@ -139,8 +150,14 @@ class StudentImport extends Component
 
     public function resetForm()
     {
-        $this->reset(['file', 'importResults']);
+        $this->reset(['file', 'importResults', 'academicYearId']);
         $this->columnMapping = $this->defaultColumnMapping;
+        
+        // Reset to current academic year
+        $currentAcademicYear = AcademicYear::where('is_current', true)->first();
+        if ($currentAcademicYear) {
+            $this->academicYearId = $currentAcademicYear->id;
+        }
     }
 
     public function render()
@@ -148,6 +165,7 @@ class StudentImport extends Component
         return view('livewire.student-import', [
             'programs' => CollegeClass::orderBy('name')->get(),
             'cohorts' => Cohort::orderBy('name')->get(),
+            'academicYears' => AcademicYear::orderBy('start_date', 'desc')->get(),
         ]);
     }
 }

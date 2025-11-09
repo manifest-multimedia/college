@@ -85,7 +85,7 @@ class StudentImportWithIdGenerationTest extends TestCase
         ]);
 
         // Create importer and process the collection
-        $importer = new StudentImporter($this->collegeClass->id, $this->cohort->id);
+        $importer = new StudentImporter($this->collegeClass->id, $this->cohort->id, [], $this->academicYear->id);
         $importer->collection($testData);
 
         // Get import stats
@@ -135,7 +135,7 @@ class StudentImportWithIdGenerationTest extends TestCase
             ]
         ]);
 
-        $importer = new StudentImporter($this->collegeClass->id, $this->cohort->id);
+        $importer = new StudentImporter($this->collegeClass->id, $this->cohort->id, [], $this->academicYear->id);
         $importer->collection($testData);
         
         $stats = $importer->getImportStats();
@@ -164,7 +164,7 @@ class StudentImportWithIdGenerationTest extends TestCase
             ]
         ]);
 
-        $importer = new StudentImporter($this->collegeClass->id, $this->cohort->id);
+        $importer = new StudentImporter($this->collegeClass->id, $this->cohort->id, [], $this->academicYear->id);
         $importer->collection($testData);
         
         $stats = $importer->getImportStats();

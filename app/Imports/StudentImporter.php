@@ -17,6 +17,7 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
     protected $programId;
     protected $cohortId;
     protected $columnMapping;
+    protected $academicYearId;
     protected $studentIdService;
     protected $importStats = [
         'total' => 0,
@@ -33,11 +34,13 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
      * @param int $programId The program ID to assign to imported students
      * @param int $cohortId The cohort ID to assign to imported students  
      * @param array $columnMapping Custom column mapping if provided
+     * @param int|null $academicYearId The academic year ID for student ID generation
      */
-    public function __construct($programId, $cohortId, $columnMapping = [])
+    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null)
     {
         $this->programId = $programId;
         $this->cohortId = $cohortId;
+        $this->academicYearId = $academicYearId;
         $this->studentIdService = new StudentIdGenerationService();
         
         // Default column mapping (Excel column => Database field)
@@ -91,20 +94,22 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
                             $studentData['first_name'],
                             $studentData['last_name'],
                             $this->programId,
-                            null // Use current academic year
+                            $this->academicYearId
                         );
                         $this->importStats['ids_generated']++;
                         
                         Log::info('Generated student ID during import', [
                             'student_name' => $studentData['first_name'] . ' ' . $studentData['last_name'],
                             'generated_id' => $studentData['student_id'],
-                            'program_id' => $this->programId
+                            'program_id' => $this->programId,
+                            'academic_year_id' => $this->academicYearId
                         ]);
                         
                     } catch (\Exception $e) {
                         Log::error('Failed to generate student ID during import', [
                             'student_name' => $studentData['first_name'] . ' ' . $studentData['last_name'],
                             'program_id' => $this->programId,
+                            'academic_year_id' => $this->academicYearId,
                             'error' => $e->getMessage()
                         ]);
                         // Continue without ID - will be handled by validation
