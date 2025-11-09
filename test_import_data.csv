@@ -1,0 +1,7 @@
+Student ID,First Name,Last Name,Email,Gender,Date of Birth,Mobile Number
+,John,Doe,john.doe@example.com,Male,1999-01-15,123456789
+,Jane,,jane@example.com,Female,2000-05-20,987654321
+,,Smith,smith@example.com,Male,2001-03-10,555123456
+,Alice,Johnson,,Female,1998-12-08,444987654
+,Bob,Wilson,invalid-email,Male,1999-07-25,333222111
+EXISTING001,Charlie,Brown,charlie@example.com,Male,2000-11-30,222333444

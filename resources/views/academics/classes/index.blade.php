@@ -1,6 +1,6 @@
 <x-dashboard.default>
     <x-slot name="title">
-        College Classes
+        Academic Programs
     </x-slot>
     
     <div class="container-fluid">
@@ -10,14 +10,14 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title">
-                                <i class="fas fa-chalkboard me-2"></i>College Classes
+                                <i class="fas fa-graduation-cap me-2"></i>Academic Programs
                             </h5>
                             <div>
                                 <a href="{{ route('academics.dashboard') }}" class="btn btn-sm btn-secondary me-2">
                                     <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
                                 </a>
                                 <a href="{{ route('academics.classes.create') }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus me-1"></i> Add New Class
+                                    <i class="fas fa-plus me-1"></i> Add New Program
                                 </a>
                             </div>
                         </div>
@@ -37,65 +37,52 @@
                             </div>
                         @endif
                         
-                        <!-- Semester filter -->
+                        <!-- Program info -->
                         <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="card bg-light">
-                                    <div class="card-body p-3">
-                                        <h6 class="mb-3">Filter Classes by Semester</h6>
-                                        <form action="{{ route('academics.classes.filter') }}" method="POST" class="d-flex">
-                                            @csrf
-                                            <select name="semester_id" class="form-select me-2">
-                                                <option value="">All Semesters</option>
-                                                @foreach(\App\Models\Semester::with('academicYear')->get() as $semester)
-                                                    <option value="{{ $semester->id }}" {{ isset($currentSemester) && $currentSemester && $currentSemester->id == $semester->id ? 'selected' : '' }}>
-                                                        {{ $semester->name }} ({{ optional($semester->academicYear)->name ?? 'No Academic Year' }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit" class="btn btn-primary">Filter</button>
-                                        </form>
-                                    </div>
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Academic Programs</strong> are semester-independent educational offerings that define structured pathways for student learning. Programs can run across multiple academic periods and contain various courses taught by different instructors.
                                 </div>
                             </div>
-                            
-                            @if(isset($currentSemester) && $currentSemester)
-                                <div class="col-md-6">
-                                    <div class="alert alert-info mb-0">
-                                        <i class="fas fa-filter me-2"></i> 
-                                        Showing classes for: <strong>{{ $currentSemester->name }}</strong>
-                                        ({{ optional($currentSemester->academicYear)->name ?? 'No Academic Year' }})
-                                    </div>
-                                </div>
-                            @endif
                         </div>
                         
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Class Name</th>
-                                        <th>Course</th>
-                                        <th>Semester</th>
-                                        <th>Instructor</th>
+                                        <th>Program Name</th>
+                                        <th>Short Name</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($classes as $class)
                                         <tr>
-                                            <td>{{ $class->name }}</td>
-                                            <td>{{ optional($class->course)->name ?? 'No course assigned' }}</td>
                                             <td>
-                                                @if($class->semester)
-                                                    <a href="{{ route('academics.semesters.show', $class->semester) }}">
-                                                        {{ $class->semester->name }}
-                                                    </a>
-                                                @else
-                                                    <span class="text-muted">No semester assigned</span>
+                                                <strong>{{ $class->name }}</strong>
+                                                @if($class->slug)
+                                                    <br><small class="text-muted">{{ $class->slug }}</small>
                                                 @endif
                                             </td>
-                                            <td>{{ optional($class->instructor)->name ?? 'No instructor assigned' }}</td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ $class->getProgramCode() }}</span>
+                                                @if(empty($class->short_name))
+                                                    <br><small class="text-muted">Auto-generated</small>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{ $class->description ? Str::limit($class->description, 80) : 'No description provided' }}
+                                            </td>
+                                            <td>
+                                                @if($class->is_active)
+                                                    <span class="badge bg-success">Active</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                @endif
+                                            </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     <a href="{{ route('academics.classes.show', $class) }}" class="btn btn-info" title="View">
@@ -138,7 +125,16 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center">No classes found.</td>
+                                            <td colspan="5" class="text-center">
+                                                <div class="py-4">
+                                                    <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                                                    <h5 class="text-muted">No Programs Found</h5>
+                                                    <p class="text-muted">Create your first academic program to get started.</p>
+                                                    <a href="{{ route('academics.classes.create') }}" class="btn btn-primary">
+                                                        <i class="fas fa-plus me-1"></i> Create Program
+                                                    </a>
+                                                </div>
+                                            </td>
                                         </tr>
                                     @endforelse
                                 </tbody>

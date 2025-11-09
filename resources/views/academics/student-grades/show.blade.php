@@ -49,28 +49,19 @@
                                 </table>
                             </div>
                             <div class="col-md-6">
-                                <h4>Course Information</h4>
+                                <h4>Program Information</h4>
                                 <table class="table table-bordered">
                                     <tr>
-                                        <th width="30%">Course</th>
-                                        <td>{{ $studentGrade->collegeClass && $studentGrade->collegeClass->course ? $studentGrade->collegeClass->course->title : 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Class</th>
+                                        <th width="30%">Program</th>
                                         <td>{{ $studentGrade->collegeClass ? $studentGrade->collegeClass->name : 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Semester</th>
-                                        <td>
-                                            @if($studentGrade->collegeClass && $studentGrade->collegeClass->semester)
-                                                {{ $studentGrade->collegeClass->semester->name }}
-                                                @if($studentGrade->collegeClass->semester->academicYear)
-                                                    ({{ $studentGrade->collegeClass->semester->academicYear->name }})
-                                                @endif
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
+                                        <th>Program Code</th>
+                                        <td>{{ $studentGrade->collegeClass ? $studentGrade->collegeClass->getProgramCode() : 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Short Name</th>
+                                        <td>{{ $studentGrade->collegeClass && $studentGrade->collegeClass->short_name ? $studentGrade->collegeClass->short_name : 'N/A' }}</td>
                                     </tr>
                                 </table>
                             </div>

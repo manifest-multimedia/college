@@ -1,6 +1,6 @@
 <x-dashboard.default>
     <x-slot name="title">
-        Class Details
+        Program Details
     </x-slot>
     
     <div class="container-fluid">
@@ -10,11 +10,11 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title">
-                                <i class="fas fa-chalkboard me-2"></i>Class Details
+                                <i class="fas fa-graduation-cap me-2"></i>Program Details
                             </h5>
                             <div>
                                 <a href="{{ route('academics.classes.index') }}" class="btn btn-sm btn-secondary me-2">
-                                    <i class="fas fa-arrow-left me-1"></i> Back to Classes
+                                    <i class="fas fa-arrow-left me-1"></i> Back to Programs
                                 </a>
                                 <a href="{{ route('academics.classes.edit', $class) }}" class="btn btn-sm btn-warning">
                                     <i class="fas fa-edit me-1"></i> Edit
@@ -41,47 +41,55 @@
                             <div class="col-md-8">
                                 <div class="card">
                                     <div class="card-header bg-primary text-white">
-                                        <h5 class="card-title mb-0">Class Information</h5>
+                                        <h5 class="card-title mb-0">Program Information</h5>
                                     </div>
                                     <div class="card-body">
                                         <table class="table table-striped">
                                             <tbody>
                                                 <tr>
-                                                    <th style="width: 30%">Class Name</th>
+                                                    <th style="width: 30%">Program Name</th>
                                                     <td>{{ $class->name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Short Name (Program Code)</th>
+                                                    <td>
+                                                        <span class="badge bg-primary">{{ $class->getProgramCode() }}</span>
+                                                        @if(empty($class->short_name))
+                                                            <small class="text-muted ms-2">Auto-generated from program name</small>
+                                                        @else
+                                                            <small class="text-muted ms-2">Custom short name</small>
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <th>Description</th>
                                                     <td>{{ $class->description ?: 'No description provided' }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th>Semester</th>
+                                                    <th>Status</th>
                                                     <td>
-                                                        @if($class->semester)
-                                                            <a href="{{ route('academics.semesters.show', $class->semester) }}">
-                                                                {{ $class->semester->name }}
-                                                            </a>
-                                                            ({{ optional($class->semester->academicYear)->name ?? 'No Academic Year' }})
+                                                        @if($class->is_active)
+                                                            <span class="badge bg-success">Active</span>
                                                         @else
-                                                            <span class="text-muted">No semester assigned</span>
+                                                            <span class="badge bg-secondary">Inactive</span>
                                                         @endif
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <th>Course</th>
-                                                    <td>
-                                                        {{ optional($class->course)->name ?? 'No course assigned' }}
-                                                        @if($class->course && $class->course->course_code)
-                                                            ({{ $class->course->course_code }})
-                                                        @endif
-                                                    </td>
+                                                    <th>Created</th>
+                                                    <td>{{ $class->created_at->format('F d, Y \a\t g:i A') }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th>Instructor</th>
-                                                    <td>{{ optional($class->instructor)->name ?? 'No instructor assigned' }}</td>
+                                                    <th>Last Updated</th>
+                                                    <td>{{ $class->updated_at->format('F d, Y \a\t g:i A') }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
+                                        
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Academic Program:</strong> This is a semester-independent educational offering that provides a structured pathway for student learning across multiple academic periods.
+                                        </div>
                                     </div>
                                 </div>
                             </div>

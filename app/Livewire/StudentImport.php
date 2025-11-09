@@ -132,6 +132,14 @@ class StudentImport extends Component
                 $this->importResults['created'] . ' created, ' . 
                 $this->importResults['updated'] . ' updated';
             
+            if ($this->importResults['skipped'] > 0) {
+                $message .= ', ' . $this->importResults['skipped'] . ' skipped due to validation errors';
+            }
+            
+            if ($this->importResults['failed'] > 0) {
+                $message .= ', ' . $this->importResults['failed'] . ' failed';
+            }
+            
             if (isset($this->importResults['ids_generated']) && $this->importResults['ids_generated'] > 0) {
                 $message .= ', ' . $this->importResults['ids_generated'] . ' student IDs generated automatically';
             }

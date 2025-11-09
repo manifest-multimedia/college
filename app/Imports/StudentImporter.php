@@ -26,6 +26,8 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
         'failed' => 0,
         'skipped' => 0,
         'ids_generated' => 0,
+        'validation_errors' => [],
+        'processed' => 0,
     ];
 
     /**
@@ -75,14 +77,35 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
     {
         $this->importStats['total'] = count($rows);
         
-        foreach ($rows as $row) {
+        foreach ($rows as $rowIndex => $row) {
             try {
                 // Prepare student data from mapped columns
                 $studentData = $this->mapRowToStudentData($row);
                 
+                // Validate required fields before processing
+                $validationResult = $this->validateStudentData($studentData, $rowIndex + 2); // +2 for header and 0-based index
+                
+                if (!$validationResult['valid']) {
+                    $this->importStats['skipped']++;
+                    $this->importStats['validation_errors'][] = [
+                        'row' => $rowIndex + 2,
+                        'errors' => $validationResult['errors'],
+                        'data' => array_filter($studentData) // Only show non-empty fields
+                    ];
+                    Log::warning('Student record skipped due to validation errors', [
+                        'row' => $rowIndex + 2,
+                        'errors' => $validationResult['errors'],
+                        'data' => $studentData
+                    ]);
+                    continue; // Skip this record
+                }
+                
+                $this->importStats['processed']++;
+                
                 // Add program and cohort data
                 $studentData['college_class_id'] = $this->programId;
                 $studentData['cohort_id'] = $this->cohortId;
+                $studentData['status'] = $studentData['status'] ?? 'active'; // Default status
                 
                 // Generate student ID if not provided
                 if (empty($studentData['student_id']) && 
@@ -112,7 +135,9 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
                             'academic_year_id' => $this->academicYearId,
                             'error' => $e->getMessage()
                         ]);
-                        // Continue without ID - will be handled by validation
+                        // Skip if we can't generate ID and none provided
+                        $this->importStats['skipped']++;
+                        continue;
                     }
                 }
                 
@@ -127,18 +152,33 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
                 }
                 
                 if ($existingStudent) {
-                    // Update existing student
-                    $existingStudent->update($studentData);
+                    // Update existing student with non-empty values only
+                    $updateData = array_filter($studentData, function($value) {
+                        return !is_null($value) && $value !== '';
+                    });
+                    $existingStudent->update($updateData);
                     $this->importStats['updated']++;
+                    
+                    Log::info('Updated existing student during import', [
+                        'student_id' => $existingStudent->student_id,
+                        'updated_fields' => array_keys($updateData)
+                    ]);
                 } else {
                     // Create new student
-                    Student::create($studentData);
+                    $newStudent = Student::create($studentData);
                     $this->importStats['created']++;
+                    
+                    Log::info('Created new student during import', [
+                        'student_id' => $newStudent->student_id,
+                        'student_name' => $newStudent->name
+                    ]);
                 }
             } catch (\Exception $e) {
                 $this->importStats['failed']++;
                 Log::error("Student import error: " . $e->getMessage(), [
-                    'row' => json_encode($row)
+                    'row' => $rowIndex + 2,
+                    'row_data' => json_encode($row),
+                    'exception' => $e->getTraceAsString()
                 ]);
             }
         }
@@ -165,11 +205,80 @@ class StudentImporter implements ToCollection, WithHeadingRow, WithValidation, W
             
             // Map the column if it exists in the row
             if (isset($row[$normalizedExcelColumn])) {
-                $studentData[$dbField] = $row[$normalizedExcelColumn];
+                $value = $row[$normalizedExcelColumn];
+                
+                // Clean up the value
+                if (is_string($value)) {
+                    $value = trim($value);
+                    // Convert empty strings to null
+                    $value = $value === '' ? null : $value;
+                }
+                
+                $studentData[$dbField] = $value;
             }
         }
         
         return $studentData;
+    }
+    
+    /**
+     * Validate student data before import
+     *
+     * @param array $studentData
+     * @param int $rowNumber
+     * @return array
+     */
+    protected function validateStudentData($studentData, $rowNumber)
+    {
+        $errors = [];
+        $valid = true;
+        
+        // Check required fields
+        $requiredFields = ['first_name', 'last_name'];
+        
+        foreach ($requiredFields as $field) {
+            if (empty($studentData[$field])) {
+                $errors[] = "Missing required field: " . str_replace('_', ' ', $field);
+                $valid = false;
+            }
+        }
+        
+        // Validate email if provided
+        if (!empty($studentData['email']) && !filter_var($studentData['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Invalid email format: " . $studentData['email'];
+            $valid = false;
+        }
+        
+        // Validate date of birth if provided
+        if (!empty($studentData['date_of_birth'])) {
+            $dob = $studentData['date_of_birth'];
+            if (!strtotime($dob)) {
+                $errors[] = "Invalid date of birth format: " . $dob;
+                $valid = false;
+            }
+        }
+        
+        // Validate gender if provided
+        if (!empty($studentData['gender'])) {
+            $validGenders = ['male', 'female', 'M', 'F', 'Male', 'Female'];
+            if (!in_array($studentData['gender'], $validGenders)) {
+                $errors[] = "Invalid gender value: " . $studentData['gender'];
+                $valid = false;
+            }
+        }
+        
+        // Log validation issues
+        if (!$valid) {
+            Log::warning("Row $rowNumber validation failed", [
+                'errors' => $errors,
+                'data' => $studentData
+            ]);
+        }
+        
+        return [
+            'valid' => $valid,
+            'errors' => $errors
+        ];
     }
 
     /**

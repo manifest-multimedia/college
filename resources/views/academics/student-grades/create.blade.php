@@ -33,18 +33,10 @@
                             <div class="row">
                                 <div class="col-md-12 mb-3">
                                     <div class="alert alert-info">
-                                        @if($currentSemester)
-                                            <p class="mb-0">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                You are assigning grades for <strong>{{ $currentSemester->name }} ({{ $currentSemester->academicYear->name }})</strong>.
-                                            </p>
-                                        @else
-                                            <p class="mb-0">
-                                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                                No current semester is set. Please set a current semester in 
-                                                <a href="{{ route('academics.settings') }}">Academic Settings</a>.
-                                            </p>
-                                        @endif
+                                        <p class="mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            You are creating a grade entry for a student in one of the available academic programs.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -66,13 +58,18 @@
                                 </div>
 
                                 <div class="col-md-6 mb-3">
-                                    <label for="college_class_id" class="form-label">Class <span class="text-danger">*</span></label>
+                                    <label for="college_class_id" class="form-label">Program <span class="text-danger">*</span></label>
                                     <select name="college_class_id" id="college_class_id" class="form-select @error('college_class_id') is-invalid @enderror" required>
-                                        <option value="">-- Select Class --</option>
+                                        <option value="">-- Select Program --</option>
                                         @foreach($collegeClasses as $class)
                                             <option value="{{ $class->id }}" {{ old('college_class_id') == $class->id ? 'selected' : '' }}>
-                                                {{ $class->name }} - {{ $class->course->title }} 
-                                                ({{ $class->semester->name }})
+                                                {{ $class->name }}
+                                                @if($class->getProgramCode())
+                                                    ({{ $class->getProgramCode() }})
+                                                @endif
+                                                @if($class->description)
+                                                    - {{ Str::limit($class->description, 50) }}
+                                                @endif
                                             </option>
                                         @endforeach
                                     </select>

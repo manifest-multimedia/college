@@ -34,16 +34,17 @@
                             </div>
                         @endif
 
-                        <!-- Semester filter -->
+                        <!-- Program filter -->
                         <div class="mb-4">
                             <form action="{{ route('academics.student-grades.filter') }}" method="GET" class="row g-3">
                                 <div class="col-md-4">
-                                    <label for="semester_id" class="form-label">Filter by Semester</label>
-                                    <select name="semester_id" id="semester_id" class="form-select">
-                                        @foreach($semesters as $semester)
-                                            <option value="{{ $semester->id }}" 
-                                                {{ $currentSemester && $currentSemester->id == $semester->id ? 'selected' : '' }}>
-                                                {{ $semester->name }} @if($semester->academicYear)({{ $semester->academicYear->name }})@endif
+                                    <label for="program_id" class="form-label">Filter by Program</label>
+                                    <select name="program_id" id="program_id" class="form-select">
+                                        <option value="">All Programs</option>
+                                        @foreach($programs as $program)
+                                            <option value="{{ $program->id }}" 
+                                                {{ isset($currentProgram) && $currentProgram && $currentProgram->id == $program->id ? 'selected' : '' }}>
+                                                {{ $program->name }} @if($program->getProgramCode())({{ $program->getProgramCode() }})@endif
                                             </option>
                                         @endforeach
                                     </select>
@@ -61,7 +62,7 @@
                                 <thead>
                                     <tr>
                                         <th>Student</th>
-                                        <th>Course</th>
+                                        <th>Program</th>
                                         <th>Grade</th>
                                         <th>Comments</th>
                                         <th>Graded By</th>
@@ -82,9 +83,9 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($grade->collegeClass && $grade->collegeClass->course)
-                                                    {{ $grade->collegeClass->course->title }}<br>
-                                                    <small class="text-muted">{{ $grade->collegeClass->name }}</small>
+                                                @if($grade->collegeClass)
+                                                    {{ $grade->collegeClass->name }}<br>
+                                                    <small class="text-muted">{{ $grade->collegeClass->getProgramCode() }}</small>
                                                 @else
                                                     N/A<br>
                                                     <small class="text-muted">N/A</small>
@@ -129,7 +130,7 @@
                                     @empty
                                         <tr>
                                             <td colspan="7" class="text-center">
-                                                No grades found for the selected semester.
+                                                No grades found for the selected program.
                                             </td>
                                         </tr>
                                     @endforelse

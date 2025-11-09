@@ -170,6 +170,12 @@
                                 <span>Total Records:</span>
                                 <span class="fw-bold">{{ $importResults['total'] }}</span>
                             </div>
+                            @if(isset($importResults['processed']))
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Successfully Processed:</span>
+                                <span class="fw-bold text-info">{{ $importResults['processed'] }}</span>
+                            </div>
+                            @endif
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Successfully Created:</span>
                                 <span class="fw-bold text-success">{{ $importResults['created'] }}</span>
@@ -193,6 +199,29 @@
                             </div>
                             @endif
                         </div>
+                        
+                        @if(isset($importResults['validation_errors']) && count($importResults['validation_errors']) > 0)
+                            <div class="mt-3">
+                                <h6>Validation Errors:</h6>
+                                <div class="alert alert-warning" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach(array_slice($importResults['validation_errors'], 0, 10) as $error)
+                                        <div class="mb-2">
+                                            <strong>Row {{ $error['row'] }}:</strong>
+                                            <ul class="mb-0">
+                                                @foreach($error['errors'] as $err)
+                                                    <li>{{ $err }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endforeach
+                                    @if(count($importResults['validation_errors']) > 10)
+                                        <div class="text-muted">
+                                            ... and {{ count($importResults['validation_errors']) - 10 }} more validation errors
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
                         
                         @if(isset($importResults['sync_output']))
                             <div class="mt-3">

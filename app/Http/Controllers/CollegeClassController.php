@@ -23,110 +23,94 @@ class CollegeClassController extends Controller
     }
 
     /**
-     * Display a listing of college classes.
+     * Display a listing of college programs.
      */
     public function index()
     {
-        // Default to current semester if set
-        $currentSemester = $this->academicsService->getCurrentSemester();
-
-        $classes = CollegeClass::when($currentSemester, function ($query) use ($currentSemester) {
-            $query->where('semester_id', $currentSemester->id);
-        })
-            ->with(['semester.academicYear', 'instructor'])
+        // Programs are semester-independent, show all active programs
+        $classes = CollegeClass::where('is_deleted', false)
+            ->orderBy('name')
             ->paginate(10);
 
-        return view('academics.classes.index', compact('classes', 'currentSemester'));
+        return view('academics.classes.index', compact('classes'));
     }
 
     /**
-     * Show the form for creating a new college class.
+     * Show the form for creating a new college program.
      */
     public function create()
     {
-        $semesters = Semester::with('academicYear')->get();
-        $instructors = User::whereHas('roles', function ($query) {
-            $query->where('name', 'instructor');
-        })->get();
-
-        return view('academics.classes.create', compact('semesters', 'instructors'));
+        // Programs are semester-independent and don't require instructor assignment
+        return view('academics.classes.create');
     }
 
     /**
-     * Store a newly created college class in storage.
+     * Store a newly created college program in storage.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'short_name' => 'nullable|string|max:10|alpha_num',
             'description' => 'nullable|string',
-            'semester_id' => 'required|exists:semesters,id',
-            'instructor_id' => 'nullable|exists:users,id',
         ]);
 
         $collegeClass = CollegeClass::create([
             'name' => $validated['name'],
+            'short_name' => $validated['short_name'],
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
-            'semester_id' => $validated['semester_id'],
-            'instructor_id' => $validated['instructor_id'],
             'is_active' => true,
             'is_deleted' => false,
             'created_by' => auth()->id(),
         ]);
 
         return redirect()->route('academics.classes.index')
-            ->with('success', 'College class created successfully.');
+            ->with('success', 'Academic program created successfully.');
     }
 
     /**
-     * Display the specified college class.
+     * Display the specified college program.
      */
     public function show(CollegeClass $class)
     {
-        $class->load(['semester.academicYear', 'instructor', 'students']);
+        $class->load(['students']);
 
-        // Get student grades for this class
+        // Get student grades for this program
         $studentGrades = $class->studentGrades()->with(['student', 'grade'])->get();
 
         return view('academics.classes.show', compact('class', 'studentGrades'));
     }
 
     /**
-     * Show the form for editing the specified college class.
+     * Show the form for editing the specified college program.
      */
     public function edit(CollegeClass $class)
     {
-        $semesters = Semester::with('academicYear')->get();
-        $instructors = User::whereHas('roles', function ($query) {
-            $query->where('name', 'instructor');
-        })->get();
-
-        return view('academics.classes.edit', compact('class', 'semesters', 'instructors'));
+        // Programs are semester-independent and don't require instructor assignment
+        return view('academics.classes.edit', compact('class'));
     }
 
     /**
-     * Update the specified college class in storage.
+     * Update the specified college program in storage.
      */
     public function update(Request $request, CollegeClass $class)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'short_name' => 'nullable|string|max:10|alpha_num',
             'description' => 'nullable|string',
-            'semester_id' => 'required|exists:semesters,id',
-            'instructor_id' => 'nullable|exists:users,id',
         ]);
 
         $class->update([
             'name' => $validated['name'],
+            'short_name' => $validated['short_name'],
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
-            'semester_id' => $validated['semester_id'],
-            'instructor_id' => $validated['instructor_id'],
         ]);
 
         return redirect()->route('academics.classes.index')
-            ->with('success', 'College class updated successfully.');
+            ->with('success', 'Academic program updated successfully.');
     }
 
     /**

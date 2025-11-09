@@ -225,7 +225,7 @@ Route::middleware([
     });
 
     // Administrator routes
-    Route::middleware(['role:Administrator|Super Admin|Academic Officer'])->group(function () {
+    Route::middleware(['role:Administrator|Super Admin|Academic Officer|System'])->group(function () {
         Route::get('/students', function () {
             return view('students');
         })->name('students');

@@ -91,6 +91,7 @@ class StudentIdGenerationService
     /**
      * Get program code from college class
      * Maps college class to program codes
+     * Now uses short_name field if available, falls back to auto-generation
      */
     private function getProgramCode(?int $collegeClassId): string
     {
@@ -105,7 +106,21 @@ class StudentIdGenerationService
                 return 'GEN';
             }
             
-            // Extract program code from class name or use mapping
+            // First priority: Use the program's getProgramCode() method
+            // This will use short_name if set, or auto-generate from name
+            if (method_exists($collegeClass, 'getProgramCode')) {
+                $programCode = $collegeClass->getProgramCode();
+                if (!empty($programCode) && $programCode !== 'PROG') {
+                    return $programCode;
+                }
+            }
+            
+            // Second priority: Use short_name field directly if available
+            if (!empty($collegeClass->short_name)) {
+                return strtoupper($collegeClass->short_name);
+            }
+            
+            // Fallback: Use existing extraction logic for backward compatibility
             return $this->extractProgramCode($collegeClass->name);
             
         } catch (\Exception $e) {

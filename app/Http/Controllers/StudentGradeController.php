@@ -6,7 +6,6 @@ use App\Models\StudentGrade;
 use App\Models\Student;
 use App\Models\CollegeClass;
 use App\Models\Grade;
-use App\Models\Semester;
 use App\Services\AcademicsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -29,19 +28,14 @@ class StudentGradeController extends Controller
      */
     public function index()
     {
-        // Default to current semester if set
-        $currentSemester = $this->academicsService->getCurrentSemester();
-        $semesters = Semester::with('academicYear')->get();
+        // Get all active programs for filtering
+        $programs = CollegeClass::where('is_active', true)->where('is_deleted', false)->orderBy('name')->get();
         
-        $grades = StudentGrade::whereHas('collegeClass', function ($query) use ($currentSemester) {
-                if ($currentSemester) {
-                    $query->where('semester_id', $currentSemester->id);
-                }
-            })
-            ->with(['student', 'collegeClass.course', 'grade', 'gradedBy'])
+        // Show all student grades
+        $grades = StudentGrade::with(['student', 'collegeClass', 'grade', 'gradedBy'])
             ->paginate(15);
         
-        return view('academics.student-grades.index', compact('grades', 'semesters', 'currentSemester'));
+        return view('academics.student-grades.index', compact('grades', 'programs'));
     }
 
     /**
@@ -49,18 +43,15 @@ class StudentGradeController extends Controller
      */
     public function create()
     {
-        // Default to current semester if set
-        $currentSemester = $this->academicsService->getCurrentSemester();
-        
         $students = Student::where('status', 'active')->get();
-        $collegeClasses = CollegeClass::when($currentSemester, function ($query) use ($currentSemester) {
-                $query->where('semester_id', $currentSemester->id);
-            })
-            ->with(['course', 'semester'])
+        // Programs are now semester-independent, show all active programs
+        $collegeClasses = CollegeClass::where('is_active', true)
+            ->where('is_deleted', false)
+            ->orderBy('name')
             ->get();
         $gradeTypes = Grade::all();
         
-        return view('academics.student-grades.create', compact('students', 'collegeClasses', 'gradeTypes', 'currentSemester'));
+        return view('academics.student-grades.create', compact('students', 'collegeClasses', 'gradeTypes'));
     }
 
     /**
@@ -109,7 +100,7 @@ class StudentGradeController extends Controller
      */
     public function show(StudentGrade $studentGrade)
     {
-        $studentGrade->load(['student', 'collegeClass.course', 'collegeClass.semester', 'grade', 'gradedBy']);
+        $studentGrade->load(['student', 'collegeClass', 'grade', 'gradedBy']);
         
         return view('academics.student-grades.show', compact('studentGrade'));
     }
@@ -120,7 +111,7 @@ class StudentGradeController extends Controller
     public function edit(StudentGrade $studentGrade)
     {
         $students = Student::where('status', 'active')->get();
-        $collegeClasses = CollegeClass::with(['course', 'semester'])->get();
+        $collegeClasses = CollegeClass::where('is_active', true)->where('is_deleted', false)->orderBy('name')->get();
         $gradeTypes = Grade::all();
         
         return view('academics.student-grades.edit', compact('studentGrade', 'students', 'collegeClasses', 'gradeTypes'));
@@ -189,21 +180,21 @@ class StudentGradeController extends Controller
     }
     
     /**
-     * Filter grades by semester
+     * Filter grades by program
      */
     public function filter(Request $request)
     {
-        $semesterId = $request->semester_id;
-        $semesters = Semester::with('academicYear')->get();
-        $currentSemester = Semester::find($semesterId);
+        $programId = $request->program_id;
+        $programs = CollegeClass::where('is_active', true)->where('is_deleted', false)->orderBy('name')->get();
+        $currentProgram = CollegeClass::find($programId);
         
-        $grades = StudentGrade::whereHas('collegeClass', function ($query) use ($semesterId) {
-                $query->where('semester_id', $semesterId);
+        $grades = StudentGrade::when($programId, function ($query) use ($programId) {
+                return $query->where('college_class_id', $programId);
             })
-            ->with(['student', 'collegeClass.course', 'grade', 'gradedBy'])
+            ->with(['student', 'collegeClass', 'grade', 'gradedBy'])
             ->paginate(15);
         
-        return view('academics.student-grades.index', compact('grades', 'semesters', 'currentSemester'));
+        return view('academics.student-grades.index', compact('grades', 'programs', 'currentProgram'));
     }
     
     /**
