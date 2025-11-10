@@ -6,6 +6,7 @@ use App\Models\Semester;
 use App\Models\AcademicYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class SemesterController extends Controller
 {
@@ -51,7 +52,14 @@ class SemesterController extends Controller
         
         // Check if the dates fall within the academic year dates
         $academicYear = AcademicYear::findOrFail($validated['academic_year_id']);
-        if ($validated['start_date'] < $academicYear->start_date || $validated['end_date'] > $academicYear->end_date) {
+        
+        // Convert dates to Carbon instances for proper comparison
+        $semesterStartDate = Carbon::parse($validated['start_date']);
+        $semesterEndDate = Carbon::parse($validated['end_date']);
+        $academicYearStartDate = Carbon::parse($academicYear->start_date);
+        $academicYearEndDate = Carbon::parse($academicYear->end_date);
+        
+        if ($semesterStartDate->lt($academicYearStartDate) || $semesterEndDate->gt($academicYearEndDate)) {
             return redirect()->back()
                 ->withErrors(['date_range' => 'Semester dates must fall within the academic year date range.'])
                 ->withInput();
@@ -103,7 +111,14 @@ class SemesterController extends Controller
         
         // Check if the dates fall within the academic year dates
         $academicYear = AcademicYear::findOrFail($validated['academic_year_id']);
-        if ($validated['start_date'] < $academicYear->start_date || $validated['end_date'] > $academicYear->end_date) {
+        
+        // Convert dates to Carbon instances for proper comparison
+        $semesterStartDate = Carbon::parse($validated['start_date']);
+        $semesterEndDate = Carbon::parse($validated['end_date']);
+        $academicYearStartDate = Carbon::parse($academicYear->start_date);
+        $academicYearEndDate = Carbon::parse($academicYear->end_date);
+        
+        if ($semesterStartDate->lt($academicYearStartDate) || $semesterEndDate->gt($academicYearEndDate)) {
             return redirect()->back()
                 ->withErrors(['date_range' => 'Semester dates must fall within the academic year date range.'])
                 ->withInput();

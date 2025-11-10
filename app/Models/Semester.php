@@ -14,11 +14,15 @@ class Semester extends Model
         'name',
         'slug',
         'academic_year_id',
+        'start_date',
+        'end_date',
         'is_current',
         'description'
     ];
 
     protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
         'is_current' => 'boolean',
     ];
 
