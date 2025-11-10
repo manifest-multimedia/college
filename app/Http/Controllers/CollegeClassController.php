@@ -153,7 +153,7 @@ class CollegeClassController extends Controller
     }
 
     /**
-     * Add students to a class
+     * Add students to a program
      */
     public function addStudents(Request $request, CollegeClass $class)
     {
@@ -162,23 +162,29 @@ class CollegeClassController extends Controller
             'student_ids.*' => 'exists:students,id'
         ]);
 
+        // Use direct foreign key assignment since students belong to programs directly
         foreach ($request->student_ids as $studentId) {
-            // Add student to class if not already enrolled
-            $class->students()->syncWithoutDetaching([$studentId]);
+            $student = \App\Models\Student::find($studentId);
+            if ($student && $student->college_class_id != $class->id) {
+                $student->update(['college_class_id' => $class->id]);
+            }
         }
 
         return redirect()->route('academics.classes.show', $class)
-            ->with('success', 'Students added to class successfully.');
+            ->with('success', 'Students added to program successfully.');
     }
 
     /**
-     * Remove a student from a class
+     * Remove a student from a program
      */
     public function removeStudent(CollegeClass $class, $studentId)
     {
-        $class->students()->detach($studentId);
+        $student = \App\Models\Student::find($studentId);
+        if ($student && $student->college_class_id == $class->id) {
+            $student->update(['college_class_id' => null]);
+        }
 
         return redirect()->route('academics.classes.show', $class)
-            ->with('success', 'Student removed from class successfully.');
+            ->with('success', 'Student removed from program successfully.');
     }
 }

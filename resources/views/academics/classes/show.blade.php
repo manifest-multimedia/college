@@ -230,7 +230,7 @@
                                                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                                         </div>
                                                                         <div class="modal-body">
-                                                                            Are you sure you want to remove <strong>{{ $student->name }}</strong> from this class?
+                                                                            Are you sure you want to remove <strong>{{ $student->name }}</strong> from this program?
                                                                         </div>
                                                                         <div class="modal-footer">
                                                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -251,7 +251,7 @@
                                     </div>
                                 @else
                                     <div class="alert alert-info">
-                                        No students are currently enrolled in this class. Click "Add Students" to enroll students.
+                                        No students are currently enrolled in this program. Click "Add Students" to enroll students.
                                     </div>
                                 @endif
                             </div>
@@ -262,7 +262,7 @@
                             <div class="modal-dialog modal-lg">
                                 <div class="modal-content">
                                     <div class="modal-header bg-primary text-white">
-                                        <h5 class="modal-title" id="addStudentsModalLabel">Add Students to Class</h5>
+                                        <h5 class="modal-title" id="addStudentsModalLabel">Add Students to Program</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <form action="{{ route('academics.classes.students.add', $class->id) }}" method="POST">
@@ -271,15 +271,18 @@
                                             <div class="mb-3">
                                                 <label class="form-label">Select Students</label>
                                                 <div class="alert alert-info">
-                                                    Select students to add to this class. Hold Ctrl or ⌘ to select multiple students.
+                                                    Select students to add to this program. Hold Ctrl or ⌘ to select multiple students.
                                                 </div>
                                                 <select class="form-select" name="student_ids[]" multiple size="10" required>
-                                                    @foreach(\App\Models\Student::where('status', 'active')->get() as $student)
-                                                        @if(!$class->students->contains($student->id))
-                                                            <option value="{{ $student->id }}">
-                                                                {{ $student->name }} ({{ $student->student_id ?? 'No ID' }}) - {{ $student->email }}
-                                                            </option>
-                                                        @endif
+                                                    @foreach(\App\Models\Student::where('status', 'active')->where(function($query) use ($class) {
+                                                        $query->whereNull('college_class_id')->orWhere('college_class_id', '!=', $class->id);
+                                                    })->get() as $student)
+                                                        <option value="{{ $student->id }}">
+                                                            {{ $student->name }} ({{ $student->student_id ?? 'No ID' }}) - {{ $student->email }}
+                                                            @if($student->college_class_id)
+                                                                <span class="text-muted">(Currently in: {{ $student->collegeClass->name ?? 'Unknown Program' }})</span>
+                                                            @endif
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             </div>

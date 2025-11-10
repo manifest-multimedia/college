@@ -80,13 +80,12 @@ class CollegeClass extends Model
     // }
 
     /**
-     * Get all students enrolled in this class
+     * Get all students enrolled in this program
+     * Direct relationship via college_class_id foreign key
      */
-    public function students(): BelongsToMany
+    public function students(): HasMany
     {
-        return $this->belongsToMany(User::class, 'class_enrollments', 'class_id', 'student_id')
-            ->withTimestamps()
-            ->withPivot(['enrollment_status', 'grade', 'comments']);
+        return $this->hasMany(Student::class, 'college_class_id');
     }
 
     /**
