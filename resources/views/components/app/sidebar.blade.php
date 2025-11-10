@@ -218,7 +218,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     {{-- @endcan --}}
                     
                     {{-- @can('use ai chat') --}}
-                    <!--begin:Menu item-->
+                    {{-- <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('communication.chat') ? 'active' : '' }}" href="{{ route('communication.chat') }}">
                             <span class="menu-bullet">
@@ -227,7 +227,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-title">AI Assistant</span>
                         </a>
                     </div>
-                    <!--end:Menu item-->
+                    <!--end:Menu item--> --}}
                     {{-- @endcan --}}
                     
                     <!-- AI Sensei Assistant with File Capabilities -->

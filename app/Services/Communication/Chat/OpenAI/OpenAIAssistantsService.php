@@ -9,9 +9,8 @@ use Illuminate\Support\Facades\Log;
 class OpenAIAssistantsService
 {
     /**
-     * OpenAI API credentials and URLs
+     * OpenAI API URLs and model (non-sensitive configuration)
      */
-    protected $apiKey;
     protected $baseUrl;
     protected $model;
     
@@ -20,9 +19,19 @@ class OpenAIAssistantsService
      */
     public function __construct()
     {
-        $this->apiKey = Config::get('services.openai.key');
         $this->baseUrl = Config::get('services.openai.base_url', 'https://api.openai.com/v1');
         $this->model = Config::get('services.openai.model', 'gpt-4-turbo');
+    }
+    
+    /**
+     * Get the API key dynamically from config
+     * This prevents caching of sensitive credentials in singleton instances
+     * 
+     * @return string|null
+     */
+    protected function getApiKey(): ?string
+    {
+        return Config::get('services.openai.key');
     }
     
     /**
@@ -58,7 +67,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/assistants", $payload);
@@ -121,7 +130,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/assistants?" . http_build_query($queryParams));
@@ -165,7 +174,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/assistants/{$assistantId}");
@@ -212,7 +221,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/assistants/{$assistantId}", $data);
@@ -258,7 +267,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->delete("{$this->baseUrl}/assistants/{$assistantId}");
@@ -315,7 +324,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads", $payload);
@@ -359,7 +368,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}");
@@ -410,7 +419,7 @@ class OpenAIAssistantsService
             ];
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}", $payload);
@@ -456,7 +465,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->delete("{$this->baseUrl}/threads/{$threadId}");
@@ -524,7 +533,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/messages", $payload);
@@ -593,7 +602,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/messages?" . http_build_query($queryParams));
@@ -640,7 +649,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/messages/{$messageId}");
@@ -713,7 +722,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/runs", $payload);
@@ -762,7 +771,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/runs/{$runId}");
@@ -833,7 +842,7 @@ class OpenAIAssistantsService
             }
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/runs?" . http_build_query($queryParams));
@@ -880,7 +889,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/runs/{$runId}/cancel");
@@ -936,7 +945,7 @@ class OpenAIAssistantsService
             ];
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/messages", $payload);
@@ -1010,7 +1019,7 @@ class OpenAIAssistantsService
             // Use v2 API as v1 is deprecated
             // In v2, we need to list all messages and collect their file IDs
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/messages?" . http_build_query($queryParams));
@@ -1086,7 +1095,7 @@ class OpenAIAssistantsService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/files/{$fileId}");
@@ -1148,7 +1157,7 @@ class OpenAIAssistantsService
             // In v2 API, we can't directly remove a file from a thread
             // Instead, we can delete the file from OpenAI entirely
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->delete("{$this->baseUrl}/files/{$fileId}");

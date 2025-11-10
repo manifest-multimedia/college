@@ -12,9 +12,8 @@ use Illuminate\Support\Facades\Log;
 class OpenAIChatService extends AbstractChatService
 {
     /**
-     * OpenAI API credentials
+     * OpenAI API URLs and model (non-sensitive configuration)
      */
-    protected $apiKey;
     protected $apiUrl;
     protected $model;
     
@@ -28,10 +27,20 @@ class OpenAIChatService extends AbstractChatService
      */
     public function __construct(OpenAIFilesService $openAIFilesService)
     {
-        $this->apiKey = Config::get('services.openai.key');
         $this->apiUrl = Config::get('services.openai.url', 'https://api.openai.com/v1/chat/completions');
         $this->model = Config::get('services.openai.model', 'gpt-4-turbo');
         $this->openAIFilesService = $openAIFilesService;
+    }
+    
+    /**
+     * Get the API key dynamically from config
+     * This prevents caching of sensitive credentials in singleton instances
+     * 
+     * @return string|null
+     */
+    protected function getApiKey(): ?string
+    {
+        return Config::get('services.openai.key');
     }
 
     /**
@@ -124,7 +133,7 @@ class OpenAIChatService extends AbstractChatService
             
             // Make API request to OpenAI
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
             ])->post($this->apiUrl, $requestParams);
 

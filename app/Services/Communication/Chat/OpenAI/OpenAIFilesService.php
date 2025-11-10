@@ -11,9 +11,8 @@ use Illuminate\Support\Facades\Storage;
 class OpenAIFilesService
 {
     /**
-     * OpenAI API credentials and URLs
+     * OpenAI API URLs (non-sensitive configuration)
      */
-    protected $apiKey;
     protected $baseUrl;
     
     /**
@@ -27,11 +26,21 @@ class OpenAIFilesService
      */
     public function __construct()
     {
-        $this->apiKey = Config::get('services.openai.key');
         $this->baseUrl = Config::get('services.openai.base_url', 'https://api.openai.com/v1');
         
         $this->diskName = Config::get('services.openai.storage_disk', 'local');
         $this->storagePath = Config::get('services.openai.storage_path', 'openai-files');
+    }
+    
+    /**
+     * Get the API key dynamically from config
+     * This prevents caching of sensitive credentials in singleton instances
+     * 
+     * @return string|null
+     */
+    protected function getApiKey(): ?string
+    {
+        return Config::get('services.openai.key');
     }
     
     /**
@@ -62,7 +71,7 @@ class OpenAIFilesService
             
             // Upload file to OpenAI
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
             ])->attach(
                 'file', file_get_contents($fullPath), $file->getClientOriginalName()
             )->post("{$this->baseUrl}/files", [
@@ -127,7 +136,7 @@ class OpenAIFilesService
             $queryString = !empty($queryParams) ? '?' . http_build_query($queryParams) : '';
             
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
             ])->get("{$this->baseUrl}/files{$queryString}");
             
@@ -172,7 +181,7 @@ class OpenAIFilesService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
             ])->delete("{$this->baseUrl}/files/{$fileId}");
             
@@ -224,7 +233,7 @@ class OpenAIFilesService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
             ])->get("{$this->baseUrl}/files/{$fileId}");
             
@@ -269,7 +278,7 @@ class OpenAIFilesService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$this->apiKey}",
+                'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
             ])->get("{$this->baseUrl}/files/{$fileId}/content");
             
