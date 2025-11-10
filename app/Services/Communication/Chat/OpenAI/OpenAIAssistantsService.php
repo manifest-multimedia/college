@@ -62,8 +62,14 @@ class OpenAIAssistantsService
                 $payload['tools'] = $tools;
             }
             
+            // Note: For assistants, file attachments are now handled through tool_resources
+            // file_ids parameter is deprecated in v2 API for assistants
             if (!empty($fileIds)) {
-                $payload['file_ids'] = $fileIds;
+                // Convert to tool_resources format for v2 API
+                $payload['tool_resources'] = [
+                    'file_search' => ['file_ids' => $fileIds],
+                    'code_interpreter' => ['file_ids' => $fileIds]
+                ];
             }
             
             $response = Http::withHeaders([
@@ -507,8 +513,9 @@ class OpenAIAssistantsService
      * @param string $threadId
      * @param string $content
      * @param string $role
-     * @param array|null $fileIds
+     * @param array|null $fileIds (deprecated - use attachments instead)
      * @param array|null $metadata
+     * @param array|null $attachments - New format: [['file_id' => 'file-xxx', 'tools' => [...]]]
      * @return array
      */
     public function addMessage(
@@ -516,7 +523,8 @@ class OpenAIAssistantsService
         string $content,
         string $role = 'user',
         ?array $fileIds = null,
-        ?array $metadata = null
+        ?array $metadata = null,
+        ?array $attachments = null
     ) {
         try {
             $payload = [
@@ -524,8 +532,21 @@ class OpenAIAssistantsService
                 'content' => $content,
             ];
             
-            if ($fileIds) {
-                $payload['file_ids'] = $fileIds;
+            // Handle new attachments format (v2 API)
+            if ($attachments) {
+                $payload['attachments'] = $attachments;
+            } 
+            // Handle legacy file_ids format for backward compatibility
+            elseif ($fileIds) {
+                $payload['attachments'] = array_map(function($fileId) {
+                    return [
+                        'file_id' => $fileId,
+                        'tools' => [
+                            ['type' => 'code_interpreter'],
+                            ['type' => 'file_search']
+                        ]
+                    ];
+                }, $fileIds);
             }
             
             if ($metadata) {
@@ -934,14 +955,22 @@ class OpenAIAssistantsService
      * @param string $fileId
      * @return array
      */
-    public function attachFileToThread(string $threadId, string $fileId)
+    public function attachFileToThread(string $threadId, string $fileId, string $content = "I've uploaded a file for you to analyze.")
     {
         try {
-            // In v2 API, we attach files by creating a message with file_ids array
+            // In v2 API, we attach files using attachments instead of file_ids
             $payload = [
                 'role' => 'user',
-                'content' => '', // Empty content for file-only message
-                'file_ids' => [$fileId], // Use file_ids as an array parameter
+                'content' => $content,
+                'attachments' => [
+                    [
+                        'file_id' => $fileId,
+                        'tools' => [
+                            ['type' => 'code_interpreter'],
+                            ['type' => 'file_search']
+                        ]
+                    ]
+                ]
             ];
             
             $response = Http::withHeaders([
@@ -1191,6 +1220,213 @@ class OpenAIAssistantsService
             return [
                 'success' => false,
                 'message' => 'File removal failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+    
+    /**
+     * Upload file and create message with attachment in one step
+     * This is a convenience method that handles the complete workflow
+     * 
+     * @param string $threadId
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param string $content
+     * @param array $tools - Tools to enable for the file ['code_interpreter', 'file_search']
+     * @return array
+     */
+    public function uploadFileAndCreateMessage(
+        string $threadId, 
+        \Illuminate\Http\UploadedFile $file, 
+        string $content = "I've uploaded a file for you to analyze.",
+        array $tools = ['code_interpreter', 'file_search']
+    ) {
+        try {
+            // Step 1: Upload file to OpenAI
+            $filesService = app(\App\Services\Communication\Chat\OpenAI\OpenAIFilesService::class);
+            $uploadResult = $filesService->uploadFile($file, 'assistants');
+            
+            if (!$uploadResult['success']) {
+                return [
+                    'success' => false,
+                    'message' => 'File upload failed: ' . $uploadResult['message'],
+                    'step' => 'file_upload'
+                ];
+            }
+            
+            $fileId = $uploadResult['data']['file_id'];
+            
+            // Step 2: Create message with file attachment
+            $attachments = [
+                [
+                    'file_id' => $fileId,
+                    'tools' => array_map(fn($tool) => ['type' => $tool], $tools)
+                ]
+            ];
+            
+            $messageResult = $this->addMessage(
+                $threadId,
+                $content,
+                'user',
+                null, // fileIds (deprecated)
+                null, // metadata
+                $attachments // new attachments format
+            );
+            
+            if (!$messageResult['success']) {
+                return [
+                    'success' => false,
+                    'message' => 'Message creation failed: ' . $messageResult['message'],
+                    'step' => 'message_creation',
+                    'file_id' => $fileId
+                ];
+            }
+            
+            return [
+                'success' => true,
+                'data' => [
+                    'file_id' => $fileId,
+                    'message' => $messageResult['data'],
+                    'file_info' => $uploadResult['data']
+                ]
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Complete file upload and message creation failed', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId,
+                'file_name' => $file->getClientOriginalName(),
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'Complete file processing failed: ' . $e->getMessage(),
+                'step' => 'exception'
+            ];
+        }
+    }
+    
+    /**
+     * Process uploaded file and get AI response
+     * This method handles the complete workflow including running the assistant
+     * 
+     * @param string $threadId
+     * @param string $assistantId
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param string $query - What to ask about the file
+     * @param array $tools - Tools to enable for the file
+     * @return array
+     */
+    public function processFileWithAI(
+        string $threadId,
+        string $assistantId,
+        \Illuminate\Http\UploadedFile $file,
+        string $query = "Please analyze this file and provide a summary.",
+        array $tools = ['code_interpreter', 'file_search']
+    ) {
+        try {
+            // Step 1: Upload file and create message
+            $uploadResult = $this->uploadFileAndCreateMessage($threadId, $file, $query, $tools);
+            
+            if (!$uploadResult['success']) {
+                return $uploadResult;
+            }
+            
+            // Step 2: Run the assistant
+            $runResult = $this->createRun($threadId, $assistantId);
+            
+            if (!$runResult['success']) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to run assistant: ' . $runResult['message'],
+                    'step' => 'assistant_run',
+                    'file_info' => $uploadResult['data']
+                ];
+            }
+            
+            $runId = $runResult['data']['id'];
+            
+            // Step 3: Wait for completion (with timeout)
+            $maxAttempts = 60; // 60 attempts = ~2 minutes
+            $attempt = 0;
+            
+            do {
+                sleep(2); // Wait 2 seconds between checks
+                $attempt++;
+                
+                $statusResult = $this->retrieveRun($threadId, $runId);
+                
+                if (!$statusResult['success']) {
+                    return [
+                        'success' => false,
+                        'message' => 'Failed to check run status: ' . $statusResult['message'],
+                        'step' => 'status_check',
+                        'file_info' => $uploadResult['data']
+                    ];
+                }
+                
+                $status = $statusResult['data']['status'];
+                
+                if ($status === 'completed') {
+                    // Step 4: Get the response
+                    $messagesResult = $this->listMessages($threadId, 1, 'desc');
+                    
+                    if (!$messagesResult['success']) {
+                        return [
+                            'success' => false,
+                            'message' => 'Failed to retrieve AI response: ' . $messagesResult['message'],
+                            'step' => 'response_retrieval',
+                            'file_info' => $uploadResult['data']
+                        ];
+                    }
+                    
+                    $messages = $messagesResult['data']['data'] ?? [];
+                    $latestMessage = $messages[0] ?? null;
+                    
+                    return [
+                        'success' => true,
+                        'data' => [
+                            'file_info' => $uploadResult['data'],
+                            'run_id' => $runId,
+                            'response' => $latestMessage,
+                            'status' => 'completed'
+                        ]
+                    ];
+                }
+                
+                if (in_array($status, ['failed', 'cancelled', 'expired'])) {
+                    return [
+                        'success' => false,
+                        'message' => "Assistant run failed with status: {$status}",
+                        'step' => 'assistant_execution',
+                        'file_info' => $uploadResult['data'],
+                        'run_status' => $status
+                    ];
+                }
+                
+            } while ($attempt < $maxAttempts && in_array($status, ['queued', 'in_progress', 'requires_action']));
+            
+            // Timeout reached
+            return [
+                'success' => false,
+                'message' => 'Assistant processing timeout. The file is uploaded but processing is taking longer than expected.',
+                'step' => 'timeout',
+                'file_info' => $uploadResult['data'],
+                'run_id' => $runId,
+                'last_status' => $status ?? 'unknown'
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Complete file processing with AI failed', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId,
+                'assistant_id' => $assistantId,
+                'file_name' => $file->getClientOriginalName(),
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'File processing with AI failed: ' . $e->getMessage(),
+                'step' => 'exception'
             ];
         }
     }

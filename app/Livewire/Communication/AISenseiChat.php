@@ -31,6 +31,7 @@ class AISenseiChat extends Component
     public $temporaryUploads = [];
     public $uploadingFile = false;
     public $filesAttachedToThread = [];
+    public $uploadedFiles = [];
 
     // Service injections
     protected $openAIAssistantsService;
@@ -412,33 +413,41 @@ class AISenseiChat extends Component
                         continue;
                     }
 
-                    // Attach the file to the thread
+                    // Use the new comprehensive upload method that handles both upload and attachment
                     if ($this->threadId) {
-                        $attachResponse = $this->openAIAssistantsService->attachFileToThread(
-                            $this->threadId, 
-                            $fileId
+                        // Instead of separate upload and attach, use the new combined method
+                        $uploadAndAttachResponse = $this->openAIAssistantsService->uploadFileAndCreateMessage(
+                            $this->threadId,
+                            $file,
+                            "I've uploaded a file: " . $file->getClientOriginalName() . ". Please analyze it.",
+                            ['code_interpreter', 'file_search'] // Enable both tools
                         );
 
-                        if ($attachResponse['success']) {
+                        if ($uploadAndAttachResponse['success']) {
                             $this->uploadedFiles[] = [
-                                'id' => $fileId,
+                                'id' => $uploadAndAttachResponse['data']['file_id'],
                                 'filename' => $file->getClientOriginalName(),
                                 'size' => $file->getSize(),
-                                'attached' => true
+                                'attached' => true,
+                                'message_id' => $uploadAndAttachResponse['data']['message']['id'] ?? null
                             ];
 
                             // Emit an event about the successful file upload
                             $this->dispatch('file-uploaded', [
-                                'file_id' => $fileId,
-                                'filename' => $file->getClientOriginalName()
+                                'file_id' => $uploadAndAttachResponse['data']['file_id'],
+                                'filename' => $file->getClientOriginalName(),
+                                'message_created' => true
                             ]);
+                            
+                            // Refresh messages to show the upload message
+                            $this->loadMessages();
                         } else {
-                            Log::error('Failed to attach file to thread', [
-                                'error' => $attachResponse['message'] ?? 'Unknown error',
-                                'file_id' => $fileId,
+                            Log::error('Failed to upload and attach file to thread', [
+                                'error' => $uploadAndAttachResponse['message'] ?? 'Unknown error',
+                                'step' => $uploadAndAttachResponse['step'] ?? 'unknown',
                                 'thread_id' => $this->threadId
                             ]);
-                            $this->error = "Failed to attach file: " . ($attachResponse['message'] ?? 'Unknown error');
+                            $this->error = "Failed to attach file: " . ($uploadAndAttachResponse['message'] ?? 'Unknown error');
                         }
                     }
                 } else {
@@ -507,6 +516,92 @@ class AISenseiChat extends Component
             'user_id' => Auth::id(),
             'thread_id' => $this->threadId
         ]);
+    }
+
+    /**
+     * Upload file and get immediate AI analysis
+     * This method provides instant feedback on uploaded files
+     */
+    public function uploadAndAnalyzeFile($file, $query = null)
+    {
+        try {
+            $this->uploadingFile = true;
+            $this->error = null;
+            $this->isAITyping = true;
+
+            // Use default analysis query if none provided
+            $analysisQuery = $query ?? "Please analyze this uploaded file and provide a detailed summary of its contents, structure, and key insights.";
+
+            // Use the new comprehensive processing method
+            $result = $this->openAIAssistantsService->processFileWithAI(
+                $this->threadId,
+                $this->assistantId,
+                $file,
+                $analysisQuery
+            );
+
+            if ($result['success']) {
+                // Add the uploaded file to our tracking
+                $this->uploadedFiles[] = [
+                    'id' => $result['data']['file_info']['file_id'],
+                    'filename' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'attached' => true,
+                    'analyzed' => true,
+                    'run_id' => $result['data']['run_id']
+                ];
+
+                // Refresh messages to show both the upload and AI response
+                $this->loadMessages();
+
+                // Emit success event
+                $this->dispatch('file-analyzed', [
+                    'file_id' => $result['data']['file_info']['file_id'],
+                    'filename' => $file->getClientOriginalName(),
+                    'analysis_completed' => true
+                ]);
+
+                // Add a success message
+                $this->dispatch('show-notification', [
+                    'type' => 'success',
+                    'message' => "File '{$file->getClientOriginalName()}' uploaded and analyzed successfully!"
+                ]);
+
+            } else {
+                $this->error = "File analysis failed: " . $result['message'];
+                
+                Log::error('File analysis failed', [
+                    'error' => $result['message'],
+                    'step' => $result['step'] ?? 'unknown',
+                    'file_name' => $file->getClientOriginalName(),
+                    'thread_id' => $this->threadId
+                ]);
+
+                // If file was uploaded but analysis failed, we still have the file
+                if (isset($result['file_info'])) {
+                    $this->uploadedFiles[] = [
+                        'id' => $result['file_info']['file_id'],
+                        'filename' => $file->getClientOriginalName(),
+                        'size' => $file->getSize(),
+                        'attached' => true,
+                        'analyzed' => false,
+                        'error' => $result['message']
+                    ];
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error in uploadAndAnalyzeFile', [
+                'error' => $e->getMessage(),
+                'file_name' => $file->getClientOriginalName(),
+                'thread_id' => $this->threadId
+            ]);
+            
+            $this->error = "Failed to process file: " . $e->getMessage();
+        } finally {
+            $this->uploadingFile = false;
+            $this->isAITyping = false;
+        }
     }
 
     public function render()
