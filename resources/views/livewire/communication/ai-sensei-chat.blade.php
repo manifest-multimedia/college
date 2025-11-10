@@ -136,6 +136,27 @@
                                                             <img src="{{ $contentItem['file_url'] ?? '#' }}"
                                                                 class="img-fluid rounded" alt="Image Attachment">
                                                         </div>
+                                                    @elseif($contentItem['type'] === 'file_attachment')
+                                                        <div class="file-attachment mb-2">
+                                                            <div class="card bg-light border">
+                                                                <div class="card-body p-2 d-flex align-items-center">
+                                                                    <div class="file-icon me-2" style="font-size: 1.5rem;">
+                                                                        {!! $this->getFileIcon($contentItem['filename']) !!}
+                                                                    </div>
+                                                                    <div class="flex-grow-1">
+                                                                        <div class="fw-bold text-truncate" style="font-size: 0.85rem;">
+                                                                            {{ $contentItem['filename'] }}
+                                                                        </div>
+                                                                        <div class="text-muted small">
+                                                                            {{ number_format($contentItem['size'] / 1024, 1) }} KB
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="text-success">
+                                                                        <i class="bi bi-check-circle"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     @endif
                                                 @endforeach
 
@@ -250,6 +271,43 @@
                         </div>
                     </div>
 
+                    <!-- File Staging Area -->
+                    @if (!empty($pendingFiles))
+                        <div class="border-top pt-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <small class="text-muted fw-bold">Files to Send ({{ count($pendingFiles) }})</small>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        wire:click="clearPendingFiles">
+                                    Clear All
+                                </button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                @foreach ($pendingFiles as $index => $file)
+                                    <div class="file-preview-item">
+                                        <div class="card border-0 shadow-sm" style="min-width: 120px; max-width: 200px;">
+                                            <div class="card-body p-2 text-center">
+                                                <div class="file-icon mb-1" style="font-size: 2rem;">
+                                                    {!! $this->getFileIcon($file['filename'] ?? 'unknown') !!}
+                                                </div>
+                                                <div class="file-name text-truncate" style="font-size: 0.75rem;" 
+                                                     title="{{ $file['filename'] ?? 'Unknown File' }}">
+                                                    {{ $file['filename'] ?? 'Unknown File' }}
+                                                </div>
+                                                <div class="file-size text-muted" style="font-size: 0.65rem;">
+                                                    {{ number_format(($file['size'] ?? 0) / 1024, 1) }} KB
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-danger mt-1" 
+                                                        wire:click="removePendingFile({{ $index }})">
+                                                    <i class="bi bi-x" style="font-size: 0.75rem;"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Message Input -->
                     <div class="mt-auto">
                         <form @submit.prevent="sendChatMessage" class="mt-3">
@@ -281,24 +339,42 @@
 
                             <!-- File upload status -->
                             @if ($uploadingFile)
-                                <div class="progress mt-2">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                        role="progressbar" style="width: 100%">
-                                        Uploading file...
+                                <div class="file-upload-progress mt-2">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                            <span class="visually-hidden">Processing...</span>
+                                        </div>
+                                        <span class="text-primary fw-bold">Processing files and message...</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                            role="progressbar" style="width: 100%">
+                                        </div>
                                     </div>
                                 </div>
                             @endif
 
-                            <!-- Show temporary upload files -->
+                            <!-- Show upload progress or validation errors -->
                             @if (!empty($temporaryUploads))
                                 <div class="mt-2">
                                     @foreach ($temporaryUploads as $file)
-                                        <div class="alert alert-info d-flex align-items-center mb-2">
-                                            <i class="bi bi-file-earmark me-2"></i>
+                                        <div class="alert alert-success d-flex align-items-center mb-2">
+                                            <i class="bi bi-check-circle me-2"></i>
                                             <div class="flex-grow-1 text-truncate">
-                                                {{ $file->getClientOriginalName() }}</div>
-                                            <button type="button" class="btn-close btn-sm"
-                                                wire:click="$set('temporaryUploads', [])"></button>
+                                                File uploaded: {{ $file->getClientOriginalName() }}
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if (!empty($fileValidationErrors))
+                                <div class="mt-2">
+                                    @foreach ($fileValidationErrors as $error)
+                                        <div class="alert alert-danger alert-dismissible fade show mb-2" role="alert">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            {{ $error }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                         </div>
                                     @endforeach
                                 </div>
@@ -429,41 +505,57 @@
 
                     // Send message with instant local feedback
                     sendChatMessage() {
-                        if (!this.newMessage.trim() || this.isSubmitting || !this.isPageLoaded) return;
+                        // Check if there are pending files by looking at the DOM element
+                        const pendingFilesContainer = document.querySelector('.file-preview-item');
+                        const hasPendingFiles = pendingFilesContainer !== null;
+                        const hasMessage = this.newMessage.trim();
+                        
+                        if ((!hasMessage && !hasPendingFiles) || this.isSubmitting || !this.isPageLoaded) return;
 
                         // Set submitting state
                         this.isSubmitting = true;
 
-                        // Create temporary local message
-                        const tempMessage = {
-                            content: this.newMessage,
-                            time: new Date().toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })
-                        };
-
-                        // Add to local messages array for instant display
-                        this.localMessages.push(tempMessage);
-
-                        // Store message to send
+                        // Store message to send before clearing
                         const messageToSend = this.newMessage;
 
-                        // Clear input field
+                        // Clear input field immediately
                         this.newMessage = '';
 
                         // Stop typing indicator
                         this.isTyping = false;
                         this.$wire.userStoppedTyping();
 
-                        // Scroll to show the new message
-                        setTimeout(() => this.scrollToBottom(), 100);
+                        if (hasPendingFiles) {
+                            // Show processing message for files
+                            console.log('Processing files and message...');
+                            
+                            // Don't show local message yet - wait for server processing
+                            // This ensures message appears WITH attachments
+                            
+                            // Don't start AI response yet - let file processing complete first
+                            this.$wire.sendMessageWithFiles(messageToSend);
+                        } else {
+                            // Regular message - show immediately
+                            const tempMessage = {
+                                content: messageToSend,
+                                time: new Date().toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })
+                            };
 
-                        // Set AI response in progress state
-                        Alpine.store('chat').updateAiResponseStatus(true);
+                            // Add to local messages array for instant display
+                            this.localMessages.push(tempMessage);
 
-                        // Send to server
-                        this.$wire.sendMessage(messageToSend);
+                            // Scroll to show the new message
+                            setTimeout(() => this.scrollToBottom(), 100);
+
+                            // Set AI response in progress state
+                            Alpine.store('chat').updateAiResponseStatus(true);
+
+                            console.log('Sending regular message:', messageToSend);
+                            this.$wire.sendMessage(messageToSend);
+                        }
                     },
 
                     // Scroll to bottom of chat
@@ -638,6 +730,92 @@
                 100% {
                     opacity: 1;
                     transform: scale(1);
+                }
+            }
+
+            /* File staging area styles */
+            .file-preview-item {
+                animation: fadeInUp 0.3s ease forwards;
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            @keyframes fadeInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .file-preview-item .card {
+                transition: all 0.2s ease;
+                cursor: pointer;
+            }
+
+            .file-preview-item .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            }
+
+            .file-icon {
+                color: #6c757d;
+                transition: color 0.2s ease;
+            }
+
+            .file-preview-item:hover .file-icon {
+                color: #495057;
+            }
+
+            /* File type specific colors */
+            .file-icon.text-primary { color: #0d6efd !important; }
+            .file-icon.text-success { color: #198754 !important; }
+            .file-icon.text-danger { color: #dc3545 !important; }
+            .file-icon.text-warning { color: #fd7e14 !important; }
+            .file-icon.text-info { color: #0dcaf0 !important; }
+            .file-icon.text-purple { color: #6f42c1 !important; }
+
+            /* File attachment in messages */
+            .file-attachment .card {
+                transition: all 0.2s ease;
+                border: 1px solid #e9ecef;
+                max-width: 300px;
+            }
+
+            .file-attachment .card:hover {
+                border-color: #6c757d;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .file-attachment .file-icon {
+                min-width: 24px;
+            }
+
+            /* File processing indicator styles */
+            .file-upload-progress {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border: 1px solid #dee2e6;
+                border-radius: 0.375rem;
+                padding: 1rem;
+                animation: processingPulse 2s infinite;
+            }
+
+            .file-upload-progress .spinner-border-sm {
+                width: 1rem;
+                height: 1rem;
+            }
+
+            @keyframes processingPulse {
+                0% { 
+                    opacity: 1; 
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                }
+                50% { 
+                    opacity: 0.85; 
+                    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+                }
+                100% { 
+                    opacity: 1; 
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
                 }
             }
         </style>

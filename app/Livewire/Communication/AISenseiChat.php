@@ -5,6 +5,7 @@ namespace App\Livewire\Communication;
 use App\Models\User;
 use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
+use App\Services\Communication\Chat\MCPIntegrationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
@@ -32,16 +33,23 @@ class AISenseiChat extends Component
     public $uploadingFile = false;
     public $filesAttachedToThread = [];
     public $uploadedFiles = [];
+    public $pendingFiles = []; // Files waiting to be sent with message
+    public $fileUploadMessage = ''; // Custom message to send with files
 
     // Service injections
     protected $openAIAssistantsService;
     protected $openAIFilesService;
+    protected $mcpIntegrationService;
 
     // Constructor with dependency injection
-    public function boot(OpenAIAssistantsService $openAIAssistantsService, OpenAIFilesService $openAIFilesService)
-    {
+    public function boot(
+        OpenAIAssistantsService $openAIAssistantsService, 
+        OpenAIFilesService $openAIFilesService,
+        MCPIntegrationService $mcpIntegrationService
+    ) {
         $this->openAIAssistantsService = $openAIAssistantsService;
         $this->openAIFilesService = $openAIFilesService;
+        $this->mcpIntegrationService = $mcpIntegrationService;
     }
 
     public function mount()
@@ -123,6 +131,22 @@ class AISenseiChat extends Component
                         }
                         return null;
                     })->filter()->toArray();
+
+                    // Add attachment information if this is a user message with attachments
+                    if ($message['role'] === 'user' && !empty($message['attachments'])) {
+                        foreach ($message['attachments'] as $attachment) {
+                            if ($attachment['file_id']) {
+                                // Get file info from our uploaded files tracking or OpenAI
+                                $fileInfo = $this->getFileInfo($attachment['file_id']);
+                                $content[] = [
+                                    'type' => 'file_attachment',
+                                    'file_id' => $attachment['file_id'],
+                                    'filename' => $fileInfo['filename'] ?? 'Attached File',
+                                    'size' => $fileInfo['size'] ?? 0
+                                ];
+                            }
+                        }
+                    }
 
                     return [
                         'id' => $message['id'],
@@ -285,7 +309,7 @@ class AISenseiChat extends Component
             $maxRetries = 30;
             $retries = 0;
             
-            while (in_array($status, ['queued', 'in_progress']) && $retries < $maxRetries) {
+            while (in_array($status, ['queued', 'in_progress', 'requires_action']) && $retries < $maxRetries) {
                 // Wait a moment before checking status
                 usleep(500000); // 500ms
                 
@@ -298,6 +322,13 @@ class AISenseiChat extends Component
                 }
                 
                 $status = $runStatusResponse['data']['status'];
+                
+                // Handle function calls (MCP tool execution)
+                if ($status === 'requires_action') {
+                    $this->handleFunctionCalls($runStatusResponse['data'], $runId);
+                    $status = 'in_progress'; // Continue polling after submitting function outputs
+                }
+                
                 $retries++;
             }
             
@@ -325,6 +356,68 @@ class AISenseiChat extends Component
             ]);
             $this->error = "Error processing response: " . $e->getMessage();
             $this->broadcastTypingStatus(false);
+        }
+    }
+
+    /**
+     * Handle function calls from OpenAI Assistant (MCP tools)
+     */
+    protected function handleFunctionCalls($runData, $runId)
+    {
+        try {
+            if (!isset($runData['required_action']['submit_tool_outputs']['tool_calls'])) {
+                Log::warning('Function call action detected but no tool calls found', ['run_data' => $runData]);
+                return;
+            }
+
+            $toolCalls = $runData['required_action']['submit_tool_outputs']['tool_calls'];
+            $toolOutputs = [];
+
+            foreach ($toolCalls as $toolCall) {
+                Log::info('Processing MCP tool call', [
+                    'tool_call_id' => $toolCall['id'],
+                    'function_name' => $toolCall['function']['name'],
+                    'arguments' => $toolCall['function']['arguments']
+                ]);
+
+                // Parse arguments (they come as JSON string)
+                $arguments = json_decode($toolCall['function']['arguments'], true);
+                
+                // Execute the MCP function
+                $result = $this->mcpIntegrationService->processFunctionCall(
+                    $toolCall['function']['name'],
+                    $arguments
+                );
+
+                // Prepare the output for OpenAI
+                $toolOutputs[] = [
+                    'tool_call_id' => $toolCall['id'],
+                    'output' => json_encode($result)
+                ];
+            }
+
+            // Submit the tool outputs back to OpenAI
+            if (!empty($toolOutputs)) {
+                $submitResponse = $this->openAIAssistantsService->submitToolOutputs(
+                    $this->threadId,
+                    $runId,
+                    $toolOutputs
+                );
+
+                if (!$submitResponse['success']) {
+                    Log::error('Failed to submit tool outputs', [
+                        'error' => $submitResponse['message'] ?? 'Unknown error',
+                        'tool_outputs' => $toolOutputs
+                    ]);
+                }
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error handling function calls', [
+                'error' => $e->getMessage(),
+                'run_id' => $runId,
+                'thread_id' => $this->threadId
+            ]);
         }
     }
 
@@ -389,89 +482,32 @@ class AISenseiChat extends Component
     public function updatedTemporaryUploads($value)
     {
         try {
+            // Stage files for sending with message instead of immediate upload
             foreach ($this->temporaryUploads as $file) {
-                $this->uploadingFile = true;
-
-                // Upload the file to OpenAI
-                $response = $this->openAIFilesService->uploadFile($file, 'assistants');
-
-                if ($response['success']) {
-                    // Debug the response to see what's being returned
-                    Log::info('OpenAI file upload response', [
-                        'response' => $response
-                    ]);
-
-                    // The file ID is stored in the data array in our service response
-                    $fileId = $response['data']['file_id'] ?? $response['data']['id'] ?? null;
-
-                    if (!$fileId) {
-                        Log::error('Missing file ID in OpenAI response', [
-                            'response' => $response,
-                            'filename' => $file->getClientOriginalName()
-                        ]);
-                        $this->error = "Failed to get file ID from upload response";
-                        continue;
-                    }
-
-                    // Use the new comprehensive upload method that handles both upload and attachment
-                    if ($this->threadId) {
-                        // Instead of separate upload and attach, use the new combined method
-                        $uploadAndAttachResponse = $this->openAIAssistantsService->uploadFileAndCreateMessage(
-                            $this->threadId,
-                            $file,
-                            "I've uploaded a file: " . $file->getClientOriginalName() . ". Please analyze it.",
-                            ['code_interpreter', 'file_search'] // Enable both tools
-                        );
-
-                        if ($uploadAndAttachResponse['success']) {
-                            $this->uploadedFiles[] = [
-                                'id' => $uploadAndAttachResponse['data']['file_id'],
-                                'filename' => $file->getClientOriginalName(),
-                                'size' => $file->getSize(),
-                                'attached' => true,
-                                'message_id' => $uploadAndAttachResponse['data']['message']['id'] ?? null
-                            ];
-
-                            // Emit an event about the successful file upload
-                            $this->dispatch('file-uploaded', [
-                                'file_id' => $uploadAndAttachResponse['data']['file_id'],
-                                'filename' => $file->getClientOriginalName(),
-                                'message_created' => true
-                            ]);
-                            
-                            // Refresh messages to show the upload message
-                            $this->loadMessages();
-                        } else {
-                            Log::error('Failed to upload and attach file to thread', [
-                                'error' => $uploadAndAttachResponse['message'] ?? 'Unknown error',
-                                'step' => $uploadAndAttachResponse['step'] ?? 'unknown',
-                                'thread_id' => $this->threadId
-                            ]);
-                            $this->error = "Failed to attach file: " . ($uploadAndAttachResponse['message'] ?? 'Unknown error');
-                        }
-                    }
-                } else {
-                    Log::error('Failed to upload file', [
-                        'error' => $response['message'] ?? 'Unknown error',
-                        'filename' => $file->getClientOriginalName()
-                    ]);
-                    $this->error = "Failed to upload file: " . ($response['message'] ?? 'Unknown error');
-                }
+                $this->pendingFiles[] = [
+                    'file' => $file,
+                    'filename' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'type' => $this->getFileTypeName($file->getClientOriginalName()),
+                    'icon' => $this->getFileIcon($file->getClientOriginalName()),
+                    'id' => uniqid('pending_')
+                ];
             }
 
-            // Clear the temporary uploads
+            // Clear temporary uploads
             $this->temporaryUploads = [];
 
-            // Refresh the list of attached files
-            $this->loadAttachedFiles();
+            // Emit event to update UI
+            $this->dispatch('files-staged', [
+                'count' => count($this->pendingFiles)
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('Error processing file upload', [
+            Log::error('Error staging file uploads', [
                 'error' => $e->getMessage(),
             ]);
-            $this->error = "Error uploading file: " . $e->getMessage();
+            $this->error = "Error preparing files: " . $e->getMessage();
         }
-
-        $this->uploadingFile = false;
     }
 
     public function removeFile($fileId)
@@ -516,6 +552,76 @@ class AISenseiChat extends Component
             'user_id' => Auth::id(),
             'thread_id' => $this->threadId
         ]);
+    }
+
+    /**
+     * Get file icon based on file extension
+     */
+    private function getFileIcon($filename)
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        $iconMap = [
+            'pdf' => 'ki-duotone ki-file-sheet fs-3x text-danger',
+            'doc' => 'ki-duotone ki-file-text fs-3x text-primary',
+            'docx' => 'ki-duotone ki-file-text fs-3x text-primary',
+            'txt' => 'ki-duotone ki-file-added fs-3x text-info',
+            'csv' => 'ki-duotone ki-file-sheet fs-3x text-success',
+            'xlsx' => 'ki-duotone ki-file-sheet fs-3x text-success',
+            'xls' => 'ki-duotone ki-file-sheet fs-3x text-success',
+            'ppt' => 'ki-duotone ki-file-up fs-3x text-warning',
+            'pptx' => 'ki-duotone ki-file-up fs-3x text-warning',
+            'jpg' => 'ki-duotone ki-picture fs-3x text-info',
+            'jpeg' => 'ki-duotone ki-picture fs-3x text-info',
+            'png' => 'ki-duotone ki-picture fs-3x text-info',
+            'gif' => 'ki-duotone ki-picture fs-3x text-info',
+            'zip' => 'ki-duotone ki-file-zip fs-3x text-dark',
+            'rar' => 'ki-duotone ki-file-zip fs-3x text-dark',
+            'json' => 'ki-duotone ki-code fs-3x text-warning',
+            'xml' => 'ki-duotone ki-code fs-3x text-warning',
+            'html' => 'ki-duotone ki-code fs-3x text-warning',
+            'css' => 'ki-duotone ki-code fs-3x text-warning',
+            'js' => 'ki-duotone ki-code fs-3x text-warning',
+            'php' => 'ki-duotone ki-code fs-3x text-warning',
+            'py' => 'ki-duotone ki-code fs-3x text-warning',
+        ];
+        
+        return $iconMap[$extension] ?? 'ki-duotone ki-file fs-3x text-gray-400';
+    }
+
+    /**
+     * Get file type display name
+     */
+    private function getFileTypeName($filename)
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        $typeMap = [
+            'pdf' => 'PDF Document',
+            'doc' => 'Word Document',
+            'docx' => 'Word Document', 
+            'txt' => 'Text File',
+            'csv' => 'CSV Spreadsheet',
+            'xlsx' => 'Excel Spreadsheet',
+            'xls' => 'Excel Spreadsheet',
+            'ppt' => 'PowerPoint Presentation',
+            'pptx' => 'PowerPoint Presentation',
+            'jpg' => 'JPEG Image',
+            'jpeg' => 'JPEG Image',
+            'png' => 'PNG Image',
+            'gif' => 'GIF Image',
+            'zip' => 'ZIP Archive',
+            'rar' => 'RAR Archive',
+            'json' => 'JSON File',
+            'xml' => 'XML File',
+            'html' => 'HTML File',
+            'css' => 'CSS File',
+            'js' => 'JavaScript File',
+            'php' => 'PHP File',
+            'py' => 'Python File',
+        ];
+        
+        return $typeMap[$extension] ?? strtoupper($extension) . ' File';
     }
 
     /**
@@ -601,6 +707,248 @@ class AISenseiChat extends Component
         } finally {
             $this->uploadingFile = false;
             $this->isAITyping = false;
+        }
+    }
+
+    /**
+     * Remove a staged file before sending
+     */
+    public function removeStagedFile($fileId)
+    {
+        $this->pendingFiles = array_filter($this->pendingFiles, function($file) use ($fileId) {
+            return $file['id'] !== $fileId;
+        });
+
+        $this->dispatch('file-removed', [
+            'file_id' => $fileId
+        ]);
+    }
+
+    /**
+     * Send message with attached files
+     */
+    public function sendMessageWithFiles($customMessage = null)
+    {
+        try {
+            Log::info('sendMessageWithFiles called', [
+                'customMessage' => $customMessage,
+                'newMessage' => $this->newMessage,
+                'pendingFiles_count' => count($this->pendingFiles),
+                'pendingFiles' => array_map(function($file) {
+                    return ['filename' => $file['filename'], 'size' => $file['size']];
+                }, $this->pendingFiles)
+            ]);
+
+            if (empty($this->pendingFiles) && empty(trim($customMessage ?: $this->newMessage))) {
+                Log::warning('sendMessageWithFiles: Nothing to send - no files and no message');
+                return; // Nothing to send
+            }
+
+            $this->uploadingFile = true;
+            $this->error = null;
+
+            // Prepare the message content
+            $messageText = trim($customMessage ?: $this->newMessage) ?: "I've shared some files with you.";
+            
+            if (!empty($this->pendingFiles)) {
+                // Upload files and create message with attachments
+                $attachments = [];
+                $fileInfos = [];
+
+                foreach ($this->pendingFiles as $pendingFile) {
+                    $file = $pendingFile['file'];
+                    
+                    // Upload file to OpenAI
+                    $uploadResponse = $this->openAIFilesService->uploadFile($file, 'assistants');
+                    
+                    if ($uploadResponse['success']) {
+                        $fileId = $uploadResponse['data']['file_id'];
+                        
+                        $attachments[] = [
+                            'file_id' => $fileId,
+                            'tools' => [
+                                ['type' => 'code_interpreter'],
+                                ['type' => 'file_search']
+                            ]
+                        ];
+
+                        $fileInfos[] = [
+                            'id' => $fileId,
+                            'filename' => $pendingFile['filename'],
+                            'size' => $pendingFile['size'],
+                            'type' => $pendingFile['type'],
+                            'icon' => $pendingFile['icon']
+                        ];
+                    } else {
+                        $this->error = "Failed to upload file: " . $pendingFile['filename'];
+                        return;
+                    }
+                }
+
+                // Create message with attachments
+                $result = $this->openAIAssistantsService->addMessage(
+                    $this->threadId,
+                    $messageText,
+                    'user',
+                    null, // deprecated fileIds
+                    null, // metadata
+                    $attachments
+                );
+
+                if ($result['success']) {
+                    // Add to uploaded files tracking
+                    foreach ($fileInfos as $fileInfo) {
+                        $this->uploadedFiles[] = [
+                            'id' => $fileInfo['id'],
+                            'filename' => $fileInfo['filename'],
+                            'size' => $fileInfo['size'],
+                            'attached' => true,
+                            'message_text' => $messageText
+                        ];
+                    }
+
+                    // Clear pending files and message
+                    $this->pendingFiles = [];
+                    $this->newMessage = '';
+
+                    // Refresh messages to show the sent message with files
+                    $this->loadMessages();
+
+                    // Automatically trigger AI response to process the files
+                    $this->triggerAIResponse();
+
+                    $this->dispatch('message-sent', [
+                        'with_files' => true,
+                        'file_count' => count($fileInfos)
+                    ]);
+                } else {
+                    $this->error = "Failed to send message with files: " . $result['message'];
+                }
+            } else {
+                // Send regular message without files
+                $this->sendMessage();
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error sending message with files', [
+                'error' => $e->getMessage(),
+                'thread_id' => $this->threadId
+            ]);
+            $this->error = "Error sending message: " . $e->getMessage();
+        } finally {
+            $this->uploadingFile = false;
+        }
+    }
+
+    /**
+     * Trigger AI response after files are uploaded
+     */
+    private function triggerAIResponse()
+    {
+        try {
+            // Check if assistant ID is set
+            if (!$this->assistantId) {
+                Log::error('Assistant ID not set when triggering AI response for files');
+                return;
+            }
+
+            // Broadcast AI typing status
+            $this->broadcastTypingStatus(true);
+
+            // Run the assistant to process the uploaded files
+            $runResponse = $this->openAIAssistantsService->createRun($this->threadId, $this->assistantId);
+
+            if (!$runResponse['success']) {
+                $this->error = "Failed to process uploaded files: " . ($runResponse['message'] ?? 'Unknown error');
+                $this->broadcastTypingStatus(false);
+                Log::error('Failed to create run for file processing', ['error' => $runResponse['message'] ?? 'Unknown error']);
+                return;
+            }
+
+            $runId = $runResponse['data']['id'];
+            
+            // Store the current run ID in the session for reference
+            session(['ai_sensei_current_run_id' => $runId]);
+            
+            // Process the AI response
+            $this->processAiResponse($runId);
+
+        } catch (\Exception $e) {
+            Log::error('Error triggering AI response for files', [
+                'error' => $e->getMessage(),
+                'thread_id' => $this->threadId,
+                'user_id' => Auth::id()
+            ]);
+            $this->broadcastTypingStatus(false);
+            $this->error = "Error processing files: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Get file information by file ID
+     */
+    private function getFileInfo($fileId)
+    {
+        // First check our uploaded files tracking
+        foreach ($this->uploadedFiles as $uploadedFile) {
+            if ($uploadedFile['id'] === $fileId) {
+                return [
+                    'filename' => $uploadedFile['filename'],
+                    'size' => $uploadedFile['size']
+                ];
+            }
+        }
+
+        // If not found, try to get from OpenAI API
+        try {
+            $response = $this->openAIFilesService->getFile($fileId);
+            if ($response['success']) {
+                return [
+                    'filename' => $response['data']['filename'] ?? 'Unknown File',
+                    'size' => $response['data']['bytes'] ?? 0
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not retrieve file info', ['file_id' => $fileId, 'error' => $e->getMessage()]);
+        }
+
+        return [
+            'filename' => 'Attached File',
+            'size' => 0
+        ];
+    }
+
+    /**
+     * Clear all staged files
+     */
+    public function clearStagedFiles()
+    {
+        $this->pendingFiles = [];
+        $this->dispatch('files-cleared');
+    }
+
+    /**
+     * Clear all pending files (alias for clearStagedFiles)
+     */
+    public function clearPendingFiles()
+    {
+        $this->clearStagedFiles();
+    }
+
+    /**
+     * Remove a specific pending file by index
+     */
+    public function removePendingFile($index)
+    {
+        if (isset($this->pendingFiles[$index])) {
+            unset($this->pendingFiles[$index]);
+            // Re-index the array to avoid gaps
+            $this->pendingFiles = array_values($this->pendingFiles);
+            
+            $this->dispatch('file-removed', [
+                'index' => $index,
+                'remaining_count' => count($this->pendingFiles)
+            ]);
         }
     }
 

@@ -11,7 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register MCP Service
+        $this->app->singleton(\App\Services\Communication\Chat\MCP\ExamManagementMCPService::class);
     }
 
     /**

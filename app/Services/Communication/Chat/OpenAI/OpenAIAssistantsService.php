@@ -1430,4 +1430,105 @@ class OpenAIAssistantsService
             ];
         }
     }
+
+    /**
+     * Retrieve assistant details
+     * 
+     * @param string $assistantId
+     * @return array
+     */
+    public function retrieveAssistant(string $assistantId): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->getApiKey()}",
+                'Content-Type' => 'application/json',
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->get("{$this->baseUrl}/assistants/{$assistantId}");
+
+            $responseData = $response->json();
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $responseData,
+                ];
+            } else {
+                Log::error('OpenAI assistant retrieval error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'assistant_id' => $assistantId,
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => $responseData['error']['message'] ?? 'Unknown assistant retrieval error',
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI assistant retrieval failed', [
+                'error' => $e->getMessage(),
+                'assistant_id' => $assistantId,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Assistant retrieval failed: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Submit tool outputs for a run that requires action
+     * 
+     * @param string $threadId
+     * @param string $runId  
+     * @param array $toolOutputs - Format: [['tool_call_id' => 'call_xxx', 'output' => 'result']]
+     * @return array
+     */
+    public function submitToolOutputs(string $threadId, string $runId, array $toolOutputs): array
+    {
+        try {
+            $payload = [
+                'tool_outputs' => $toolOutputs
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->getApiKey()}",
+                'Content-Type' => 'application/json',
+                'OpenAI-Beta' => 'assistants=v2',
+            ])->post("{$this->baseUrl}/threads/{$threadId}/runs/{$runId}/submit_tool_outputs", $payload);
+
+            $responseData = $response->json();
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $responseData,
+                ];
+            } else {
+                Log::error('OpenAI tool outputs submission error', [
+                    'error' => $responseData['error'] ?? 'Unknown error',
+                    'thread_id' => $threadId,
+                    'run_id' => $runId,
+                    'tool_outputs' => $toolOutputs,
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => $responseData['error']['message'] ?? 'Unknown tool outputs submission error',
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('OpenAI tool outputs submission failed', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId,
+                'run_id' => $runId,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Tool outputs submission failed: ' . $e->getMessage(),
+            ];
+        }
+    }
 }
