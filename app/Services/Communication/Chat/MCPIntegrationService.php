@@ -37,20 +37,25 @@ class MCPIntegrationService
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
-                            'subject_id' => [
-                                'type' => 'integer',
-                                'description' => 'The ID of the subject for the question set'
-                            ],
-                            'title' => [
+                            'course_code' => [
                                 'type' => 'string',
-                                'description' => 'The title of the question set'
+                                'description' => 'Course code for the question set (e.g., CS101, MATH201)'
+                            ],
+                            'name' => [
+                                'type' => 'string',
+                                'description' => 'Name of the question set'
                             ],
                             'description' => [
                                 'type' => 'string',
                                 'description' => 'Optional description of the question set'
+                            ],
+                            'difficulty_level' => [
+                                'type' => 'string',
+                                'enum' => ['easy', 'medium', 'hard'],
+                                'description' => 'Difficulty level of the question set (default: medium)'
                             ]
                         ],
-                        'required' => ['subject_id', 'title']
+                        'required' => ['course_code', 'name']
                     ]
                 ]
             ],
@@ -101,33 +106,57 @@ class MCPIntegrationService
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
-                            'course_id' => [
-                                'type' => 'integer',
-                                'description' => 'The ID of the course for the exam'
-                            ],
-                            'title' => [
+                            'course_code' => [
                                 'type' => 'string',
-                                'description' => 'The title of the exam'
+                                'description' => 'Course code for the exam (e.g., CS101, MATH201)'
                             ],
-                            'exam_date' => [
+                            'type' => [
                                 'type' => 'string',
-                                'format' => 'date-time',
-                                'description' => 'The date and time of the exam (Y-m-d H:i:s)'
+                                'enum' => ['quiz', 'midterm', 'final', 'assignment', 'test'],
+                                'description' => 'Type of exam'
                             ],
                             'duration' => [
                                 'type' => 'integer',
-                                'description' => 'Duration of the exam in minutes'
+                                'description' => 'Exam duration in minutes'
                             ],
-                            'total_marks' => [
+                            'passing_percentage' => [
                                 'type' => 'integer',
-                                'description' => 'Total marks for the exam'
+                                'description' => 'Minimum percentage to pass (default: 50)'
                             ],
-                            'instructions' => [
+                            'start_date' => [
                                 'type' => 'string',
-                                'description' => 'Instructions for the exam'
+                                'format' => 'date-time',
+                                'description' => 'Exam start date and time (ISO format)'
+                            ],
+                            'end_date' => [
+                                'type' => 'string',
+                                'format' => 'date-time',
+                                'description' => 'Exam end date and time (ISO format)'
+                            ],
+                            'question_sets' => [
+                                'type' => 'array',
+                                'description' => 'Question sets to include in exam (optional)',
+                                'items' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'question_set_id' => [
+                                            'type' => 'integer',
+                                            'description' => 'Question set ID'
+                                        ],
+                                        'questions_to_pick' => [
+                                            'type' => 'integer',
+                                            'description' => 'Number of questions to pick (0 = all)'
+                                        ],
+                                        'shuffle_questions' => [
+                                            'type' => 'boolean',
+                                            'description' => 'Whether to shuffle questions'
+                                        ]
+                                    ],
+                                    'required' => ['question_set_id']
+                                ]
                             ]
                         ],
-                        'required' => ['course_id', 'title', 'exam_date', 'duration', 'total_marks']
+                        'required' => ['course_code', 'type', 'duration', 'start_date', 'end_date']
                     ]
                 ]
             ],
@@ -174,6 +203,45 @@ class MCPIntegrationService
                             ]
                         ],
                         'required' => ['question_set_id']
+                    ]
+                ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'list_exams',
+                    'description' => 'Get a list of exams, optionally filtered by course',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'course_code' => [
+                                'type' => 'string',
+                                'description' => 'Optional: Filter by course code'
+                            ],
+                            'status' => [
+                                'type' => 'string',
+                                'enum' => ['upcoming', 'active', 'completed'],
+                                'description' => 'Optional: Filter by exam status'
+                            ]
+                        ],
+                        'required' => []
+                    ]
+                ]
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'get_exam_details',
+                    'description' => 'Get detailed information about a specific exam',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'exam_id' => [
+                                'type' => 'integer',
+                                'description' => 'The ID of the exam to retrieve'
+                            ]
+                        ],
+                        'required' => ['exam_id']
                     ]
                 ]
             ]
@@ -266,6 +334,28 @@ class MCPIntegrationService
                     }
                     $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->getQuestionSetDetails($arguments);
+                
+                case 'list_exams':
+                    if (!$this->permissionService->canViewExams()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+                    return $this->mcpService->listExams($arguments);
+                
+                case 'get_exam_details':
+                    if (!$this->permissionService->canViewExams()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+                    return $this->mcpService->getExamDetails($arguments);
                 
                 default:
                     Log::warning("Unknown MCP function called", ['function' => $functionName]);

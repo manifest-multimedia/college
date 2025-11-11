@@ -115,9 +115,9 @@ class MarkdownRenderingService
         // Add blockquote classes
         $html = preg_replace('/<blockquote>/', '<blockquote class="blockquote border-start border-4 border-primary ps-3 my-3">', $html);
         
-        // Add list classes
-        $html = preg_replace('/<ul>/', '<ul class="list-unstyled">', $html);
-        $html = preg_replace('/<ol>/', '<ol class="list-group list-group-numbered">', $html);
+        // Add list classes (preserve default bullets/numbers)
+        $html = preg_replace('/<ul>/', '<ul>', $html);
+        $html = preg_replace('/<ol>/', '<ol>', $html);
         
         // Add heading classes
         $html = preg_replace('/<h([1-6])>/', '<h$1 class="mt-3 mb-2">', $html);

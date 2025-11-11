@@ -181,6 +181,38 @@ class ExamManagementMCPService
                     ],
                     'required' => ['question_set_id']
                 ]
+            ],
+            [
+                'name' => 'list_exams',
+                'description' => 'List all exams with optional filtering by course or status',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'course_code' => [
+                            'type' => 'string',
+                            'description' => 'Filter by course code (optional)'
+                        ],
+                        'status' => [
+                            'type' => 'string',
+                            'enum' => ['upcoming', 'active', 'completed'],
+                            'description' => 'Filter by exam status (optional)'
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'name' => 'get_exam_details',
+                'description' => 'Get detailed information about a specific exam',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'exam_id' => [
+                            'type' => 'integer',
+                            'description' => 'ID of the exam'
+                        ]
+                    ],
+                    'required' => ['exam_id']
+                ]
             ]
         ];
     }
@@ -204,6 +236,10 @@ class ExamManagementMCPService
                     return $this->listCourses();
                 case 'get_question_set_details':
                     return $this->getQuestionSetDetails($arguments);
+                case 'list_exams':
+                    return $this->listExams($arguments);
+                case 'get_exam_details':
+                    return $this->getExamDetails($arguments);
                 default:
                     return [
                         'success' => false,
@@ -228,21 +264,39 @@ class ExamManagementMCPService
      */
     public function createQuestionSet(array $args): array
     {
-        // Find subject by ID
-        $subject = Subject::find($args['subject_id']);
-        if (!$subject) {
+        // Find subject by course code (compatible with both old subject_id and new course_code)
+        $subject = null;
+        
+        if (isset($args['course_code'])) {
+            $subject = Subject::where('course_code', $args['course_code'])->first();
+            if (!$subject) {
+                return [
+                    'success' => false,
+                    'error' => "Course with code '{$args['course_code']}' not found"
+                ];
+            }
+        } elseif (isset($args['subject_id'])) {
+            // Backward compatibility for old API calls
+            $subject = Subject::find($args['subject_id']);
+            if (!$subject) {
+                return [
+                    'success' => false,
+                    'error' => "Subject with ID '{$args['subject_id']}' not found"
+                ];
+            }
+        } else {
             return [
                 'success' => false,
-                'error' => "Subject with ID '{$args['subject_id']}' not found"
+                'error' => "Either 'course_code' or 'subject_id' must be provided"
             ];
         }
 
         $questionSet = QuestionSet::create([
-            'name' => $args['title'],
+            'name' => $args['name'] ?? $args['title'], // Support both new 'name' and old 'title'
             'description' => $args['description'] ?? null,
-            'course_id' => $subject->id, // Note: This seems to be subject_id based on the structure
+            'course_id' => $subject->id,
             'difficulty_level' => $args['difficulty_level'] ?? 'medium',
-            'created_by' => Auth::id() ?? 1 // Default to admin if no auth
+            'created_by' => Auth::id() ?? 1
         ]);
 
         return [
@@ -250,7 +304,7 @@ class ExamManagementMCPService
             'data' => [
                 'id' => $questionSet->id,
                 'name' => $questionSet->name,
-                'subject' => $subject->course_code . ' - ' . $subject->name,
+                'course' => $subject->course_code . ' - ' . $subject->name,
                 'difficulty_level' => $questionSet->difficulty_level,
                 'created_at' => $questionSet->created_at->toISOString()
             ]
@@ -361,7 +415,7 @@ class ExamManagementMCPService
             'type' => $args['type'],
             'duration' => $args['duration'],
             'passing_percentage' => $args['passing_percentage'] ?? 50,
-            'status' => 'draft',
+            'status' => 'upcoming', // Use valid enum value
             'slug' => $slug,
             'start_date' => $args['start_date'],
             'end_date' => $args['end_date'],
@@ -521,6 +575,101 @@ class ExamManagementMCPService
                 'created_at' => $questionSet->created_at->toISOString(),
                 'questions_count' => $questions->count(),
                 'questions' => $questions->toArray()
+            ]
+        ];
+    }
+
+    /**
+     * List exams with filtering
+     */
+    public function listExams(array $args = []): array
+    {
+        $query = Exam::with(['course', 'user'])
+            ->withCount(['questionSets']);
+
+        // Apply filters
+        if (!empty($args['course_code'])) {
+            $query->whereHas('course', function($q) use ($args) {
+                $q->where('course_code', $args['course_code']);
+            });
+        }
+
+        if (!empty($args['status'])) {
+            $query->where('status', $args['status']);
+        }
+
+        $exams = $query->orderBy('created_at', 'desc')->get();
+
+        $data = $exams->map(function($exam) {
+            return [
+                'id' => $exam->id,
+                'slug' => $exam->slug,
+                'course' => $exam->course->course_code . ' - ' . $exam->course->name,
+                'type' => $exam->type,
+                'duration' => $exam->duration,
+                'passing_percentage' => $exam->passing_percentage,
+                'start_date' => $exam->start_date?->toISOString(),
+                'end_date' => $exam->end_date?->toISOString(),
+                'status' => $exam->status,
+                'question_sets_count' => $exam->question_sets_count,
+                'created_by' => $exam->user->name ?? 'Unknown',
+                'created_at' => $exam->created_at->toISOString()
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $data->toArray()
+        ];
+    }
+
+    /**
+     * Get detailed information about a specific exam
+     */
+    public function getExamDetails(array $args): array
+    {
+        $exam = Exam::with(['course', 'user', 'questionSets.questions'])
+            ->find($args['exam_id']);
+
+        if (!$exam) {
+            return [
+                'success' => false,
+                'error' => "Exam with ID {$args['exam_id']} not found"
+            ];
+        }
+
+        $questionSets = $exam->questionSets->map(function($questionSet) {
+            return [
+                'id' => $questionSet->id,
+                'name' => $questionSet->name,
+                'description' => $questionSet->description,
+                'difficulty_level' => $questionSet->difficulty_level,
+                'questions_count' => $questionSet->questions->count(),
+                'questions_to_pick' => $questionSet->pivot->questions_to_pick ?? 0,
+                'shuffle_questions' => $questionSet->pivot->shuffle_questions ?? false
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => [
+                'id' => $exam->id,
+                'slug' => $exam->slug,
+                'course' => [
+                    'id' => $exam->course->id,
+                    'code' => $exam->course->course_code,
+                    'name' => $exam->course->name
+                ],
+                'type' => $exam->type,
+                'duration' => $exam->duration,
+                'passing_percentage' => $exam->passing_percentage,
+                'start_date' => $exam->start_date?->toISOString(),
+                'end_date' => $exam->end_date?->toISOString(),
+                'status' => $exam->status,
+                'created_by' => $exam->user->name ?? 'Unknown',
+                'created_at' => $exam->created_at->toISOString(),
+                'question_sets' => $questionSets->toArray(),
+                'total_questions_estimate' => $questionSets->sum('questions_count')
             ]
         ];
     }

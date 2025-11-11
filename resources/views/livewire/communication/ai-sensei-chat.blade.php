@@ -860,8 +860,35 @@
                 padding-left: 1.5rem;
             }
 
+            .rendered-markdown ul {
+                list-style-type: disc;
+            }
+
+            .rendered-markdown ol {
+                list-style-type: decimal;
+            }
+
             .rendered-markdown li {
                 margin-bottom: 0.25rem;
+                display: list-item;
+            }
+
+            .rendered-markdown ul ul {
+                list-style-type: circle;
+                margin-top: 0.25rem;
+            }
+
+            .rendered-markdown ul ul ul {
+                list-style-type: square;
+            }
+
+            .rendered-markdown ol ol {
+                list-style-type: lower-alpha;
+                margin-top: 0.25rem;
+            }
+
+            .rendered-markdown ol ol ol {
+                list-style-type: lower-roman;
             }
 
             .rendered-markdown code {
