@@ -4,17 +4,23 @@ namespace App\Services\Communication\Chat;
 
 use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
 use App\Services\Communication\Chat\MCP\ExamManagementMCPService;
+use App\Services\Communication\Chat\MCPPermissionService;
 use Illuminate\Support\Facades\Log;
 
 class MCPIntegrationService
 {
     protected $mcpService;
     protected $assistantService;
+    protected $permissionService;
 
-    public function __construct(ExamManagementMCPService $mcpService, OpenAIAssistantsService $assistantService)
-    {
+    public function __construct(
+        ExamManagementMCPService $mcpService, 
+        OpenAIAssistantsService $assistantService,
+        MCPPermissionService $permissionService
+    ) {
         $this->mcpService = $mcpService;
         $this->assistantService = $assistantService;
+        $this->permissionService = $permissionService;
     }
 
     /**
@@ -175,7 +181,7 @@ class MCPIntegrationService
     }
 
     /**
-     * Process MCP function calls from OpenAI Assistant
+     * Process MCP function calls from OpenAI Assistant with permission checks
      */
     public function processFunctionCall(string $functionName, array $arguments): array
     {
@@ -185,23 +191,80 @@ class MCPIntegrationService
                 'arguments' => $arguments
             ]);
 
+            // Check if user has general MCP access
+            if (!$this->permissionService->canAccessMCP()) {
+                $this->permissionService->logPermissionCheck($functionName, false);
+                return [
+                    'success' => false,
+                    'error' => "Access denied. You don't have permission to use AI Sensei exam management features. Please contact your administrator if you believe this is an error."
+                ];
+            }
+
             switch ($functionName) {
                 case 'create_question_set':
+                    if (!$this->permissionService->canCreateQuestionSets()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->createQuestionSet($arguments);
                 
                 case 'add_question_to_set':
+                    if (!$this->permissionService->canAddQuestions()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->addQuestionToSet($arguments);
                 
                 case 'create_exam':
+                    if (!$this->permissionService->canCreateExams()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->createExam($arguments);
                 
                 case 'list_courses':
+                    if (!$this->permissionService->canListCourses()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->listCourses($arguments);
                 
                 case 'list_question_sets':
+                    if (!$this->permissionService->canListQuestionSets()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->listQuestionSets($arguments);
                 
                 case 'get_question_set_details':
+                    if (!$this->permissionService->canViewQuestionSetDetails()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName)
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
                     return $this->mcpService->getQuestionSetDetails($arguments);
                 
                 default:
@@ -223,6 +286,36 @@ class MCPIntegrationService
                 'error' => "Function execution failed: {$e->getMessage()}"
             ];
         }
+    }
+
+    /**
+     * Get user context for AI assistant instructions
+     */
+    public function getUserContextForAssistant(): string
+    {
+        $context = $this->permissionService->getUserContext();
+        
+        if (!$context['authenticated']) {
+            return "User is not authenticated. Inform them that they need to log in to use exam management features.";
+        }
+
+        $contextString = "## Current User Context\n";
+        $contextString .= "- **User**: {$context['name']} ({$context['email']})\n";
+        $contextString .= "- **Primary Role**: {$context['primary_role']}\n";
+        
+        if (!empty($context['capabilities'])) {
+            $contextString .= "- **Available Exam Management Capabilities**: " . implode(', ', $context['capabilities']) . "\n";
+        } else {
+            $contextString .= "- **Exam Management Access**: None - inform user they don't have exam management permissions\n";
+        }
+        
+        if (!empty($context['exam_permissions'])) {
+            $contextString .= "- **Specific Exam Permissions**: " . implode(', ', $context['exam_permissions']) . "\n";
+        }
+
+        $contextString .= "\n**Important**: Only perform actions the user has permission for. If they request something they can't do, explain their role limitations politely and suggest who they should contact.";
+
+        return $contextString;
     }
 
     /**

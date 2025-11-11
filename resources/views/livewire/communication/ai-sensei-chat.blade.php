@@ -28,7 +28,8 @@
                     </div>
                     <p class="mb-0">
                         AI Sensei can help with your educational queries, analyze documents, provide insights,
-                        and assist with research. 
+                        assist with research, and manage your exam content including creating question sets,
+                        adding questions, and organizing course materials.
                     </p>
 
                     <!-- Files Attached to Current Thread -->
@@ -58,14 +59,20 @@
                         <h6>Available Tools</h6>
                         <div class="d-flex flex-wrap gap-1">
                             <span class="badge bg-success rounded-pill">Chat</span>
+                            <span class="badge bg-success rounded-pill">File Analysis</span>
+                            <span class="badge bg-success rounded-pill">Code Analysis</span>
+                            <span class="badge bg-primary rounded-pill">Exam Management</span>
                         </div>
-
+                        <small class="text-muted d-block mt-2">
+                            <strong>Exam Management:</strong> Create question sets, add questions, manage exams, and organize course content
+                        </small>
                     </div>
                     {{-- Tools in Development --}}
                     <div class="mt-3">
                         <h6>Tools in Development</h6>
                         <div class="d-flex flex-wrap gap-1">
-                            <span class="badge bg-secondary rounded-pill">Document Processing</span>
+                            <span class="badge bg-secondary rounded-pill">Advanced Analytics</span>
+                            <span class="badge bg-secondary rounded-pill">Automated Grading</span>
                         </div>
                     </div>
                 </div>
@@ -130,7 +137,7 @@
                                             <div class="card-body py-2 px-3">
                                                 @foreach ($message['content'] as $contentItem)
                                                     @if ($contentItem['type'] === 'text')
-                                                        <p class="mb-0">{!! nl2br(e($contentItem['text'])) !!}</p>
+                                                        <div class="mb-0 rendered-markdown">{!! $this->renderMarkdown($contentItem['text']) !!}</div>
                                                     @elseif($contentItem['type'] === 'image')
                                                         <div class="image-attachment mb-2">
                                                             <img src="{{ $contentItem['file_url'] ?? '#' }}"
@@ -817,6 +824,139 @@
                     opacity: 1; 
                     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
                 }
+            }
+
+            /* Markdown rendering styles */
+            .rendered-markdown {
+                line-height: 1.6;
+            }
+
+            .rendered-markdown h1, 
+            .rendered-markdown h2, 
+            .rendered-markdown h3, 
+            .rendered-markdown h4, 
+            .rendered-markdown h5, 
+            .rendered-markdown h6 {
+                margin-top: 1rem;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+                line-height: 1.25;
+            }
+
+            .rendered-markdown h1 { font-size: 1.5rem; }
+            .rendered-markdown h2 { font-size: 1.35rem; }
+            .rendered-markdown h3 { font-size: 1.2rem; }
+            .rendered-markdown h4 { font-size: 1.1rem; }
+            .rendered-markdown h5 { font-size: 1rem; }
+            .rendered-markdown h6 { font-size: 0.9rem; }
+
+            .rendered-markdown p {
+                margin-bottom: 0.75rem;
+            }
+
+            .rendered-markdown ul, 
+            .rendered-markdown ol {
+                margin-bottom: 0.75rem;
+                padding-left: 1.5rem;
+            }
+
+            .rendered-markdown li {
+                margin-bottom: 0.25rem;
+            }
+
+            .rendered-markdown code {
+                background-color: rgba(255, 255, 255, 0.15);
+                padding: 0.125rem 0.25rem;
+                border-radius: 0.25rem;
+                font-size: 0.875em;
+                font-family: 'Courier New', Courier, monospace;
+            }
+
+            .rendered-markdown pre {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 0.75rem;
+                border-radius: 0.375rem;
+                margin: 0.75rem 0;
+                overflow-x: auto;
+            }
+
+            .rendered-markdown pre code {
+                background-color: transparent;
+                padding: 0;
+                border-radius: 0;
+                font-size: 0.8rem;
+            }
+
+            .rendered-markdown blockquote {
+                border-left: 4px solid rgba(255, 255, 255, 0.3);
+                padding-left: 1rem;
+                margin: 0.75rem 0;
+                font-style: italic;
+            }
+
+            .rendered-markdown table {
+                width: 100%;
+                margin: 0.75rem 0;
+                border-collapse: collapse;
+            }
+
+            .rendered-markdown table th,
+            .rendered-markdown table td {
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 0.375rem 0.75rem;
+                text-align: left;
+            }
+
+            .rendered-markdown table th {
+                background-color: rgba(255, 255, 255, 0.1);
+                font-weight: 600;
+            }
+
+            .rendered-markdown strong {
+                font-weight: 700;
+            }
+
+            .rendered-markdown em {
+                font-style: italic;
+            }
+
+            .rendered-markdown a {
+                color: rgba(255, 255, 255, 0.9);
+                text-decoration: underline;
+            }
+
+            .rendered-markdown a:hover {
+                color: rgba(255, 255, 255, 1);
+            }
+
+            /* User message markdown (darker background) */
+            .card.bg-light .rendered-markdown code {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+
+            .card.bg-light .rendered-markdown pre {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+
+            .card.bg-light .rendered-markdown blockquote {
+                border-left-color: #6c757d;
+            }
+
+            .card.bg-light .rendered-markdown table th,
+            .card.bg-light .rendered-markdown table td {
+                border-color: rgba(0, 0, 0, 0.125);
+            }
+
+            .card.bg-light .rendered-markdown table th {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+
+            .card.bg-light .rendered-markdown a {
+                color: #0d6efd;
+            }
+
+            .card.bg-light .rendered-markdown a:hover {
+                color: #0a58ca;
             }
         </style>
     @endpush

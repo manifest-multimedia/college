@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 use App\Services\Communication\Chat\MCPIntegrationService;
+use App\Services\Communication\Chat\MarkdownRenderingService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
@@ -40,16 +41,19 @@ class AISenseiChat extends Component
     protected $openAIAssistantsService;
     protected $openAIFilesService;
     protected $mcpIntegrationService;
+    protected $markdownRenderingService;
 
     // Constructor with dependency injection
     public function boot(
         OpenAIAssistantsService $openAIAssistantsService, 
         OpenAIFilesService $openAIFilesService,
-        MCPIntegrationService $mcpIntegrationService
+        MCPIntegrationService $mcpIntegrationService,
+        MarkdownRenderingService $markdownRenderingService
     ) {
         $this->openAIAssistantsService = $openAIAssistantsService;
         $this->openAIFilesService = $openAIFilesService;
         $this->mcpIntegrationService = $mcpIntegrationService;
+        $this->markdownRenderingService = $markdownRenderingService;
     }
 
     public function mount()
@@ -264,8 +268,15 @@ class AISenseiChat extends Component
                 return;
             }
 
-            // Run the assistant - explicitly pass the assistant ID
-            $runResponse = $this->openAIAssistantsService->createRun($this->threadId, $this->assistantId);
+            // Get user context for permission-aware responses
+            $userContext = $this->mcpIntegrationService->getUserContextForAssistant();
+
+            // Run the assistant with user context for permission-aware responses
+            $runResponse = $this->openAIAssistantsService->createRun(
+                $this->threadId, 
+                $this->assistantId, 
+                $userContext
+            );
 
             if (!$runResponse['success']) {
                 $this->error = "Failed to process message: " . ($runResponse['message'] ?? 'Unknown error');
@@ -855,8 +866,15 @@ class AISenseiChat extends Component
             // Broadcast AI typing status
             $this->broadcastTypingStatus(true);
 
-            // Run the assistant to process the uploaded files
-            $runResponse = $this->openAIAssistantsService->createRun($this->threadId, $this->assistantId);
+            // Get user context for permission-aware responses
+            $userContext = $this->mcpIntegrationService->getUserContextForAssistant();
+
+            // Run the assistant to process the uploaded files with user context
+            $runResponse = $this->openAIAssistantsService->createRun(
+                $this->threadId, 
+                $this->assistantId, 
+                $userContext
+            );
 
             if (!$runResponse['success']) {
                 $this->error = "Failed to process uploaded files: " . ($runResponse['message'] ?? 'Unknown error');
@@ -949,6 +967,23 @@ class AISenseiChat extends Component
                 'index' => $index,
                 'remaining_count' => count($this->pendingFiles)
             ]);
+        }
+    }
+
+    /**
+     * Render markdown content to HTML for display
+     */
+    public function renderMarkdown($content)
+    {
+        try {
+            return $this->markdownRenderingService->safeRender($content);
+        } catch (\Exception $e) {
+            // Fallback to regular text rendering if markdown parsing fails
+            Log::warning('Markdown rendering failed', [
+                'error' => $e->getMessage(),
+                'content_preview' => substr($content, 0, 100)
+            ]);
+            return nl2br(e($content));
         }
     }
 
