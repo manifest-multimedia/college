@@ -76,6 +76,20 @@ class MCPPermissionService
     }
 
     /**
+     * Check if user can view exams
+     */
+    public function canViewExams(): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasAnyRole(['System', 'Super Admin', 'Academic Officer', 'Administrator', 'Lecturer']) 
+            || $user->hasAnyPermission(['view exams', 'create exams', 'edit exams', 'grade exams']);
+    }
+
+    /**
      * Check if user can list courses (generally more permissive)
      */
     public function canListCourses(): bool
@@ -145,6 +159,9 @@ class MCPPermissionService
         if ($this->canCreateExams()) {
             $capabilities[] = 'create exams';
         }
+        if ($this->canViewExams()) {
+            $capabilities[] = 'view exams';
+        }
         if ($this->canListCourses()) {
             $capabilities[] = 'view courses';
         }
@@ -189,6 +206,8 @@ class MCPPermissionService
             'create_question_set' => "Sorry, your role ({$userRole}) does not have permission to create question sets. This action requires Academic Officer, Administrator, or System role, or specific exam creation permissions.",
             'add_question_to_set' => "Sorry, your role ({$userRole}) does not have permission to add questions. This action requires Academic Officer, Administrator, Lecturer, or System role, or exam management permissions.",
             'create_exam' => "Sorry, your role ({$userRole}) does not have permission to create exams. This action requires Academic Officer, Administrator, or System role, or the 'create exams' permission.",
+            'list_exams' => "Sorry, your role ({$userRole}) does not have permission to view exams. This action requires Academic Officer, Administrator, Lecturer, or System role, or exam viewing permissions.",
+            'get_exam_details' => "Sorry, your role ({$userRole}) does not have permission to view exam details. This action requires Academic Officer, Administrator, Lecturer, or System role, or exam viewing permissions.",
             'list_courses' => "Sorry, your role ({$userRole}) does not have permission to view courses.",
             'list_question_sets' => "Sorry, your role ({$userRole}) does not have permission to view question sets. This action requires Academic Officer, Administrator, Lecturer, or System role.",
             'get_question_set_details' => "Sorry, your role ({$userRole}) does not have permission to view question set details. This action requires Academic Officer, Administrator, Lecturer, or System role."

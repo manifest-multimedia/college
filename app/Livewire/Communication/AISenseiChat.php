@@ -247,25 +247,43 @@ class AISenseiChat extends Component
             return;
         }
 
-        // Check for active runs first
+        // Check for active runs first with improved handling
         try {
             $runsResponse = $this->openAIAssistantsService->listRuns($this->threadId);
             
             if ($runsResponse['success']) {
-                $activeRun = collect($runsResponse['data']['data'] ?? [])->first(function ($run) {
+                $activeRuns = collect($runsResponse['data']['data'] ?? [])->filter(function ($run) {
                     return in_array($run['status'], ['queued', 'in_progress', 'requires_action']);
                 });
                 
-                if ($activeRun) {
-                    $this->error = "Please wait for the current response to complete before sending another message.";
-                    // Log the issue for debugging
-                    Log::warning('Attempt to send message while a run is active', [
-                        'user_id' => Auth::id(),
-                        'thread_id' => $this->threadId,
-                        'run_id' => $activeRun['id'],
-                        'run_status' => $activeRun['status']
-                    ]);
-                    return;
+                if ($activeRuns->isNotEmpty()) {
+                    $activeRun = $activeRuns->first();
+                    
+                    // Check if the run is too old (stuck)
+                    $runAge = time() - $activeRun['created_at'];
+                    if ($runAge > 60) { // 1 minute
+                        Log::warning('Found old active run, attempting to cancel', [
+                            'run_id' => $activeRun['id'],
+                            'status' => $activeRun['status'],
+                            'age_seconds' => $runAge
+                        ]);
+                        
+                        // Try to cancel the old run
+                        $this->cancelStuckRun($activeRun['id']);
+                        
+                        // Continue with sending the new message
+                    } else {
+                        $this->error = "Please wait for the current response to complete before sending another message.";
+                        // Log the issue for debugging
+                        Log::warning('Attempt to send message while a run is active', [
+                            'user_id' => Auth::id(),
+                            'thread_id' => $this->threadId,
+                            'run_id' => $activeRun['id'],
+                            'run_status' => $activeRun['status'],
+                            'run_age' => $runAge
+                        ]);
+                        return;
+                    }
                 }
             }
         } catch (\Exception $e) {
@@ -336,19 +354,43 @@ class AISenseiChat extends Component
     protected function processAiResponse($runId)
     {
         try {
-            // This would be better handled through a queued job and websocket for real-time updates
-            // For now, we'll simulate the polling behavior
+            // Enhanced polling with better timeout handling
             $status = 'queued';
-            $maxRetries = 30;
+            $maxRetries = 60; // Increased to 30 seconds (60 * 500ms)
             $retries = 0;
+            $startTime = time();
+            $maxExecutionTime = 30; // 30 seconds maximum
+            
+            Log::info('Starting AI response processing', [
+                'run_id' => $runId,
+                'thread_id' => $this->threadId,
+                'max_retries' => $maxRetries
+            ]);
             
             while (in_array($status, ['queued', 'in_progress', 'requires_action']) && $retries < $maxRetries) {
-                // Wait a moment before checking status
-                usleep(500000); // 500ms
+                // Check for overall timeout
+                if (time() - $startTime > $maxExecutionTime) {
+                    Log::error('AI response processing timed out', [
+                        'run_id' => $runId,
+                        'execution_time' => time() - $startTime,
+                        'final_status' => $status
+                    ]);
+                    $this->error = "Response processing timed out. Please try again.";
+                    $this->broadcastTypingStatus(false);
+                    return;
+                }
+                
+                // Wait before checking status (progressive backoff)
+                $waitTime = min(500000 + ($retries * 100000), 2000000); // 0.5s to 2s max
+                usleep($waitTime);
                 
                 $runStatusResponse = $this->openAIAssistantsService->retrieveRun($this->threadId, $runId);
                 
                 if (!$runStatusResponse['success']) {
+                    Log::error('Failed to retrieve run status', [
+                        'run_id' => $runId,
+                        'error' => $runStatusResponse['message'] ?? 'Unknown error'
+                    ]);
                     $this->error = "Failed to check message status: " . ($runStatusResponse['message'] ?? 'Unknown error');
                     $this->broadcastTypingStatus(false);
                     break;
@@ -356,16 +398,40 @@ class AISenseiChat extends Component
                 
                 $status = $runStatusResponse['data']['status'];
                 
+                Log::info('Run status check', [
+                    'run_id' => $runId,
+                    'status' => $status,
+                    'retry' => $retries + 1,
+                    'elapsed_time' => time() - $startTime
+                ]);
+                
                 // Handle function calls (MCP tool execution)
                 if ($status === 'requires_action') {
-                    $this->handleFunctionCalls($runStatusResponse['data'], $runId);
-                    $status = 'in_progress'; // Continue polling after submitting function outputs
+                    Log::info('Handling function calls for run', ['run_id' => $runId]);
+                    
+                    $actionHandled = $this->handleFunctionCalls($runStatusResponse['data'], $runId);
+                    
+                    if ($actionHandled) {
+                        $status = 'in_progress'; // Continue polling after submitting function outputs
+                        // Reset some counters after successful action handling
+                        $retries = max(0, $retries - 5); // Give more time after function calls
+                    } else {
+                        Log::error('Failed to handle required actions', ['run_id' => $runId]);
+                        $this->error = "Failed to process required actions.";
+                        $this->broadcastTypingStatus(false);
+                        break;
+                    }
                 }
                 
                 $retries++;
             }
             
             if ($status === 'completed') {
+                Log::info('AI response processing completed', [
+                    'run_id' => $runId,
+                    'total_time' => time() - $startTime
+                ]);
+                
                 // Refresh messages from the API
                 $this->loadMessages();
                 
@@ -381,15 +447,47 @@ class AISenseiChat extends Component
                 
                 // Signal that AI is done typing
                 $this->broadcastTypingStatus(false);
-            } else {
-                $this->error = "Message processing failed or timed out with status: {$status}";
-                $this->broadcastTypingStatus(false);
                 
-                Log::error('Message processing failed', [
-                    'status' => $status,
+                // Clear any session run ID
+                session()->forget('ai_sensei_current_run_id');
+                
+            } elseif ($status === 'failed') {
+                Log::error('AI run failed', [
+                    'run_id' => $runId,
+                    'thread_id' => $this->threadId,
+                    'last_error' => $runStatusResponse['data']['last_error'] ?? null
+                ]);
+                
+                $this->error = "AI processing failed. Please try again.";
+                $this->broadcastTypingStatus(false);
+                session()->forget('ai_sensei_current_run_id');
+                
+            } elseif ($status === 'cancelled') {
+                Log::info('AI run was cancelled', [
                     'run_id' => $runId,
                     'thread_id' => $this->threadId
                 ]);
+                
+                $this->error = "Response was cancelled. Please try again.";
+                $this->broadcastTypingStatus(false);
+                session()->forget('ai_sensei_current_run_id');
+                
+            } else {
+                // Handle timeout or stuck runs
+                Log::error('Message processing failed or timed out', [
+                    'status' => $status,
+                    'run_id' => $runId,
+                    'thread_id' => $this->threadId,
+                    'retries' => $retries,
+                    'execution_time' => time() - $startTime
+                ]);
+                
+                // Try to cancel the stuck run
+                $this->cancelStuckRun($runId);
+                
+                $this->error = "Message processing failed or timed out with status: {$status}. The run has been cancelled.";
+                $this->broadcastTypingStatus(false);
+                session()->forget('ai_sensei_current_run_id');
             }
         } catch (\Exception $e) {
             Log::error('Error processing AI response', [
@@ -405,16 +503,24 @@ class AISenseiChat extends Component
     /**
      * Handle function calls from OpenAI Assistant (MCP tools)
      */
-    protected function handleFunctionCalls($runData, $runId)
+    protected function handleFunctionCalls($runData, $runId): bool
     {
         try {
             if (!isset($runData['required_action']['submit_tool_outputs']['tool_calls'])) {
-                Log::warning('Function call action detected but no tool calls found', ['run_data' => $runData]);
-                return;
+                Log::warning('Function call action detected but no tool calls found', [
+                    'run_id' => $runId,
+                    'run_data_keys' => array_keys($runData)
+                ]);
+                return false;
             }
 
             $toolCalls = $runData['required_action']['submit_tool_outputs']['tool_calls'];
             $toolOutputs = [];
+
+            Log::info('Processing function calls', [
+                'run_id' => $runId,
+                'tool_calls_count' => count($toolCalls)
+            ]);
 
             foreach ($toolCalls as $toolCall) {
                 Log::info('Processing MCP tool call', [
@@ -423,24 +529,73 @@ class AISenseiChat extends Component
                     'arguments' => $toolCall['function']['arguments']
                 ]);
 
-                // Parse arguments (they come as JSON string)
-                $arguments = json_decode($toolCall['function']['arguments'], true);
-                
-                // Execute the MCP function
-                $result = $this->mcpIntegrationService->processFunctionCall(
-                    $toolCall['function']['name'],
-                    $arguments
-                );
+                try {
+                    // Parse arguments (they come as JSON string)
+                    $arguments = json_decode($toolCall['function']['arguments'], true);
+                    
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        Log::error('Failed to parse tool call arguments', [
+                            'tool_call_id' => $toolCall['id'],
+                            'json_error' => json_last_error_msg(),
+                            'raw_arguments' => $toolCall['function']['arguments']
+                        ]);
+                        
+                        // Provide error response for this tool call
+                        $toolOutputs[] = [
+                            'tool_call_id' => $toolCall['id'],
+                            'output' => json_encode([
+                                'success' => false,
+                                'error' => 'Invalid arguments provided to function'
+                            ])
+                        ];
+                        continue;
+                    }
+                    
+                    // Execute the MCP function with timeout protection
+                    $startTime = microtime(true);
+                    $result = $this->mcpIntegrationService->processFunctionCall(
+                        $toolCall['function']['name'],
+                        $arguments ?: []
+                    );
+                    $executionTime = microtime(true) - $startTime;
 
-                // Prepare the output for OpenAI
-                $toolOutputs[] = [
-                    'tool_call_id' => $toolCall['id'],
-                    'output' => json_encode($result)
-                ];
+                    Log::info('MCP function executed', [
+                        'function_name' => $toolCall['function']['name'],
+                        'execution_time' => round($executionTime, 3),
+                        'success' => $result['success'] ?? false
+                    ]);
+
+                    // Prepare the output for OpenAI
+                    $toolOutputs[] = [
+                        'tool_call_id' => $toolCall['id'],
+                        'output' => json_encode($result)
+                    ];
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error executing MCP function', [
+                        'tool_call_id' => $toolCall['id'],
+                        'function_name' => $toolCall['function']['name'],
+                        'error' => $e->getMessage()
+                    ]);
+                    
+                    // Provide error response for this specific tool call
+                    $toolOutputs[] = [
+                        'tool_call_id' => $toolCall['id'],
+                        'output' => json_encode([
+                            'success' => false,
+                            'error' => 'Function execution failed: ' . $e->getMessage()
+                        ])
+                    ];
+                }
             }
 
             // Submit the tool outputs back to OpenAI
             if (!empty($toolOutputs)) {
+                Log::info('Submitting tool outputs', [
+                    'run_id' => $runId,
+                    'outputs_count' => count($toolOutputs)
+                ]);
+
                 $submitResponse = $this->openAIAssistantsService->submitToolOutputs(
                     $this->threadId,
                     $runId,
@@ -449,16 +604,107 @@ class AISenseiChat extends Component
 
                 if (!$submitResponse['success']) {
                     Log::error('Failed to submit tool outputs', [
+                        'run_id' => $runId,
                         'error' => $submitResponse['message'] ?? 'Unknown error',
-                        'tool_outputs' => $toolOutputs
+                        'tool_outputs_count' => count($toolOutputs)
                     ]);
+                    return false;
                 }
+
+                Log::info('Tool outputs submitted successfully', [
+                    'run_id' => $runId,
+                    'outputs_count' => count($toolOutputs)
+                ]);
+                return true;
             }
+
+            Log::warning('No tool outputs to submit', ['run_id' => $runId]);
+            return false;
 
         } catch (\Exception $e) {
             Log::error('Error handling function calls', [
                 'error' => $e->getMessage(),
                 'run_id' => $runId,
+                'thread_id' => $this->threadId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Cancel a stuck run
+     */
+    protected function cancelStuckRun($runId)
+    {
+        try {
+            Log::info('Attempting to cancel stuck run', [
+                'run_id' => $runId,
+                'thread_id' => $this->threadId
+            ]);
+
+            $cancelResponse = $this->openAIAssistantsService->cancelRun($this->threadId, $runId);
+            
+            if ($cancelResponse['success']) {
+                Log::info('Successfully cancelled stuck run', ['run_id' => $runId]);
+                return true;
+            } else {
+                Log::error('Failed to cancel stuck run', [
+                    'run_id' => $runId,
+                    'error' => $cancelResponse['message'] ?? 'Unknown error'
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception while cancelling stuck run', [
+                'run_id' => $runId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Clean up all stuck runs for the current thread
+     */
+    public function cleanupStuckRuns()
+    {
+        try {
+            if (!$this->threadId) {
+                return;
+            }
+
+            $runsResponse = $this->openAIAssistantsService->listRuns($this->threadId);
+            
+            if (!$runsResponse['success']) {
+                return;
+            }
+
+            $stuckRuns = collect($runsResponse['data']['data'] ?? [])->filter(function ($run) {
+                $isActive = in_array($run['status'], ['queued', 'in_progress', 'requires_action']);
+                $isOld = (time() - $run['created_at']) > 30; // 30 seconds
+                return $isActive && $isOld;
+            });
+
+            foreach ($stuckRuns as $run) {
+                Log::info('Cleaning up stuck run', [
+                    'run_id' => $run['id'],
+                    'status' => $run['status'],
+                    'age' => time() - $run['created_at']
+                ]);
+                
+                $this->cancelStuckRun($run['id']);
+            }
+
+            if ($stuckRuns->isNotEmpty()) {
+                $this->dispatch('stuck-runs-cleaned', [
+                    'count' => $stuckRuns->count()
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error cleaning up stuck runs', [
+                'error' => $e->getMessage(),
                 'thread_id' => $this->threadId
             ]);
         }
