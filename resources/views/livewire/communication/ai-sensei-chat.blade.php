@@ -6,11 +6,153 @@
                 <div class="card-header">
                     <div class="d-flex align-items-center justify-content-between w-100">
                         <h3 class="card-title mb-0">AI Sensei</h3>
-                        <button class="btn btn-sm btn-primary" wire:click="startNewChat">
-                            <i class="bi bi-plus-lg"></i> New Chat
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" wire:click="toggleSessionHistory" 
+                                    title="Toggle History">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+                            <button class="btn btn-sm btn-primary" wire:click="startNewChat">
+                                <i class="bi bi-plus-lg"></i> New Chat
+                            </button>
+                        </div>
                     </div>
-                </div>    </div>
+                </div>
+                
+                <!-- Chat History Section -->
+                @if ($showSessionHistory || count($chatSessions) > 0)
+                    <div class="card-body">
+                        <!-- Current Session Info -->
+                        @if ($currentChatSession)
+                            <div class="mb-3 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        @if ($editingSessionTitle === $currentChatSession->session_id)
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" class="form-control" wire:model="newSessionTitle" 
+                                                       wire:keydown.enter="saveSessionTitle('{{ $currentChatSession->session_id }}')"
+                                                       wire:keydown.escape="cancelEditingTitle" 
+                                                       autofocus>
+                                                <button class="btn btn-outline-success" type="button" 
+                                                        wire:click="saveSessionTitle('{{ $currentChatSession->session_id }}')">
+                                                    <i class="bi bi-check"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" type="button" 
+                                                        wire:click="cancelEditingTitle">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="fw-bold text-primary cursor-pointer" 
+                                                 wire:click="startEditingTitle('{{ $currentChatSession->session_id }}')"
+                                                 title="Click to edit title">
+                                                {{ $currentChatSession->title }}
+                                            </div>
+                                        @endif
+                                        <small class="text-muted">
+                                            Current • {{ count($messages) }} messages
+                                            @if ($currentChatSession->last_activity_at)
+                                                • {{ $currentChatSession->last_activity_at->diffForHumans() }}
+                                            @endif
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Session Search -->
+                        <div class="mb-3">
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" placeholder="Search conversations..." 
+                                       wire:model.live.debounce.300ms="sessionSearchQuery">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Session History List -->
+                        <div class="session-list" style="max-height: 300px; overflow-y: auto;">
+                            @forelse ($chatSessions as $session)
+                                <div class="session-item p-2 mb-2 border rounded cursor-pointer position-relative
+                                            {{ $currentChatSession && $currentChatSession->session_id === $session['session_id'] ? 'border-primary bg-light' : 'border-light' }}"
+                                     wire:click="loadChatSession('{{ $session['session_id'] }}')">
+                                    
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1 me-2">
+                                            <div class="fw-semibold small">{{ Str::limit($session['title'], 30) }}</div>
+                                            <small class="text-muted">
+                                                {{ $session['message_count'] }} messages • {{ $session['last_activity_human'] }}
+                                            </small>
+                                        </div>
+                                        
+                                        <!-- Session Actions Dropdown -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary border-0" type="button" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false"
+                                                    onclick="event.stopPropagation();">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a class="dropdown-item" href="#" 
+                                                       wire:click.prevent="startEditingTitle('{{ $session['session_id'] }}')"
+                                                       onclick="event.stopPropagation();">
+                                                        <i class="bi bi-pencil me-2"></i>
+                                                        Rename
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" 
+                                                       wire:click.prevent="autoGenerateTitle('{{ $session['session_id'] }}')"
+                                                       onclick="event.stopPropagation();">
+                                                        <i class="bi bi-lightning me-2"></i>
+                                                        Auto-title
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" 
+                                                       wire:click.prevent="archiveSession('{{ $session['session_id'] }}')"
+                                                       onclick="event.stopPropagation();">
+                                                        <i class="bi bi-archive me-2"></i>
+                                                        Archive
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="#" 
+                                                       wire:click.prevent="deleteSession('{{ $session['session_id'] }}')"
+                                                       onclick="event.stopPropagation();"
+                                                       wire:confirm="Are you sure you want to delete this conversation? This action cannot be undone.">
+                                                        <i class="bi bi-trash me-2"></i>
+                                                        Delete
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center text-muted py-3">
+                                    @if ($sessionSearchQuery)
+                                        <div>
+                                            <i class="bi bi-search fs-3 text-muted mb-2"></i>
+                                            <div>No conversations found</div>
+                                            <small>Try different search terms</small>
+                                        </div>
+                                    @else
+                                        <div>
+                                            <i class="bi bi-chat-dots fs-3 text-muted mb-2"></i>
+                                            <div>No conversation history</div>
+                                            <small>Previous chats will appear here</small>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                @endif
+            </div>
 
             <!-- About AI Sensei -->
             <div class="card shadow-sm">
@@ -984,6 +1126,66 @@
 
             .card.bg-light .rendered-markdown a:hover {
                 color: #0a58ca;
+            }
+
+            /* Chat Session History Styles */
+            .session-item {
+                transition: all 0.2s ease;
+            }
+
+            .session-item:hover {
+                background-color: #f8f9fa !important;
+                border-color: #6c757d !important;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .session-item.border-primary:hover {
+                background-color: #e7f3ff !important;
+            }
+
+            .cursor-pointer {
+                cursor: pointer;
+            }
+
+            .session-list {
+                scrollbar-width: thin;
+                scrollbar-color: #dee2e6 transparent;
+            }
+
+            .session-list::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .session-list::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .session-list::-webkit-scrollbar-thumb {
+                background: #dee2e6;
+                border-radius: 2px;
+            }
+
+            .session-list::-webkit-scrollbar-thumb:hover {
+                background: #adb5bd;
+            }
+
+            /* Enhanced dropdown styling */
+            .dropdown-toggle::after {
+                display: none;
+            }
+
+            .session-item .dropdown-menu {
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+            }
+
+            .session-item .dropdown-item {
+                font-size: 0.875rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .session-item .dropdown-item:hover {
+                background-color: #f8f9fa;
             }
         </style>
     @endpush

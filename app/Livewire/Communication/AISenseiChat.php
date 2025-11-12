@@ -7,6 +7,8 @@ use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 use App\Services\Communication\Chat\MCPIntegrationService;
 use App\Services\Communication\Chat\MarkdownRenderingService;
+use App\Services\Communication\Chat\ChatSessionService;
+use App\Models\ChatSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
@@ -29,6 +31,14 @@ class AISenseiChat extends Component
     public $isUserTyping = false;
     public $componentLoaded = false;
 
+    // Chat session management
+    public $currentChatSession = null;
+    public $chatSessions = [];
+    public $showSessionHistory = false;
+    public $sessionSearchQuery = '';
+    public $editingSessionTitle = null;
+    public $newSessionTitle = '';
+
     // File upload properties
     public $temporaryUploads = [];
     public $uploadingFile = false;
@@ -42,18 +52,21 @@ class AISenseiChat extends Component
     protected $openAIFilesService;
     protected $mcpIntegrationService;
     protected $markdownRenderingService;
+    protected $chatSessionService;
 
     // Constructor with dependency injection
     public function boot(
         OpenAIAssistantsService $openAIAssistantsService, 
         OpenAIFilesService $openAIFilesService,
         MCPIntegrationService $mcpIntegrationService,
-        MarkdownRenderingService $markdownRenderingService
+        MarkdownRenderingService $markdownRenderingService,
+        ChatSessionService $chatSessionService
     ) {
         $this->openAIAssistantsService = $openAIAssistantsService;
         $this->openAIFilesService = $openAIFilesService;
         $this->mcpIntegrationService = $mcpIntegrationService;
         $this->markdownRenderingService = $markdownRenderingService;
+        $this->chatSessionService = $chatSessionService;
     }
 
     public function mount()
@@ -85,7 +98,10 @@ class AISenseiChat extends Component
 
     private function initializeChat(User $user)
     {
-        // This would typically come from a database table that stores thread IDs per user
+        // Load recent sessions for the sidebar
+        $this->loadChatSessions();
+
+        // Get or restore the current thread
         $this->threadId = session('ai_sensei_thread_id');
 
         if (!$this->threadId) {
@@ -95,10 +111,16 @@ class AISenseiChat extends Component
             if ($threadResponse['success']) {
                 $this->threadId = $threadResponse['data']['id'];
                 session(['ai_sensei_thread_id' => $this->threadId]);
+                
+                // Create a new chat session in the database
+                $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
             } else {
                 throw new \Exception('Failed to create a new thread: ' . ($threadResponse['message'] ?? 'Unknown error'));
             }
         } else {
+            // Get or create the chat session for this thread
+            $this->currentChatSession = $this->chatSessionService->getOrCreateActiveSession($user, $this->threadId);
+            
             // Load existing messages
             $this->loadMessages();
         }
@@ -347,6 +369,16 @@ class AISenseiChat extends Component
                 // Refresh messages from the API
                 $this->loadMessages();
                 
+                // Sync messages to database
+                $this->syncMessagesFromOpenAI();
+                
+                // Auto-generate title for new sessions with meaningful content
+                if ($this->currentChatSession && 
+                    $this->currentChatSession->title && 
+                    str_contains($this->currentChatSession->title, 'New Chat -')) {
+                    $this->autoGenerateTitle();
+                }
+                
                 // Signal that AI is done typing
                 $this->broadcastTypingStatus(false);
             } else {
@@ -443,33 +475,7 @@ class AISenseiChat extends Component
         $this->dispatch('ai-typing-status', ['isTyping' => $isTyping]);
     }
 
-    public function startNewChat()
-    {
-        try {
-            // Create a new thread
-            $threadResponse = $this->openAIAssistantsService->createThread();
 
-            if ($threadResponse['success']) {
-                $this->threadId = $threadResponse['data']['id'];
-                session(['ai_sensei_thread_id' => $this->threadId]);
-                $this->messages = [];
-                $this->newMessage = '';
-                $this->filesAttachedToThread = [];
-                $this->error = null;
-
-                // Dispatch event for message updates
-                $this->dispatch('messages-updated');
-            } else {
-                $this->error = "Failed to start new chat: " . ($threadResponse['message'] ?? 'Unknown error');
-            }
-        } catch (\Exception $e) {
-            Log::error('Error starting new chat', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ]);
-            $this->error = "Error starting new chat: " . $e->getMessage();
-        }
-    }
 
     /**
      * Handle user typing status changes
@@ -966,6 +972,357 @@ class AISenseiChat extends Component
             $this->dispatch('file-removed', [
                 'index' => $index,
                 'remaining_count' => count($this->pendingFiles)
+            ]);
+        }
+    }
+
+    /**
+     * Load chat sessions for the sidebar
+     */
+    public function loadChatSessions()
+    {
+        $user = Auth::user();
+        $this->chatSessions = $this->chatSessionService->getRecentSessions($user, 15)->toArray();
+    }
+
+    /**
+     * Switch to a different chat session
+     */
+    public function loadChatSession($sessionId)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Find the session
+            $session = ChatSession::where('session_id', $sessionId)
+                ->where('user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if (!$session) {
+                $this->error = "Chat session not found or inaccessible.";
+                return;
+            }
+
+            // Switch to this session
+            $this->threadId = $sessionId;
+            $this->currentChatSession = $session;
+            
+            // Update session storage
+            session(['ai_sensei_thread_id' => $sessionId]);
+
+            // Load messages and files
+            $this->loadMessages();
+            $this->loadAttachedFiles();
+
+            // Sync messages from OpenAI (in case there are new ones)
+            $this->syncMessagesFromOpenAI();
+
+            // Update last activity
+            $session->update(['last_activity_at' => now()]);
+
+            // Clear any errors
+            $this->error = null;
+
+            // Refresh sessions list to update last activity times
+            $this->loadChatSessions();
+
+            $this->dispatch('session-loaded', [
+                'session_id' => $sessionId,
+                'title' => $session->title
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error loading chat session', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            $this->error = "Failed to load chat session: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Start a new chat session
+     */
+    public function startNewChat()
+    {
+        try {
+            // Create a new thread
+            $threadResponse = $this->openAIAssistantsService->createThread();
+
+            if ($threadResponse['success']) {
+                $user = Auth::user();
+                $this->threadId = $threadResponse['data']['id'];
+                
+                // Create new chat session in database
+                $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
+                
+                // Update session storage
+                session(['ai_sensei_thread_id' => $this->threadId]);
+                
+                // Reset state
+                $this->messages = [];
+                $this->newMessage = '';
+                $this->filesAttachedToThread = [];
+                $this->uploadedFiles = [];
+                $this->pendingFiles = [];
+                $this->error = null;
+
+                // Refresh sessions list
+                $this->loadChatSessions();
+
+                // Dispatch event for message updates
+                $this->dispatch('messages-updated');
+                $this->dispatch('new-chat-started', [
+                    'session_id' => $this->threadId,
+                    'title' => $this->currentChatSession->title
+                ]);
+            } else {
+                $this->error = "Failed to start new chat: " . ($threadResponse['message'] ?? 'Unknown error');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error starting new chat', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+            $this->error = "Error starting new chat: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Toggle session history sidebar
+     */
+    public function toggleSessionHistory()
+    {
+        $this->showSessionHistory = !$this->showSessionHistory;
+        
+        if ($this->showSessionHistory) {
+            $this->loadChatSessions();
+        }
+    }
+
+    /**
+     * Search chat sessions
+     */
+    public function searchSessions()
+    {
+        if (empty($this->sessionSearchQuery)) {
+            $this->loadChatSessions();
+            return;
+        }
+
+        $user = Auth::user();
+        $searchResults = $this->chatSessionService->searchUserSessions($user, $this->sessionSearchQuery, 15);
+        
+        $this->chatSessions = $searchResults->map(function ($session) {
+            return [
+                'id' => $session->id,
+                'session_id' => $session->session_id,
+                'title' => $session->title,
+                'last_activity_at' => $session->last_activity_at,
+                'last_activity_human' => $session->last_activity_at->diffForHumans(),
+                'message_count' => $session->messages()->count(),
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Start editing session title
+     */
+    public function startEditingTitle($sessionId)
+    {
+        $session = collect($this->chatSessions)->firstWhere('session_id', $sessionId);
+        if ($session) {
+            $this->editingSessionTitle = $sessionId;
+            $this->newSessionTitle = $session['title'];
+        }
+    }
+
+    /**
+     * Cancel editing session title
+     */
+    public function cancelEditingTitle()
+    {
+        $this->editingSessionTitle = null;
+        $this->newSessionTitle = '';
+    }
+
+    /**
+     * Save session title
+     */
+    public function saveSessionTitle($sessionId)
+    {
+        try {
+            if (empty(trim($this->newSessionTitle))) {
+                $this->error = "Session title cannot be empty.";
+                return;
+            }
+
+            $user = Auth::user();
+            $success = $this->chatSessionService->updateSessionTitle($sessionId, trim($this->newSessionTitle), $user);
+
+            if ($success) {
+                // Update current session if it's the one being edited
+                if ($this->currentChatSession && $this->currentChatSession->session_id === $sessionId) {
+                    $this->currentChatSession->title = trim($this->newSessionTitle);
+                }
+
+                // Refresh sessions list
+                $this->loadChatSessions();
+
+                // Reset editing state
+                $this->editingSessionTitle = null;
+                $this->newSessionTitle = '';
+
+                $this->dispatch('session-title-updated', [
+                    'session_id' => $sessionId,
+                    'title' => trim($this->newSessionTitle)
+                ]);
+            } else {
+                $this->error = "Failed to update session title.";
+            }
+        } catch (\Exception $e) {
+            Log::error('Error updating session title', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            $this->error = "Error updating title: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Archive a chat session
+     */
+    public function archiveSession($sessionId)
+    {
+        try {
+            $user = Auth::user();
+            $success = $this->chatSessionService->archiveSession($sessionId, $user);
+
+            if ($success) {
+                // If we're archiving the current session, start a new one
+                if ($this->threadId === $sessionId) {
+                    $this->startNewChat();
+                } else {
+                    // Just refresh the sessions list
+                    $this->loadChatSessions();
+                }
+
+                $this->dispatch('session-archived', ['session_id' => $sessionId]);
+            } else {
+                $this->error = "Failed to archive session.";
+            }
+        } catch (\Exception $e) {
+            Log::error('Error archiving session', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            $this->error = "Error archiving session: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Delete a chat session
+     */
+    public function deleteSession($sessionId)
+    {
+        try {
+            $user = Auth::user();
+            $success = $this->chatSessionService->deleteSession($sessionId, $user);
+
+            if ($success) {
+                // If we're deleting the current session, start a new one
+                if ($this->threadId === $sessionId) {
+                    $this->startNewChat();
+                } else {
+                    // Just refresh the sessions list
+                    $this->loadChatSessions();
+                }
+
+                $this->dispatch('session-deleted', ['session_id' => $sessionId]);
+            } else {
+                $this->error = "Failed to delete session.";
+            }
+        } catch (\Exception $e) {
+            Log::error('Error deleting session', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            $this->error = "Error deleting session: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Sync messages from OpenAI to local database
+     */
+    private function syncMessagesFromOpenAI()
+    {
+        if (!$this->currentChatSession) {
+            return;
+        }
+
+        try {
+            $response = $this->openAIAssistantsService->listMessages($this->threadId);
+
+            if ($response['success']) {
+                $openaiMessages = collect($response['data']['data'])->reverse()->values()->toArray();
+                $this->chatSessionService->syncMessagesFromOpenAI($this->currentChatSession, $openaiMessages);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to sync messages from OpenAI', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->currentChatSession->session_id
+            ]);
+        }
+    }
+
+    /**
+     * Auto-generate and update session title based on content
+     */
+    public function autoGenerateTitle($sessionId = null)
+    {
+        try {
+            $targetSessionId = $sessionId ?: $this->threadId;
+            $session = $this->currentChatSession;
+
+            if ($sessionId) {
+                $session = ChatSession::where('session_id', $sessionId)
+                    ->where('user_id', Auth::id())
+                    ->first();
+            }
+
+            if (!$session) {
+                return;
+            }
+
+            $newTitle = $this->chatSessionService->generateSessionTitle($session);
+            
+            if ($newTitle !== $session->title) {
+                $user = Auth::user();
+                $this->chatSessionService->updateSessionTitle($session->session_id, $newTitle, $user);
+                
+                // Update current session if it's the one being updated
+                if ($this->currentChatSession && $this->currentChatSession->id === $session->id) {
+                    $this->currentChatSession->title = $newTitle;
+                }
+
+                // Refresh sessions list
+                $this->loadChatSessions();
+
+                $this->dispatch('session-title-generated', [
+                    'session_id' => $session->session_id,
+                    'title' => $newTitle
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error auto-generating session title', [
+                'session_id' => $sessionId ?: $this->threadId,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
             ]);
         }
     }
