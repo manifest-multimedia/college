@@ -19,6 +19,15 @@ host('mhtia')
     ->setHostname('83.147.39.47')
     ->set('remote_user', 'administrator')
     ->set('deploy_path', '/var/www/mhtia.siteshowcase.top')
+    ->set('labels', ['stage' => 'staging']);
+
+host('mhtia-prod')
+    ->setHostname('62.77.158.206')
+    ->set('remote_user', 'pnmtc')
+    ->set('deploy_path', '/var/www/mhtia.edu.gh')
+    ->set('http_user', 'www-data')
+    ->set('writable_mode', 'chmod')
+    ->set('writable_chmod_mode', '0775')
     ->set('labels', ['stage' => 'production']);
 
 host('pnmtc')
@@ -69,6 +78,23 @@ task('deploy:prepare_structure', function () {
         // Ensure www-data group ownership
         run("chgrp www-data {{deploy_path}}/shared/$dir || echo 'Could not change group ownership'");
     }
+    
+    // Ensure critical Laravel directories exist with proper permissions
+    $criticalDirs = [
+        'storage/framework/cache',
+        'storage/framework/sessions',
+        'storage/framework/views',
+        'storage/logs',
+        'storage/app',
+        'storage/app/public'
+    ];
+    
+    foreach ($criticalDirs as $dir) {
+        run("if [ ! -d {{deploy_path}}/shared/$dir ]; then mkdir -p {{deploy_path}}/shared/$dir; fi");
+        run("chmod 775 {{deploy_path}}/shared/$dir");
+        run("chgrp www-data {{deploy_path}}/shared/$dir || echo 'Could not change group ownership for $dir'");
+        run("chmod g+s {{deploy_path}}/shared/$dir || echo 'Could not set sticky bit for $dir'");
+    }
 });
 
 // Setup upload directories with proper permissions
@@ -117,9 +143,52 @@ task('deploy:fix_permissions', function () {
     // Make specific files executable
     run('chmod +x {{deploy_path}}/current/artisan || echo "Artisan not found"');
     
+    // Fix storage directory permissions - critical for Laravel cache/views/sessions
+    writeln('Fixing storage directory permissions...');
+    run('find {{deploy_path}}/shared/storage -type d -exec chmod 775 {} \; || true');
+    run('find {{deploy_path}}/shared/storage -type d -exec chgrp www-data {} \; || true');
+    run('find {{deploy_path}}/shared/storage -type d -exec chmod g+s {} \; || true');
+    run('find {{deploy_path}}/shared/storage -type f -exec chmod 664 {} \; || true');
+    run('find {{deploy_path}}/shared/storage -type f -exec chgrp www-data {} \; || true');
+    
+    // Ensure bootstrap/cache is writable
+    run('chmod -R 775 {{deploy_path}}/current/bootstrap/cache || true');
+    run('chgrp -R www-data {{deploy_path}}/current/bootstrap/cache || true');
+    
     // Ensure upload directories remain writable
     run('chmod -R 775 {{deploy_path}}/shared/public/images/ || true');
     run('chgrp -R www-data {{deploy_path}}/shared/public/images/ || true');
+});
+
+// Ensure .env file has proper permissions
+task('deploy:fix_env_permissions', function () {
+    writeln('Fixing .env file permissions...');
+    
+    // Ensure shared directory has proper permissions
+    run('chmod 775 {{deploy_path}}/shared || true');
+    run('chgrp www-data {{deploy_path}}/shared || true');
+    
+    // Ensure .env file has proper permissions for web server to write
+    run('chmod 664 {{deploy_path}}/shared/.env || true');
+    run('chgrp www-data {{deploy_path}}/shared/.env || true');
+    
+    writeln('✅ Environment file permissions fixed');
+});
+
+// Ensure Laravel application key is set
+task('deploy:ensure_app_key', function () {
+    writeln('Checking Laravel application key...');
+    
+    // Check if APP_KEY is set in .env
+    $result = run('cd {{deploy_path}}/current && grep -E "^APP_KEY=" .env | grep -v "APP_KEY=$" || echo "MISSING"');
+    
+    if (trim($result) === 'MISSING') {
+        writeln('APP_KEY not found or empty, generating new key...');
+        run('cd {{deploy_path}}/current && php artisan key:generate --force');
+        writeln('✅ Application key generated successfully');
+    } else {
+        writeln('✅ Application key is already set');
+    }
 });
 
 // Debug upload directory structure and permissions
@@ -160,7 +229,9 @@ task('deploy', [
     'deploy:vendors',
     'build:assets',
     'deploy:shared',
+    'deploy:fix_env_permissions',
     'deploy:setup_uploads',
+    'deploy:ensure_app_key',
     'artisan:storage:link',
     'artisan:view:cache',
     'artisan:config:cache',

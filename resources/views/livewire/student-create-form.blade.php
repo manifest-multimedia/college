@@ -280,7 +280,7 @@
                                 @error('student_id_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <div class="form-text">Leave blank to auto-generate (e.g., PNMTC/DA/RM/22/23/001)</div>
+                                <div class="form-text">Leave blank to auto-generate (e.g., STU/RM/22/23/001)</div>
                             </div>
 
                             <!-- Program -->
