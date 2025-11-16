@@ -179,8 +179,12 @@ class ChatSessionService
         try {
             // Get existing message IDs from database
             $existingMessageIds = $session->messages()
-                ->whereNotNull('metadata->openai_message_id')
-                ->pluck('metadata->openai_message_id')
+                ->whereNotNull('metadata')
+                ->get()
+                ->filter(function ($message) {
+                    return isset($message->metadata['openai_message_id']);
+                })
+                ->pluck('metadata.openai_message_id')
                 ->toArray();
 
             foreach ($openaiMessages as $openaiMessage) {

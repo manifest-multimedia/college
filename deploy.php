@@ -86,7 +86,9 @@ task('deploy:prepare_structure', function () {
         'storage/framework/views',
         'storage/logs',
         'storage/app',
-        'storage/app/public'
+        'storage/app/public',
+        'storage/app/private',
+        'storage/app/private/livewire-tmp'
     ];
     
     foreach ($criticalDirs as $dir) {
@@ -150,6 +152,13 @@ task('deploy:fix_permissions', function () {
     run('find {{deploy_path}}/shared/storage -type d -exec chmod g+s {} \; || true');
     run('find {{deploy_path}}/shared/storage -type f -exec chmod 664 {} \; || true');
     run('find {{deploy_path}}/shared/storage -type f -exec chgrp www-data {} \; || true');
+    
+    // Set ACL permissions for critical directories (especially Livewire temp directory)
+    writeln('Setting ACL permissions for storage directories...');
+    run('setfacl -R -m u:{{remote_user}}:rwx,u:www-data:rwx,g:www-data:rwx {{deploy_path}}/shared/storage/app/private || echo "ACL not available for storage/app/private"');
+    run('setfacl -R -d -m u:{{remote_user}}:rwx,u:www-data:rwx,g:www-data:rwx {{deploy_path}}/shared/storage/app/private || echo "Default ACL not available for storage/app/private"');
+    run('setfacl -R -m u:{{remote_user}}:rwx,u:www-data:rwx,g:www-data:rwx {{deploy_path}}/shared/storage/framework || echo "ACL not available for storage/framework"');
+    run('setfacl -R -d -m u:{{remote_user}}:rwx,u:www-data:rwx,g:www-data:rwx {{deploy_path}}/shared/storage/framework || echo "Default ACL not available for storage/framework"');
     
     // Ensure bootstrap/cache is writable
     run('chmod -R 775 {{deploy_path}}/current/bootstrap/cache || true');
