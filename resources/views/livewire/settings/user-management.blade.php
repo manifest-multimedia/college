@@ -85,7 +85,7 @@
                             <span class="badge badge-light-info">{{ $user->permissions->count() }} direct permissions</span>
                         </td>
                         <td class="align-middle text-end">
-                            <div class="d-inline-flex">
+                            <div class="d-inline-flex align-items-center gap-2">
                                 <button type="button" class="btn btn-sm btn-icon btn-light-primary me-2" wire:click="editUser({{ $user->id }})">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -93,6 +93,16 @@
                                     {{ $user->id === auth()->id() ? 'disabled' : '' }}>
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                @role('System')
+                                @if($user->id !== auth()->id())
+                                <form action="{{ route('impersonate.start', $user) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-icon btn-light-warning" title="Impersonate User">
+                                        <i class="fas fa-user-secret"></i>
+                                    </button>
+                                </form>
+                                @endif
+                                @endrole
                             </div>
                         </td>
                     </tr>

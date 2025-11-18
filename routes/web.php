@@ -114,6 +114,14 @@ Route::middleware([
     'auth:sanctum',
 ])->group(function () {
 
+    // Impersonation Routes
+    Route::post('/impersonate/{user}', [\App\Http\Controllers\ImpersonationController::class, 'start'])
+        ->middleware('role:System')
+        ->name('impersonate.start');
+
+    Route::match(['POST', 'GET'], '/impersonate/stop', [\App\Http\Controllers\ImpersonationController::class, 'stop'])
+        ->name('impersonate.stop');
+
     Route::get('/portal', function () {
         // Check if user has Student role and redirect to student dashboard
         if (auth()->user()->hasRole('Student')) {

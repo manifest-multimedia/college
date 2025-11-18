@@ -4,6 +4,63 @@
 <x-partials.dash-header />
 <!--begin::Content-->
 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+    @if(session()->has('impersonator_id'))
+    <!-- Impersonation Floating Bar -->
+    <div id="impersonationBar" class="position-fixed bottom-4 right-4 z-50 shadow-lg rounded bg-warning text-dark px-4 py-3 d-flex align-items-center gap-3" style="bottom: 1rem; right: 1rem;">
+        <i class="fas fa-user-secret"></i>
+        <span>Impersonation active</span>
+        <a href="{{ route('impersonate.stop') }}" class="btn btn-sm btn-dark">Exit</a>
+        <button type="button" id="hideImpersonationBar" class="btn btn-sm btn-light">Hide</button>
+    </div>
+    <script>
+        (function(){
+            const bar = document.getElementById('impersonationBar');
+            const hideBtn = document.getElementById('hideImpersonationBar');
+            const key = 'cis.impersonationBar.hidden';
+            if(localStorage.getItem(key) === '1'){
+                hideBar();
+                // Create a small reveal tab
+                createReveal();
+            }
+            function createReveal(){
+                if(document.getElementById('impersonationReveal')) return;
+                const reveal = document.createElement('div');
+                reveal.id = 'impersonationReveal';
+                reveal.className = 'position-fixed bottom-4 right-4 z-50 rounded bg-warning text-dark px-3 py-2 shadow';
+                reveal.style.bottom = '1rem';
+                reveal.style.right = '1rem';
+                reveal.style.cursor = 'pointer';
+                reveal.innerHTML = '<i class="fas fa-user-secret me-1"></i> Show Impersonation';
+                reveal.addEventListener('click', ()=>{
+                    showBar();
+                    localStorage.setItem(key, '0');
+                    reveal.remove();
+                });
+                document.body.appendChild(reveal);
+            }
+            function hideBar(){
+                // Use multiple strategies to ensure hide in all CSS stacks
+                bar.style.display = 'none';
+                bar.style.visibility = 'hidden';
+                bar.style.pointerEvents = 'none';
+                bar.classList.add('d-none');
+            }
+            function showBar(){
+                bar.classList.remove('d-none');
+                bar.style.display = 'flex';
+                bar.style.visibility = '';
+                bar.style.pointerEvents = '';
+            }
+            hideBtn?.addEventListener('click', (e)=>{
+                e.preventDefault();
+                e.stopPropagation();
+                hideBar();
+                localStorage.setItem(key, '1');
+                createReveal();
+            });
+        })();
+    </script>
+    @endif
     <!--begin::Toolbar-->
     <div class="mb-3 toolbar d-flex flex-stack mb-lg-5" id="kt_toolbar">
         <!--begin::Container-->
