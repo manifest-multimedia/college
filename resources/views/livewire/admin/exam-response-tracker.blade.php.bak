@@ -24,7 +24,7 @@
                             <div class="form-group">
                                 <label for="student_id" class="form-label">Search by Student ID</label>
                                 <input type="text" id="student_id" wire:model.live.debounce.500ms="student_id" class="form-control" 
-                                       placeholder="Enter student ID (e.g. PNMTC/DA/RGN/24/25/001)">
+                                       placeholder="Enter student ID (e.g. COLLEGE/DEPT/RGN/24/25/001)">
                             </div>
                         </div>
                     </div>

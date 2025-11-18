@@ -475,7 +475,7 @@
             </div>
 
             {{-- AuthCentral SSO Login Option --}}
-            @if($authService->getAuthCentralLoginUrl())
+            @if(config('branding.theme_settings.show_auth_central_button', true) && $authService->getAuthCentralLoginUrl())
                 <div class="sso-section">
                     <a href="{{ $authService->getAuthCentralLoginUrl() }}" class="sso-btn">
                         <i class="fas fa-sign-in-alt"></i>

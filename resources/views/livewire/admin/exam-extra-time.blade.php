@@ -63,7 +63,7 @@
                                 placeholder="Enter one or more student IDs separated by spaces, commas, or new lines"></textarea>
                         </div>
                         <div class="form-text">
-                            Enter multiple student college IDs (e.g., PNMTC/DA/RM/22/23/197, PNMTC/DA/RM/22/23/198)
+                            Enter multiple student college IDs (e.g., COLLEGE/DEPT/RM/22/23/197, COLLEGE/DEPT/RM/22/23/198)
                             <div class="mt-1"><strong>Tip:</strong> You can paste a list of IDs from Excel or any other source</div>
                         </div>
                     </div>

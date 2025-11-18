@@ -10,5 +10,5 @@
 
 
 return [
-    'prefix' => 'PNMTC/DA',
+    'prefix' => 'COLLEGE/DEPT',
 ];

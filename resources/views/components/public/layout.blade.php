@@ -8,7 +8,7 @@
     <title>{{ $title ?? 'College Elections' }} - Presbyterian Nursing and Midwifery Training College</title>
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('images/mhtia-white.png') }}" />
+    <link rel="shortcut icon" href="{{ asset('images/college-logo.png') }}" />
     
     <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
@@ -151,8 +151,8 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ route('public.elections.index') }}">
-                <img src="{{ asset('images/mhtia-white.png') }}" alt="College Logo" class="me-2">
-                <span>PNMTC Elections</span>
+                <img src="{{ asset('images/college-logo.png') }}" alt="College Logo" class="me-2">
+                <span>College Elections</span>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

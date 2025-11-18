@@ -27,10 +27,10 @@ return [
     */
 
     'authcentral' => [
-        'login_url' => env('AUTHCENTRAL_LOGIN_URL', 'https://auth.pnmtc.edu.gh/login'),
-        'api_url' => env('AUTHCENTRAL_API_URL', 'https://auth.pnmtc.edu.gh/api/user'),
-        'signup_url' => env('AUTHCENTRAL_SIGNUP_URL', 'https://auth.pnmtc.edu.gh/sign-up'),
-        'student_registration_url' => env('AUTHCENTRAL_STUDENT_REGISTRATION_URL', 'https://auth.pnmtc.edu.gh/student/register'),
+        'login_url' => env('AUTHCENTRAL_LOGIN_URL', 'https://auth.example.edu/login'),
+        'api_url' => env('AUTHCENTRAL_API_URL', 'https://auth.example.edu/api/user'),
+        'signup_url' => env('AUTHCENTRAL_SIGNUP_URL', 'https://auth.example.edu/sign-up'),
+        'student_registration_url' => env('AUTHCENTRAL_STUDENT_REGISTRATION_URL', 'https://auth.example.edu/student/register'),
     ],
 
     /*

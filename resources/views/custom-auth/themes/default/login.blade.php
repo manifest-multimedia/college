@@ -19,23 +19,25 @@
 
     <div class="px-4 mx-auto mw-sm">
         {{-- AuthCentral SSO Login Option --}}
-        <div class="mb-4">
-            <a href="{{ $authService->getAuthCentralLoginUrl() }}"
-                class="btn btn-lg btn-primary fs-11 w-100 text-primary-light d-flex align-items-center justify-content-center"
-                style="background-color: var(--brand-primary, #007bff); border-color: var(--brand-primary, #007bff);">
-                <i class="fas fa-sign-in-alt me-2"></i>
-                Sign In with AuthCentral
-            </a>
-            <p class="text-center text-muted fs-13 mt-2 mb-0">Single Sign-On (SSO) - Quick & Secure</p>
-        </div>
+        @if(config('branding.theme_settings.show_auth_central_button', true))
+            <div class="mb-4">
+                <a href="{{ $authService->getAuthCentralLoginUrl() }}"
+                    class="btn btn-lg btn-primary fs-11 w-100 text-primary-light d-flex align-items-center justify-content-center"
+                    style="background-color: var(--brand-primary, #007bff); border-color: var(--brand-primary, #007bff);">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    Sign In with AuthCentral
+                </a>
+                <p class="text-center text-muted fs-13 mt-2 mb-0">Single Sign-On (SSO) - Quick & Secure</p>
+            </div>
 
-        {{-- Divider --}}
-        <div class="text-center my-4">
-            <span class="text-muted fs-13 px-3" style="background: white; position: relative; z-index: 1;">
-                OR
-            </span>
-            <hr style="margin-top: -12px; border-color: #dee2e6;">
-        </div>
+            {{-- Divider --}}
+            <div class="text-center my-4">
+                <span class="text-muted fs-13 px-3" style="background: white; position: relative; z-index: 1;">
+                    OR
+                </span>
+                <hr style="margin-top: -12px; border-color: #dee2e6;">
+            </div>
+        @endif
 
         {{-- Email/Password Login Form --}}
         <form method="POST" action="{{ route('regular.login') }}">

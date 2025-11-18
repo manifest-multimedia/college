@@ -2,7 +2,7 @@
     <nav class="flex-wrap navbar navbar-expand-xl navbar-dark bg-dark">
         <div class="container-fluid">
             <div class="d-flex w-100 align-items-center"> <a class="navbar-brand" href="{{ '/' }}"> <img
-                        class="img-fluid" src="{{ asset('images/mhtia-white.png') }}" alt="logo" width="auto"
+                        class="img-fluid" src="{{ asset('images/college-logo.png') }}" alt="logo" width="auto"
                         style="height:60px;"> </a>
                 <button class="navbar-burger navbar-toggler bg-primary ms-auto" type="button"> <span
                         class="navbar-toggler-icon"></span> </button>
@@ -184,7 +184,7 @@
         <div class="overflow-auto top-0 bottom-0 pt-6 position-fixed start-0 w-75 mw-sm-xs bg-dark">
             <div class="px-6 pb-6 position-relative border-bottom border-secondary">
                 <div class="d-inline-flex align-items-center"> <a href="#"> <img class="img-fluid"
-                            src="{{ asset('/images/mhtia-white.png') }}" alt="alt" width="auto">
+                            src="{{ asset('/images/college-logo.png') }}" alt="alt" width="auto">
                     </a>
                 </div>
 

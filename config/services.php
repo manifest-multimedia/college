@@ -51,7 +51,7 @@ return [
         'api_key' => env('NALO_API_KEY'),
         'username' => env('NALO_USERNAME'),
         'password' => env('NALO_PASSWORD'),
-        'sender_id' => env('NALO_SENDER_ID', 'PNMTC'),
+        'sender_id' => env('NALO_SENDER_ID', 'COLLEGE'),
         'reseller_prefix' => env('NALO_RESELLER_PREFIX', 'Resl_Nalo'),
     ],
 

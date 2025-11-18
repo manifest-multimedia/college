@@ -24,10 +24,10 @@ Controls which authentication system is active:
 
 ```php
 'authcentral' => [
-    'login_url' => env('AUTHCENTRAL_LOGIN_URL', 'https://auth.pnmtc.edu.gh/login'),
-    'api_url' => env('AUTHCENTRAL_API_URL', 'https://auth.pnmtc.edu.gh/api/user'),
-    'signup_url' => env('AUTHCENTRAL_SIGNUP_URL', 'https://auth.pnmtc.edu.gh/sign-up'),
-    'student_registration_url' => env('AUTHCENTRAL_STUDENT_REGISTRATION_URL', 'https://auth.pnmtc.edu.gh/student/register'),
+    'login_url' => env('AUTHCENTRAL_LOGIN_URL', 'https://auth.example.edu/login'),
+    'api_url' => env('AUTHCENTRAL_API_URL', 'https://auth.example.edu/api/user'),
+    'signup_url' => env('AUTHCENTRAL_SIGNUP_URL', 'https://auth.example.edu/sign-up'),
+    'student_registration_url' => env('AUTHCENTRAL_STUDENT_REGISTRATION_URL', 'https://auth.example.edu/student/register'),
 ],
 ```
 
@@ -113,10 +113,10 @@ AUTH_METHOD=authcentral                     # Authentication method (authcentral
 
 ### AuthCentral URLs
 ```env
-AUTHCENTRAL_LOGIN_URL=https://auth.pnmtc.edu.gh/login
-AUTHCENTRAL_API_URL=https://auth.pnmtc.edu.gh/api/user
-AUTHCENTRAL_SIGNUP_URL=https://auth.pnmtc.edu.gh/sign-up
-AUTHCENTRAL_STUDENT_REGISTRATION_URL=https://auth.pnmtc.edu.gh/student/register
+AUTHCENTRAL_LOGIN_URL=https://auth.example.edu/login
+AUTHCENTRAL_API_URL=https://auth.example.edu/api/user
+AUTHCENTRAL_SIGNUP_URL=https://auth.example.edu/sign-up
+AUTHCENTRAL_STUDENT_REGISTRATION_URL=https://auth.example.edu/student/register
 ```
 
 ### Regular Authentication

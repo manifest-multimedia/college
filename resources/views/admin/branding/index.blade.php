@@ -604,6 +604,16 @@
                                                 Enable Authentication Animations
                                             </label>
                                         </div>
+                                        
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            <input type="hidden" name="show_auth_central_button" value="0">
+                                            <input class="form-check-input" type="checkbox" name="show_auth_central_button" value="1" 
+                                                   id="show_auth_central_button" {{ old('show_auth_central_button', $themeSettings['show_auth_central_button'] ?? true) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="show_auth_central_button">
+                                                Show Auth Central Login Button
+                                            </label>
+                                            <div class="form-text">Hide Auth Central button if your institution doesn't use SSO authentication</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -619,6 +629,191 @@
                         </div>
                     </form>
                 </div>
+        </div>
+
+        <!-- Student ID Configuration -->
+        <div class="row mb-8">
+            <div class="col-12">
+                <div class="card card-flush">
+                    <form method="POST" action="{{ route('admin.branding.update-student-id') }}">
+                        @csrf
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="ki-duotone ki-profile-user fs-2 me-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                </i>
+                                Student ID Generation Settings
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Format Selection -->
+                            <div class="row mb-8">
+                                <div class="col-md-6">
+                                    <div class="mb-5">
+                                        <label class="form-label required">Student ID Format</label>
+                                        <select name="student_id_format" class="form-select" id="student_id_format">
+                                            <option value="structured" {{ old('student_id_format', config('branding.student_id.format', 'structured')) === 'structured' ? 'selected' : '' }}>
+                                                Structured (COLLEGE/DEPT/PROG/22/23/001)
+                                            </option>
+                                            <option value="simple" {{ old('student_id_format', config('branding.student_id.format')) === 'simple' ? 'selected' : '' }}>
+                                                Simple (COLLEGEPROG240135)
+                                            </option>
+                                            <option value="custom" {{ old('student_id_format', config('branding.student_id.format')) === 'custom' ? 'selected' : '' }}>
+                                                Custom Pattern
+                                            </option>
+                                        </select>
+                                        <div class="form-text">Choose the format for automatically generated student IDs</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-5">
+                                        <label class="form-label">Custom Pattern</label>
+                                        <input type="text" name="student_id_custom_pattern" class="form-control" 
+                                               value="{{ old('student_id_custom_pattern', config('branding.student_id.custom_pattern')) }}"
+                                               placeholder="{INSTITUTION_SIMPLE}-{PROGRAM}-{SEQUENCE_4}"
+                                               id="custom_pattern_input" 
+                                               {{ config('branding.student_id.format') !== 'custom' ? 'disabled' : '' }}>
+                                        <div class="form-text">
+                                            Create your own pattern using placeholders and separators (-, /, or no separator)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Institution Configuration -->
+                            <div class="separator separator-dashed my-6"></div>
+                            <h4 class="mb-5">Institution Configuration</h4>
+                            <div class="row mb-6">
+                                <div class="col-md-6">
+                                    <div class="mb-5">
+                                        <label class="form-label required">Institution Prefix (Full)</label>
+                                        <input type="text" name="institution_prefix" class="form-control" 
+                                               value="{{ old('institution_prefix', config('branding.student_id.institution_prefix', 'COLLEGE/DEPT')) }}"
+                                               placeholder="COLLEGE/DEPT">
+                                        <div class="form-text">Full institution prefix used in structured format (e.g., COLLEGE/DEPT, UNIV/ENG)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-5">
+                                        <label class="form-label required">Institution Code (Simple)</label>
+                                        <input type="text" name="institution_simple" class="form-control" 
+                                               value="{{ old('institution_simple', config('branding.student_id.institution_simple', 'COLLEGE')) }}"
+                                               placeholder="COLLEGE">
+                                        <div class="form-text">Simplified institution code for simple and custom formats (4-6 characters)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sequence Configuration -->
+                            <div class="separator separator-dashed my-6"></div>
+                            <h4 class="mb-5">Sequence Configuration</h4>
+                            <div class="row mb-6">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch form-check-custom form-check-solid mb-4">
+                                        <input type="hidden" name="enable_alphabetical_ordering" value="0">
+                                        <input class="form-check-input" type="checkbox" name="enable_alphabetical_ordering" value="1" 
+                                               id="enable_alphabetical_ordering" {{ old('enable_alphabetical_ordering', config('branding.student_id.enable_alphabetical_ordering', true)) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="enable_alphabetical_ordering">
+                                            Enable Alphabetical Ordering
+                                        </label>
+                                        <div class="form-text">Assign sequence numbers based on alphabetical order of student names</div>
+                                    </div>
+                                    
+                                    <div class="form-check form-switch form-check-custom form-check-solid">
+                                        <input type="hidden" name="sequence_reset_yearly" value="0">
+                                        <input class="form-check-input" type="checkbox" name="sequence_reset_yearly" value="1" 
+                                               id="sequence_reset_yearly" {{ old('sequence_reset_yearly', config('branding.student_id.sequence_reset_yearly', true)) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="sequence_reset_yearly">
+                                            Reset Sequence Each Year
+                                        </label>
+                                        <div class="form-text">Start sequence from 001 each academic year</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-5">
+                                        <label class="form-label">Starting Sequence Number</label>
+                                        <input type="number" name="sequence_start" class="form-control" 
+                                               value="{{ old('sequence_start', config('branding.student_id.sequence_start', 1)) }}"
+                                               min="1" max="999">
+                                        <div class="form-text">First sequence number to use (usually 1)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Examples and Documentation -->
+                            <div class="separator separator-dashed my-6"></div>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="card bg-light-info">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">📋 Available Placeholders</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <ul class="list-unstyled mb-0">
+                                                        <li class="mb-2"><code>{INSTITUTION}</code> - Full prefix</li>
+                                                        <li class="mb-2"><code>{INSTITUTION_SIMPLE}</code> - Simple code</li>
+                                                        <li class="mb-2"><code>{PROGRAM}</code> - Program code (RN, RM, etc.)</li>
+                                                        <li class="mb-2"><code>{PROGRAM_SIMPLE}</code> - Short program code</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <ul class="list-unstyled mb-0">
+                                                        <li class="mb-2"><code>{YEAR_FULL}</code> - 22/23</li>
+                                                        <li class="mb-2"><code>{YEAR_SIMPLE}</code> - 23</li>
+                                                        <li class="mb-2"><code>{SEQUENCE_3}</code> - 001</li>
+                                                        <li class="mb-2"><code>{SEQUENCE_4}</code> - 0001</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light-success">
+                                        <div class="card-header">
+                                            <h5 class="card-title mb-0">✅ Pattern Examples</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <strong>Structured:</strong><br>
+                                                <code>COLLEGE/DEPT/RN/22/23/001</code>
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Simple:</strong><br>
+                                                <code>COLLEGERN230135</code>
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Custom with dashes:</strong><br>
+                                                <code>{INSTITUTION_SIMPLE}-{PROGRAM}-{SEQUENCE_4}</code><br>
+                                                → <code>COLLEGE-RN-0135</code>
+                                            </div>
+                                            <div class="mb-0">
+                                                <strong>Custom with slashes:</strong><br>
+                                                <code>{INSTITUTION}/{PROGRAM}/{SEQUENCE_3}</code><br>
+                                                → <code>COLLEGE/RN/135</code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="ki-duotone ki-check fs-2 me-2">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                                Save Student ID Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -638,6 +833,25 @@
                     });
                 }
             });
+
+            // Handle student ID format changes
+            const formatSelect = document.getElementById('student_id_format');
+            const customPatternInput = document.getElementById('custom_pattern_input');
+
+            if (formatSelect && customPatternInput) {
+                function toggleCustomPattern() {
+                    if (formatSelect.value === 'custom') {
+                        customPatternInput.disabled = false;
+                        customPatternInput.required = true;
+                    } else {
+                        customPatternInput.disabled = true;
+                        customPatternInput.required = false;
+                    }
+                }
+
+                formatSelect.addEventListener('change', toggleCustomPattern);
+                toggleCustomPattern(); // Initialize on page load
+            }
         });
     </script>
     @endpush

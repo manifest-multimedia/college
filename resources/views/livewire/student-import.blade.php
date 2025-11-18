@@ -263,7 +263,7 @@
                     
                     <div class="alert alert-info">
                         <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Automatic ID Generation:</strong> If Student ID is missing, the system will automatically generate one using the format: PNMTC/DA/[PROGRAM]/[YEAR]/[NUMBER] based on the selected program, academic year, and alphabetical ordering.
+                        <strong>Automatic ID Generation:</strong> If Student ID is missing, the system will automatically generate one using the configured format (e.g., COLLEGE/DEPT/PROGRAM/YEAR/NUMBER) based on the selected program, academic year, and alphabetical ordering.
                     </div>
                     
                     <div class="alert alert-warning">

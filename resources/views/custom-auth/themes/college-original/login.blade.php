@@ -510,7 +510,7 @@
             </div>
 
             {{-- AuthCentral SSO Login Option --}}
-            @if($authService->isAuthCentral() || config('branding.features.show_sso', true))
+            @if(config('branding.theme_settings.show_auth_central_button', true) && ($authService->isAuthCentral() || config('branding.features.show_sso', true)))
                 <div class="sso-section">
                     <a href="{{ $authService->getAuthCentralLoginUrl() ?? '#' }}" class="sso-btn">
                         <div class="sso-icon">

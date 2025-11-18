@@ -115,6 +115,35 @@ return [
         'show_background_pattern' => env('SHOW_BACKGROUND_PATTERN', false),
         'enable_animations' => env('ENABLE_AUTH_ANIMATIONS', true),
         'card_style' => env('AUTH_CARD_STYLE', 'elevated'), // elevated, flat, bordered
+        'show_auth_central_button' => env('SHOW_AUTH_CENTRAL_BUTTON', true), // Show/hide Auth Central SSO button
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Student ID Generation Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure student ID generation formats and patterns.
+    | All placeholders can be customized here.
+    |
+    */
+
+    'student_id' => [
+        // Primary Configuration
+        'format' => env('STUDENT_ID_FORMAT', 'structured'), // structured, simple, custom
+        'custom_pattern' => env('STUDENT_ID_CUSTOM_PATTERN', null), // Custom pattern for student IDs
+        'enable_alphabetical_ordering' => env('STUDENT_ID_ALPHABETICAL_ORDERING', true), // Maintain alphabetical order in sequence
+        
+        // Placeholder Configuration
+        'institution_prefix' => env('STUDENT_ID_INSTITUTION_PREFIX', 'COLLEGE/DEPT'), // Institution prefix (replaces school_name_prefix)
+        'institution_simple' => env('STUDENT_ID_INSTITUTION_SIMPLE', 'COLLEGE'), // Simple institution code
+        
+        // Academic Year Configuration  
+        'use_academic_year' => env('STUDENT_ID_USE_ACADEMIC_YEAR', true), // Use academic year vs calendar year
+        
+        // Sequence Configuration
+        'sequence_start' => env('STUDENT_ID_SEQUENCE_START', 1), // Starting sequence number
+        'sequence_reset_yearly' => env('STUDENT_ID_SEQUENCE_RESET_YEARLY', true), // Reset sequence each academic year
     ],
 
 ];

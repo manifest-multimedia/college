@@ -53,10 +53,10 @@ AUTH_ALLOW_REGISTRATION=true
 AUTH_REGULAR_DEFAULT_ROLE=Staff
 
 # AuthCentral URLs (when AUTH_METHOD=authcentral)
-AUTHCENTRAL_LOGIN_URL=https://auth.pnmtc.edu.gh/login
-AUTHCENTRAL_API_URL=https://auth.pnmtc.edu.gh/api/user
-AUTHCENTRAL_SIGNUP_URL=https://auth.pnmtc.edu.gh/sign-up
-AUTHCENTRAL_STUDENT_REGISTRATION_URL=https://auth.pnmtc.edu.gh/student/register
+AUTHCENTRAL_LOGIN_URL=https://auth.example.edu/login
+AUTHCENTRAL_API_URL=https://auth.example.edu/api/user
+AUTHCENTRAL_SIGNUP_URL=https://auth.example.edu/sign-up
+AUTHCENTRAL_STUDENT_REGISTRATION_URL=https://auth.example.edu/student/register
 ```
 
 ### Configuration File

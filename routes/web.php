@@ -301,7 +301,7 @@ Route::middleware([
         Route::get('/tickets/{ticketId}', App\Livewire\TicketDetail::class)->name('support.ticket.detail');
         Route::get('/knowledge-base', App\Livewire\KnowledgeBase::class)->name('support.knowledge-base');
         Route::get('/knowledgebase', App\Livewire\KnowledgeBase::class)->name('support.knowledgebase'); // Alias for backward compatibility
-        
+
         // KB Admin - Restricted to System, IT Manager, and Super Admin
         Route::middleware(['role:System|IT Manager|Super Admin'])->group(function () {
             Route::get('/kb-admin', App\Livewire\KnowledgeBaseAdmin::class)->name('support.kb-admin');
@@ -476,7 +476,7 @@ Route::middleware([
     | Support Center Routes
     |--------------------------------------------------------------------------
     */
-    
+
     /*
     |--------------------------------------------------------------------------
     | Settings Routes
@@ -518,18 +518,19 @@ Route::middleware([
     | Institution Branding Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('admin')->group(function () {
         Route::get('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'index'])->name('admin.branding.index');
         Route::post('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'update'])->name('admin.branding.update');
         Route::get('/branding/preview', [App\Http\Controllers\Admin\BrandingController::class, 'preview'])->name('admin.branding.preview');
         Route::post('/branding/upload-logo', [App\Http\Controllers\Admin\BrandingController::class, 'uploadLogo'])->name('admin.branding.upload-logo');
-        
+
         // Individual section updates
         Route::post('/branding/update-theme', [App\Http\Controllers\Admin\BrandingController::class, 'updateTheme'])->name('admin.branding.update-theme');
         Route::post('/branding/update-institution', [App\Http\Controllers\Admin\BrandingController::class, 'updateInstitution'])->name('admin.branding.update-institution');
         Route::post('/branding/update-urls', [App\Http\Controllers\Admin\BrandingController::class, 'updateUrls'])->name('admin.branding.update-urls');
         Route::post('/branding/update-colors', [App\Http\Controllers\Admin\BrandingController::class, 'updateColors'])->name('admin.branding.update-colors');
         Route::post('/branding/update-theme-settings', [App\Http\Controllers\Admin\BrandingController::class, 'updateThemeSettings'])->name('admin.branding.update-theme-settings');
+        Route::post('/branding/update-student-id', [App\Http\Controllers\Admin\BrandingController::class, 'updateStudentIdSettings'])->name('admin.branding.update-student-id');
     });
 
     /*
@@ -558,11 +559,11 @@ Route::middleware([
             Route::patch('/semesters/{semester}/toggle-active', [App\Http\Controllers\SemesterController::class, 'toggleActive'])->name('semesters.toggle-active');
 
             // College Classes
-                    // Year Management (Livewire)
-                    Route::get('/years', \App\Livewire\Academics\YearManager::class)->name('years.index');
+            // Year Management (Livewire)
+            Route::get('/years', \App\Livewire\Academics\YearManager::class)->name('years.index');
             Route::resource('classes', App\Http\Controllers\CollegeClassController::class);
             Route::post('/classes/filter', [App\Http\Controllers\CollegeClassController::class, 'filter'])->name('classes.filter');
-            
+
             // Class Student Management
             Route::post('/classes/{class}/students/add', [App\Http\Controllers\CollegeClassController::class, 'addStudents'])->name('classes.students.add');
             Route::delete('/classes/{class}/students/{student}', [App\Http\Controllers\CollegeClassController::class, 'removeStudent'])->name('classes.students.remove');
