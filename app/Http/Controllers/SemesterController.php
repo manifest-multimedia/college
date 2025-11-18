@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Semester;
 use App\Models\AcademicYear;
+use App\Models\Semester;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class SemesterController extends Controller
 {
@@ -17,14 +17,14 @@ class SemesterController extends Controller
     {
         // $this->middleware(['auth', 'permission:manage-academics']);
     }
-    
+
     /**
      * Display a listing of semesters.
      */
     public function index()
     {
         $semesters = Semester::with('academicYear')->paginate(10);
-        
+
         return view('academics.semesters.index', compact('semesters'));
     }
 
@@ -34,6 +34,7 @@ class SemesterController extends Controller
     public function create()
     {
         $academicYears = AcademicYear::all();
+
         return view('academics.semesters.create', compact('academicYears'));
     }
 
@@ -49,22 +50,22 @@ class SemesterController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ]);
-        
+
         // Check if the dates fall within the academic year dates
         $academicYear = AcademicYear::findOrFail($validated['academic_year_id']);
-        
+
         // Convert dates to Carbon instances for proper comparison
         $semesterStartDate = Carbon::parse($validated['start_date']);
         $semesterEndDate = Carbon::parse($validated['end_date']);
         $academicYearStartDate = Carbon::parse($academicYear->start_date);
         $academicYearEndDate = Carbon::parse($academicYear->end_date);
-        
+
         if ($semesterStartDate->lt($academicYearStartDate) || $semesterEndDate->gt($academicYearEndDate)) {
             return redirect()->back()
                 ->withErrors(['date_range' => 'Semester dates must fall within the academic year date range.'])
                 ->withInput();
         }
-        
+
         $semester = Semester::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
@@ -73,7 +74,7 @@ class SemesterController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
         ]);
-        
+
         return redirect()->route('academics.semesters.index')
             ->with('success', 'Semester created successfully.');
     }
@@ -84,6 +85,7 @@ class SemesterController extends Controller
     public function show(Semester $semester)
     {
         $semester->load('academicYear');
+
         return view('academics.semesters.show', compact('semester'));
     }
 
@@ -93,6 +95,7 @@ class SemesterController extends Controller
     public function edit(Semester $semester)
     {
         $academicYears = AcademicYear::all();
+
         return view('academics.semesters.edit', compact('semester', 'academicYears'));
     }
 
@@ -108,22 +111,22 @@ class SemesterController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ]);
-        
+
         // Check if the dates fall within the academic year dates
         $academicYear = AcademicYear::findOrFail($validated['academic_year_id']);
-        
+
         // Convert dates to Carbon instances for proper comparison
         $semesterStartDate = Carbon::parse($validated['start_date']);
         $semesterEndDate = Carbon::parse($validated['end_date']);
         $academicYearStartDate = Carbon::parse($academicYear->start_date);
         $academicYearEndDate = Carbon::parse($academicYear->end_date);
-        
+
         if ($semesterStartDate->lt($academicYearStartDate) || $semesterEndDate->gt($academicYearEndDate)) {
             return redirect()->back()
                 ->withErrors(['date_range' => 'Semester dates must fall within the academic year date range.'])
                 ->withInput();
         }
-        
+
         $semester->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
@@ -132,7 +135,7 @@ class SemesterController extends Controller
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
         ]);
-        
+
         return redirect()->route('academics.semesters.index')
             ->with('success', 'Semester updated successfully.');
     }
@@ -142,14 +145,24 @@ class SemesterController extends Controller
      */
     public function destroy(Semester $semester)
     {
-        // Check if the semester has any classes
-        if ($semester->collegeClasses()->count() > 0) {
+        // Prevent deletion if the semester has dependent records
+        // Programs (CollegeClass) are now semester-independent, so we check real dependencies instead
+        $hasDependencies =
+            // Subjects associated to this semester
+            $semester->subjects()->exists()
+            // Financial and academic records tied to this semester
+            || \App\Models\StudentFeeBill::query()->where('semester_id', $semester->id)->exists()
+            || \App\Models\CourseRegistration::query()->where('semester_id', $semester->id)->exists()
+            || \App\Models\ExamClearance::query()->where('semester_id', $semester->id)->exists()
+            || \App\Models\FeeStructure::query()->where('semester_id', $semester->id)->exists();
+
+        if ($hasDependencies) {
             return redirect()->route('academics.semesters.index')
-                ->with('error', 'Cannot delete semester with associated classes.');
+                ->with('error', 'Cannot delete semester with associated academic or finance records.');
         }
-        
+
         $semester->delete();
-        
+
         return redirect()->route('academics.semesters.index')
             ->with('success', 'Semester deleted successfully.');
     }
@@ -168,18 +181,19 @@ class SemesterController extends Controller
             } else {
                 // If not active, set it as current (which deactivates all others)
                 $result = $semester->setAsCurrent();
-                if (!$result) {
+                if (! $result) {
                     throw new \Exception('Failed to set semester as active');
                 }
                 $message = 'Semester activated successfully.';
             }
-            
+
             return redirect()->route('academics.semesters.index')
                 ->with('success', $message);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error toggling semester active status: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error toggling semester active status: '.$e->getMessage());
+
             return redirect()->route('academics.semesters.index')
-                ->with('error', 'An error occurred while updating semester status: ' . $e->getMessage());
+                ->with('error', 'An error occurred while updating semester status: '.$e->getMessage());
         }
     }
 }

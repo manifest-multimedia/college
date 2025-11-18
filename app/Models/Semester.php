@@ -17,7 +17,7 @@ class Semester extends Model
         'start_date',
         'end_date',
         'is_current',
-        'description'
+        'description',
     ];
 
     protected $casts = [
@@ -40,6 +40,14 @@ class Semester extends Model
     public function classes(): HasMany
     {
         return $this->hasMany(CollegeClass::class);
+    }
+
+    /**
+     * Subjects linked to this semester
+     */
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(Subject::class);
     }
 
     /**
@@ -81,20 +89,22 @@ class Semester extends Model
     {
         // Begin transaction
         DB::beginTransaction();
-        
+
         try {
             // Unset all current semesters
             self::where('is_current', true)->update(['is_current' => false]);
-            
+
             // Set this semester as current
             $this->is_current = true;
             $this->save();
-            
+
             DB::commit();
+
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error setting current semester: ' . $e->getMessage());
+            Log::error('Error setting current semester: '.$e->getMessage());
+
             return false;
         }
     }
