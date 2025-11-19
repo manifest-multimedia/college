@@ -6,6 +6,11 @@ use Livewire\Component;
 use App\Models\Exam;
 use Livewire\WithPagination;
 
+/**
+ * @deprecated This component is deprecated. Individual exam sessions are now handled by the Exam Audit Tool.
+ * This component originally displayed a list of exams, not actual student exam sessions.
+ * For student exam session tracking, use the Exam Audit Tool instead.
+ */
 class ExamSessions extends Component
 {
     use WithPagination;

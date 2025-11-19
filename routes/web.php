@@ -168,7 +168,8 @@ Route::middleware([
             return view('examcenter');
         })->name('examcenter');
 
-        Route::get('/exam-sessions', \App\Livewire\ExamSessions::class)->name('examsessions');
+        // DEPRECATED: Exam Sessions route - This functionality is now handled by the Exam Audit Tool
+        // Route::get('/exam-sessions', \App\Livewire\ExamSessions::class)->name('examsessions');
 
         // Exam Management Routes
         Route::get('/create-exam', [App\Http\Controllers\ExamController::class, 'create'])->name('exams.create');

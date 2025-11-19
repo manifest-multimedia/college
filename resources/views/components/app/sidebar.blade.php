@@ -511,7 +511,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             @php
                 $examRoutes = [
-                    'examcenter', 'examsessions', 'questionbank', 'exams.results', 
+                    'examcenter', 'questionbank', 'exams.results', 
                     'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
                     'exams.create', 'exams.edit', 'admin.exams.offline', 'admin.exams.offline-scores',
                     'admin.transcripts.generation', 'question.sets', 'question.sets.create', 
@@ -546,16 +546,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
+                    {{-- DEPRECATED: Exam Sessions - This functionality is now handled by the Exam Audit Tool --}}
+                    {{-- <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('examsessions') ? 'active' : '' }}" href="{{ route('examsessions') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Exam Sessions</span>
                         </a>
-                    </div>
-                    <!--end:Menu item-->
+                    </div> --}}
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('questionbank') || request()->routeIs('questionbank.with.slug') ? 'active' : '' }}" href="{{ route('questionbank') }}">

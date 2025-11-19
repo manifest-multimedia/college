@@ -1,10 +1,20 @@
+{{-- 
+    DEPRECATED: This view is deprecated. 
+    Individual exam sessions are now handled by the Exam Audit Tool.
+    This originally displayed a list of exams, not actual student exam sessions.
+--}}
 <div>
+    <div class="alert alert-warning mb-4">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Deprecated:</strong> This page is deprecated. For student exam session tracking, please use the <strong>Exam Audit Tool</strong>.
+    </div>
+    
     <div class="card shadow-sm mb-4">
         <div class="card-header py-3">
             <div class="card-title">
                 <h3 class="card-title">
                     <i class="bi bi-calendar-check me-2"></i>
-                    Exam Sessions
+                    Exam Sessions (Deprecated)
                 </h3>
             </div>
         </div>
@@ -92,8 +102,8 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ route('exams.show', $exam) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i> View Details
+                                        <a href="{{ route('exams.show', $exam->slug ?? $exam->id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View Sessions
                                         </a>
                                         <a href="{{ route('exams.edit', $exam->slug ?? $exam->id) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-pencil"></i> Edit
