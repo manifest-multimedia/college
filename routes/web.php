@@ -162,8 +162,6 @@ Route::middleware([
             return view('exams.results');
         })->middleware('role:System|Academic Officer|Administrator|Lecturer')->name('exams.results');
 
-        Route::get('/exams/{exam}', \App\Livewire\ExamDetail::class)->name('exams.show');
-
         Route::get('/exam-center', function () {
             return view('examcenter');
         })->name('examcenter');
@@ -171,13 +169,16 @@ Route::middleware([
         // DEPRECATED: Exam Sessions route - This functionality is now handled by the Exam Audit Tool
         // Route::get('/exam-sessions', \App\Livewire\ExamSessions::class)->name('examsessions');
 
-        // Exam Management Routes
+        // Exam Management Routes - IMPORTANT: These specific routes must come BEFORE the wildcard route '/exams/{exam}'
         Route::get('/create-exam', [App\Http\Controllers\ExamController::class, 'create'])->name('exams.create');
         Route::post('/exams', [App\Http\Controllers\ExamController::class, 'store'])->name('exams.store');
         Route::get('/exams/get-courses', [App\Http\Controllers\ExamController::class, 'getCourses'])->name('exams.get-courses');
         Route::get('/exams/get-question-sets', [App\Http\Controllers\ExamController::class, 'getQuestionSets'])->name('exams.get-question-sets');
         Route::get('/exams/generate-password', [App\Http\Controllers\ExamController::class, 'generatePassword'])->name('exams.generate-password');
         Route::post('/exams/validate-form', [App\Http\Controllers\ExamController::class, 'validateForm'])->name('exams.validate-form');
+
+        // Wildcard route - MUST be after specific /exams/* routes
+        Route::get('/exams/{exam}', \App\Livewire\ExamDetail::class)->name('exams.show');
 
         Route::get('/question-bank', function () {
             return view('questionbank');

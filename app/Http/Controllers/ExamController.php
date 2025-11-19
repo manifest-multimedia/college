@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use App\Models\AcademicYear;
+use App\Models\CollegeClass;
 use App\Models\Exam;
 use App\Models\QuestionSet;
-use App\Models\Subject;
-use App\Models\CollegeClass;
-use App\Models\Year;
 use App\Models\Semester;
-use App\Models\AcademicYear;
+use App\Models\Subject;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Models\Year;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ExamController extends Controller
 {
@@ -28,14 +27,14 @@ class ExamController extends Controller
         $years = Year::all();
         $semesters = Semester::all();
         $academicYears = AcademicYear::orderBy('name', 'desc')->get();
-        
+
         // Get staff users using Spatie's role system
-        $staffUsers = User::whereHas('roles', function($query) {
-                $query->whereNotIn('name', ['Student', 'Parent']);
-            })
-            ->orWhere(function($query) {
+        $staffUsers = User::whereHas('roles', function ($query) {
+            $query->whereNotIn('name', ['Student', 'Parent']);
+        })
+            ->orWhere(function ($query) {
                 $query->whereNotIn('role', ['Student', 'Parent'])
-                      ->whereDoesntHave('roles');
+                    ->whereDoesntHave('roles');
             })
             ->orderBy('name', 'asc')
             ->get();
@@ -48,24 +47,34 @@ class ExamController extends Controller
      */
     public function getCourses(Request $request)
     {
-        $query = Subject::query();
-        
-        if ($request->class_id) {
-            $query->where('college_class_id', $request->class_id);
+        try {
+            $query = Subject::query();
+
+            if ($request->class_id) {
+                $query->where('college_class_id', $request->class_id);
+            }
+            if ($request->year_id) {
+                $query->where('year_id', $request->year_id);
+            }
+            if ($request->semester_id) {
+                $query->where('semester_id', $request->semester_id);
+            }
+
+            $courses = $query->orderBy('name', 'asc')->get(['id', 'name', 'course_code']);
+
+            return response()->json([
+                'success' => true,
+                'courses' => $courses,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getCourses: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load courses',
+                'courses' => [],
+            ], 500);
         }
-        if ($request->year_id) {
-            $query->where('year_id', $request->year_id);
-        }
-        if ($request->semester_id) {
-            $query->where('semester_id', $request->semester_id);
-        }
-        
-        $courses = $query->orderBy('name', 'asc')->get(['id', 'name', 'course_code']);
-        
-        return response()->json([
-            'success' => true,
-            'courses' => $courses
-        ]);
     }
 
     /**
@@ -74,7 +83,7 @@ class ExamController extends Controller
     public function getQuestionSets(Request $request)
     {
         $request->validate([
-            'course_id' => 'required|exists:subjects,id'
+            'course_id' => 'required|exists:subjects,id',
         ]);
 
         $questionSets = QuestionSet::where('course_id', $request->course_id)
@@ -83,7 +92,7 @@ class ExamController extends Controller
 
         return response()->json([
             'success' => true,
-            'question_sets' => $questionSets
+            'question_sets' => $questionSets,
         ]);
     }
 
@@ -122,10 +131,10 @@ class ExamController extends Controller
             DB::beginTransaction();
 
             // Generate unique slug
-            $slug = Str::slug('exam-' . now()->format('Y-m-d-H-i-s'));
-            
+            $slug = Str::slug('exam-'.now()->format('Y-m-d-H-i-s'));
+
             while (Exam::where('slug', $slug)->exists()) {
-                $slug = Str::slug('exam-' . now()->format('Y-m-d-H-i-s') . '-' . Str::random(4));
+                $slug = Str::slug('exam-'.now()->format('Y-m-d-H-i-s').'-'.Str::random(4));
             }
 
             // Create the exam with correct database columns
@@ -140,7 +149,7 @@ class ExamController extends Controller
                 'slug' => $slug,
                 'status' => 'upcoming', // Use valid enum value instead of 'draft'
                 'passing_percentage' => $request->passing_mark ?: 50.00,
-                'clearance_threshold' => (int)($request->passing_mark ?: 50),
+                'clearance_threshold' => (int) ($request->passing_mark ?: 50),
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
             ]);
@@ -159,20 +168,20 @@ class ExamController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Exam created successfully!',
-                'redirect' => route('examcenter')
+                'redirect' => route('examcenter'),
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Exam creation error: ' . $e->getMessage(), [
+            Log::error('Exam creation error: '.$e->getMessage(), [
                 'request_data' => $request->all(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while creating the exam. Please try again.',
-                'errors' => ['general' => [$e->getMessage()]]
+                'errors' => ['general' => [$e->getMessage()]],
             ], 422);
         }
     }
@@ -190,7 +199,7 @@ class ExamController extends Controller
 
         return response()->json([
             'success' => true,
-            'password' => $password
+            'password' => $password,
         ]);
     }
 
@@ -219,13 +228,13 @@ class ExamController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Form validation passed'
+                'message' => 'Form validation passed',
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         }
     }

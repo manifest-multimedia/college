@@ -265,8 +265,20 @@
                         class_id: classId,
                         year_id: yearId,
                         semester_id: semesterId
-                    }))
-                    .then(response => response.json())
+                    }), {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         const courseSelect = document.getElementById('course_code');
                         courseSelect.innerHTML = '<option value="">Select a subject</option>';
@@ -296,8 +308,20 @@
                 
                 fetch('{{ route("exams.get-question-sets") }}?' + new URLSearchParams({
                     course_id: courseId
-                }))
-                .then(response => response.json())
+                }), {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success && data.question_sets.length > 0) {
                         availableQuestionSets = data.question_sets;
@@ -506,8 +530,20 @@
 
             // Generate password
             function generatePassword() {
-                fetch('{{ route("exams.generate-password") }}')
-                .then(response => response.json())
+                fetch('{{ route("exams.generate-password") }}', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         document.getElementById('exam_password').value = data.password;
