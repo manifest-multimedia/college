@@ -26,7 +26,7 @@
                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
                         <div class="p-3 pt-4 card-text w-100" style="font-size:18px;font-weight:600">
                             <div class="d-flex justify-content-center">
-                                <h4 class="text-center text-danger"><strong> Instructions (One-by-One Mode)</strong></h4>
+                                <h4 class="text-center text-danger"><strong> Instructions @if(isset($isPreview) && $isPreview)(One-by-One Mode)@endif</strong></h4>
                             </div>
                             <p>
                                 You're being proctored by AI Sensei. <br />Any suspecious activity will result in immediate
@@ -43,7 +43,7 @@
                                         <i class="bi bi-clock me-2"></i> Timer disabled in preview mode
                                     </div>
                                 @else
-                                    <!-- New Timer Component -->
+                                    <!-- Timer Component -->
                                     <x-exam.timer :examSessionId="$examSession->id"
                                                   :startedAt="$examSession->started_at->toIso8601String()"
                                                   :completedAt="$examSession->adjustedCompletionTime->toIso8601String()"
@@ -186,6 +186,10 @@
 
     @include('components.partials.styles.exam-styles')
     @include('components.partials.styles.scrollbar-styles')
+
+    <!-- Timer scripts and styles -->
+    <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">
+    <script src="{{ asset('js/services/ExamTimerService.js') }}"></script>
 
     <style>
         .question{ min-width:720px !important; width:100% !important; }

@@ -92,10 +92,10 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ url('admin.exams.sessions', $exam->id) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-eye"></i> View Sessions
+                                        <a href="{{ route('exams.show', $exam) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> View Details
                                         </a>
-                                        <a href="{{ url('admin.exams.edit', $exam->id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <a href="{{ route('exams.edit', $exam->slug ?? $exam->id) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-pencil"></i> Edit
                                         </a>
                                     </div>
