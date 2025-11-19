@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Imports\StudentImporter;
+use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
-use App\Models\AcademicYear;
-use App\Imports\StudentImporter;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -17,12 +17,19 @@ class StudentImport extends Component
     use WithFileUploads;
 
     public $file;
+
     public $programId;
+
     public $cohortId;
+
     public $academicYearId;
+
     public $syncUsers = true;
+
     public $columnMapping = [];
+
     public $importResults = null;
+
     public $isProcessing = false;
 
     // Available fields in the student model
@@ -59,7 +66,7 @@ class StudentImport extends Component
         'country' => 'country_of_residence',
         'home_region' => 'home_region',
         'home_town' => 'home_town',
-        'region' => null, 
+        'religion' => 'religion',
         'mobile_number' => 'mobile_number',
         'email' => 'email',
         'gps_address' => 'gps_address',
@@ -89,7 +96,7 @@ class StudentImport extends Component
     public function mount()
     {
         $this->columnMapping = $this->defaultColumnMapping;
-        
+
         // Set current academic year as default
         $currentAcademicYear = AcademicYear::where('is_current', true)->first();
         if ($currentAcademicYear) {
@@ -121,36 +128,36 @@ class StudentImport extends Component
 
             // Get import results
             $this->importResults = $importer->getImportStats();
-            
+
             // Sync user accounts if requested
             if ($this->syncUsers && ($this->importResults['created'] > 0 || $this->importResults['updated'] > 0)) {
                 Artisan::call('students:sync-user-ids', ['--force' => true]);
                 $this->importResults['sync_output'] = Artisan::output();
             }
 
-            $message = 'Students imported successfully: ' . 
-                $this->importResults['created'] . ' created, ' . 
-                $this->importResults['updated'] . ' updated';
-            
+            $message = 'Students imported successfully: '.
+                $this->importResults['created'].' created, '.
+                $this->importResults['updated'].' updated';
+
             if ($this->importResults['skipped'] > 0) {
-                $message .= ', ' . $this->importResults['skipped'] . ' skipped due to validation errors';
+                $message .= ', '.$this->importResults['skipped'].' skipped due to validation errors';
             }
-            
+
             if ($this->importResults['failed'] > 0) {
-                $message .= ', ' . $this->importResults['failed'] . ' failed';
+                $message .= ', '.$this->importResults['failed'].' failed';
             }
-            
+
             if (isset($this->importResults['ids_generated']) && $this->importResults['ids_generated'] > 0) {
-                $message .= ', ' . $this->importResults['ids_generated'] . ' student IDs generated automatically';
+                $message .= ', '.$this->importResults['ids_generated'].' student IDs generated automatically';
             }
-            
-            session()->flash('success', $message . '.');
-            
+
+            session()->flash('success', $message.'.');
+
             Log::channel('daily')->info('Student import completed', $this->importResults);
-            
+
         } catch (\Exception $e) {
-            Log::error('Student import error: ' . $e->getMessage());
-            session()->flash('error', 'Error importing students: ' . $e->getMessage());
+            Log::error('Student import error: '.$e->getMessage());
+            session()->flash('error', 'Error importing students: '.$e->getMessage());
         } finally {
             $this->isProcessing = false;
         }
@@ -160,7 +167,7 @@ class StudentImport extends Component
     {
         $this->reset(['file', 'importResults', 'academicYearId']);
         $this->columnMapping = $this->defaultColumnMapping;
-        
+
         // Reset to current academic year
         $currentAcademicYear = AcademicYear::where('is_current', true)->first();
         if ($currentAcademicYear) {
