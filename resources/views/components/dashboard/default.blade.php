@@ -6,7 +6,7 @@
 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
     @if(session()->has('impersonator_id'))
     <!-- Impersonation Floating Bar -->
-    <div id="impersonationBar" class="position-fixed bottom-4 right-4 z-50 shadow-lg rounded bg-warning text-dark px-4 py-3 d-flex align-items-center gap-3" style="bottom: 1rem; right: 1rem;">
+    <div id="impersonationBar" class="position-fixed bottom-4 right-4 shadow-lg rounded bg-warning text-dark px-4 py-3 d-flex align-items-center gap-3" style="bottom: 1rem; right: 1rem; z-index: 9999 !important;">
         <i class="fas fa-user-secret"></i>
         <span>Impersonation active</span>
         <a href="{{ route('impersonate.stop') }}" class="btn btn-sm btn-dark">Exit</a>
@@ -26,10 +26,11 @@
                 if(document.getElementById('impersonationReveal')) return;
                 const reveal = document.createElement('div');
                 reveal.id = 'impersonationReveal';
-                reveal.className = 'position-fixed bottom-4 right-4 z-50 rounded bg-warning text-dark px-3 py-2 shadow';
+                reveal.className = 'position-fixed bottom-4 right-4 rounded bg-warning text-dark px-3 py-2 shadow';
                 reveal.style.bottom = '1rem';
                 reveal.style.right = '1rem';
                 reveal.style.cursor = 'pointer';
+                reveal.style.zIndex = '9999';
                 reveal.innerHTML = '<i class="fas fa-user-secret me-1"></i> Show Impersonation';
                 reveal.addEventListener('click', ()=>{
                     showBar();
