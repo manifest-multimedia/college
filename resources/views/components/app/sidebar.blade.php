@@ -3,7 +3,54 @@
 data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true"
 data-kt-drawer-width="{default:'200px', '300px': '250px'}" data-kt-drawer-direction="start"
 data-kt-drawer-toggle="#kt_aside_toggle">
-<!--begin::Aside menu-->
+    <!-- Collapsible Sidebar Styles -->
+    <style>
+        /* Collapsed Aside Base */
+        body.sidebar-collapsed #kt_aside {
+            width: 72px !important;
+            min-width: 72px !important;
+            transition: width 0.2s ease;
+        }
+        /* Hover-to-reveal temporary expansion */
+        body.sidebar-collapsed #kt_aside:hover {
+            width: 250px !important;
+            min-width: 250px !important;
+            z-index: 70; /* above content when sliding over */
+        }
+        /* Hide text and arrows when collapsed */
+        body.sidebar-collapsed #kt_aside .menu-title,
+        body.sidebar-collapsed #kt_aside .menu-arrow,
+        body.sidebar-collapsed #kt_aside .menu-heading,
+        body.sidebar-collapsed #kt_aside .menu-badge,
+        body.sidebar-collapsed #kt_aside .badge { display: none !important; }
+        /* Show text while hovered in collapsed state */
+        body.sidebar-collapsed #kt_aside:hover .menu-title,
+        body.sidebar-collapsed #kt_aside:hover .menu-arrow,
+        body.sidebar-collapsed #kt_aside:hover .menu-heading,
+        body.sidebar-collapsed #kt_aside:hover .menu-badge,
+        body.sidebar-collapsed #kt_aside:hover .badge { display: inline-flex !important; }
+
+        /* Center icons */
+        body.sidebar-collapsed #kt_aside .menu-link { justify-content: center; padding-left: 0.75rem; padding-right: 0.75rem; }
+        body.sidebar-collapsed #kt_aside .menu-icon { margin-right: 0 !important; }
+        /* Restore alignment on hover */
+        body.sidebar-collapsed #kt_aside:hover .menu-link { justify-content: flex-start; }
+
+        /* Footer compaction */
+        body.sidebar-collapsed #kt_aside .aside-footer { display: none; }
+
+        /* Collapse toggle button styling */
+        #sidebarCollapseToggle { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 60; }
+        body.sidebar-collapsed #sidebarCollapseToggle .fa-chevron-left { transform: rotate(180deg); }
+
+        /* Make content container fluid when collapsed so content fills freed space */
+        body.sidebar-collapsed #kt_content_container.container-xxl { max-width: 100% !important; }
+    </style>
+    <!-- Collapse / Expand Button -->
+    <button id="sidebarCollapseToggle" class="btn btn-sm btn-light" type="button" title="Toggle sidebar">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <!--begin::Aside menu-->
 <div class="mb-7 aside-menu flex-column-fluid ps-5 pe-3" id="kt_aside_menu">
     <!--begin::Aside Menu-->
     <div class="w-100 hover-scroll-y d-flex pe-2" id="kt_aside_menu_wrapper" data-kt-scroll="true"
@@ -1162,6 +1209,47 @@ data-kt-drawer-toggle="#kt_aside_toggle">
         <!--end::Menu-->
     </div>
     <!--end::Aside Menu-->
+    <script>
+        (function(){
+            const key = 'cis.sidebar.collapsed';
+            const body = document.body;
+            const toggleBtn = document.getElementById('sidebarCollapseToggle');
+            const content = document.getElementById('kt_content_container');
+            function applyContentWidth(){
+                if(!content) return;
+                if(body.classList.contains('sidebar-collapsed')){
+                    content.classList.add('container-fluid');
+                    content.classList.remove('container-xxl');
+                } else {
+                    content.classList.remove('container-fluid');
+                    content.classList.add('container-xxl');
+                }
+            }
+            // Apply saved state
+            if(localStorage.getItem(key) === '1'){
+                body.classList.add('sidebar-collapsed');
+            }
+            applyContentWidth();
+            // Toggle handler
+            toggleBtn?.addEventListener('click', function(e){
+                e.preventDefault();
+                body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem(key, body.classList.contains('sidebar-collapsed') ? '1' : '0');
+                applyContentWidth();
+            });
+
+            // Add native title tooltips to menu items from their text labels (for collapsed mode)
+            const links = document.querySelectorAll('#kt_aside_menu .menu-link');
+            links.forEach(link => {
+                if(!link.getAttribute('title')){
+                    const textEl = link.querySelector('.menu-title');
+                    if(textEl && textEl.textContent.trim().length){
+                        link.setAttribute('title', textEl.textContent.trim());
+                    }
+                }
+            });
+        })();
+    </script>
 </div>
 <!--end::Aside menu-->
 <!--begin::Footer-->
