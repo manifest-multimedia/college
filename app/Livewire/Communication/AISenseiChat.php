@@ -2,16 +2,16 @@
 
 namespace App\Livewire\Communication;
 
+use App\Models\ChatSession;
 use App\Models\User;
+use App\Services\Communication\Chat\ChatSessionService;
+use App\Services\Communication\Chat\MarkdownRenderingService;
+use App\Services\Communication\Chat\MCPIntegrationService;
 use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
-use App\Services\Communication\Chat\MCPIntegrationService;
-use App\Services\Communication\Chat\MarkdownRenderingService;
-use App\Services\Communication\Chat\ChatSessionService;
-use App\Models\ChatSession;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -21,42 +21,65 @@ class AISenseiChat extends Component
 
     // Chat properties
     public $threadId;
+
     public $currentThreadId;
+
     public $assistantId;
+
     public $messages = [];
+
     public $newMessage = '';
+
     public $error = null;
+
     public $isAITyping = false;
+
     public $isLoading = false;
+
     public $isUserTyping = false;
+
     public $componentLoaded = false;
 
     // Chat session management
     public $currentChatSession = null;
+
     public $chatSessions = [];
+
     public $showSessionHistory = false;
+
     public $sessionSearchQuery = '';
+
     public $editingSessionTitle = null;
+
     public $newSessionTitle = '';
 
     // File upload properties
     public $temporaryUploads = [];
+
     public $uploadingFile = false;
+
     public $filesAttachedToThread = [];
+
     public $uploadedFiles = [];
+
     public $pendingFiles = []; // Files waiting to be sent with message
+
     public $fileUploadMessage = ''; // Custom message to send with files
 
     // Service injections
     protected $openAIAssistantsService;
+
     protected $openAIFilesService;
+
     protected $mcpIntegrationService;
+
     protected $markdownRenderingService;
+
     protected $chatSessionService;
 
     // Constructor with dependency injection
     public function boot(
-        OpenAIAssistantsService $openAIAssistantsService, 
+        OpenAIAssistantsService $openAIAssistantsService,
         OpenAIFilesService $openAIFilesService,
         MCPIntegrationService $mcpIntegrationService,
         MarkdownRenderingService $markdownRenderingService,
@@ -78,11 +101,11 @@ class AISenseiChat extends Component
             // Set assistant ID from config
             $this->assistantId = Config::get('services.openai.assistant_id');
 
-            if (!$this->assistantId) {
+            if (! $this->assistantId) {
                 Log::error('OpenAI Assistant ID is not configured', [
                     'user_id' => Auth::id(),
                 ]);
-                $this->error = "OpenAI Assistant ID is not configured. Please check your configuration.";
+                $this->error = 'OpenAI Assistant ID is not configured. Please check your configuration.';
             }
 
             // Initialize thread and messages
@@ -92,7 +115,7 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = "Failed to initialize chat: " . $e->getMessage();
+            $this->error = 'Failed to initialize chat: '.$e->getMessage();
         }
     }
 
@@ -104,23 +127,23 @@ class AISenseiChat extends Component
         // Get or restore the current thread
         $this->threadId = session('ai_sensei_thread_id');
 
-        if (!$this->threadId) {
+        if (! $this->threadId) {
             // Create a new thread if one doesn't exist
             $threadResponse = $this->openAIAssistantsService->createThread();
 
             if ($threadResponse['success']) {
                 $this->threadId = $threadResponse['data']['id'];
                 session(['ai_sensei_thread_id' => $this->threadId]);
-                
+
                 // Create a new chat session in the database
                 $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
             } else {
-                throw new \Exception('Failed to create a new thread: ' . ($threadResponse['message'] ?? 'Unknown error'));
+                throw new \Exception('Failed to create a new thread: '.($threadResponse['message'] ?? 'Unknown error'));
             }
         } else {
             // Get or create the chat session for this thread
             $this->currentChatSession = $this->chatSessionService->getOrCreateActiveSession($user, $this->threadId);
-            
+
             // Load existing messages
             $this->loadMessages();
         }
@@ -131,7 +154,7 @@ class AISenseiChat extends Component
 
     public function loadMessages()
     {
-        if (!$this->threadId) {
+        if (! $this->threadId) {
             return;
         }
 
@@ -142,24 +165,25 @@ class AISenseiChat extends Component
                 // OpenAI returns messages in reverse chronological order
                 $messages = collect($response['data']['data'])->reverse()->values();
 
-                $this->messages = $messages->map(function($message) {
-                    $content = collect($message['content'])->map(function($item) {
+                $this->messages = $messages->map(function ($message) {
+                    $content = collect($message['content'])->map(function ($item) {
                         if ($item['type'] === 'text') {
                             return [
                                 'type' => 'text',
-                                'text' => $item['text']['value']
+                                'text' => $item['text']['value'],
                             ];
                         } elseif ($item['type'] === 'image_file') {
                             return [
                                 'type' => 'image',
-                                'file_id' => $item['image_file']['file_id']
+                                'file_id' => $item['image_file']['file_id'],
                             ];
                         }
+
                         return null;
                     })->filter()->toArray();
 
                     // Add attachment information if this is a user message with attachments
-                    if ($message['role'] === 'user' && !empty($message['attachments'])) {
+                    if ($message['role'] === 'user' && ! empty($message['attachments'])) {
                         foreach ($message['attachments'] as $attachment) {
                             if ($attachment['file_id']) {
                                 // Get file info from our uploaded files tracking or OpenAI
@@ -168,7 +192,7 @@ class AISenseiChat extends Component
                                     'type' => 'file_attachment',
                                     'file_id' => $attachment['file_id'],
                                     'filename' => $fileInfo['filename'] ?? 'Attached File',
-                                    'size' => $fileInfo['size'] ?? 0
+                                    'size' => $fileInfo['size'] ?? 0,
                                 ];
                             }
                         }
@@ -187,22 +211,22 @@ class AISenseiChat extends Component
             } else {
                 Log::error('Failed to load messages', [
                     'error' => $response['message'] ?? 'Unknown error',
-                    'thread_id' => $this->threadId
+                    'thread_id' => $this->threadId,
                 ]);
-                $this->error = "Failed to load messages: " . ($response['message'] ?? 'Unknown error');
+                $this->error = 'Failed to load messages: '.($response['message'] ?? 'Unknown error');
             }
         } catch (\Exception $e) {
             Log::error('Error loading messages', [
                 'error' => $e->getMessage(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
-            $this->error = "Error loading messages: " . $e->getMessage();
+            $this->error = 'Error loading messages: '.$e->getMessage();
         }
     }
 
     public function loadAttachedFiles()
     {
-        if (!$this->threadId) {
+        if (! $this->threadId) {
             return;
         }
 
@@ -214,13 +238,13 @@ class AISenseiChat extends Component
             } else {
                 Log::error('Failed to load attached files', [
                     'error' => $response['message'] ?? 'Unknown error',
-                    'thread_id' => $this->threadId
+                    'thread_id' => $this->threadId,
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Error loading attached files', [
                 'error' => $e->getMessage(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
         }
     }
@@ -233,55 +257,57 @@ class AISenseiChat extends Component
     {
         // Get message from parameter if provided, otherwise use the property
         $messageText = $message ?: $this->newMessage;
-        
+
         if (empty($messageText)) {
             return;
         }
 
         // Check if assistant ID is set
-        if (!$this->assistantId) {
-            $this->error = "OpenAI Assistant ID is not configured. Please check your configuration.";
+        if (! $this->assistantId) {
+            $this->error = 'OpenAI Assistant ID is not configured. Please check your configuration.';
             Log::error('Assistant ID not set when sending message', [
                 'user_id' => Auth::id(),
             ]);
+
             return;
         }
 
         // Check for active runs first with improved handling
         try {
             $runsResponse = $this->openAIAssistantsService->listRuns($this->threadId);
-            
+
             if ($runsResponse['success']) {
                 $activeRuns = collect($runsResponse['data']['data'] ?? [])->filter(function ($run) {
                     return in_array($run['status'], ['queued', 'in_progress', 'requires_action']);
                 });
-                
+
                 if ($activeRuns->isNotEmpty()) {
                     $activeRun = $activeRuns->first();
-                    
+
                     // Check if the run is too old (stuck)
                     $runAge = time() - $activeRun['created_at'];
                     if ($runAge > 60) { // 1 minute
                         Log::warning('Found old active run, attempting to cancel', [
                             'run_id' => $activeRun['id'],
                             'status' => $activeRun['status'],
-                            'age_seconds' => $runAge
+                            'age_seconds' => $runAge,
                         ]);
-                        
+
                         // Try to cancel the old run
                         $this->cancelStuckRun($activeRun['id']);
-                        
+
                         // Continue with sending the new message
                     } else {
-                        $this->error = "Please wait for the current response to complete before sending another message.";
+                        $this->error = 'Please wait for the current response to complete before sending another message.';
                         // Log the issue for debugging
                         Log::warning('Attempt to send message while a run is active', [
                             'user_id' => Auth::id(),
                             'thread_id' => $this->threadId,
                             'run_id' => $activeRun['id'],
                             'run_status' => $activeRun['status'],
-                            'run_age' => $runAge
+                            'run_age' => $runAge,
                         ]);
+
                         return;
                     }
                 }
@@ -290,7 +316,7 @@ class AISenseiChat extends Component
             Log::error('Error checking for active runs', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
         }
 
@@ -302,9 +328,10 @@ class AISenseiChat extends Component
             // Add user message to thread
             $userMessageResponse = $this->openAIAssistantsService->addMessage($this->threadId, $messageText, 'user');
 
-            if (!$userMessageResponse['success']) {
-                $this->error = "Failed to send message: " . ($userMessageResponse['message'] ?? 'Unknown error');
+            if (! $userMessageResponse['success']) {
+                $this->error = 'Failed to send message: '.($userMessageResponse['message'] ?? 'Unknown error');
                 $this->broadcastTypingStatus(false);
+
                 return;
             }
 
@@ -313,22 +340,23 @@ class AISenseiChat extends Component
 
             // Run the assistant with user context for permission-aware responses
             $runResponse = $this->openAIAssistantsService->createRun(
-                $this->threadId, 
-                $this->assistantId, 
+                $this->threadId,
+                $this->assistantId,
                 $userContext
             );
 
-            if (!$runResponse['success']) {
-                $this->error = "Failed to process message: " . ($runResponse['message'] ?? 'Unknown error');
+            if (! $runResponse['success']) {
+                $this->error = 'Failed to process message: '.($runResponse['message'] ?? 'Unknown error');
                 $this->broadcastTypingStatus(false);
+
                 return;
             }
 
             $runId = $runResponse['data']['id'];
-            
+
             // Store the current run ID in the session for reference
             session(['ai_sensei_current_run_id' => $runId]);
-            
+
             // Process in background or poll based on your setup
             $this->processAiResponse($runId);
 
@@ -336,14 +364,14 @@ class AISenseiChat extends Component
             Log::error('Error sending message to AI Sensei', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
-            $this->error = "Error sending message: " . $e->getMessage();
+            $this->error = 'Error sending message: '.$e->getMessage();
             $this->broadcastTypingStatus(false);
         }
 
         // Clear the input field if using the property (not from JavaScript)
-        if (!$message) {
+        if (! $message) {
             $this->newMessage = '';
         }
     }
@@ -360,118 +388,149 @@ class AISenseiChat extends Component
             $retries = 0;
             $startTime = time();
             $maxExecutionTime = 30; // 30 seconds maximum
-            
+
             Log::info('Starting AI response processing', [
                 'run_id' => $runId,
                 'thread_id' => $this->threadId,
-                'max_retries' => $maxRetries
+                'max_retries' => $maxRetries,
             ]);
-            
+
             while (in_array($status, ['queued', 'in_progress', 'requires_action']) && $retries < $maxRetries) {
                 // Check for overall timeout
                 if (time() - $startTime > $maxExecutionTime) {
                     Log::error('AI response processing timed out', [
                         'run_id' => $runId,
                         'execution_time' => time() - $startTime,
-                        'final_status' => $status
+                        'final_status' => $status,
                     ]);
-                    $this->error = "Response processing timed out. Please try again.";
+                    $this->error = 'Response processing timed out. Please try again.';
                     $this->broadcastTypingStatus(false);
+
                     return;
                 }
-                
+
                 // Wait before checking status (progressive backoff)
                 $waitTime = min(500000 + ($retries * 100000), 2000000); // 0.5s to 2s max
                 usleep($waitTime);
-                
+
                 $runStatusResponse = $this->openAIAssistantsService->retrieveRun($this->threadId, $runId);
-                
-                if (!$runStatusResponse['success']) {
+
+                if (! $runStatusResponse['success']) {
                     Log::error('Failed to retrieve run status', [
                         'run_id' => $runId,
-                        'error' => $runStatusResponse['message'] ?? 'Unknown error'
+                        'error' => $runStatusResponse['message'] ?? 'Unknown error',
                     ]);
-                    $this->error = "Failed to check message status: " . ($runStatusResponse['message'] ?? 'Unknown error');
+                    $this->error = 'Failed to check message status: '.($runStatusResponse['message'] ?? 'Unknown error');
                     $this->broadcastTypingStatus(false);
                     break;
                 }
-                
+
                 $status = $runStatusResponse['data']['status'];
-                
+
                 Log::info('Run status check', [
                     'run_id' => $runId,
                     'status' => $status,
                     'retry' => $retries + 1,
-                    'elapsed_time' => time() - $startTime
+                    'elapsed_time' => time() - $startTime,
                 ]);
-                
+
                 // Handle function calls (MCP tool execution)
                 if ($status === 'requires_action') {
                     Log::info('Handling function calls for run', ['run_id' => $runId]);
-                    
+
                     $actionHandled = $this->handleFunctionCalls($runStatusResponse['data'], $runId);
-                    
+
                     if ($actionHandled) {
                         $status = 'in_progress'; // Continue polling after submitting function outputs
                         // Reset some counters after successful action handling
                         $retries = max(0, $retries - 5); // Give more time after function calls
                     } else {
                         Log::error('Failed to handle required actions', ['run_id' => $runId]);
-                        $this->error = "Failed to process required actions.";
+                        $this->error = 'Failed to process required actions.';
                         $this->broadcastTypingStatus(false);
                         break;
                     }
                 }
-                
+
                 $retries++;
             }
-            
+
             if ($status === 'completed') {
                 Log::info('AI response processing completed', [
                     'run_id' => $runId,
-                    'total_time' => time() - $startTime
+                    'total_time' => time() - $startTime,
                 ]);
-                
+
                 // Refresh messages from the API
                 $this->loadMessages();
-                
+
                 // Sync messages to database
                 $this->syncMessagesFromOpenAI();
-                
+
                 // Auto-generate title for new sessions with meaningful content
-                if ($this->currentChatSession && 
-                    $this->currentChatSession->title && 
+                if ($this->currentChatSession &&
+                    $this->currentChatSession->title &&
                     str_contains($this->currentChatSession->title, 'New Chat -')) {
                     $this->autoGenerateTitle();
                 }
-                
+
                 // Signal that AI is done typing
                 $this->broadcastTypingStatus(false);
-                
+
                 // Clear any session run ID
                 session()->forget('ai_sensei_current_run_id');
-                
+
             } elseif ($status === 'failed') {
+                $lastError = $runStatusResponse['data']['last_error'] ?? null;
+
                 Log::error('AI run failed', [
                     'run_id' => $runId,
                     'thread_id' => $this->threadId,
-                    'last_error' => $runStatusResponse['data']['last_error'] ?? null
+                    'last_error' => $lastError,
                 ]);
-                
-                $this->error = "AI processing failed. Please try again.";
+
+                // Check if this is a rate limit error
+                if ($lastError && isset($lastError['code']) && $lastError['code'] === 'rate_limit_exceeded') {
+                    // Extract wait time from error message if available
+                    $errorMessage = $lastError['message'] ?? '';
+                    $waitTime = null;
+
+                    if (preg_match('/Please try again in ([\d.]+)s/', $errorMessage, $matches)) {
+                        $waitTime = ceil(floatval($matches[1]));
+                    }
+
+                    $userMessage = "⏳ Your request completed successfully, but AI Sensei's response was delayed due to API rate limits. ";
+                    if ($waitTime) {
+                        $userMessage .= "Please wait {$waitTime} seconds and try sending your message again.";
+                    } else {
+                        $userMessage .= 'Please wait a moment and try again.';
+                    }
+
+                    $this->error = $userMessage;
+
+                    Log::info('Rate limit encountered - operation completed but response delayed', [
+                        'run_id' => $runId,
+                        'wait_time' => $waitTime,
+                        'rate_limit_message' => $errorMessage,
+                    ]);
+                } else {
+                    // Generic failure for non-rate-limit errors
+                    $this->error = 'AI processing failed. Please try again.';
+                }
+
                 $this->broadcastTypingStatus(false);
                 session()->forget('ai_sensei_current_run_id');
-                
+
             } elseif ($status === 'cancelled') {
                 Log::info('AI run was cancelled', [
                     'run_id' => $runId,
-                    'thread_id' => $this->threadId
+                    'thread_id' => $this->threadId,
                 ]);
-                
-                $this->error = "Response was cancelled. Please try again.";
+
+                $this->error = 'Response was cancelled. Please try again.';
                 $this->broadcastTypingStatus(false);
                 session()->forget('ai_sensei_current_run_id');
-                
+
             } else {
                 // Handle timeout or stuck runs
                 Log::error('Message processing failed or timed out', [
@@ -479,12 +538,12 @@ class AISenseiChat extends Component
                     'run_id' => $runId,
                     'thread_id' => $this->threadId,
                     'retries' => $retries,
-                    'execution_time' => time() - $startTime
+                    'execution_time' => time() - $startTime,
                 ]);
-                
+
                 // Try to cancel the stuck run
                 $this->cancelStuckRun($runId);
-                
+
                 $this->error = "Message processing failed or timed out with status: {$status}. The run has been cancelled.";
                 $this->broadcastTypingStatus(false);
                 session()->forget('ai_sensei_current_run_id');
@@ -493,9 +552,9 @@ class AISenseiChat extends Component
             Log::error('Error processing AI response', [
                 'error' => $e->getMessage(),
                 'run_id' => $runId,
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
-            $this->error = "Error processing response: " . $e->getMessage();
+            $this->error = 'Error processing response: '.$e->getMessage();
             $this->broadcastTypingStatus(false);
         }
     }
@@ -506,11 +565,12 @@ class AISenseiChat extends Component
     protected function handleFunctionCalls($runData, $runId): bool
     {
         try {
-            if (!isset($runData['required_action']['submit_tool_outputs']['tool_calls'])) {
+            if (! isset($runData['required_action']['submit_tool_outputs']['tool_calls'])) {
                 Log::warning('Function call action detected but no tool calls found', [
                     'run_id' => $runId,
-                    'run_data_keys' => array_keys($runData)
+                    'run_data_keys' => array_keys($runData),
                 ]);
+
                 return false;
             }
 
@@ -519,38 +579,39 @@ class AISenseiChat extends Component
 
             Log::info('Processing function calls', [
                 'run_id' => $runId,
-                'tool_calls_count' => count($toolCalls)
+                'tool_calls_count' => count($toolCalls),
             ]);
 
             foreach ($toolCalls as $toolCall) {
                 Log::info('Processing MCP tool call', [
                     'tool_call_id' => $toolCall['id'],
                     'function_name' => $toolCall['function']['name'],
-                    'arguments' => $toolCall['function']['arguments']
+                    'arguments' => $toolCall['function']['arguments'],
                 ]);
 
                 try {
                     // Parse arguments (they come as JSON string)
                     $arguments = json_decode($toolCall['function']['arguments'], true);
-                    
+
                     if (json_last_error() !== JSON_ERROR_NONE) {
                         Log::error('Failed to parse tool call arguments', [
                             'tool_call_id' => $toolCall['id'],
                             'json_error' => json_last_error_msg(),
-                            'raw_arguments' => $toolCall['function']['arguments']
+                            'raw_arguments' => $toolCall['function']['arguments'],
                         ]);
-                        
+
                         // Provide error response for this tool call
                         $toolOutputs[] = [
                             'tool_call_id' => $toolCall['id'],
                             'output' => json_encode([
                                 'success' => false,
-                                'error' => 'Invalid arguments provided to function'
-                            ])
+                                'error' => 'Invalid arguments provided to function',
+                            ]),
                         ];
+
                         continue;
                     }
-                    
+
                     // Execute the MCP function with timeout protection
                     $startTime = microtime(true);
                     $result = $this->mcpIntegrationService->processFunctionCall(
@@ -562,38 +623,38 @@ class AISenseiChat extends Component
                     Log::info('MCP function executed', [
                         'function_name' => $toolCall['function']['name'],
                         'execution_time' => round($executionTime, 3),
-                        'success' => $result['success'] ?? false
+                        'success' => $result['success'] ?? false,
                     ]);
 
                     // Prepare the output for OpenAI
                     $toolOutputs[] = [
                         'tool_call_id' => $toolCall['id'],
-                        'output' => json_encode($result)
+                        'output' => json_encode($result),
                     ];
-                    
+
                 } catch (\Exception $e) {
                     Log::error('Error executing MCP function', [
                         'tool_call_id' => $toolCall['id'],
                         'function_name' => $toolCall['function']['name'],
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ]);
-                    
+
                     // Provide error response for this specific tool call
                     $toolOutputs[] = [
                         'tool_call_id' => $toolCall['id'],
                         'output' => json_encode([
                             'success' => false,
-                            'error' => 'Function execution failed: ' . $e->getMessage()
-                        ])
+                            'error' => 'Function execution failed: '.$e->getMessage(),
+                        ]),
                     ];
                 }
             }
 
             // Submit the tool outputs back to OpenAI
-            if (!empty($toolOutputs)) {
+            if (! empty($toolOutputs)) {
                 Log::info('Submitting tool outputs', [
                     'run_id' => $runId,
-                    'outputs_count' => count($toolOutputs)
+                    'outputs_count' => count($toolOutputs),
                 ]);
 
                 $submitResponse = $this->openAIAssistantsService->submitToolOutputs(
@@ -602,23 +663,26 @@ class AISenseiChat extends Component
                     $toolOutputs
                 );
 
-                if (!$submitResponse['success']) {
+                if (! $submitResponse['success']) {
                     Log::error('Failed to submit tool outputs', [
                         'run_id' => $runId,
                         'error' => $submitResponse['message'] ?? 'Unknown error',
-                        'tool_outputs_count' => count($toolOutputs)
+                        'tool_outputs_count' => count($toolOutputs),
                     ]);
+
                     return false;
                 }
 
                 Log::info('Tool outputs submitted successfully', [
                     'run_id' => $runId,
-                    'outputs_count' => count($toolOutputs)
+                    'outputs_count' => count($toolOutputs),
                 ]);
+
                 return true;
             }
 
             Log::warning('No tool outputs to submit', ['run_id' => $runId]);
+
             return false;
 
         } catch (\Exception $e) {
@@ -626,8 +690,9 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'run_id' => $runId,
                 'thread_id' => $this->threadId,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return false;
         }
     }
@@ -640,26 +705,29 @@ class AISenseiChat extends Component
         try {
             Log::info('Attempting to cancel stuck run', [
                 'run_id' => $runId,
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
 
             $cancelResponse = $this->openAIAssistantsService->cancelRun($this->threadId, $runId);
-            
+
             if ($cancelResponse['success']) {
                 Log::info('Successfully cancelled stuck run', ['run_id' => $runId]);
+
                 return true;
             } else {
                 Log::error('Failed to cancel stuck run', [
                     'run_id' => $runId,
-                    'error' => $cancelResponse['message'] ?? 'Unknown error'
+                    'error' => $cancelResponse['message'] ?? 'Unknown error',
                 ]);
+
                 return false;
             }
         } catch (\Exception $e) {
             Log::error('Exception while cancelling stuck run', [
                 'run_id' => $runId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -670,19 +738,20 @@ class AISenseiChat extends Component
     public function cleanupStuckRuns()
     {
         try {
-            if (!$this->threadId) {
+            if (! $this->threadId) {
                 return;
             }
 
             $runsResponse = $this->openAIAssistantsService->listRuns($this->threadId);
-            
-            if (!$runsResponse['success']) {
+
+            if (! $runsResponse['success']) {
                 return;
             }
 
             $stuckRuns = collect($runsResponse['data']['data'] ?? [])->filter(function ($run) {
                 $isActive = in_array($run['status'], ['queued', 'in_progress', 'requires_action']);
                 $isOld = (time() - $run['created_at']) > 30; // 30 seconds
+
                 return $isActive && $isOld;
             });
 
@@ -690,22 +759,22 @@ class AISenseiChat extends Component
                 Log::info('Cleaning up stuck run', [
                     'run_id' => $run['id'],
                     'status' => $run['status'],
-                    'age' => time() - $run['created_at']
+                    'age' => time() - $run['created_at'],
                 ]);
-                
+
                 $this->cancelStuckRun($run['id']);
             }
 
             if ($stuckRuns->isNotEmpty()) {
                 $this->dispatch('stuck-runs-cleaned', [
-                    'count' => $stuckRuns->count()
+                    'count' => $stuckRuns->count(),
                 ]);
             }
 
         } catch (\Exception $e) {
             Log::error('Error cleaning up stuck runs', [
                 'error' => $e->getMessage(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
         }
     }
@@ -716,12 +785,10 @@ class AISenseiChat extends Component
     protected function broadcastTypingStatus($isTyping)
     {
         $this->isAITyping = $isTyping;
-        
+
         // Dispatch to frontend
         $this->dispatch('ai-typing-status', ['isTyping' => $isTyping]);
     }
-
-
 
     /**
      * Handle user typing status changes
@@ -729,7 +796,7 @@ class AISenseiChat extends Component
     public function userStartedTyping()
     {
         $this->isUserTyping = true;
-        
+
         // Dispatch event for UI updates in other components if needed
         // $this->dispatch('user-typing-status', ['status' => 'typing']);
     }
@@ -737,7 +804,7 @@ class AISenseiChat extends Component
     public function userStoppedTyping()
     {
         $this->isUserTyping = false;
-        
+
         // Dispatch event for UI updates in other components if needed
         // $this->dispatch('user-typing-status', ['status' => 'stopped']);
     }
@@ -753,7 +820,7 @@ class AISenseiChat extends Component
                     'size' => $file->getSize(),
                     'type' => $this->getFileTypeName($file->getClientOriginalName()),
                     'icon' => $this->getFileIcon($file->getClientOriginalName()),
-                    'id' => uniqid('pending_')
+                    'id' => uniqid('pending_'),
                 ];
             }
 
@@ -762,14 +829,14 @@ class AISenseiChat extends Component
 
             // Emit event to update UI
             $this->dispatch('files-staged', [
-                'count' => count($this->pendingFiles)
+                'count' => count($this->pendingFiles),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error staging file uploads', [
                 'error' => $e->getMessage(),
             ]);
-            $this->error = "Error preparing files: " . $e->getMessage();
+            $this->error = 'Error preparing files: '.$e->getMessage();
         }
     }
 
@@ -782,23 +849,23 @@ class AISenseiChat extends Component
 
                 if ($response['success']) {
                     // Remove from the uploaded files list
-                    $this->uploadedFiles = array_filter($this->uploadedFiles ?? [], function($file) use ($fileId) {
+                    $this->uploadedFiles = array_filter($this->uploadedFiles ?? [], function ($file) use ($fileId) {
                         return $file['id'] !== $fileId;
                     });
 
                     // Refresh the list of attached files
                     $this->loadAttachedFiles();
                 } else {
-                    $this->error = "Failed to remove file: " . ($response['message'] ?? 'Unknown error');
+                    $this->error = 'Failed to remove file: '.($response['message'] ?? 'Unknown error');
                 }
             }
         } catch (\Exception $e) {
             Log::error('Error removing file', [
                 'error' => $e->getMessage(),
                 'file_id' => $fileId,
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
-            $this->error = "Error removing file: " . $e->getMessage();
+            $this->error = 'Error removing file: '.$e->getMessage();
         }
     }
 
@@ -809,11 +876,11 @@ class AISenseiChat extends Component
     {
         $this->componentLoaded = true;
         $this->dispatch('component-loaded');
-        
+
         // Log successful initialization for debugging purposes
         Log::info('AI Sensei Chat component fully loaded', [
             'user_id' => Auth::id(),
-            'thread_id' => $this->threadId
+            'thread_id' => $this->threadId,
         ]);
     }
 
@@ -823,7 +890,7 @@ class AISenseiChat extends Component
     private function getFileIcon($filename)
     {
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
+
         $iconMap = [
             'pdf' => 'ki-duotone ki-file-sheet fs-3x text-danger',
             'doc' => 'ki-duotone ki-file-text fs-3x text-primary',
@@ -848,7 +915,7 @@ class AISenseiChat extends Component
             'php' => 'ki-duotone ki-code fs-3x text-warning',
             'py' => 'ki-duotone ki-code fs-3x text-warning',
         ];
-        
+
         return $iconMap[$extension] ?? 'ki-duotone ki-file fs-3x text-gray-400';
     }
 
@@ -858,11 +925,11 @@ class AISenseiChat extends Component
     private function getFileTypeName($filename)
     {
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
+
         $typeMap = [
             'pdf' => 'PDF Document',
             'doc' => 'Word Document',
-            'docx' => 'Word Document', 
+            'docx' => 'Word Document',
             'txt' => 'Text File',
             'csv' => 'CSV Spreadsheet',
             'xlsx' => 'Excel Spreadsheet',
@@ -883,8 +950,8 @@ class AISenseiChat extends Component
             'php' => 'PHP File',
             'py' => 'Python File',
         ];
-        
-        return $typeMap[$extension] ?? strtoupper($extension) . ' File';
+
+        return $typeMap[$extension] ?? strtoupper($extension).' File';
     }
 
     /**
@@ -899,7 +966,7 @@ class AISenseiChat extends Component
             $this->isAITyping = true;
 
             // Use default analysis query if none provided
-            $analysisQuery = $query ?? "Please analyze this uploaded file and provide a detailed summary of its contents, structure, and key insights.";
+            $analysisQuery = $query ?? 'Please analyze this uploaded file and provide a detailed summary of its contents, structure, and key insights.';
 
             // Use the new comprehensive processing method
             $result = $this->openAIAssistantsService->processFileWithAI(
@@ -917,7 +984,7 @@ class AISenseiChat extends Component
                     'size' => $file->getSize(),
                     'attached' => true,
                     'analyzed' => true,
-                    'run_id' => $result['data']['run_id']
+                    'run_id' => $result['data']['run_id'],
                 ];
 
                 // Refresh messages to show both the upload and AI response
@@ -927,23 +994,23 @@ class AISenseiChat extends Component
                 $this->dispatch('file-analyzed', [
                     'file_id' => $result['data']['file_info']['file_id'],
                     'filename' => $file->getClientOriginalName(),
-                    'analysis_completed' => true
+                    'analysis_completed' => true,
                 ]);
 
                 // Add a success message
                 $this->dispatch('show-notification', [
                     'type' => 'success',
-                    'message' => "File '{$file->getClientOriginalName()}' uploaded and analyzed successfully!"
+                    'message' => "File '{$file->getClientOriginalName()}' uploaded and analyzed successfully!",
                 ]);
 
             } else {
-                $this->error = "File analysis failed: " . $result['message'];
-                
+                $this->error = 'File analysis failed: '.$result['message'];
+
                 Log::error('File analysis failed', [
                     'error' => $result['message'],
                     'step' => $result['step'] ?? 'unknown',
                     'file_name' => $file->getClientOriginalName(),
-                    'thread_id' => $this->threadId
+                    'thread_id' => $this->threadId,
                 ]);
 
                 // If file was uploaded but analysis failed, we still have the file
@@ -954,7 +1021,7 @@ class AISenseiChat extends Component
                         'size' => $file->getSize(),
                         'attached' => true,
                         'analyzed' => false,
-                        'error' => $result['message']
+                        'error' => $result['message'],
                     ];
                 }
             }
@@ -963,10 +1030,10 @@ class AISenseiChat extends Component
             Log::error('Error in uploadAndAnalyzeFile', [
                 'error' => $e->getMessage(),
                 'file_name' => $file->getClientOriginalName(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
-            
-            $this->error = "Failed to process file: " . $e->getMessage();
+
+            $this->error = 'Failed to process file: '.$e->getMessage();
         } finally {
             $this->uploadingFile = false;
             $this->isAITyping = false;
@@ -978,12 +1045,12 @@ class AISenseiChat extends Component
      */
     public function removeStagedFile($fileId)
     {
-        $this->pendingFiles = array_filter($this->pendingFiles, function($file) use ($fileId) {
+        $this->pendingFiles = array_filter($this->pendingFiles, function ($file) use ($fileId) {
             return $file['id'] !== $fileId;
         });
 
         $this->dispatch('file-removed', [
-            'file_id' => $fileId
+            'file_id' => $fileId,
         ]);
     }
 
@@ -997,13 +1064,14 @@ class AISenseiChat extends Component
                 'customMessage' => $customMessage,
                 'newMessage' => $this->newMessage,
                 'pendingFiles_count' => count($this->pendingFiles),
-                'pendingFiles' => array_map(function($file) {
+                'pendingFiles' => array_map(function ($file) {
                     return ['filename' => $file['filename'], 'size' => $file['size']];
-                }, $this->pendingFiles)
+                }, $this->pendingFiles),
             ]);
 
             if (empty($this->pendingFiles) && empty(trim($customMessage ?: $this->newMessage))) {
                 Log::warning('sendMessageWithFiles: Nothing to send - no files and no message');
+
                 return; // Nothing to send
             }
 
@@ -1012,27 +1080,27 @@ class AISenseiChat extends Component
 
             // Prepare the message content
             $messageText = trim($customMessage ?: $this->newMessage) ?: "I've shared some files with you.";
-            
-            if (!empty($this->pendingFiles)) {
+
+            if (! empty($this->pendingFiles)) {
                 // Upload files and create message with attachments
                 $attachments = [];
                 $fileInfos = [];
 
                 foreach ($this->pendingFiles as $pendingFile) {
                     $file = $pendingFile['file'];
-                    
+
                     // Upload file to OpenAI
                     $uploadResponse = $this->openAIFilesService->uploadFile($file, 'assistants');
-                    
+
                     if ($uploadResponse['success']) {
                         $fileId = $uploadResponse['data']['file_id'];
-                        
+
                         $attachments[] = [
                             'file_id' => $fileId,
                             'tools' => [
                                 ['type' => 'code_interpreter'],
-                                ['type' => 'file_search']
-                            ]
+                                ['type' => 'file_search'],
+                            ],
                         ];
 
                         $fileInfos[] = [
@@ -1040,10 +1108,11 @@ class AISenseiChat extends Component
                             'filename' => $pendingFile['filename'],
                             'size' => $pendingFile['size'],
                             'type' => $pendingFile['type'],
-                            'icon' => $pendingFile['icon']
+                            'icon' => $pendingFile['icon'],
                         ];
                     } else {
-                        $this->error = "Failed to upload file: " . $pendingFile['filename'];
+                        $this->error = 'Failed to upload file: '.$pendingFile['filename'];
+
                         return;
                     }
                 }
@@ -1066,7 +1135,7 @@ class AISenseiChat extends Component
                             'filename' => $fileInfo['filename'],
                             'size' => $fileInfo['size'],
                             'attached' => true,
-                            'message_text' => $messageText
+                            'message_text' => $messageText,
                         ];
                     }
 
@@ -1082,10 +1151,10 @@ class AISenseiChat extends Component
 
                     $this->dispatch('message-sent', [
                         'with_files' => true,
-                        'file_count' => count($fileInfos)
+                        'file_count' => count($fileInfos),
                     ]);
                 } else {
-                    $this->error = "Failed to send message with files: " . $result['message'];
+                    $this->error = 'Failed to send message with files: '.$result['message'];
                 }
             } else {
                 // Send regular message without files
@@ -1095,9 +1164,9 @@ class AISenseiChat extends Component
         } catch (\Exception $e) {
             Log::error('Error sending message with files', [
                 'error' => $e->getMessage(),
-                'thread_id' => $this->threadId
+                'thread_id' => $this->threadId,
             ]);
-            $this->error = "Error sending message: " . $e->getMessage();
+            $this->error = 'Error sending message: '.$e->getMessage();
         } finally {
             $this->uploadingFile = false;
         }
@@ -1110,8 +1179,9 @@ class AISenseiChat extends Component
     {
         try {
             // Check if assistant ID is set
-            if (!$this->assistantId) {
+            if (! $this->assistantId) {
                 Log::error('Assistant ID not set when triggering AI response for files');
+
                 return;
             }
 
@@ -1123,23 +1193,24 @@ class AISenseiChat extends Component
 
             // Run the assistant to process the uploaded files with user context
             $runResponse = $this->openAIAssistantsService->createRun(
-                $this->threadId, 
-                $this->assistantId, 
+                $this->threadId,
+                $this->assistantId,
                 $userContext
             );
 
-            if (!$runResponse['success']) {
-                $this->error = "Failed to process uploaded files: " . ($runResponse['message'] ?? 'Unknown error');
+            if (! $runResponse['success']) {
+                $this->error = 'Failed to process uploaded files: '.($runResponse['message'] ?? 'Unknown error');
                 $this->broadcastTypingStatus(false);
                 Log::error('Failed to create run for file processing', ['error' => $runResponse['message'] ?? 'Unknown error']);
+
                 return;
             }
 
             $runId = $runResponse['data']['id'];
-            
+
             // Store the current run ID in the session for reference
             session(['ai_sensei_current_run_id' => $runId]);
-            
+
             // Process the AI response
             $this->processAiResponse($runId);
 
@@ -1147,10 +1218,10 @@ class AISenseiChat extends Component
             Log::error('Error triggering AI response for files', [
                 'error' => $e->getMessage(),
                 'thread_id' => $this->threadId,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
             $this->broadcastTypingStatus(false);
-            $this->error = "Error processing files: " . $e->getMessage();
+            $this->error = 'Error processing files: '.$e->getMessage();
         }
     }
 
@@ -1164,7 +1235,7 @@ class AISenseiChat extends Component
             if ($uploadedFile['id'] === $fileId) {
                 return [
                     'filename' => $uploadedFile['filename'],
-                    'size' => $uploadedFile['size']
+                    'size' => $uploadedFile['size'],
                 ];
             }
         }
@@ -1175,7 +1246,7 @@ class AISenseiChat extends Component
             if ($response['success']) {
                 return [
                     'filename' => $response['data']['filename'] ?? 'Unknown File',
-                    'size' => $response['data']['bytes'] ?? 0
+                    'size' => $response['data']['bytes'] ?? 0,
                 ];
             }
         } catch (\Exception $e) {
@@ -1184,7 +1255,7 @@ class AISenseiChat extends Component
 
         return [
             'filename' => 'Attached File',
-            'size' => 0
+            'size' => 0,
         ];
     }
 
@@ -1214,10 +1285,10 @@ class AISenseiChat extends Component
             unset($this->pendingFiles[$index]);
             // Re-index the array to avoid gaps
             $this->pendingFiles = array_values($this->pendingFiles);
-            
+
             $this->dispatch('file-removed', [
                 'index' => $index,
-                'remaining_count' => count($this->pendingFiles)
+                'remaining_count' => count($this->pendingFiles),
             ]);
         }
     }
@@ -1238,22 +1309,23 @@ class AISenseiChat extends Component
     {
         try {
             $user = Auth::user();
-            
+
             // Find the session
             $session = ChatSession::where('session_id', $sessionId)
                 ->where('user_id', $user->id)
                 ->where('status', 'active')
                 ->first();
 
-            if (!$session) {
-                $this->error = "Chat session not found or inaccessible.";
+            if (! $session) {
+                $this->error = 'Chat session not found or inaccessible.';
+
                 return;
             }
 
             // Switch to this session
             $this->threadId = $sessionId;
             $this->currentChatSession = $session;
-            
+
             // Update session storage
             session(['ai_sensei_thread_id' => $sessionId]);
 
@@ -1275,16 +1347,16 @@ class AISenseiChat extends Component
 
             $this->dispatch('session-loaded', [
                 'session_id' => $sessionId,
-                'title' => $session->title
+                'title' => $session->title,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error loading chat session', [
                 'session_id' => $sessionId,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
-            $this->error = "Failed to load chat session: " . $e->getMessage();
+            $this->error = 'Failed to load chat session: '.$e->getMessage();
         }
     }
 
@@ -1300,13 +1372,13 @@ class AISenseiChat extends Component
             if ($threadResponse['success']) {
                 $user = Auth::user();
                 $this->threadId = $threadResponse['data']['id'];
-                
+
                 // Create new chat session in database
                 $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
-                
+
                 // Update session storage
                 session(['ai_sensei_thread_id' => $this->threadId]);
-                
+
                 // Reset state
                 $this->messages = [];
                 $this->newMessage = '';
@@ -1322,17 +1394,17 @@ class AISenseiChat extends Component
                 $this->dispatch('messages-updated');
                 $this->dispatch('new-chat-started', [
                     'session_id' => $this->threadId,
-                    'title' => $this->currentChatSession->title
+                    'title' => $this->currentChatSession->title,
                 ]);
             } else {
-                $this->error = "Failed to start new chat: " . ($threadResponse['message'] ?? 'Unknown error');
+                $this->error = 'Failed to start new chat: '.($threadResponse['message'] ?? 'Unknown error');
             }
         } catch (\Exception $e) {
             Log::error('Error starting new chat', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = "Error starting new chat: " . $e->getMessage();
+            $this->error = 'Error starting new chat: '.$e->getMessage();
         }
     }
 
@@ -1341,8 +1413,8 @@ class AISenseiChat extends Component
      */
     public function toggleSessionHistory()
     {
-        $this->showSessionHistory = !$this->showSessionHistory;
-        
+        $this->showSessionHistory = ! $this->showSessionHistory;
+
         if ($this->showSessionHistory) {
             $this->loadChatSessions();
         }
@@ -1355,12 +1427,13 @@ class AISenseiChat extends Component
     {
         if (empty($this->sessionSearchQuery)) {
             $this->loadChatSessions();
+
             return;
         }
 
         $user = Auth::user();
         $searchResults = $this->chatSessionService->searchUserSessions($user, $this->sessionSearchQuery, 15);
-        
+
         $this->chatSessions = $searchResults->map(function ($session) {
             return [
                 'id' => $session->id,
@@ -1401,7 +1474,8 @@ class AISenseiChat extends Component
     {
         try {
             if (empty(trim($this->newSessionTitle))) {
-                $this->error = "Session title cannot be empty.";
+                $this->error = 'Session title cannot be empty.';
+
                 return;
             }
 
@@ -1423,18 +1497,18 @@ class AISenseiChat extends Component
 
                 $this->dispatch('session-title-updated', [
                     'session_id' => $sessionId,
-                    'title' => trim($this->newSessionTitle)
+                    'title' => trim($this->newSessionTitle),
                 ]);
             } else {
-                $this->error = "Failed to update session title.";
+                $this->error = 'Failed to update session title.';
             }
         } catch (\Exception $e) {
             Log::error('Error updating session title', [
                 'session_id' => $sessionId,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
-            $this->error = "Error updating title: " . $e->getMessage();
+            $this->error = 'Error updating title: '.$e->getMessage();
         }
     }
 
@@ -1458,15 +1532,15 @@ class AISenseiChat extends Component
 
                 $this->dispatch('session-archived', ['session_id' => $sessionId]);
             } else {
-                $this->error = "Failed to archive session.";
+                $this->error = 'Failed to archive session.';
             }
         } catch (\Exception $e) {
             Log::error('Error archiving session', [
                 'session_id' => $sessionId,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
-            $this->error = "Error archiving session: " . $e->getMessage();
+            $this->error = 'Error archiving session: '.$e->getMessage();
         }
     }
 
@@ -1490,15 +1564,15 @@ class AISenseiChat extends Component
 
                 $this->dispatch('session-deleted', ['session_id' => $sessionId]);
             } else {
-                $this->error = "Failed to delete session.";
+                $this->error = 'Failed to delete session.';
             }
         } catch (\Exception $e) {
             Log::error('Error deleting session', [
                 'session_id' => $sessionId,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
-            $this->error = "Error deleting session: " . $e->getMessage();
+            $this->error = 'Error deleting session: '.$e->getMessage();
         }
     }
 
@@ -1507,7 +1581,7 @@ class AISenseiChat extends Component
      */
     private function syncMessagesFromOpenAI()
     {
-        if (!$this->currentChatSession) {
+        if (! $this->currentChatSession) {
             return;
         }
 
@@ -1521,7 +1595,7 @@ class AISenseiChat extends Component
         } catch (\Exception $e) {
             Log::warning('Failed to sync messages from OpenAI', [
                 'error' => $e->getMessage(),
-                'session_id' => $this->currentChatSession->session_id
+                'session_id' => $this->currentChatSession->session_id,
             ]);
         }
     }
@@ -1541,16 +1615,16 @@ class AISenseiChat extends Component
                     ->first();
             }
 
-            if (!$session) {
+            if (! $session) {
                 return;
             }
 
             $newTitle = $this->chatSessionService->generateSessionTitle($session);
-            
+
             if ($newTitle !== $session->title) {
                 $user = Auth::user();
                 $this->chatSessionService->updateSessionTitle($session->session_id, $newTitle, $user);
-                
+
                 // Update current session if it's the one being updated
                 if ($this->currentChatSession && $this->currentChatSession->id === $session->id) {
                     $this->currentChatSession->title = $newTitle;
@@ -1561,14 +1635,14 @@ class AISenseiChat extends Component
 
                 $this->dispatch('session-title-generated', [
                     'session_id' => $session->session_id,
-                    'title' => $newTitle
+                    'title' => $newTitle,
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Error auto-generating session title', [
                 'session_id' => $sessionId ?: $this->threadId,
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
         }
     }
@@ -1584,8 +1658,9 @@ class AISenseiChat extends Component
             // Fallback to regular text rendering if markdown parsing fails
             Log::warning('Markdown rendering failed', [
                 'error' => $e->getMessage(),
-                'content_preview' => substr($content, 0, 100)
+                'content_preview' => substr($content, 0, 100),
             ]);
+
             return nl2br(e($content));
         }
     }

@@ -185,6 +185,11 @@ class MCPPermissionService
         if ($this->canViewQuestionSetDetails()) {
             $capabilities[] = 'view question details';
         }
+        if ($this->canManageStudents()) {
+            $capabilities[] = 'manage student IDs';
+            $capabilities[] = 'reassign student IDs';
+            $capabilities[] = 'revert student ID changes';
+        }
 
         return [
             'authenticated' => true,
@@ -198,8 +203,12 @@ class MCPPermissionService
                 'create offline exams', 'update offline exams', 'view offline exams',
                 'grade exams', 'generate exam reports', 'manage curriculum',
             ]),
+            'student_permissions' => array_intersect($permissions, [
+                'manage students', 'edit students', 'create students', 'view students',
+            ]),
             'capabilities' => $capabilities,
             'can_access_mcp' => $this->canAccessMCP(),
+            'can_manage_students' => $this->canManageStudents(),
         ];
     }
 

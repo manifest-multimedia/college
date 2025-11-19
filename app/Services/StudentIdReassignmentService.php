@@ -150,13 +150,24 @@ class StudentIdReassignmentService
         try {
             DB::beginTransaction();
 
-            // Generate new ID using existing service
-            $newId = $this->idGenerationService->generateStudentId(
-                $student->first_name,
-                $student->last_name,
-                $student->college_class_id,
-                $this->getStudentAcademicYearId($student, $parsedId)
-            );
+            // Generate new ID - use custom pattern if provided, otherwise use service
+            if ($customPattern) {
+                // Build ID using custom pattern with preserved sequence
+                $newId = $this->buildCustomIdWithPreservedSequence($student, $parsedId, $customPattern);
+            } else {
+                // Use existing service for standard formats
+                $newId = $this->idGenerationService->generateStudentId(
+                    $student->first_name,
+                    $student->last_name,
+                    $student->college_class_id,
+                    $this->getStudentAcademicYearId($student, $parsedId)
+                );
+            }
+
+            // Check uniqueness
+            if (! $this->isNewIdUnique($newId, $student->id)) {
+                throw new \Exception("Generated ID '{$newId}' already exists");
+            }
 
             // Store backup in case we need to revert
             $this->storeIdBackup($student->id, $oldId, $newId);
@@ -174,6 +185,7 @@ class StudentIdReassignmentService
                 'new_id' => $newId,
                 'parsed_old_format' => $parsedId['format'],
                 'target_format' => $format,
+                'custom_pattern' => $customPattern,
             ]);
 
             return [
@@ -261,10 +273,28 @@ class StudentIdReassignmentService
             if ($dryRun) {
                 // Preview mode: show what would be changed
                 $parsedId = $this->parseStudentId($student->student_id);
+
+                // Generate preview of new ID
+                try {
+                    if ($customPattern) {
+                        $previewNewId = $this->buildCustomIdWithPreservedSequence($student, $parsedId, $customPattern);
+                    } else {
+                        $previewNewId = $this->idGenerationService->generateStudentId(
+                            $student->first_name,
+                            $student->last_name,
+                            $student->college_class_id,
+                            $this->getStudentAcademicYearId($student, $parsedId)
+                        );
+                    }
+                } catch (\Exception $e) {
+                    $previewNewId = "[Error: {$e->getMessage()}]";
+                }
+
                 $results['updates'][] = [
                     'id' => $student->id,
                     'name' => "{$student->first_name} {$student->last_name}",
                     'current_id' => $student->student_id,
+                    'new_id' => $previewNewId,
                     'parsed_format' => $parsedId['format'],
                     'would_change' => true,
                 ];
@@ -311,10 +341,18 @@ class StudentIdReassignmentService
                 ];
             }
 
+            // Validate backup has required fields
+            if (! isset($backup['old_student_id'])) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid backup record - missing old_student_id',
+                ];
+            }
+
             DB::beginTransaction();
 
             $currentId = $student->student_id;
-            $student->student_id = $backup['old_id'];
+            $student->student_id = $backup['old_student_id']; // Use correct column name
             $student->save();
 
             // Keep the backup record for audit trail
@@ -326,14 +364,14 @@ class StudentIdReassignmentService
                 'student_id' => $student->id,
                 'student_name' => "{$student->first_name} {$student->last_name}",
                 'reverted_from' => $currentId,
-                'reverted_to' => $backup['old_id'],
+                'reverted_to' => $backup['old_student_id'],
             ]);
 
             return [
                 'success' => true,
                 'student' => $student,
                 'reverted_from' => $currentId,
-                'reverted_to' => $backup['old_id'],
+                'reverted_to' => $backup['old_student_id'],
             ];
 
         } catch (\Exception $e) {
@@ -403,10 +441,12 @@ class StudentIdReassignmentService
     /**
      * Preview what changes would be made without actually making them
      */
-    public function previewReassignment(array $filters = []): array
+    public function previewReassignment(array $filters = [], ?string $targetFormat = null, ?string $customPattern = null): array
     {
         return $this->batchReassignStudentIds([
             'filters' => $filters,
+            'target_format' => $targetFormat,
+            'custom_pattern' => $customPattern,
             'dry_run' => true,
         ]);
     }
@@ -551,5 +591,113 @@ class StudentIdReassignmentService
         }
 
         return $validation;
+    }
+
+    /**
+     * Build custom ID with preserved sequence from original ID
+     */
+    private function buildCustomIdWithPreservedSequence(Student $student, array $parsedId, string $pattern): string
+    {
+        // Extract sequence from original ID
+        $sequence = $parsedId['sequence'] ?? '0001';
+
+        // Get program information
+        $program = $student->collegeClass;
+        $programCode = $program ? $program->class_code : 'STU';
+
+        // Get academic year - handle both formats
+        if (isset($parsedId['year_start']) && isset($parsedId['year_end'])) {
+            // Structured format: has year_start and year_end
+            $academicYearFull = $parsedId['year_start'].'/'.$parsedId['year_end'];
+            $academicYearSimple = $parsedId['year_start'];
+        } elseif (isset($parsedId['year'])) {
+            // Simple format: has year
+            $academicYearSimple = $parsedId['year'];
+            $academicYearFull = $academicYearSimple;
+        } else {
+            // Fallback: extract from original ID
+            $academicYearSimple = $this->extractYearFromId($student->student_id);
+            $academicYearFull = $academicYearSimple;
+        }
+
+        // Get institution codes
+        $institutionPrefix = config('branding.student_id.institution_prefix', 'COLLEGE');
+        $institutionSimple = config('branding.student_id.institution_simple', 'MHIAF');
+
+        // Replace placeholders in pattern
+        $newId = str_replace(
+            [
+                '{INSTITUTION}',
+                '{INSTITUTION_SIMPLE}',
+                '{PROGRAM}',
+                '{PROGRAM_SIMPLE}',
+                '{YEAR_FULL}',
+                '{YEAR_SIMPLE}',
+                '{YEAR}', // Generic year placeholder (defaults to simple)
+                '{SEQUENCE_3}',
+                '{SEQUENCE_4}',
+                '{FIRST_NAME}',
+                '{LAST_NAME}',
+            ],
+            [
+                $institutionPrefix,
+                $institutionSimple,
+                $programCode,
+                strtoupper(substr($programCode, 0, 2)),
+                $academicYearFull,
+                $academicYearSimple,
+                $academicYearSimple, // Generic {YEAR} maps to simple year
+                str_pad($sequence, 3, '0', STR_PAD_LEFT),
+                str_pad($sequence, 4, '0', STR_PAD_LEFT),
+                strtoupper(substr($student->first_name, 0, 2)),
+                strtoupper(substr($student->last_name, 0, 2)),
+            ],
+            $pattern
+        );
+
+        Log::info('Built custom ID with preserved sequence', [
+            'student_id' => $student->id,
+            'student_name' => "{$student->first_name} {$student->last_name}",
+            'original_id' => $student->student_id,
+            'extracted_sequence' => $sequence,
+            'pattern' => $pattern,
+            'new_id' => $newId,
+        ]);
+
+        return $newId;
+    }
+
+    /**
+     * Extract year from student ID (handles both formats)
+     */
+    private function extractYearFromId(string $studentId): string
+    {
+        // Try to extract year from ID
+        // Simple format: MHIAFRGN220003 -> 22
+        // Structured format: MHIAF/RGN/22/23/003 -> 22/23 or 22
+
+        if (preg_match('/(\d{2})\/(\d{2})/', $studentId, $matches)) {
+            // Structured with full year: 22/23
+            return $matches[1];
+        } elseif (preg_match('/\/(\d{2})\//', $studentId, $matches)) {
+            // Structured with single year: /22/
+            return $matches[1];
+        } elseif (preg_match('/[A-Z]+(\d{2})\d{4}/', $studentId, $matches)) {
+            // Simple format: extract 2 digits before last 4
+            return $matches[1];
+        }
+
+        // Fallback to current year
+        return date('y');
+    }
+
+    /**
+     * Check if new ID is unique (excluding current student)
+     */
+    private function isNewIdUnique(string $newId, int $studentId): bool
+    {
+        return ! Student::where('student_id', $newId)
+            ->where('id', '!=', $studentId)
+            ->exists();
     }
 }

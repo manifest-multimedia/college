@@ -605,13 +605,21 @@ class MCPIntegrationService
         $contextString .= "- **Primary Role**: {$context['primary_role']}\n";
 
         if (! empty($context['capabilities'])) {
-            $contextString .= '- **Available Exam Management Capabilities**: '.implode(', ', $context['capabilities'])."\n";
+            $contextString .= '- **Available Capabilities**: '.implode(', ', $context['capabilities'])."\n";
         } else {
-            $contextString .= "- **Exam Management Access**: None - inform user they don't have exam management permissions\n";
+            $contextString .= "- **Management Access**: None - inform user they don't have management permissions\n";
         }
 
         if (! empty($context['exam_permissions'])) {
-            $contextString .= '- **Specific Exam Permissions**: '.implode(', ', $context['exam_permissions'])."\n";
+            $contextString .= '- **Exam Permissions**: '.implode(', ', $context['exam_permissions'])."\n";
+        }
+
+        if (! empty($context['student_permissions'])) {
+            $contextString .= '- **Student Permissions**: '.implode(', ', $context['student_permissions'])."\n";
+        }
+
+        if ($context['can_manage_students'] ?? false) {
+            $contextString .= "- **Student ID Management**: ✅ Can reassign, preview, and revert student IDs\n";
         }
 
         $contextString .= "\n**Important**: Only perform actions the user has permission for. If they request something they can't do, explain their role limitations politely and suggest who they should contact.";

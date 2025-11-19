@@ -22,22 +22,29 @@ class StudentManagementMCPService
     {
         try {
             $filters = $this->buildFilters($arguments);
+            $targetFormat = $arguments['target_format'] ?? null;
+            $customPattern = $arguments['custom_pattern'] ?? null;
 
             Log::info('Preview student ID reassignment requested', [
                 'filters' => $filters,
+                'target_format' => $targetFormat,
+                'custom_pattern' => $customPattern,
                 'user_id' => auth()->id(),
             ]);
 
-            $preview = $this->reassignmentService->previewReassignment($filters);
+            $preview = $this->reassignmentService->previewReassignment($filters, $targetFormat, $customPattern);
 
             return [
                 'success' => true,
-                'preview' => $preview,
                 'summary' => [
                     'total_students' => $preview['total'],
                     'would_be_updated' => $preview['successful'],
                     'filters_applied' => $filters,
+                    'target_format' => $targetFormat,
+                    'custom_pattern' => $customPattern,
+                    'sample_changes' => array_slice($preview['updates'], 0, 5), // Show only 5 examples
                 ],
+                'message' => "Preview: {$preview['successful']} student IDs would be updated out of {$preview['total']} total students.",
             ];
 
         } catch (\Exception $e) {
@@ -96,14 +103,14 @@ class StudentManagementMCPService
 
             return [
                 'success' => true,
-                'results' => $results,
                 'summary' => [
                     'total_processed' => $results['processed'],
                     'successful' => $results['successful'],
                     'failed' => $results['failed'],
-                    'updates' => array_slice($results['updates'], 0, 10), // Show first 10
+                    'sample_updates' => array_slice($results['updates'], 0, 5), // Show only 5 examples
                 ],
-                'validation' => $validation,
+                'message' => "Successfully updated {$results['successful']} student IDs out of {$results['processed']} total. ".
+                            ($results['failed'] > 0 ? "{$results['failed']} failed." : 'All updates completed successfully.'),
             ];
 
         } catch (\Exception $e) {
