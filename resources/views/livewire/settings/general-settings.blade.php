@@ -106,6 +106,21 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <div class="mb-4">
+                            <label for="examTheme" class="form-label fw-bold">Exam Interface Theme</label>
+                            <select wire:model="examTheme" id="examTheme" class="form-select @error('examTheme') is-invalid @enderror">
+                                <option value="default">Default (All questions visible)</option>
+                                <option value="one-by-one">One-by-One (Single question at a time)</option>
+                            </select>
+                            <div class="form-text">
+                                Select the active theme for online examinations. The default theme shows all questions on one page, 
+                                while the one-by-one theme displays questions one at a time with navigation buttons.
+                            </div>
+                            @error('examTheme')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         
                         <div class="mb-4">
                             <label for="schoolLogo" class="form-label fw-bold">School Logo</label>

@@ -178,6 +178,15 @@
                         Edit Details
                     </a>
                     
+                    <a href="{{ route('exams.preview', $exam) }}" class="btn btn-light-primary">
+                        <i class="ki-duotone ki-eye fs-3">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        Preview Exam
+                    </a>
+                    
                     <a href="{{ route('exams.results', ['exam_id' => $exam->id]) }}" class="btn btn-light-success">
                         <i class="ki-duotone ki-chart fs-3">
                             <span class="path1"></span>

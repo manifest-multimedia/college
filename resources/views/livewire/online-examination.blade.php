@@ -1,4 +1,18 @@
 <div class="container my-5 {{ $examExpired && !$canStillSubmit ? 'exam-expired' : '' }}">
+    {{-- Preview Mode Banner (Staff Only) --}}
+    @if(isset($isPreview) && $isPreview)
+        <div class="alert alert-info mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-eye me-2"></i> <strong>Preview Mode</strong> — Viewing as: {{ $student_name }} | No data will be saved
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary">Theme: {{ ucfirst($theme) }}</span>
+                <button wire:click="switchTheme('default')" class="btn btn-sm btn-light {{ $theme === 'default' ? 'active' : '' }}" type="button">Default</button>
+                <button wire:click="switchTheme('one-by-one')" class="btn btn-sm btn-light {{ $theme === 'one-by-one' ? 'active' : '' }}" type="button">One-by-One</button>
+            </div>
+        </div>
+    @endif
+
     <div class="row">
         <!-- Main Exam Content -->
         <div class="mb-4 text-center">
@@ -23,14 +37,21 @@
                             </p>
 
                             <div class="d-flex justify-content-center w-100">
-                                <!-- New Timer Component -->
-                                <x-exam.timer :examSessionId="$examSession->id" 
-                                    :startedAt="$examSession->started_at->toIso8601String()" 
-                                    :completedAt="$examSession->adjustedCompletionTime->toIso8601String()" 
-                                    :hasExtraTime="$hasExtraTime"
-                                    :extraTimeMinutes="$extraTimeMinutes" 
-                                    :debug="false" 
-                                    class="mt-3" />
+                                @if(isset($isPreview) && $isPreview)
+                                    {{-- Timer disabled in preview mode --}}
+                                    <div class="alert alert-secondary mt-3">
+                                        <i class="bi bi-clock me-2"></i> Timer disabled in preview mode
+                                    </div>
+                                @else
+                                    <!-- New Timer Component -->
+                                    <x-exam.timer :examSessionId="$examSession->id" 
+                                        :startedAt="$examSession->started_at->toIso8601String()" 
+                                        :completedAt="$examSession->adjustedCompletionTime->toIso8601String()" 
+                                        :hasExtraTime="$hasExtraTime"
+                                        :extraTimeMinutes="$extraTimeMinutes" 
+                                        :debug="false" 
+                                        class="mt-3" />
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -67,25 +88,21 @@
                             <div class="questions-container">
                                 @foreach ($questions as $index => $question)
                                     <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
-                                        <p><strong>Q{{ $index + 1 }}:</strong> {{ $question['question'] }}</p>
+                                        <div class="mb-3" style="font-size: 18px; font-weight: 600;">
+                                            <strong>Q{{ $index + 1 }}:</strong> {!! $question['question'] !!}
+                                        </div>
                                         <ul class="list-unstyled">
                                             @foreach ($question['options'] as $option)
-                                                <li>
-                                                    <label class="form-check-label">
+                                                <li class="mb-3">
+                                                    <label class="form-check-label d-flex align-items-center">
                                                         <input type="radio" class="mx-2 form-check-input"
                                                             name="responses[{{ $question['id'] }}]"
                                                             value="{{ $option['id'] }}"
                                                             wire:click="storeResponse({{ $question['id'] }}, {{ $option['id'] }})"
                                                             @if (isset($responses[$question['id']]) && $responses[$question['id']] == $option['id']) checked @endif>
-                                                        {{ $option['option_text'] }}
+                                                        <span style="font-size: 16px;">{{ $option['option_text'] }}</span>
                                                     </label>
-                                                    <!-- TEMPORARY CHANGE (May 12, 2025): Removed conditional disabling of radio buttons
-                                                     when exam time expires. This allows students to save their answers at all times
-                                                     during ongoing exams, even after the timer ends.
-                                                     Original code had: @if ($examExpired && !$canStillSubmit)
-        disabled
-        @endif -->
-                                                        </li>
+                                                </li>
                                             @endforeach
                                         </ul>
                                     </div>
@@ -237,7 +254,8 @@
             console.log('Question overview updated. Answered:', answeredCount);
         }
 
-        // Initialize device heartbeat system
+        // Initialize device heartbeat system (disabled in preview mode)
+        @if(!isset($isPreview) || !$isPreview)
         document.addEventListener('livewire:initialized', function() {
             // Send heartbeats to keep the device session active
             const heartbeatInterval = setInterval(function() {
@@ -273,6 +291,7 @@
             // Check device consistency every 60 seconds
             setInterval(checkDeviceConsistency, 60000);
         });
+        @endif
     </script>
 
     <style>

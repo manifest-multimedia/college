@@ -2,44 +2,69 @@
 
 namespace App\Livewire;
 
+use App\Helpers\DeviceDetector;
 use App\Models\Exam;
 use App\Models\ExamSession;
-use App\Models\Student;
 use App\Models\Response;
-use Livewire\Component;
-use Carbon\Carbon;
+use App\Models\Student;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Helpers\DeviceDetector;
+use Livewire\Component;
 
 class OnlineExamination extends Component
 {
     public $examPassword = '';
+
     public $student_id = null;
+
     public $exam;
+
     public $questions = [];
+
     public $responses = [];
+
     public $remainingTime;
+
     public $examStartTime;
+
     public $examSession;
+
     public $student_name;
+
     public $hours;
+
     public $minutes;
+
     public $seconds;
+
     public $user;
+
     public $student;
+
     public $student_index;
+
     public $startedAt;
+
     public $estimatedEndTime;
+
     public $deviceConflict = false;
+
     public $readOnlyMode = false; // New property for read-only access to completed exams
 
     public $timerStart;
+
     public $timerFinish;
 
     public $examExpired = false;
+
     public $timeExpiredAt = null;
+
+    // Themeing support and one-by-one navigation
+    public string $theme = 'default';
+
+    public int $currentIndex = 0;
 
     // Add examTimeExpired to listeners for new timer component
     protected $listeners = ['submitExam', 'examTimeExpired', 'heartbeat'];
@@ -51,29 +76,43 @@ class OnlineExamination extends Component
         $this->student_id = $student_id;
 
         $student = Student::find($student_id);
-        if (!$student) {
+        if (! $student) {
             abort(404, 'Student not found');
         }
 
-        $this->student_name = $student->first_name . ' ' . $student->last_name . ' ' . $student->other_name;
+        $this->student_name = $student->first_name.' '.$student->last_name.' '.$student->other_name;
         $this->student = $student; // Save student instance for reuse
         $this->exam = Exam::with('course')->where('password', $this->examPassword)->first();
 
-        if (!$this->exam) {
+        if (! $this->exam) {
             abort(404, 'Exam not found');
         }
 
         // Initialize user and session
         $this->initializeExamSession();
-        
+
+        // Load active exam theme from settings (fallback to default)
+        try {
+            $activeTheme = \Illuminate\Support\Facades\DB::table('settings')
+                ->where('key', 'exam_active_theme')
+                ->value('value');
+            if (in_array($activeTheme, ['default', 'one-by-one'])) {
+                $this->theme = $activeTheme;
+            }
+        } catch (\Throwable $e) {
+            // If settings table doesn't exist yet or any error occurs, keep default theme
+            Log::warning('Exam theme read failed, using default', ['error' => $e->getMessage()]);
+            $this->theme = 'default';
+        }
+
         // Check if exam is completed - but account for restored sessions
         if ($this->examSession && $this->examSession->completed_at) {
             // A restored session has completed_at set to a future date with auto_submitted set to false
-            $isRestoredSession = $this->examSession->completed_at->isFuture() && !$this->examSession->auto_submitted;
-            
+            $isRestoredSession = $this->examSession->completed_at->isFuture() && ! $this->examSession->auto_submitted;
+
             // Only set read-only mode if it's NOT a restored session
-            $this->readOnlyMode = !$isRestoredSession;
-            
+            $this->readOnlyMode = ! $isRestoredSession;
+
             // Log the session status for debugging
             Log::info('Exam session status determined', [
                 'session_id' => $this->examSession->id,
@@ -82,13 +121,13 @@ class OnlineExamination extends Component
                 'is_future_date' => $this->examSession->completed_at->isFuture(),
                 'auto_submitted' => $this->examSession->auto_submitted,
                 'is_restored_session' => $isRestoredSession,
-                'read_only_mode' => $this->readOnlyMode
+                'read_only_mode' => $this->readOnlyMode,
             ]);
         }
-        
+
         // Load existing responses from the database
         $this->loadResponses();
-        
+
         // Then load questions with the loaded responses
         $this->loadQuestions();
     }
@@ -98,8 +137,8 @@ class OnlineExamination extends Component
      */
     private function getDeviceInfo()
     {
-        $detector = new DeviceDetector();
-        
+        $detector = new DeviceDetector;
+
         return json_encode($detector->getDeviceInfo());
     }
 
@@ -120,17 +159,17 @@ class OnlineExamination extends Component
     protected function loadResponses()
     {
         // Check device consistency before loading responses
-        if (!$this->validateDeviceAccess()) {
+        if (! $this->validateDeviceAccess()) {
             return;
         }
 
         $existingResponses = Response::where('exam_session_id', $this->examSession->id)->get();
-        
+
         // Map responses to question IDs for easier access
         $this->responses = $existingResponses->mapWithKeys(function ($response) {
             return [$response->question_id => $response->selected_option];
         })->toArray();
-        
+
         // Store in session as backup
         session()->put('responses', $this->responses);
     }
@@ -143,9 +182,9 @@ class OnlineExamination extends Component
         // Get the current device info and token
         $currentDeviceInfo = $this->getDeviceInfo();
         $sessionToken = session('exam_session_token');
-        
+
         // If no token in session, generate a new one
-        if (!$sessionToken) {
+        if (! $sessionToken) {
             $sessionToken = Str::random(40);
             session(['exam_session_token' => $sessionToken]);
         }
@@ -154,32 +193,33 @@ class OnlineExamination extends Component
         if ($this->readOnlyMode) {
             // Still update the device info for tracking purposes, but don't enforce restrictions
             $this->examSession->updateDeviceAccess($sessionToken, $currentDeviceInfo);
-            
+
             Log::info('Device access allowed in read-only mode', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
-                'device_info' => $currentDeviceInfo
+                'device_info' => $currentDeviceInfo,
             ]);
-            
+
             return true;
         }
 
         // If the session is being accessed from a different device
         if ($this->examSession->isBeingAccessedFromDifferentDevice($sessionToken, $currentDeviceInfo)) {
             $this->deviceConflict = true;
-            
+
             Log::warning('Device conflict detected during exam', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
                 'saved_device' => $this->examSession->device_info,
-                'current_device' => $currentDeviceInfo
+                'current_device' => $currentDeviceInfo,
             ]);
-            
+
             return false;
         }
-        
+
         // Keep updating the last activity time
         $this->examSession->updateDeviceAccess($sessionToken, $currentDeviceInfo);
+
         return true;
     }
 
@@ -202,28 +242,28 @@ class OnlineExamination extends Component
             if ($existingSession) {
                 // Use the existing session
                 $this->examSession = $existingSession;
-                
+
                 Log::info('Using existing exam session', [
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
                     'start_time' => $this->examSession->started_at->toDateTimeString(),
-                    'end_time' => $this->examSession->completed_at ? $this->examSession->completed_at->toDateTimeString() : 'Not completed'
+                    'end_time' => $this->examSession->completed_at ? $this->examSession->completed_at->toDateTimeString() : 'Not completed',
                 ]);
-                
+
                 // Validate device access
-                if (!$this->validateDeviceAccess()) {
+                if (! $this->validateDeviceAccess()) {
                     return;
                 }
             } else {
                 // Create a new exam session with current time as start time
                 $currentTime = now();
                 $examEndTime = $currentTime->copy()->addMinutes((int) $this->exam->duration);
-                
+
                 // Get session token and device info
                 $sessionToken = session('exam_session_token') ?? Str::random(40);
                 session(['exam_session_token' => $sessionToken]);
                 $deviceInfo = $this->getDeviceInfo();
-                
+
                 // Create a new session with the current time
                 $this->examSession = ExamSession::create([
                     'exam_id' => $this->exam->id,
@@ -235,15 +275,15 @@ class OnlineExamination extends Component
                     'auto_submitted' => false,
                     'session_token' => $sessionToken,
                     'device_info' => $deviceInfo,
-                    'last_activity' => $currentTime
+                    'last_activity' => $currentTime,
                 ]);
-                
+
                 // Log the creation of a new exam session
                 Log::info('New exam session created', [
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
                     'exam_start' => $currentTime->toDateTimeString(),
-                    'device_info' => $deviceInfo
+                    'device_info' => $deviceInfo,
                 ]);
             }
 
@@ -260,7 +300,7 @@ class OnlineExamination extends Component
                 Log::info('Extra time applied to exam session', [
                     'session_id' => $this->examSession->id,
                     'extra_time' => $extraTime,
-                    'total_duration' => $totalDuration
+                    'total_duration' => $totalDuration,
                 ]);
             }
 
@@ -268,9 +308,9 @@ class OnlineExamination extends Component
             Log::error('Error initializing exam session', [
                 'error' => $e->getMessage(),
                 'student_id' => $this->student->student_id ?? null,
-                'exam_id' => $this->exam->id ?? null
+                'exam_id' => $this->exam->id ?? null,
             ]);
-            
+
             abort(500, 'An error occurred while setting up the exam session.');
         }
     }
@@ -280,26 +320,26 @@ class OnlineExamination extends Component
     //     try {
     //         // Get the number of questions per session from the exam configuration or use 140 as fallback
     //         $questionsPerSession = $this->exam->questions_per_session ?? 140;
-            
+
     //         // First, get any questions that the student has already answered
     //         $answeredQuestionIds = array_keys($this->responses);
     //         $answeredQuestions = [];
-            
+
     //         if (!empty($answeredQuestionIds)) {
     //             $answeredQuestions = $this->exam->questions()
     //                 ->whereIn('id', $answeredQuestionIds)
     //                 ->get();
-                
+
     //             Log::info('Prioritizing previously answered questions', [
     //                 'session_id' => $this->examSession->id,
     //                 'student_id' => $this->student->student_id,
     //                 'answered_count' => count($answeredQuestions)
     //             ]);
     //         }
-            
+
     //         // Calculate how many additional random questions we need
     //         $additionalQuestionsNeeded = $questionsPerSession - count($answeredQuestions);
-            
+
     //         // If we need additional questions, get them randomly but exclude already answered ones
     //         $randomQuestions = collect([]);
     //         if ($additionalQuestionsNeeded > 0) {
@@ -311,10 +351,10 @@ class OnlineExamination extends Component
     //                 ->take($additionalQuestionsNeeded)
     //                 ->get();
     //         }
-            
+
     //         // Merge the answered questions with the random questions
     //         $examQuestions = $answeredQuestions->merge($randomQuestions);
-            
+
     //         // Log question selection details for debugging
     //         Log::info('Exam questions loaded', [
     //             'session_id' => $this->examSession->id,
@@ -322,7 +362,7 @@ class OnlineExamination extends Component
     //             'previously_answered' => count($answeredQuestions),
     //             'random_questions' => $randomQuestions->count()
     //         ]);
-            
+
     //         // Map the questions to the format expected by the view
     //         $this->questions = $examQuestions->map(function ($question) {
     //             // Get the response for this question if it exists
@@ -340,14 +380,14 @@ class OnlineExamination extends Component
     //                 'marks' => $question->mark,
     //             ];
     //         });
-            
+
     //     } catch (\Exception $e) {
     //         Log::error('Error loading exam questions', [
     //             'error' => $e->getMessage(),
     //             'student_id' => $this->student->student_id ?? null,
     //             'exam_id' => $this->exam->id ?? null
     //         ]);
-            
+
     //         // If there's an error, ensure we at least have an empty questions array
     //         $this->questions = [];
     //     }
@@ -368,7 +408,7 @@ class OnlineExamination extends Component
                     'student_id' => $this->student->student_id,
                     'existing_count' => $existingSessionQuestions->count(),
                 ]);
-                
+
                 $examQuestions = $existingSessionQuestions->pluck('question');
             } else {
                 // Generate new session questions using question sets
@@ -376,40 +416,40 @@ class OnlineExamination extends Component
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
                     'exam_has_question_sets' => $this->exam->questionSets()->exists(),
-                    'exam_has_direct_questions' => $this->exam->questions()->exists()
+                    'exam_has_direct_questions' => $this->exam->questions()->exists(),
                 ]);
-                
+
                 // Use the exam model's generateSessionQuestions method which handles question sets properly
                 $examQuestions = $this->exam->generateSessionQuestions(true); // true for shuffling
-                
+
                 // Limit to questions_per_session if configured
                 $questionsPerSession = $this->exam->questions_per_session ?? $examQuestions->count();
                 if ($examQuestions->count() > $questionsPerSession) {
                     $examQuestions = $examQuestions->take($questionsPerSession);
                 }
-                
+
                 // Store these questions in exam_session_questions for consistency across page loads
                 $displayOrder = 1;
                 foreach ($examQuestions as $question) {
                     \App\Models\ExamSessionQuestion::create([
                         'exam_session_id' => $this->examSession->id,
                         'question_id' => $question->id,
-                        'display_order' => $displayOrder++
+                        'display_order' => $displayOrder++,
                     ]);
                 }
-                
+
                 Log::info('Session questions generated and stored', [
                     'session_id' => $this->examSession->id,
                     'total_questions' => $examQuestions->count(),
-                    'questions_per_session' => $questionsPerSession
+                    'questions_per_session' => $questionsPerSession,
                 ]);
             }
-    
+
             // Map the questions to the format expected by the view
             $this->questions = $examQuestions->map(function ($question) {
                 // Get the response for this question if it exists
                 $response = $this->responses[$question->id] ?? null;
-    
+
                 return [
                     'id' => $question->id,
                     'question' => $question->question_text,
@@ -417,23 +457,23 @@ class OnlineExamination extends Component
                     'marks' => $question->mark,
                 ];
             })->values()->toArray();
-    
+
             Log::info('Questions loaded successfully', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
                 'final_question_count' => count($this->questions),
                 'has_question_sets' => $this->exam->questionSets()->exists(),
-                'question_set_count' => $this->exam->questionSets()->count()
+                'question_set_count' => $this->exam->questionSets()->count(),
             ]);
-    
+
         } catch (\Exception $e) {
             Log::error('Error loading exam questions', [
                 'error' => $e->getMessage(),
                 'student_id' => $this->student->student_id ?? null,
                 'exam_id' => $this->exam->id ?? null,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-    
+
             // Fallback: if there's an error with question sets, try loading direct questions
             try {
                 $fallbackQuestions = $this->exam->questions()->with('options')->get();
@@ -445,19 +485,44 @@ class OnlineExamination extends Component
                         'marks' => $question->mark,
                     ];
                 })->toArray();
-                
+
                 Log::info('Using fallback direct questions', [
                     'session_id' => $this->examSession->id,
-                    'fallback_count' => count($this->questions)
+                    'fallback_count' => count($this->questions),
                 ]);
             } catch (\Exception $fallbackError) {
                 Log::error('Fallback question loading also failed', [
-                    'error' => $fallbackError->getMessage()
+                    'error' => $fallbackError->getMessage(),
                 ]);
                 $this->questions = [];
             }
         }
     }
+
+    /**
+     * Navigation for one-by-one theme
+     */
+    public function nextQuestion(): void
+    {
+        if ($this->currentIndex < max(0, count($this->questions) - 1)) {
+            $this->currentIndex++;
+        }
+    }
+
+    public function prevQuestion(): void
+    {
+        if ($this->currentIndex > 0) {
+            $this->currentIndex--;
+        }
+    }
+
+    public function goToQuestion(int $index): void
+    {
+        if ($index >= 0 && $index < count($this->questions)) {
+            $this->currentIndex = $index;
+        }
+    }
+
     public function storeResponse($questionId, $answer)
     {
         try {
@@ -467,21 +532,22 @@ class OnlineExamination extends Component
                 Log::warning('Attempt to modify exam in read-only mode', [
                     'session_id' => $this->examSession->id,
                     'student_id' => $this->student->student_id,
-                    'question_id' => $questionId
+                    'question_id' => $questionId,
                 ]);
+
                 return;
             }
-            
-            // TEMPORARY CHANGE (May 12, 2025): Removed time expiration restrictions to allow students 
+
+            // TEMPORARY CHANGE (May 12, 2025): Removed time expiration restrictions to allow students
             // to save their answers at all times during ongoing exams. This bypasses the normal checks
             // for exam expiration to ensure students can submit even after the timer ends.
             // TODO: Restore proper time restrictions after current exam period.
-            
+
             /* Original code commented out:
             // Check if the exam is expired but has extra time
             $hasExtraTime = $this->examSession && $this->examSession->extra_time_minutes > 0;
             $isExpired = $this->isExamExpired();
-            
+
             // Don't process responses if exam is expired and has no extra time
             if ($isExpired && !$hasExtraTime) {
                 Log::info('Response not saved - exam is expired without extra time', [
@@ -492,7 +558,7 @@ class OnlineExamination extends Component
                 return;
             }
             */
-            
+
             // Log the response being saved
             Log::info('Saving exam response', [
                 'session_id' => $this->examSession->id,
@@ -500,9 +566,9 @@ class OnlineExamination extends Component
                 'answer' => $answer,
                 'student_id' => $this->user->id,
                 'exam_expired' => $this->isExamExpired(),
-                'has_extra_time' => $this->examSession && $this->examSession->extra_time_minutes > 0
+                'has_extra_time' => $this->examSession && $this->examSession->extra_time_minutes > 0,
             ]);
-            
+
             // Create or update the response in the database
             $response = Response::updateOrCreate(
                 [
@@ -515,10 +581,10 @@ class OnlineExamination extends Component
 
             // Update the responses array in memory
             $this->responses[$questionId] = $answer;
-            
+
             // Store in session as backup
             session()->put('responses', $this->responses);
-            
+
             // Dispatch browser event in Laravel 12 format
             $this->dispatch('responseUpdated');
         } catch (\Throwable $th) {
@@ -526,7 +592,7 @@ class OnlineExamination extends Component
             Log::error('Error storing exam response', [
                 'error' => $th->getMessage(),
                 'question_id' => $questionId,
-                'student_id' => $this->user->id ?? null
+                'student_id' => $this->user->id ?? null,
             ]);
             report($th);
         }
@@ -536,7 +602,7 @@ class OnlineExamination extends Component
     {
         try {
             $score = $this->calculateScore();
-            
+
             // Update the exam session with completion information
             $this->examSession->update([
                 'completed_at' => now(),
@@ -550,19 +616,20 @@ class OnlineExamination extends Component
                 'student_id' => $this->student->student_id,
                 'score' => $score,
                 'question_count' => count($this->questions),
-                'answered_count' => count(array_filter($this->responses))
+                'answered_count' => count(array_filter($this->responses)),
             ]);
 
             session()->flash('message', 'Exam submitted successfully.');
+
             return redirect()->route('take-exam');
         } catch (\Throwable $th) {
             // Handle submission errors
             Log::error('Error submitting exam', [
                 'error' => $th->getMessage(),
                 'session_id' => $this->examSession->id,
-                'student_id' => $this->student->student_id
+                'student_id' => $this->student->student_id,
             ]);
-            
+
             session()->flash('error', 'Failed to submit exam. Please try again.');
             report($th);
         }
@@ -600,8 +667,9 @@ class OnlineExamination extends Component
      * Get remaining time for the exam (ISO format)
      * This is a backward-compatibility method for the deprecated timer system
      * It will be removed once the new timer system is fully integrated across all environments
-     * 
+     *
      * @return string ISO 8601 format datetime string
+     *
      * @deprecated Since May 12, 2025 - Use the new ExamTimerService instead
      */
     public function getRemainingTime()
@@ -611,20 +679,20 @@ class OnlineExamination extends Component
             Log::info('Deprecated getRemainingTime method called', [
                 'session_id' => $this->examSession->id ?? null,
                 'student_id' => $this->student->student_id ?? null,
-                'exam_id' => $this->exam->id ?? null
+                'exam_id' => $this->exam->id ?? null,
             ]);
-            
+
             // Get the actual start time from when the student started the exam
             $startedAt = Carbon::parse($this->examSession->started_at);
-            
+
             // Calculate the expected completion time based on the exam duration
             $examDuration = (int) $this->exam->duration;
             $extraTime = (int) $this->examSession->extra_time_minutes;
             $totalDuration = $examDuration + $extraTime;
-            
-            // Calculate proper end time based on the actual start time 
+
+            // Calculate proper end time based on the actual start time
             $adjustedCompletionTime = $startedAt->copy()->addMinutes($totalDuration);
-            
+
             // Set the values for the view
             $this->timerStart = $startedAt;
             $this->timerFinish = $adjustedCompletionTime;
@@ -634,7 +702,7 @@ class OnlineExamination extends Component
             // Calculate remaining time in seconds
             $currentTime = Carbon::now();
             $remainingSeconds = 0;
-            
+
             if ($currentTime->lt($adjustedCompletionTime)) {
                 $remainingSeconds = $currentTime->diffInSeconds($adjustedCompletionTime);
             }
@@ -648,9 +716,9 @@ class OnlineExamination extends Component
         } catch (\Exception $e) {
             Log::error('Error calculating remaining time', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return now()->addHour()->toIso8601String();
         }
     }
@@ -665,93 +733,99 @@ class OnlineExamination extends Component
             // Mark the exam as expired
             $this->examExpired = true;
             $this->timeExpiredAt = now();
-            
+
             // Log the expiration
             Log::info('Exam time expired - automatic submission triggered by timer component', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
                 'exam_id' => $this->exam->id,
-                'time' => $this->timeExpiredAt
+                'time' => $this->timeExpiredAt,
             ]);
-            
+
             // Calculate and save the score
             $score = $this->calculateScore();
-            
+
             // Update the session with completion info
             $this->examSession->update([
                 'completed_at' => $this->timeExpiredAt,
                 'score' => $score,
                 'auto_submitted' => true,
             ]);
-            
+
             // Return status for the JS callback
             return [
                 'success' => true,
                 'message' => 'Time expired! Your exam has been automatically submitted.',
                 'score' => $score,
-                'submittedAt' => $this->timeExpiredAt->toIso8601String()
+                'submittedAt' => $this->timeExpiredAt->toIso8601String(),
             ];
         } catch (\Exception $e) {
             Log::error('Error handling exam expiration', [
                 'error' => $e->getMessage(),
                 'session_id' => $this->examSession->id ?? null,
-                'student_id' => $this->student->student_id ?? null
+                'student_id' => $this->student->student_id ?? null,
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => 'Failed to process exam submission.',
-                'errorDetails' => $e->getMessage()
+                'errorDetails' => $e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Check if the exam is expired or completed
      */
     public function isExamExpired()
     {
         // First check if extra time has been recently added
-        $extraTimeAdded = $this->examSession && $this->examSession->extra_time_minutes > 0 && 
-                          $this->examSession->extra_time_added_at && 
+        $extraTimeAdded = $this->examSession && $this->examSession->extra_time_minutes > 0 &&
+                          $this->examSession->extra_time_added_at &&
                           Carbon::parse($this->examSession->extra_time_added_at)->isToday();
-                          
+
         // If extra time was added recently, treat the exam as active regardless of completed_at
         if ($extraTimeAdded && Carbon::now()->lt($this->examSession->adjustedCompletionTime)) {
             Log::info('Exam is active due to recently added extra time', [
                 'session_id' => $this->examSession->id ?? null,
                 'extra_time_minutes' => $this->examSession->extra_time_minutes,
                 'extra_time_added_at' => $this->examSession->extra_time_added_at,
-                'adjustedCompletionTime' => $this->examSession->adjustedCompletionTime
+                'adjustedCompletionTime' => $this->examSession->adjustedCompletionTime,
             ]);
+
             return false;
         }
-        
+
         // Don't count an exam as expired if completed_at is in the future (meaning it's the scheduled end time)
         if ($this->examSession && $this->examSession->completed_at && Carbon::parse($this->examSession->completed_at)->isFuture()) {
             Log::info('Exam is not expired because completed_at is in the future');
+
             return false;
         }
-        
+
         // Always use adjustedCompletionTime which includes any extra time
         if ($this->examSession && $this->examSession->adjustedCompletionTime && Carbon::now()->lt($this->examSession->adjustedCompletionTime)) {
             Log::info('Exam is not expired - still within adjusted completion time');
+
             return false;
         }
-        
+
         // Check if the exam was explicitly marked as completed with score
         if ($this->examSession && $this->examSession->completed_at && $this->examSession->score !== null) {
             Log::info('Exam is expired because it was submitted with a score');
+
             return true;
         }
-        
+
         // Check if the current time is past the adjusted completion time
         if ($this->examSession && Carbon::now()->gt($this->examSession->adjustedCompletionTime)) {
             Log::info('Exam is expired because current time is past adjustedCompletionTime');
+
             return true;
         }
-        
+
         Log::info('Exam is active and not expired');
+
         return false;
     }
 
@@ -761,7 +835,7 @@ class OnlineExamination extends Component
         if ($this->deviceConflict) {
             return view('livewire.exam-device-conflict');
         }
-        
+
         // For read-only mode (completed exams), use a different view
         if ($this->readOnlyMode) {
             return view('livewire.exam-review-mode', [
@@ -770,25 +844,29 @@ class OnlineExamination extends Component
                 'examSession' => $this->examSession,
                 'student' => $this->student,
                 'student_index' => $this->student_index,
-                'responses' => $this->responses
+                'responses' => $this->responses,
             ]);
         }
-        
+
         // Refresh the remaining time on each render for active exams
         $this->calculateRemainingTime();
-        
+
         // Update last activity time on each render
         $this->heartbeat();
-        
-        // Regular exam view for active exams
-        return view('livewire.online-examination', [
+
+        // Themed exam view for active exams
+        $view = $this->theme === 'one-by-one'
+            ? 'livewire.online-examination-one'
+            : 'livewire.online-examination';
+
+        return view($view, [
             'questions' => $this->questions,
             'exam' => $this->exam,
             'remainingTime' => $this->remainingTime,
             'examExpired' => $this->isExamExpired(),
             'hasExtraTime' => $this->examSession && $this->examSession->extra_time_minutes > 0,
             'canStillSubmit' => $this->examSession && $this->examSession->extra_time_minutes > 0 && Carbon::now()->lt($this->examSession->adjustedCompletionTime),
-            'extraTimeMinutes' => $this->examSession ? $this->examSession->extra_time_minutes : 0
+            'extraTimeMinutes' => $this->examSession ? $this->examSession->extra_time_minutes : 0,
         ]);
     }
 }

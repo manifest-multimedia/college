@@ -67,6 +67,24 @@
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ $exam->id }}">
                                     <li>
+                                        <a href="{{ route('exams.show', $exam->slug ? $exam->slug : $exam->id) }}" class="dropdown-item">
+                                            <i class="ki-duotone ki-information-5 fs-6 me-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                                <span class="path3"></span>
+                                            </i>View Details
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('exams.preview', $exam) }}" class="dropdown-item">
+                                            <i class="ki-duotone ki-eye fs-6 me-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                                <span class="path3"></span>
+                                            </i>Preview Exam
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a href="{{ route('questionbank.with.slug', $exam->slug ? $exam->slug : $exam->id) }}" class="dropdown-item">
                                             <i class="ki-duotone ki-bank fs-6 me-2">
                                                 <span class="path1"></span>

@@ -16,6 +16,11 @@ Route::get('/mcq', function () {
 
 Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file.upload');
 
+// Staff Exam Preview (must be before generic student exam route to avoid conflicts)
+Route::get('/exams/{exam}/preview', \App\Livewire\ExamPreview::class)
+    ->middleware(['auth:sanctum', 'role:Lecturer|Academic Officer|Administrator|Super Admin|System'])
+    ->name('exams.preview');
+
 Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
 
     $exam = Exam::where('slug', $slug)->first();
