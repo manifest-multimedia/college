@@ -2,30 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Option;
+use App\Models\Question;
+use App\Models\QuestionSet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\QuestionSet;
-use App\Models\Question;
-use App\Models\Option;
 
 class QuestionSetQuestionController extends Controller
 {
+    /**
+     * Map form question types to database enum values
+     */
+    private function mapQuestionType($formType)
+    {
+        $mapping = [
+            'multiple_choice' => 'MCQ',
+            'true_false' => 'TF',
+            'essay' => 'ESSAY',
+            'multiple_answer' => 'MA',
+        ];
+
+        return $mapping[$formType] ?? 'MCQ'; // Default to MCQ if not found
+    }
+
     /**
      * Show the create question form
      */
     public function create($questionSetId)
     {
         $questionSet = QuestionSet::with('course')->find($questionSetId);
-        
-        if (!$questionSet) {
+
+        if (! $questionSet) {
             return redirect()->route('question.sets')
                 ->with('error', 'Question set not found.');
         }
-        
+
         // Pre-calculate questions count
         $questionsCount = $questionSet->questions()->count();
-        
+
         return view('question-sets.questions.create', compact('questionSet', 'questionsCount', 'questionSetId'));
     }
 
@@ -35,8 +50,8 @@ class QuestionSetQuestionController extends Controller
     public function edit($questionSetId, $questionId)
     {
         $questionSet = QuestionSet::with('course')->find($questionSetId);
-        
-        if (!$questionSet) {
+
+        if (! $questionSet) {
             return redirect()->route('question.sets')
                 ->with('error', 'Question set not found.');
         }
@@ -45,14 +60,14 @@ class QuestionSetQuestionController extends Controller
             ->where('question_set_id', $questionSetId)
             ->find($questionId);
 
-        if (!$question) {
+        if (! $question) {
             return redirect()->route('question.sets.questions', $questionSetId)
                 ->with('error', 'Question not found.');
         }
-        
+
         // Pre-calculate questions count
         $questionsCount = $questionSet->questions()->count();
-        
+
         return view('question-sets.questions.edit', compact('questionSet', 'question', 'questionsCount', 'questionSetId', 'questionId'));
     }
 
@@ -61,11 +76,27 @@ class QuestionSetQuestionController extends Controller
      */
     public function store(Request $request, $questionSetId)
     {
+        // Log incoming request
+        Log::info('Question creation request received', [
+            'question_set_id' => $questionSetId,
+            'has_questions_json' => $request->has('questions'),
+            'has_question_text' => $request->filled('question_text'),
+            'request_keys' => array_keys($request->all()),
+            'raw_questions' => $request->input('questions'),
+        ]);
+
         // Get all questions data
         $questionsData = json_decode($request->input('questions'), true) ?: [];
-        
+
+        Log::info('Parsed questions data', [
+            'questions_count' => count($questionsData),
+            'questions_data' => $questionsData,
+        ]);
+
         // Add current form data if not empty
         if ($request->filled('question_text')) {
+            Log::info('Adding current form data to questions');
+
             $currentQuestion = [
                 'question_text' => $request->input('question_text'),
                 'question_type' => $request->input('question_type'),
@@ -74,94 +105,143 @@ class QuestionSetQuestionController extends Controller
                 'explanation' => $request->input('explanation'),
                 'exam_section' => $request->input('exam_section'),
                 'options' => [],
-                'correct_options' => []
+                'correct_options' => [],
             ];
-            
+
             // Get options and correct answers from form
-            $options = array_filter($request->input('options', []), fn($opt) => !empty(trim($opt)));
+            $options = array_filter($request->input('options', []), fn ($opt) => ! empty(trim($opt)));
             $correctOptions = $request->input('correct_options', []);
-            
+
             $currentQuestion['options'] = array_values($options);
             $currentQuestion['correct_options'] = array_map('intval', $correctOptions);
-            
+
+            Log::info('Current question prepared', [
+                'question' => $currentQuestion,
+            ]);
+
             $questionsData[] = $currentQuestion;
         }
-        
+
         // Validate we have at least one question
         if (empty($questionsData)) {
+            Log::warning('No questions provided in request');
+
             return response()->json(['error' => 'No questions provided.'], 422);
         }
-        
+
+        Log::info('Total questions to create', [
+            'count' => count($questionsData),
+        ]);
+
         // Custom validation rules
         foreach ($questionsData as $index => $question) {
             if (empty($question['question_text'])) {
-                return response()->json(['error' => "Question text is required for question " . ($index + 1)], 422);
+                return response()->json(['error' => 'Question text is required for question '.($index + 1)], 422);
             }
-            
+
             if (strlen($question['question_text']) < 5) {
-                return response()->json(['error' => "Question text must be at least 5 characters for question " . ($index + 1)], 422);
+                return response()->json(['error' => 'Question text must be at least 5 characters for question '.($index + 1)], 422);
             }
-            
+
             if (count($question['options']) < 2) {
-                return response()->json(['error' => "At least 2 options are required for question " . ($index + 1)], 422);
+                return response()->json(['error' => 'At least 2 options are required for question '.($index + 1)], 422);
             }
-            
+
             if (empty($question['correct_options'])) {
-                return response()->json(['error' => "Please select at least one correct answer for question " . ($index + 1)], 422);
+                return response()->json(['error' => 'Please select at least one correct answer for question '.($index + 1)], 422);
             }
-            
+
             foreach ($question['correct_options'] as $optionIndex) {
-                if (!isset($question['options'][$optionIndex])) {
-                    return response()->json(['error' => "Invalid correct option selected for question " . ($index + 1)], 422);
+                if (! isset($question['options'][$optionIndex])) {
+                    return response()->json(['error' => 'Invalid correct option selected for question '.($index + 1)], 422);
                 }
             }
         }
 
         $questionSet = QuestionSet::find($questionSetId);
-        if (!$questionSet) {
+        if (! $questionSet) {
+            Log::warning('Question set not found', ['question_set_id' => $questionSetId]);
+
             return response()->json(['error' => 'Question set not found.'], 404);
         }
+
+        Log::info('Question set found', [
+            'question_set_id' => $questionSet->id,
+            'question_set_name' => $questionSet->name,
+        ]);
 
         try {
             DB::beginTransaction();
 
+            Log::info('Database transaction started');
+
             $createdQuestions = [];
-            
-            foreach ($questionsData as $questionData) {
+
+            foreach ($questionsData as $index => $questionData) {
+                Log::info('Creating question', [
+                    'index' => $index,
+                    'question_text_length' => strlen($questionData['question_text']),
+                    'options_count' => count($questionData['options']),
+                    'correct_options_count' => count($questionData['correct_options']),
+                ]);
+
                 $question = Question::create([
                     'question_set_id' => $questionSetId,
                     'question_text' => $questionData['question_text'],
-                    'type' => $questionData['question_type'],
+                    'type' => $this->mapQuestionType($questionData['question_type']),
                     'difficulty_level' => $questionData['difficulty_level'] ?? 'medium',
                     'mark' => $questionData['marks'],
                     'explanation' => $questionData['explanation'] ?? null,
                     'exam_section' => $questionData['exam_section'] ?? null,
                 ]);
-                
+
+                Log::info('Question created', [
+                    'question_id' => $question->id,
+                    'index' => $index,
+                ]);
+
                 // Create options
-                foreach ($questionData['options'] as $index => $optionText) {
+                foreach ($questionData['options'] as $optIndex => $optionText) {
+                    $isCorrect = in_array($optIndex, $questionData['correct_options']);
+
                     Option::create([
                         'question_id' => $question->id,
                         'option_text' => $optionText,
-                        'is_correct' => in_array($index, $questionData['correct_options']),
+                        'is_correct' => $isCorrect,
+                    ]);
+
+                    Log::debug('Option created', [
+                        'question_id' => $question->id,
+                        'option_index' => $optIndex,
+                        'is_correct' => $isCorrect,
                     ]);
                 }
-                
+
                 $createdQuestions[] = $question->id;
             }
 
             DB::commit();
 
+            Log::info('Questions created successfully', [
+                'count' => count($createdQuestions),
+                'question_ids' => $createdQuestions,
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => count($createdQuestions) . ' question(s) created successfully!',
-                'question_ids' => $createdQuestions
+                'message' => count($createdQuestions).' question(s) created successfully!',
+                'question_ids' => $createdQuestions,
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Question creation error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create questions: ' . $e->getMessage()], 500);
+            Log::error('Question creation error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'question_set_id' => $questionSetId,
+            ]);
+
+            return response()->json(['error' => 'Failed to create questions: '.$e->getMessage()], 500);
         }
     }
 
@@ -184,19 +264,19 @@ class QuestionSetQuestionController extends Controller
         ]);
 
         $questionSet = QuestionSet::find($questionSetId);
-        if (!$questionSet) {
+        if (! $questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
         $question = Question::where('question_set_id', $questionSetId)->find($questionId);
-        if (!$question) {
+        if (! $question) {
             return response()->json(['error' => 'Question not found.'], 404);
         }
 
         // Validate correct options
         $correctOptions = $request->input('correct_options');
         $options = $request->input('options');
-        
+
         foreach ($correctOptions as $optionIndex) {
             if ($optionIndex >= count($options)) {
                 return response()->json(['error' => 'Invalid correct option selected.'], 422);
@@ -208,7 +288,7 @@ class QuestionSetQuestionController extends Controller
 
             $question->update([
                 'question_text' => $request->input('question_text'),
-                'type' => $request->input('question_type'),
+                'type' => $this->mapQuestionType($request->input('question_type')),
                 'difficulty_level' => $request->input('difficulty_level'),
                 'mark' => $request->input('marks'),
                 'explanation' => $request->input('explanation'),
@@ -230,13 +310,14 @@ class QuestionSetQuestionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Question updated successfully!'
+                'message' => 'Question updated successfully!',
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Question update error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update question: ' . $e->getMessage()], 500);
+            Log::error('Question update error: '.$e->getMessage());
+
+            return response()->json(['error' => 'Failed to update question: '.$e->getMessage()], 500);
         }
     }
 
@@ -246,12 +327,12 @@ class QuestionSetQuestionController extends Controller
     public function destroy($questionSetId, $questionId)
     {
         $questionSet = QuestionSet::find($questionSetId);
-        if (!$questionSet) {
+        if (! $questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
         $question = Question::where('question_set_id', $questionSetId)->find($questionId);
-        if (!$question) {
+        if (! $question) {
             return response()->json(['error' => 'Question not found.'], 404);
         }
 
@@ -260,7 +341,7 @@ class QuestionSetQuestionController extends Controller
 
             // Delete options first (due to foreign key constraint)
             $question->options()->delete();
-            
+
             // Delete the question
             $question->delete();
 
@@ -268,13 +349,14 @@ class QuestionSetQuestionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Question deleted successfully!'
+                'message' => 'Question deleted successfully!',
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Question deletion error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to delete question: ' . $e->getMessage()], 500);
+            Log::error('Question deletion error: '.$e->getMessage());
+
+            return response()->json(['error' => 'Failed to delete question: '.$e->getMessage()], 500);
         }
     }
 
@@ -284,7 +366,7 @@ class QuestionSetQuestionController extends Controller
     public function show($questionSetId, $questionId)
     {
         $questionSet = QuestionSet::find($questionSetId);
-        if (!$questionSet) {
+        if (! $questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
@@ -292,7 +374,7 @@ class QuestionSetQuestionController extends Controller
             ->where('question_set_id', $questionSetId)
             ->find($questionId);
 
-        if (!$question) {
+        if (! $question) {
             return response()->json(['error' => 'Question not found.'], 404);
         }
 
@@ -317,8 +399,8 @@ class QuestionSetQuestionController extends Controller
                 'explanation' => $question->explanation,
                 'exam_section' => $question->exam_section,
                 'options' => $options,
-                'correct_options' => $correctOptions
-            ]
+                'correct_options' => $correctOptions,
+            ],
         ]);
     }
 }
