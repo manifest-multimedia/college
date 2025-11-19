@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Option;
+use App\Models\Question;
+use App\Models\QuestionSet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\QuestionSet;
-use App\Models\Question;
-use App\Models\Option;
-use App\Imports\QuestionSetImport;
 
 class QuestionSetImportController extends Controller
 {
@@ -20,15 +19,15 @@ class QuestionSetImportController extends Controller
     public function index($questionSetId)
     {
         $questionSet = QuestionSet::with('course')->find($questionSetId);
-        
-        if (!$questionSet) {
+
+        if (! $questionSet) {
             return redirect()->route('question.sets')
                 ->with('error', 'Question set not found.');
         }
-        
+
         // Pre-calculate questions count
         $questionsCount = $questionSet->questions()->count();
-        
+
         return view('question-sets.import', compact('questionSet', 'questionsCount', 'questionSetId'));
     }
 
@@ -38,7 +37,7 @@ class QuestionSetImportController extends Controller
     public function detectColumns(Request $request, $questionSetId)
     {
         $request->validate([
-            'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv'
+            'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv',
         ]);
 
         try {
@@ -49,44 +48,44 @@ class QuestionSetImportController extends Controller
             // Read Excel file directly without any transformations
             $data = Excel::toArray([], $fullPath)[0] ?? [];
             $rows = $data;
-            
+
             // Debug: Log the first few rows to see what we're getting
             Log::info('Excel data detection', [
                 'total_rows' => count($rows),
                 'first_row' => $rows[0] ?? [],
                 'second_row' => $rows[1] ?? [],
-                'third_row' => $rows[2] ?? []
+                'third_row' => $rows[2] ?? [],
             ]);
-            
+
             $columns = [];
             $sampleData = [];
-            
-            if (!empty($rows)) {
+
+            if (! empty($rows)) {
                 // Get column headers (first row)
                 $headers = $rows[0] ?? [];
-                
+
                 // Get sample data (next 3 rows)
                 $sampleRows = array_slice($rows, 1, 3);
-                
+
                 // Prepare column information
                 foreach ($headers as $index => $header) {
                     $samples = [];
                     foreach ($sampleRows as $row) {
-                        if (isset($row[$index]) && !empty($row[$index])) {
-                            $samples[] = (string)$row[$index];
+                        if (isset($row[$index]) && ! empty($row[$index])) {
+                            $samples[] = (string) $row[$index];
                         }
                     }
-                    
+
                     // Ensure header is a string and handle empty headers
-                    $headerName = !empty($header) ? (string)$header : "Column " . ((int)$index + 1);
-                    
+                    $headerName = ! empty($header) ? (string) $header : 'Column '.((int) $index + 1);
+
                     $columns[] = [
                         'index' => $index,
                         'name' => $headerName,
-                        'samples' => array_slice($samples, 0, 2) // First 2 non-empty samples
+                        'samples' => array_slice($samples, 0, 2), // First 2 non-empty samples
                     ];
                 }
-                
+
                 $sampleData = $sampleRows;
             }
 
@@ -97,12 +96,13 @@ class QuestionSetImportController extends Controller
                 'success' => true,
                 'columns' => $columns,
                 'sample_data' => $sampleData,
-                'total_rows' => count($rows) - 1 // Excluding header
+                'total_rows' => count($rows) - 1, // Excluding header
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Column detection error: ' . $e->getMessage());
-            return response()->json(['error' => 'Error reading file: ' . $e->getMessage()], 500);
+            Log::error('Column detection error: '.$e->getMessage());
+
+            return response()->json(['error' => 'Error reading file: '.$e->getMessage()], 500);
         }
     }
 
@@ -114,11 +114,11 @@ class QuestionSetImportController extends Controller
         $request->validate([
             'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt',
             'format' => 'required|in:excel,aiken',
-            'column_mapping' => 'nullable|json' // For Excel column mapping
+            'column_mapping' => 'nullable|json', // For Excel column mapping
         ]);
 
         $questionSet = QuestionSet::find($questionSetId);
-        if (!$questionSet) {
+        if (! $questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
@@ -130,19 +130,21 @@ class QuestionSetImportController extends Controller
             if ($format === 'excel') {
                 $previewData = $this->previewExcelFile($file, $questionSetId, $columnMapping);
             } else {
-                $previewData = $this->previewAikenFile($file);
+                // Pass true to limit preview to 20 questions for preview endpoint
+                $previewData = $this->previewAikenFile($file, true);
             }
 
             return response()->json([
                 'success' => true,
                 'preview' => $previewData['questions'],
                 'errors' => $previewData['errors'],
-                'total' => count($previewData['questions'])
+                'total' => count($previewData['questions']),
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Import preview error: ' . $e->getMessage());
-            return response()->json(['error' => 'Error previewing file: ' . $e->getMessage()], 500);
+            Log::error('Import preview error: '.$e->getMessage());
+
+            return response()->json(['error' => 'Error previewing file: '.$e->getMessage()], 500);
         }
     }
 
@@ -154,11 +156,11 @@ class QuestionSetImportController extends Controller
         $request->validate([
             'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt',
             'format' => 'required|in:excel,aiken',
-            'column_mapping' => 'nullable|json'
+            'column_mapping' => 'nullable|json',
         ]);
 
         $questionSet = QuestionSet::find($questionSetId);
-        if (!$questionSet) {
+        if (! $questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
@@ -181,13 +183,14 @@ class QuestionSetImportController extends Controller
                 'success' => true,
                 'imported' => $result['imported'],
                 'failed' => $result['failed'],
-                'errors' => $result['errors']
+                'errors' => $result['errors'],
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Question import error: ' . $e->getMessage());
-            return response()->json(['error' => 'Import failed: ' . $e->getMessage()], 500);
+            Log::error('Question import error: '.$e->getMessage());
+
+            return response()->json(['error' => 'Import failed: '.$e->getMessage()], 500);
         }
     }
 
@@ -205,31 +208,33 @@ class QuestionSetImportController extends Controller
             // Read Excel file directly without any transformations
             $data = Excel::toArray([], $fullPath)[0] ?? [];
             $rows = $data;
-            
+
             // Debug: Log sample of data being processed
             Log::info('Excel preview processing', [
                 'total_rows' => count($rows),
                 'header_row' => $rows[0] ?? [],
                 'column_mapping' => $columnMapping,
-                'sample_data_row' => $rows[1] ?? []
+                'sample_data_row' => $rows[1] ?? [],
             ]);
-            
+
             $lineNumber = 2;
 
             foreach ($rows as $index => $row) {
-                if ($index === 0) continue; // Skip header row
+                if ($index === 0) {
+                    continue;
+                } // Skip header row
 
                 $questionData = $this->parseExcelRow($row, $lineNumber, $columnMapping);
-                
-                if (!empty($questionData['errors'])) {
+
+                if (! empty($questionData['errors'])) {
                     $errors = array_merge($errors, $questionData['errors']);
                 } elseif ($questionData['question']) {
                     // Only add non-null questions (skip empty rows)
                     $questions[] = $questionData['question'];
                 }
-                
+
                 $lineNumber++;
-                
+
                 // No limit for preview - show all questions
             }
 
@@ -243,7 +248,7 @@ class QuestionSetImportController extends Controller
     /**
      * Preview Aiken file
      */
-    private function previewAikenFile($file)
+    private function previewAikenFile($file, $limitPreview = false)
     {
         $content = file_get_contents($file->path());
         $blocks = preg_split('/\n\s*\n/', trim($content));
@@ -252,10 +257,12 @@ class QuestionSetImportController extends Controller
         $lineNumber = 1;
 
         foreach ($blocks as $block) {
-            if (empty(trim($block))) continue;
+            if (empty(trim($block))) {
+                continue;
+            }
 
             $questionData = $this->parseAikenBlock(trim($block), $lineNumber);
-            
+
             if ($questionData['errors']) {
                 $errors = array_merge($errors, $questionData['errors']);
             } else {
@@ -263,9 +270,9 @@ class QuestionSetImportController extends Controller
             }
 
             $lineNumber += count(explode("\n", $block)) + 1;
-            
-            // Limit preview to first 20 questions
-            if (count($questions) >= 20) {
+
+            // Only limit preview when explicitly requested (for preview endpoint)
+            if ($limitPreview && count($questions) >= 20) {
                 break;
             }
         }
@@ -280,33 +287,33 @@ class QuestionSetImportController extends Controller
     {
         // Use column mapping if provided, otherwise fall back to default positions
         if ($columnMapping) {
-            $questionText = isset($columnMapping['question']) && isset($row[$columnMapping['question']]) ? (string)$row[$columnMapping['question']] : '';
-            $optionOne = isset($columnMapping['option_one']) && isset($row[$columnMapping['option_one']]) ? (string)$row[$columnMapping['option_one']] : '';
-            $optionTwo = isset($columnMapping['option_two']) && isset($row[$columnMapping['option_two']]) ? (string)$row[$columnMapping['option_two']] : '';
-            $optionThree = isset($columnMapping['option_three']) && isset($row[$columnMapping['option_three']]) ? (string)$row[$columnMapping['option_three']] : '';
-            $optionFour = isset($columnMapping['option_four']) && isset($row[$columnMapping['option_four']]) ? (string)$row[$columnMapping['option_four']] : '';
-            $correctOption = isset($columnMapping['correct_option']) && isset($row[$columnMapping['correct_option']]) ? (string)$row[$columnMapping['correct_option']] : '';
-            $marks = isset($columnMapping['marks']) && isset($row[$columnMapping['marks']]) ? (float)$row[$columnMapping['marks']] : 1;
-            $explanation = isset($columnMapping['explanation']) && isset($row[$columnMapping['explanation']]) ? (string)$row[$columnMapping['explanation']] : '';
-            $examSection = isset($columnMapping['exam_section']) && isset($row[$columnMapping['exam_section']]) ? (string)$row[$columnMapping['exam_section']] : '';
+            $questionText = isset($columnMapping['question']) && isset($row[$columnMapping['question']]) ? (string) $row[$columnMapping['question']] : '';
+            $optionOne = isset($columnMapping['option_one']) && isset($row[$columnMapping['option_one']]) ? (string) $row[$columnMapping['option_one']] : '';
+            $optionTwo = isset($columnMapping['option_two']) && isset($row[$columnMapping['option_two']]) ? (string) $row[$columnMapping['option_two']] : '';
+            $optionThree = isset($columnMapping['option_three']) && isset($row[$columnMapping['option_three']]) ? (string) $row[$columnMapping['option_three']] : '';
+            $optionFour = isset($columnMapping['option_four']) && isset($row[$columnMapping['option_four']]) ? (string) $row[$columnMapping['option_four']] : '';
+            $correctOption = isset($columnMapping['correct_option']) && isset($row[$columnMapping['correct_option']]) ? (string) $row[$columnMapping['correct_option']] : '';
+            $marks = isset($columnMapping['marks']) && isset($row[$columnMapping['marks']]) ? (float) $row[$columnMapping['marks']] : 1;
+            $explanation = isset($columnMapping['explanation']) && isset($row[$columnMapping['explanation']]) ? (string) $row[$columnMapping['explanation']] : '';
+            $examSection = isset($columnMapping['exam_section']) && isset($row[$columnMapping['exam_section']]) ? (string) $row[$columnMapping['exam_section']] : '';
         } else {
             // Default column positions (backward compatibility)
-            $questionText = (string)($row[0] ?? '');
-            $optionOne = (string)($row[1] ?? '');
-            $optionTwo = (string)($row[2] ?? '');
-            $optionThree = (string)($row[3] ?? '');
-            $optionFour = (string)($row[4] ?? '');
-            $correctOption = (string)($row[5] ?? '');
-            $marks = (float)($row[6] ?? 1);
-            $explanation = (string)($row[7] ?? '');
-            $examSection = (string)($row[8] ?? '');
+            $questionText = (string) ($row[0] ?? '');
+            $optionOne = (string) ($row[1] ?? '');
+            $optionTwo = (string) ($row[2] ?? '');
+            $optionThree = (string) ($row[3] ?? '');
+            $optionFour = (string) ($row[4] ?? '');
+            $correctOption = (string) ($row[5] ?? '');
+            $marks = (float) ($row[6] ?? 1);
+            $explanation = (string) ($row[7] ?? '');
+            $examSection = (string) ($row[8] ?? '');
         }
 
         // Skip completely empty rows
-        $hasAnyData = !empty(trim($questionText)) || !empty(trim($optionOne)) || !empty(trim($optionTwo)) || 
-                      !empty(trim($optionThree)) || !empty(trim($optionFour)) || !empty(trim($correctOption));
-        
-        if (!$hasAnyData) {
+        $hasAnyData = ! empty(trim($questionText)) || ! empty(trim($optionOne)) || ! empty(trim($optionTwo)) ||
+                      ! empty(trim($optionThree)) || ! empty(trim($optionFour)) || ! empty(trim($correctOption));
+
+        if (! $hasAnyData) {
             return ['errors' => [], 'question' => null]; // Skip empty rows without error
         }
 
@@ -316,14 +323,14 @@ class QuestionSetImportController extends Controller
         $options = [];
         $rawOptions = [
             0 => ['text' => trim($optionOne), 'label' => 'A'],
-            1 => ['text' => trim($optionTwo), 'label' => 'B'], 
+            1 => ['text' => trim($optionTwo), 'label' => 'B'],
             2 => ['text' => trim($optionThree), 'label' => 'C'],
-            3 => ['text' => trim($optionFour), 'label' => 'D']
+            3 => ['text' => trim($optionFour), 'label' => 'D'],
         ];
-        
+
         // Only include non-empty options but keep their original indices
         foreach ($rawOptions as $index => $option) {
-            if (!empty($option['text'])) {
+            if (! empty($option['text'])) {
                 $options[$index] = $option;
             }
         }
@@ -345,23 +352,23 @@ class QuestionSetImportController extends Controller
         }
 
         $correctIndex = $this->determineCorrectOption($correctOption, $options);
-        if ($correctIndex === null && !empty($correctOption)) {
+        if ($correctIndex === null && ! empty($correctOption)) {
             // Add more detailed error info for debugging
             $optionLabels = array_column($options, 'label');
             $optionTexts = array_column($options, 'text');
-            Log::info("Correct option validation failed", [
+            Log::info('Correct option validation failed', [
                 'correct_option' => $correctOption,
                 'options' => $options,
                 'option_labels' => $optionLabels,
                 'option_texts' => $optionTexts,
-                'line' => $lineNumber
+                'line' => $lineNumber,
             ]);
-            
+
             $questionPreview = $this->formatQuestionPreview($questionText, $options, $correctOption);
             $errors[] = "Line {$lineNumber}: Invalid correct option: {$correctOption}\n{$questionPreview}";
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return ['errors' => $errors, 'question' => null];
         }
 
@@ -374,8 +381,8 @@ class QuestionSetImportController extends Controller
                 'correct_option' => $correctIndex,
                 'marks' => intval($marks) ?: 1,
                 'explanation' => trim($explanation),
-                'exam_section' => trim($examSection)
-            ]
+                'exam_section' => trim($examSection),
+            ],
         ];
     }
 
@@ -397,13 +404,13 @@ class QuestionSetImportController extends Controller
             if (preg_match('/^([A-D])\.(.+)/', $line, $matches)) {
                 $options[] = [
                     'label' => $matches[1],
-                    'text' => trim($matches[2])
+                    'text' => trim($matches[2]),
                 ];
             } elseif (preg_match('/^ANSWER:\s*([A-D])/i', $line, $matches)) {
                 $correctAnswer = strtoupper($matches[1]);
             } elseif (preg_match('/^FEEDBACK:\s*(.+)/i', $line, $matches)) {
                 $feedback = trim($matches[1]);
-            } elseif (empty($questionText) && !empty($line)) {
+            } elseif (empty($questionText) && ! empty($line)) {
                 $questionText = $line;
             }
         }
@@ -428,11 +435,11 @@ class QuestionSetImportController extends Controller
             }
         }
 
-        if ($correctIndex === null && !empty($correctAnswer)) {
+        if ($correctIndex === null && ! empty($correctAnswer)) {
             $errors[] = "Line {$startLine}: Correct answer '{$correctAnswer}' not found in options";
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return ['errors' => $errors, 'question' => null];
         }
 
@@ -445,8 +452,8 @@ class QuestionSetImportController extends Controller
                 'correct_option' => $correctIndex,
                 'marks' => 1,
                 'explanation' => $feedback,
-                'exam_section' => ''
-            ]
+                'exam_section' => '',
+            ],
         ];
     }
 
@@ -456,6 +463,7 @@ class QuestionSetImportController extends Controller
     private function importExcelFile($file, $questionSetId, $columnMapping = null)
     {
         $previewData = $this->previewExcelFile($file, $questionSetId, $columnMapping);
+
         return $this->processImportData($previewData['questions'], $questionSetId, $previewData['errors']);
     }
 
@@ -464,7 +472,9 @@ class QuestionSetImportController extends Controller
      */
     private function importAikenFile($file, $questionSetId)
     {
-        $previewData = $this->previewAikenFile($file);
+        // Pass false to import ALL questions (no limit)
+        $previewData = $this->previewAikenFile($file, false);
+
         return $this->processImportData($previewData['questions'], $questionSetId, $previewData['errors']);
     }
 
@@ -502,18 +512,18 @@ class QuestionSetImportController extends Controller
 
             } catch (\Exception $e) {
                 $failed++;
-                Log::error('Question import error: ' . $e->getMessage(), [
+                Log::error('Question import error: '.$e->getMessage(), [
                     'question_data' => $questionData,
-                    'line' => $questionData['line'] ?? 'unknown'
+                    'line' => $questionData['line'] ?? 'unknown',
                 ]);
-                $errors[] = "Line {$questionData['line']}: " . $e->getMessage();
+                $errors[] = "Line {$questionData['line']}: ".$e->getMessage();
             }
         }
 
         return [
             'imported' => $imported,
             'failed' => $failed,
-            'errors' => $errors
+            'errors' => $errors,
         ];
     }
 
@@ -541,7 +551,7 @@ class QuestionSetImportController extends Controller
         if (isset($nameMap[$correctOption])) {
             $index = $nameMap[$correctOption];
             // Return the index if the option exists and has non-empty content
-            if (isset($options[$index]) && !empty(trim($options[$index]['text']))) {
+            if (isset($options[$index]) && ! empty(trim($options[$index]['text']))) {
                 return $index;
             }
         }
@@ -551,7 +561,7 @@ class QuestionSetImportController extends Controller
             $labelMap = ['a' => 0, 'b' => 1, 'c' => 2, 'd' => 3];
             $index = $labelMap[$correctOption];
             // Only return the index if the option actually exists and has content
-            if (isset($options[$index]) && !empty(trim($options[$index]['text']))) {
+            if (isset($options[$index]) && ! empty(trim($options[$index]['text']))) {
                 return $index;
             }
         }
@@ -571,23 +581,23 @@ class QuestionSetImportController extends Controller
      */
     private function formatQuestionPreview($questionText, $options, $correctOption)
     {
-        $preview = "Question: " . (strlen($questionText) > 80 ? substr($questionText, 0, 80) . '...' : $questionText) . "\n";
-        
-        if (!empty($options)) {
+        $preview = 'Question: '.(strlen($questionText) > 80 ? substr($questionText, 0, 80).'...' : $questionText)."\n";
+
+        if (! empty($options)) {
             $preview .= "Available Options:\n";
             $optionNames = ['option_one', 'option_two', 'option_three', 'option_four'];
             // Sort by index to show in proper order
             ksort($options);
             foreach ($options as $index => $option) {
-                $columnName = isset($optionNames[$index]) ? $optionNames[$index] : "option_" . ($index + 1);
+                $columnName = isset($optionNames[$index]) ? $optionNames[$index] : 'option_'.($index + 1);
                 $preview .= "  {$option['label']}. ({$columnName}) {$option['text']}\n";
             }
         } else {
             $preview .= "Available Options: None provided\n";
         }
-        
+
         $preview .= "Correct Option Column Specified: {$correctOption}";
-        
+
         // Show which option the correct_option points to
         $nameMap = [
             'option_one' => 0, 'option_two' => 1, 'option_three' => 2, 'option_four' => 3,
@@ -596,7 +606,7 @@ class QuestionSetImportController extends Controller
             $correctIndex = $nameMap[strtolower($correctOption)];
             $preview .= " → Points to: {$options[$correctIndex]['text']}";
         }
-        
+
         return $preview;
     }
 }
