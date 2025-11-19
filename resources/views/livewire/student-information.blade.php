@@ -36,7 +36,7 @@
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Phone Number</label>
-                                    <p class="form-control-plaintext">{{ $student->phone ?? 'Not provided' }}</p>
+                                    <p class="form-control-plaintext">{{ $student->mobile_number ?? 'Not provided' }}</p>
                                 </div>
                             </div>
                             <div class="col-md-6">

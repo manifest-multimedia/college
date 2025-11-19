@@ -53,7 +53,7 @@
                                 </tr>
                                 <tr>
                                     <th class="bg-light">Phone</th>
-                                    <td>{{ $student->phone ?? 'Not provided' }}</td>
+                                    <td>{{ $student->mobile_number ?? 'Not provided' }}</td>
                                 </tr>
                                 <tr>
                                     <th class="bg-light">Status</th>
