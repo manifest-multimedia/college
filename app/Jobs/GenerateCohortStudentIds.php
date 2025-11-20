@@ -18,7 +18,8 @@ class GenerateCohortStudentIds implements ShouldQueue
 
     public function __construct(
         public int $cohortId,
-        public ?int $initiatedByUserId = null
+        public ?int $initiatedByUserId = null,
+        public bool $regenerateAll = false
     ) {}
 
     /**
@@ -40,6 +41,30 @@ class GenerateCohortStudentIds implements ShouldQueue
             ]);
 
             return;
+        }
+
+        // If explicitly asked to regenerate all IDs for the cohort, delegate to the service helper
+        if ($this->regenerateAll === true) {
+            try {
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId);
+
+                Log::info('GenerateCohortStudentIds: regeneration completed', [
+                    'cohort_id' => $this->cohortId,
+                    'initiated_by' => $this->initiatedByUserId,
+                    'processed' => ($result['success'] ?? 0) + ($result['errors'] ?? 0),
+                    'generated' => $result['success'] ?? 0,
+                    'errors' => $result['errors'] ?? 0,
+                    'mode' => 'regenerate_all',
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('GenerateCohortStudentIds: regeneration failed', [
+                    'cohort_id' => $this->cohortId,
+                    'initiated_by' => $this->initiatedByUserId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return; // Done for regenerate mode
         }
 
         $query = Student::query()
@@ -85,6 +110,7 @@ class GenerateCohortStudentIds implements ShouldQueue
             'processed' => $processed,
             'generated' => $generated,
             'errors' => $errors,
+            'mode' => 'generate_missing_only',
         ]);
     }
 }

@@ -224,7 +224,8 @@ class StudentsTableWidget extends Component
         }
 
         try {
-            GenerateCohortStudentIds::dispatch((int) $this->cohortFilter, auth()->id());
+            // Pass regenerateAll=true so the job resequences all students in the cohort
+            GenerateCohortStudentIds::dispatch((int) $this->cohortFilter, auth()->id(), true);
             session()->flash('success', 'Student ID regeneration has been queued. You can continue using the app; we will notify you when it completes.');
         } catch (\Throwable $e) {
             Log::error('Error queueing ID regeneration: '.$e->getMessage());

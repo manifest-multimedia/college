@@ -2,7 +2,6 @@
 
 namespace App\Events\Communication;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -15,17 +14,13 @@ class DocumentUploadedEvent implements ShouldBroadcast
 
     /**
      * The session ID
-     *
-     * @var string
      */
-    public string $sessionId;
+    public string $sessionId = '';
 
     /**
      * Document details
-     *
-     * @var array
      */
-    public array $document;
+    public array $document = [];
 
     /**
      * Create a new event instance.
@@ -44,7 +39,7 @@ class DocumentUploadedEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel('chat.' . $this->sessionId),
+            new PresenceChannel('chat.'.$this->sessionId),
         ];
     }
 
@@ -54,5 +49,16 @@ class DocumentUploadedEvent implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'document.uploaded';
+    }
+
+    /**
+     * Data to broadcast with the event.
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'sessionId' => $this->sessionId,
+            'document' => $this->document ?? [],
+        ];
     }
 }
