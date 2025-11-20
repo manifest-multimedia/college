@@ -106,19 +106,29 @@
                 <tbody>
                     @foreach ($students as $student)
                         <tr>
-                            <td class="ps-4">{{ $student->student_id }}</td>
+                            <td class="ps-4">
+                                <a href="{{ route('students.show', $student->id) }}" class="text-gray-800 text-hover-primary fw-bold">
+                                    {{ $student->student_id }}
+                                </a>
+                            </td>
                             <td>
                                 <div class="d-flex align-items-center">
                                     @if ($student->profile_photo_url)
                                         <div class="me-3">
-                                            <img class="rounded-circle" src="{{ $student->profile_photo_url }}" alt="avatar" width="40" height="40">
+                                            <a href="{{ route('students.show', $student->id) }}">
+                                                <img class="rounded-circle" src="{{ $student->profile_photo_url }}" alt="avatar" width="40" height="40">
+                                            </a>
                                         </div>
                                     @endif
                                     <div>
-                                        <span class="text-gray-800 fw-bold">
+                                        <a href="{{ route('students.show', $student->id) }}" class="text-gray-800 text-hover-primary fw-bold">
                                             {{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}
-                                        </span>
-                                        <div class="text-gray-600 fs-7">{{ $student->email }}</div>
+                                        </a>
+                                        <div class="text-gray-600 fs-7">
+                                            <a href="{{ route('students.show', $student->id) }}" class="text-gray-600 text-hover-primary">
+                                                {{ $student->email }}
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
