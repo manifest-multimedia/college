@@ -319,11 +319,12 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
 
     /**
      * Validation rules
+     * Note: Email validation is handled after sanitization in validateStudentData()
+     * to allow for cleaning of whitespace and other formatting issues
      */
     public function rules(): array
     {
         return [
-            '*.email' => 'nullable|email',
             '*.student_id' => 'nullable|string',
         ];
     }
