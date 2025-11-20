@@ -529,7 +529,13 @@ class StudentIdGenerationService
             $sequence = str_pad($position, 3, '0', STR_PAD_LEFT);
             $candidateId = "{$institutionPrefix}/{$programCode}/{$academicYear}/{$sequence}";
 
-            while (Student::where('student_id', $candidateId)->exists()) {
+            // Use DB::table to bypass any model scopes and ensure raw check
+            while (DB::table('students')->where('student_id', $candidateId)->exists()) {
+                Log::warning('Collision detected during generation (Structured)', [
+                    'candidate' => $candidateId,
+                    'position_before' => $position,
+                    'position_after' => $position + 1,
+                ]);
                 $position++;
                 $sequence = str_pad($position, 3, '0', STR_PAD_LEFT);
                 $candidateId = "{$institutionPrefix}/{$programCode}/{$academicYear}/{$sequence}";
@@ -735,7 +741,13 @@ class StudentIdGenerationService
             $sequence = str_pad($position, 4, '0', STR_PAD_LEFT);
             $candidateId = "{$institutionPrefix}{$programCode}{$academicYear}{$sequence}";
 
-            while (Student::where('student_id', $candidateId)->exists()) {
+            // Use DB::table to bypass any model scopes and ensure raw check
+            while (DB::table('students')->where('student_id', $candidateId)->exists()) {
+                Log::warning('Collision detected during generation (Simple)', [
+                    'candidate' => $candidateId,
+                    'position_before' => $position,
+                    'position_after' => $position + 1,
+                ]);
                 $position++;
                 $sequence = str_pad($position, 4, '0', STR_PAD_LEFT);
                 $candidateId = "{$institutionPrefix}{$programCode}{$academicYear}{$sequence}";

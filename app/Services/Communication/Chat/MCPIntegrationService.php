@@ -722,7 +722,7 @@ class MCPIntegrationService
                         }
                     }
 
-                    return $this->mcpService->handleToolCall('delete_cohort_students', $arguments);
+                    return $this->studentMcpService->deleteCohortStudents($arguments);
 
                 case 'get_cohort_student_count':
                     if (! $this->permissionService->canListCohorts()) {

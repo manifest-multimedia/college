@@ -11,7 +11,6 @@ use App\Models\QuestionSet;
 use App\Models\Student;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -871,91 +870,6 @@ class ExamManagementMCPService
             return [
                 'success' => false,
                 'error' => 'Error generating student IDs: '.$e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * Delete all students for a specific cohort (destructive action with confirmation)
-     */
-    private function deleteCohortStudents(array $arguments): array
-    {
-        try {
-            $cohortName = $arguments['cohort_name'];
-            $confirmDeletion = $arguments['confirm_deletion'] ?? false;
-
-            // Safety check - require explicit confirmation
-            if (! $confirmDeletion) {
-                return [
-                    'success' => false,
-                    'error' => 'Deletion not confirmed. This is a destructive action that requires explicit confirmation by setting confirm_deletion to true.',
-                ];
-            }
-
-            $cohort = Cohort::where('name', $cohortName)->first();
-            if (! $cohort) {
-                return [
-                    'success' => false,
-                    'error' => "Cohort '{$cohortName}' not found",
-                ];
-            }
-
-            $studentCount = $cohort->students()->count();
-
-            if ($studentCount === 0) {
-                return [
-                    'success' => true,
-                    'message' => "Cohort '{$cohortName}' has no students to delete",
-                    'data' => ['deleted_count' => 0],
-                ];
-            }
-
-            // Get student names for logging before deletion
-            $studentNames = $cohort->students()
-                ->get(['first_name', 'last_name', 'student_id'])
-                ->map(function ($student) {
-                    return [
-                        'name' => "{$student->first_name} {$student->last_name}",
-                        'student_id' => $student->student_id,
-                    ];
-                })
-                ->toArray();
-
-            DB::beginTransaction();
-
-            // Delete all students in this cohort
-            $deletedCount = $cohort->students()->delete();
-
-            DB::commit();
-
-            // Log the deletion for audit purposes
-            Log::warning('Bulk student deletion performed', [
-                'cohort_name' => $cohortName,
-                'deleted_count' => $deletedCount,
-                'deleted_students' => $studentNames,
-                'performed_by' => Auth::user()?->name ?? 'System',
-            ]);
-
-            return [
-                'success' => true,
-                'message' => "Successfully deleted {$deletedCount} students from cohort '{$cohortName}'",
-                'data' => [
-                    'deleted_count' => $deletedCount,
-                    'cohort_name' => $cohortName,
-                    'deleted_students' => $studentNames,
-                ],
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error deleting cohort students', [
-                'error' => $e->getMessage(),
-                'cohort_name' => $cohortName ?? 'Unknown',
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Error deleting students: '.$e->getMessage(),
             ];
         }
     }
