@@ -324,6 +324,15 @@ class ExamManagementMCPService
             ];
         }
 
+        // Check permissions - only creator or Super Admin can add questions
+        $user = Auth::user();
+        if (!$user->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== $user->id) {
+            return [
+                'success' => false,
+                'error' => "You do not have permission to add questions to this question set"
+            ];
+        }
+
         // Map question types to database enum values
         $typeMapping = [
             'multiple_choice' => 'MCQ',
@@ -469,6 +478,13 @@ class ExamManagementMCPService
         $query = QuestionSet::with(['course', 'creator'])
             ->withCount('questions');
 
+        // Apply role-based access control - same as exam filtering
+        $user = Auth::user();
+        if (!$user->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+            // Lecturers can only see their own question sets
+            $query->where('created_by', $user->id);
+        }
+
         // Apply filters
         if (!empty($args['course_code'])) {
             $query->whereHas('course', function($q) use ($args) {
@@ -537,6 +553,15 @@ class ExamManagementMCPService
             return [
                 'success' => false,
                 'error' => "Question set with ID {$args['question_set_id']} not found"
+            ];
+        }
+
+        // Check permissions - only creator or Super Admin can view details
+        $user = Auth::user();
+        if (!$user->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== $user->id) {
+            return [
+                'success' => false,
+                'error' => "You do not have permission to view this question set"
             ];
         }
 

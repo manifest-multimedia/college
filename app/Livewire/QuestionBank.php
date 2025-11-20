@@ -137,22 +137,26 @@ class QuestionBank extends Component
 
     public function loadSubjects()
     {
-        // Get subjects based on user role (using Subject model instead of Course)
-        if (Auth::user()->role === 'Super Admin') {
+        // Get subjects based on user role - consistent with exam access control
+        if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
             $this->subjects = Subject::all();
         } else {
-            // Get subjects for courses the user has access to
-            $this->subjects = Subject::all(); // Adjust based on your access control logic
+            // Regular lecturers get all subjects (they can create question sets for any subject)
+            $this->subjects = Subject::all();
         }
     }
 
     public function loadAllQuestionSets()
     {
-        if (Auth::user()->role === 'Super Admin') {
-            $this->question_sets = QuestionSet::with('course')->get();
+        // Apply same role-based filtering as exams
+        if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+            // Super Admin and System roles can see all question sets
+            $this->question_sets = QuestionSet::with(['course', 'creator'])->get();
         } else {
-            // Get question sets for subjects the user has access to
-            $this->question_sets = QuestionSet::with('course')->get(); // Adjust based on your access control
+            // Lecturers can only see question sets they created
+            $this->question_sets = QuestionSet::with(['course', 'creator'])
+                ->where('created_by', Auth::id())
+                ->get();
         }
     }
 
@@ -484,6 +488,19 @@ class QuestionBank extends Component
 
     public function deleteQuestionSet($setId)
     {
+        $questionSet = QuestionSet::find($setId);
+        
+        if (!$questionSet) {
+            session()->flash('error', 'Question set not found.');
+            return;
+        }
+        
+        // Check permissions - only creator or Super Admin can delete
+        if (!Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+            session()->flash('error', 'You do not have permission to delete this question set.');
+            return;
+        }
+        
         // Check if the question set has questions
         $questionCount = Question::where('question_set_id', $setId)->count();
         
@@ -492,7 +509,7 @@ class QuestionBank extends Component
             return;
         }
         
-        QuestionSet::find($setId)->delete();
+        $questionSet->delete();
         session()->flash('message', 'Question set deleted successfully.');
         $this->loadAllQuestionSets();
         $this->applyQuestionSetFilter();
@@ -511,6 +528,17 @@ class QuestionBank extends Component
         $this->validate(['newDuplicateSetName' => 'required|string|max:255']);
         
         $originalSet = QuestionSet::with('questions.options')->find($this->duplicateSetId);
+        
+        if (!$originalSet) {
+            session()->flash('error', 'Original question set not found.');
+            return;
+        }
+        
+        // Check permissions - only creator or Super Admin can duplicate
+        if (!Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $originalSet->created_by !== Auth::id()) {
+            session()->flash('error', 'You do not have permission to duplicate this question set.');
+            return;
+        }
         
         // Create duplicate question set
         $duplicateSet = QuestionSet::create([

@@ -216,7 +216,7 @@ Route::middleware([
         Route::get('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'index'])->name('question.sets.import');
         Route::post('/question-sets/{id}/import/columns', [App\Http\Controllers\QuestionSetImportController::class, 'detectColumns'])->name('question.sets.import.columns');
         Route::post('/question-sets/{id}/import/preview', [App\Http\Controllers\QuestionSetImportController::class, 'preview'])->name('question.sets.import.preview');
-        Route::post('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'import'])->name('question.sets.import.process');
+        Route::post('/question-sets/{id}/import', [App\Http\Controllers\QuestionSetImportController::class, 'store'])->name('question.sets.import.process');
 
         // Individual Question Management Routes
         Route::get('/question-sets/{id}/questions/create', [App\Http\Controllers\QuestionSetQuestionController::class, 'create'])->name('question.sets.questions.create');

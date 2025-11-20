@@ -6,6 +6,7 @@ use App\Models\Option;
 use App\Models\Question;
 use App\Models\QuestionSet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -25,6 +26,12 @@ class QuestionSetImportController extends Controller
                 ->with('error', 'Question set not found.');
         }
 
+        // Check permissions - only creator or Super Admin can import
+        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+            return redirect()->route('question.sets')
+                ->with('error', 'You do not have permission to import questions to this question set.');
+        }
+
         // Pre-calculate questions count
         $questionsCount = $questionSet->questions()->count();
 
@@ -39,6 +46,16 @@ class QuestionSetImportController extends Controller
         $request->validate([
             'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv',
         ]);
+
+        $questionSet = QuestionSet::find($questionSetId);
+        if (! $questionSet) {
+            return response()->json(['error' => 'Question set not found.'], 404);
+        }
+
+        // Check permissions
+        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+            return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
+        }
 
         try {
             $file = $request->file('import_file');
@@ -122,6 +139,11 @@ class QuestionSetImportController extends Controller
             return response()->json(['error' => 'Question set not found.'], 404);
         }
 
+        // Check permissions
+        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+            return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
+        }
+
         try {
             $file = $request->file('import_file');
             $format = $request->input('format');
@@ -149,9 +171,9 @@ class QuestionSetImportController extends Controller
     }
 
     /**
-     * Process the import via AJAX
+     * Handle the import process
      */
-    public function import(Request $request, $questionSetId)
+    public function store(Request $request, $questionSetId)
     {
         $request->validate([
             'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt',
@@ -162,6 +184,11 @@ class QuestionSetImportController extends Controller
         $questionSet = QuestionSet::find($questionSetId);
         if (! $questionSet) {
             return response()->json(['error' => 'Question set not found.'], 404);
+        }
+
+        // Check permissions
+        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+            return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
         }
 
         try {
