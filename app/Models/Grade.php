@@ -8,107 +8,48 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Grade extends Model
 {
     protected $fillable = [
-        'student_id',
-        'class_id',
-        'assignment_id',
-        'grade_value',
-        'grade_type',
-        'max_grade',
-        'comments',
-        'recorded_by',
-        'grade_date',
+        'name',
+        'type',
+        'value',
+        'description',
+        'slug',
+        'is_deleted',
+        'created_by',
     ];
 
     protected $casts = [
-        'grade_date' => 'datetime',
-        'grade_value' => 'float',
-        'max_grade' => 'float',
+        'is_deleted' => 'boolean',
     ];
 
     /**
-     * Get the student who received this grade
+     * Get the user who created this grade definition
      */
-    public function student(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'student_id');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
-     * Get the class this grade belongs to
+     * Get all student grades using this grade definition
      */
-    public function class(): BelongsTo
+    public function studentGrades()
     {
-        return $this->belongsTo(CollegeClass::class, 'class_id');
+        return $this->hasMany(StudentGrade::class, 'grade_id');
     }
 
     /**
-     * Get the assignment this grade is for (if any)
+     * Scope for active (non-deleted) grades
      */
-    public function assignment(): BelongsTo
+    public function scopeActive($query)
     {
-        return $this->belongsTo(Assignment::class);
+        return $query->where('is_deleted', false);
     }
 
     /**
-     * Get the user who recorded this grade
+     * Scope to filter by grade type
      */
-    public function recorder(): BelongsTo
+    public function scopeByType($query, $type)
     {
-        return $this->belongsTo(User::class, 'recorded_by');
-    }
-
-    /**
-     * Calculate grade percentage
-     */
-    public function getPercentageAttribute()
-    {
-        if ($this->max_grade > 0) {
-            return ($this->grade_value / $this->max_grade) * 100;
-        }
-        return null;
-    }
-
-    /**
-     * Get letter grade based on percentage
-     */
-    public function getLetterGradeAttribute()
-    {
-        $percentage = $this->percentage;
-        
-        if ($percentage >= 90) {
-            return 'A';
-        } elseif ($percentage >= 80) {
-            return 'B';
-        } elseif ($percentage >= 70) {
-            return 'C';
-        } elseif ($percentage >= 60) {
-            return 'D';
-        } else {
-            return 'F';
-        }
-    }
-
-    /**
-     * Scope for final grades
-     */
-    public function scopeFinal($query)
-    {
-        return $query->where('grade_type', 'final');
-    }
-
-    /**
-     * Scope for midterm grades
-     */
-    public function scopeMidterm($query)
-    {
-        return $query->where('grade_type', 'midterm');
-    }
-
-    /**
-     * Scope for assignment grades
-     */
-    public function scopeAssignment($query)
-    {
-        return $query->where('grade_type', 'assignment');
+        return $query->where('type', $type);
     }
 }
