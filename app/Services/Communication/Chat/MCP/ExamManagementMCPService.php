@@ -2,6 +2,7 @@
 
 namespace App\Services\Communication\Chat\MCP;
 
+use App\Jobs\GenerateCohortStudentIds;
 use App\Models\Cohort;
 use App\Models\Exam;
 use App\Models\Option;
@@ -9,7 +10,6 @@ use App\Models\Question;
 use App\Models\QuestionSet;
 use App\Models\Student;
 use App\Models\Subject;
-use App\Services\StudentIdGenerationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -828,21 +828,20 @@ class ExamManagementMCPService
             }
 
             // Get students without student IDs
-            $studentsWithoutIds = $cohort->students()
+            $studentsWithoutIdsCount = $cohort->students()
                 ->where(function ($query) {
                     $query->whereNull('student_id')
                         ->orWhere('student_id', '')
                         ->orWhere('student_id', 'LIKE', 'TEMP_%');
                 })
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
+                ->count();
 
-            if ($studentsWithoutIds->isEmpty()) {
+            if ($studentsWithoutIdsCount === 0) {
                 return [
                     'success' => true,
                     'message' => "All students in cohort '{$cohortName}' already have student IDs",
                     'data' => [
+                        'queued' => false,
                         'processed' => 0,
                         'generated' => 0,
                         'errors' => 0,
@@ -850,55 +849,20 @@ class ExamManagementMCPService
                 ];
             }
 
-            $studentIdService = new StudentIdGenerationService;
-            $results = [
-                'processed' => 0,
-                'generated' => 0,
-                'errors' => 0,
-                'generated_ids' => [],
-            ];
-
-            DB::beginTransaction();
-
-            foreach ($studentsWithoutIds as $student) {
-                try {
-                    $results['processed']++;
-
-                    $newStudentId = $studentIdService->generateStudentId(
-                        $student->first_name,
-                        $student->last_name,
-                        $student->college_class_id,
-                        null // Use current academic year
-                    );
-
-                    $student->student_id = $newStudentId;
-                    $student->save();
-
-                    $results['generated']++;
-                    $results['generated_ids'][] = [
-                        'student_name' => "{$student->first_name} {$student->last_name}",
-                        'new_student_id' => $newStudentId,
-                    ];
-
-                } catch (\Exception $e) {
-                    $results['errors']++;
-                    Log::error("Error generating ID for student {$student->id}", [
-                        'error' => $e->getMessage(),
-                        'student' => $student->toArray(),
-                    ]);
-                }
-            }
-
-            DB::commit();
+            // Dispatch a background job to avoid request timeouts
+            GenerateCohortStudentIds::dispatch($cohort->id, Auth::id());
 
             return [
                 'success' => true,
-                'message' => "Generated {$results['generated']} student IDs for cohort '{$cohortName}'",
-                'data' => $results,
+                'message' => "Queued ID generation for {$studentsWithoutIdsCount} students in cohort '{$cohortName}'. You'll be notified when it's complete.",
+                'data' => [
+                    'queued' => true,
+                    'to_process' => $studentsWithoutIdsCount,
+                    'cohort_id' => $cohort->id,
+                ],
             ];
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error generating student IDs for cohort', [
                 'error' => $e->getMessage(),
                 'cohort_name' => $cohortName ?? 'Unknown',

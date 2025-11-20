@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Exports\StudentExport;
+use App\Jobs\GenerateCohortStudentIds;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Student;
@@ -223,18 +224,11 @@ class StudentsTableWidget extends Component
         }
 
         try {
-            $results = $service->regenerateStudentIdsForCohort($this->cohortFilter);
-
-            if (isset($results['success']) && $results['success'] > 0) {
-                session()->flash('success', "Successfully regenerated IDs for {$results['success']} students.");
-            } elseif (isset($results['message'])) {
-                session()->flash('error', 'Failed to regenerate IDs: '.$results['message']);
-            } else {
-                session()->flash('info', 'No students found or no IDs updated.');
-            }
-        } catch (\Exception $e) {
-            Log::error('Error regenerating IDs: '.$e->getMessage());
-            session()->flash('error', 'An error occurred while regenerating IDs.');
+            GenerateCohortStudentIds::dispatch((int) $this->cohortFilter, auth()->id());
+            session()->flash('success', 'Student ID regeneration has been queued. You can continue using the app; we will notify you when it completes.');
+        } catch (\Throwable $e) {
+            Log::error('Error queueing ID regeneration: '.$e->getMessage());
+            session()->flash('error', 'Could not queue ID regeneration. Please try again or contact support.');
         }
 
         $this->confirmingIdRegeneration = false;
