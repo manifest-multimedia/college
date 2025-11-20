@@ -116,7 +116,17 @@ class StudentDetails extends Component
         try {
             $session = \App\Models\ExamSession::find($sessionId);
             if ($session) {
+                // Delete related records manually to ensure successful deletion
+                // in case cascade delete is not configured in the database
+                $session->responses()->delete();
+                $session->sessionQuestions()->delete();
+                $session->scoredQuestions()->delete();
+                
+                // Delete device access logs
+                \App\Models\DeviceAccessLog::where('exam_session_id', $session->id)->delete();
+                
                 $session->delete();
+                
                 session()->flash('success', 'Exam session deleted successfully.');
                 $this->loadStudent(); // Reload to update the list
             } else {
@@ -124,7 +134,7 @@ class StudentDetails extends Component
             }
         } catch (\Exception $e) {
             Log::error('Error deleting exam session: '.$e->getMessage());
-            session()->flash('error', 'Failed to delete exam session.');
+            session()->flash('error', 'Failed to delete exam session: ' . $e->getMessage());
         }
     }
 
