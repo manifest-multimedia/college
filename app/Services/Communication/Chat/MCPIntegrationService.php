@@ -2,6 +2,7 @@
 
 namespace App\Services\Communication\Chat;
 
+use App\Models\Cohort;
 use App\Services\Communication\Chat\MCP\ExamManagementMCPService;
 use App\Services\Communication\Chat\MCP\StudentManagementMCPService;
 use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
@@ -423,6 +424,10 @@ class MCPIntegrationService
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
+                            'cohort_id' => [
+                                'type' => 'integer',
+                                'description' => 'ID of the cohort to delete students from (alternative to cohort_name)',
+                            ],
                             'cohort_name' => [
                                 'type' => 'string',
                                 'description' => 'Name of the cohort to delete students from',
@@ -432,7 +437,8 @@ class MCPIntegrationService
                                 'description' => 'Must be true to confirm the deletion. This action is permanent.',
                             ],
                         ],
-                        'required' => ['cohort_name', 'confirm_deletion'],
+                        // Validation handled at runtime: require either cohort_name or cohort_id, plus confirm_deletion
+                        'required' => ['confirm_deletion'],
                     ],
                 ],
             ],
@@ -665,6 +671,18 @@ class MCPIntegrationService
                     }
                     $this->permissionService->logPermissionCheck($functionName, true);
 
+                    // Normalize: allow cohort_id as alternative input
+                    if (! isset($arguments['cohort_name']) && isset($arguments['cohort_id'])) {
+                        $cohort = Cohort::find($arguments['cohort_id']);
+                        if (! $cohort) {
+                            return [
+                                'success' => false,
+                                'error' => 'Cohort not found for the provided cohort_id.',
+                            ];
+                        }
+                        $arguments['cohort_name'] = $cohort->name;
+                    }
+
                     return $this->mcpService->handleToolCall('generate_student_ids_for_cohort', $arguments);
 
                 case 'delete_cohort_students':
@@ -678,6 +696,32 @@ class MCPIntegrationService
                     }
                     $this->permissionService->logPermissionCheck($functionName, true);
 
+                    // Runtime validation: ensure confirmation and normalize cohort identifier
+                    if (! ($arguments['confirm_deletion'] ?? false)) {
+                        return [
+                            'success' => false,
+                            'error' => 'Deletion not confirmed. Set confirm_deletion to true to proceed.',
+                        ];
+                    }
+
+                    if (! isset($arguments['cohort_name'])) {
+                        if (isset($arguments['cohort_id'])) {
+                            $cohort = Cohort::find($arguments['cohort_id']);
+                            if (! $cohort) {
+                                return [
+                                    'success' => false,
+                                    'error' => 'Cohort not found for the provided cohort_id.',
+                                ];
+                            }
+                            $arguments['cohort_name'] = $cohort->name;
+                        } else {
+                            return [
+                                'success' => false,
+                                'error' => 'Missing cohort identifier. Provide either cohort_name or cohort_id.',
+                            ];
+                        }
+                    }
+
                     return $this->mcpService->handleToolCall('delete_cohort_students', $arguments);
 
                 case 'get_cohort_student_count':
@@ -690,6 +734,18 @@ class MCPIntegrationService
                         ];
                     }
                     $this->permissionService->logPermissionCheck($functionName, true);
+
+                    // Normalize: allow cohort_id as alternative input
+                    if (! isset($arguments['cohort_name']) && isset($arguments['cohort_id'])) {
+                        $cohort = Cohort::find($arguments['cohort_id']);
+                        if (! $cohort) {
+                            return [
+                                'success' => false,
+                                'error' => 'Cohort not found for the provided cohort_id.',
+                            ];
+                        }
+                        $arguments['cohort_name'] = $cohort->name;
+                    }
 
                     return $this->mcpService->handleToolCall('get_cohort_student_count', $arguments);
 

@@ -209,16 +209,22 @@ class StudentIdGenerationService
             return $this->generateStructuredStudentId($firstName, $lastName, $collegeClassId, $academicYearId);
         }
 
+        // Resolve common parts once so sequence generation can be correctly scoped
+        $institutionPrefix = $this->getInstitutionPrefix();
+        $programCode = $this->getProgramCode($collegeClassId);
+        $academicYear = $this->getAcademicYearCode($academicYearId);
+
         // Replace placeholders in custom pattern
         $replacements = [
-            '{INSTITUTION}' => $this->getInstitutionPrefix(),
+            '{INSTITUTION}' => $institutionPrefix,
             '{INSTITUTION_SIMPLE}' => $this->getSimpleInstitutionPrefix(),
-            '{PROGRAM}' => $this->getProgramCode($collegeClassId),
+            '{PROGRAM}' => $programCode,
             '{PROGRAM_SIMPLE}' => $this->getSimpleProgramCode($collegeClassId),
-            '{YEAR_FULL}' => $this->getAcademicYearCode($academicYearId),
+            '{YEAR_FULL}' => $academicYear,
             '{YEAR_SIMPLE}' => $this->getSimpleAcademicYear($academicYearId),
-            '{SEQUENCE_3}' => $this->generateSequenceNumber($firstName, $lastName, '', '', ''),
-            '{SEQUENCE_4}' => $this->generateSimpleSequenceNumber($firstName, $lastName, '', '', ''),
+            // Critically: scope sequence generation to the same institution/program/year to avoid duplicates
+            '{SEQUENCE_3}' => $this->generateSequenceNumber($firstName, $lastName, $institutionPrefix, $programCode, $academicYear),
+            '{SEQUENCE_4}' => $this->generateSimpleSequenceNumber($firstName, $lastName, $this->getSimpleInstitutionPrefix(), $this->getSimpleProgramCode($collegeClassId), $this->getSimpleAcademicYear($academicYearId)),
             '{FIRST_NAME}' => strtoupper(substr($firstName, 0, 2)),
             '{LAST_NAME}' => strtoupper(substr($lastName, 0, 2)),
         ];
