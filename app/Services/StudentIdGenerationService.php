@@ -523,8 +523,19 @@ class StudentIdGenerationService
                 $position = $existingStudents->count() + 1;
             }
 
-            // Format as 3-digit number
-            return str_pad($position, 3, '0', STR_PAD_LEFT);
+            // Intelligent Collision Resolution:
+            // If the calculated position is already taken by an existing student ID,
+            // increment the position until we find a free slot.
+            $sequence = str_pad($position, 3, '0', STR_PAD_LEFT);
+            $candidateId = "{$institutionPrefix}/{$programCode}/{$academicYear}/{$sequence}";
+
+            while (Student::where('student_id', $candidateId)->exists()) {
+                $position++;
+                $sequence = str_pad($position, 3, '0', STR_PAD_LEFT);
+                $candidateId = "{$institutionPrefix}/{$programCode}/{$academicYear}/{$sequence}";
+            }
+
+            return $sequence;
 
         } catch (\Exception $e) {
             Log::error('Error generating sequence number', [
@@ -714,14 +725,23 @@ class StudentIdGenerationService
 
                     $position++;
                 }
-
-                return str_pad($position, 4, '0', STR_PAD_LEFT);
             } else {
                 // Simple incremental numbering with lock
                 $count = $existingStudents->count();
-
-                return str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+                $position = $count + 1;
             }
+
+            // Intelligent Collision Resolution
+            $sequence = str_pad($position, 4, '0', STR_PAD_LEFT);
+            $candidateId = "{$institutionPrefix}{$programCode}{$academicYear}{$sequence}";
+
+            while (Student::where('student_id', $candidateId)->exists()) {
+                $position++;
+                $sequence = str_pad($position, 4, '0', STR_PAD_LEFT);
+                $candidateId = "{$institutionPrefix}{$programCode}{$academicYear}{$sequence}";
+            }
+
+            return $sequence;
 
         } catch (\Exception $e) {
             Log::error('Error generating simple sequence number', [
