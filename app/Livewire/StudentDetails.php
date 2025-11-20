@@ -23,8 +23,21 @@ class StudentDetails extends Component
     public function loadStudent()
     {
         try {
-            $this->student = Student::with(['CollegeClass', 'Cohort', 'User.roles', 'examSessions.exam.course'])
-                ->find($this->studentId);
+            $this->student = Student::with([
+                'CollegeClass', 
+                'Cohort', 
+                'User.roles', 
+                'examSessions' => function ($query) {
+                    $query->with([
+                        'exam' => function ($q) {
+                            $q->with('course', 'questionSets')
+                              ->withCount('questions');
+                        },
+                        'responses.question.options'
+                    ])->orderBy('created_at', 'desc');
+                }
+            ])
+            ->find($this->studentId);
 
             if (! $this->student) {
                 session()->flash('error', 'Student not found.');
@@ -37,6 +50,69 @@ class StudentDetails extends Component
             $this->loading = false;
         }
     }
+
+    public function getSessionScore($session)
+    {
+        $exam = $session->exam;
+        if (! $exam) {
+            return ['obtained' => 0, 'total' => 0, 'percentage' => 0];
+        }
+
+        // Logic from ExamResponseTracker
+        // Use questions_per_session if available, otherwise fall back to total questions count
+        $questionsPerSession = $exam->questions_per_session ?? $exam->questions_count;
+
+        $responses = $session->responses;
+        $processedResponses = collect();
+
+        foreach ($responses as $response) {
+            $question = $response->question;
+            if (! $question) {
+                continue;
+            }
+
+            $correctOption = $question->options->where('is_correct', true)->first();
+            $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
+            $questionMark = $question->mark ?? 1;
+
+            $processedResponses->push([
+                'is_correct' => $isCorrect,
+                'mark_value' => $questionMark,
+            ]);
+        }
+
+        // Only take the configured number of questions per session
+        $limitedResponses = $processedResponses->take($questionsPerSession);
+
+        $obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
+        $totalMarks = $limitedResponses->sum('mark_value');
+
+        $percentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
+
+        return [
+            'obtained' => $obtainedMarks,
+            'total' => $totalMarks,
+            'percentage' => $percentage
+        ];
+    }
+
+    public function getExamName($session)
+    {
+        $exam = $session->exam;
+        if (!$exam) return 'Unknown Exam';
+
+        // If exam has a single question set, use its name
+        if ($exam->questionSets->count() === 1) {
+            return $exam->questionSets->first()->name;
+        }
+
+        // Fallback to Course Code - Type
+        $courseCode = $exam->course->course_code ?? '';
+        $type = ucfirst($exam->type ?? 'Exam');
+        
+        return $courseCode ? "$courseCode - $type" : $type;
+    }
+
 
     public function deleteExamSession($sessionId)
     {

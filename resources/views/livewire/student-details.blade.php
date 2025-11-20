@@ -161,9 +161,13 @@
                         </thead>
                         <tbody>
                             @foreach($student->examSessions as $session)
+                                @php
+                                    $scoreData = $this->getSessionScore($session);
+                                    $examName = $this->getExamName($session);
+                                @endphp
                                 <tr>
                                     <td>
-                                        <div class="text-dark fw-bold text-hover-primary fs-6">{{ $session->exam->course->course_code ?? '' }} - {{ $session->exam->type ?? 'Exam' }}</div>
+                                        <div class="text-dark fw-bold text-hover-primary fs-6">{{ $examName }}</div>
                                         <span class="text-muted fw-semibold text-muted d-block fs-7">{{ $session->exam->slug ?? '' }}</span>
                                     </td>
                                     <td>
@@ -173,7 +177,7 @@
                                         <div class="text-dark fw-bold d-block fs-6">{{ $session->completed_at ? $session->completed_at->format('M d, Y H:i') : 'N/A' }}</div>
                                     </td>
                                     <td>
-                                        <span class="badge badge-light-primary fs-7 fw-bold">{{ $session->score }}</span>
+                                        <span class="badge badge-light-primary fs-7 fw-bold">{{ $scoreData['obtained'] }} / {{ $scoreData['total'] }} ({{ $scoreData['percentage'] }}%)</span>
                                     </td>
                                     <td>
                                         @if($session->completed_at)
