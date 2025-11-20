@@ -39,8 +39,8 @@
                             <div class="d-flex justify-content-center w-100">
                                 @if(isset($isPreview) && $isPreview)
                                     {{-- Timer disabled in preview mode --}}
-                                    <div class="alert alert-secondary mt-3">
-                                        <i class="bi bi-clock me-2"></i> Timer disabled in preview mode
+                                    <div class="alert alert-info mt-3 text-dark">
+                                        <i class="bi bi-clock me-2"></i> <strong>Timer disabled in preview mode</strong>
                                     </div>
                                 @else
                                     <!-- Timer Component -->
