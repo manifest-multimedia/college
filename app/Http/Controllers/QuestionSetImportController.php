@@ -130,8 +130,8 @@ class QuestionSetImportController extends Controller
             if ($format === 'excel') {
                 $previewData = $this->previewExcelFile($file, $questionSetId, $columnMapping);
             } else {
-                // Pass true to limit preview to 20 questions for preview endpoint
-                $previewData = $this->previewAikenFile($file, true);
+                // No limit for preview - show all questions for accurate preview
+                $previewData = $this->previewAikenFile($file, false);
             }
 
             return response()->json([
@@ -271,10 +271,7 @@ class QuestionSetImportController extends Controller
 
             $lineNumber += count(explode("\n", $block)) + 1;
 
-            // Only limit preview when explicitly requested (for preview endpoint)
-            if ($limitPreview && count($questions) >= 20) {
-                break;
-            }
+            // No limit - process all questions for complete preview and import
         }
 
         return ['questions' => $questions, 'errors' => $errors];
