@@ -79,6 +79,13 @@
                         <i class="fas fa-file-export me-2"></i>
                         Export
                     </button>
+
+                    @if($cohortFilter)
+                    <button class="btn btn-sm btn-light-warning px-3 d-flex align-items-center" wire:click="confirmIdRegeneration">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Regenerate IDs
+                    </button>
+                    @endif
                    
                 </div>
             </div>
@@ -209,6 +216,48 @@
                         <i class="fas fa-trash-alt me-1"></i>
                         <span wire:loading.remove>Delete Student</span>
                         <span wire:loading wire:target="deleteStudent">Deleting...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- ID Regeneration Confirmation Modal -->
+    @if($confirmingIdRegeneration)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Regenerate Student IDs
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" wire:click="cancelIdRegeneration" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="fs-5 text-gray-800 mb-0">
+                        Are you sure you want to regenerate IDs for the selected cohort?
+                    </p>
+                    <div class="alert alert-danger mt-4 mb-0">
+                        <div class="d-flex">
+                            <i class="fas fa-exclamation-circle fs-4 me-3"></i>
+                            <div>
+                                <p class="mb-1 fw-bold">Warning: This is a destructive action!</p>
+                                <p class="mb-0">All students in this cohort will be assigned NEW Student IDs based on the current configuration. Existing IDs will be overwritten.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" wire:click="cancelIdRegeneration">
+                        <i class="fas fa-times me-1"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" wire:click="regenerateIds" wire:loading.attr="disabled">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        <span wire:loading.remove>Regenerate IDs</span>
+                        <span wire:loading wire:target="regenerateIds">Processing...</span>
                     </button>
                 </div>
             </div>

@@ -683,9 +683,9 @@ class StudentIdGenerationService
 
     /**
      * Re-generate student IDs for existing students in a specific cohort
-     * This is useful for batch updates
+     * This will re-sequence all students in the cohort
      */
-    public function regenerateStudentIds(?int $collegeClassId = null, ?int $academicYearId = null): array
+    public function regenerateStudentIdsForCohort(int $cohortId): array
     {
         $results = [
             'success' => 0,
@@ -694,25 +694,35 @@ class StudentIdGenerationService
         ];
 
         try {
-            $query = Student::query();
+            DB::beginTransaction();
 
-            if ($collegeClassId) {
-                $query->where('college_class_id', $collegeClassId);
-            }
-
-            // Order alphabetically for proper sequence assignment
-            $students = $query->orderBy('last_name', 'asc')
+            // Get all students in the cohort
+            $students = Student::where('cohort_id', $cohortId)
+                ->orderBy('last_name', 'asc')
                 ->orderBy('first_name', 'asc')
+                ->lockForUpdate() // Lock them
                 ->get();
 
+            if ($students->isEmpty()) {
+                DB::rollBack();
+
+                return $results;
+            }
+
+            // First, clear their IDs to allow proper re-sequencing
+            foreach ($students as $student) {
+                $student->student_id = null;
+                $student->saveQuietly();
+            }
+
+            // Now regenerate
             foreach ($students as $student) {
                 try {
-                    $oldId = $student->student_id;
                     $newId = $this->generateStudentId(
                         $student->first_name,
                         $student->last_name,
                         $student->college_class_id,
-                        $academicYearId
+                        $student->academic_year_id
                     );
 
                     $student->student_id = $newId;
@@ -721,7 +731,6 @@ class StudentIdGenerationService
                     $results['updated_students'][] = [
                         'id' => $student->id,
                         'name' => "{$student->first_name} {$student->last_name}",
-                        'old_id' => $oldId,
                         'new_id' => $newId,
                     ];
 
@@ -729,17 +738,26 @@ class StudentIdGenerationService
 
                 } catch (\Exception $e) {
                     $results['errors']++;
-                    Log::error('Error updating student ID', [
+                    Log::error('Error regenerating ID for student in cohort', [
                         'student_id' => $student->id,
                         'error' => $e->getMessage(),
                     ]);
+                    throw $e;
                 }
             }
 
+            DB::commit();
+
         } catch (\Exception $e) {
-            Log::error('Error in batch student ID regeneration', [
+            DB::rollBack();
+            Log::error('Error in cohort student ID regeneration', [
+                'cohort_id' => $cohortId,
                 'error' => $e->getMessage(),
             ]);
+
+            $results['success'] = 0;
+            $results['errors'] = isset($students) ? $students->count() : 0;
+            $results['message'] = $e->getMessage();
         }
 
         return $results;

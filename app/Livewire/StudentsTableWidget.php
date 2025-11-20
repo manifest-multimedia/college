@@ -29,6 +29,8 @@ class StudentsTableWidget extends Component
 
     public $studentToDelete = null;
 
+    public $confirmingIdRegeneration = false;
+
     public $showingExportModal = false;
 
     public $exportFormat = '';
@@ -182,6 +184,60 @@ class StudentsTableWidget extends Component
     {
         $this->confirmingStudentDeletion = false;
         $this->studentToDelete = null;
+    }
+
+    /**
+     * Show confirmation modal for ID regeneration
+     *
+     * @return void
+     */
+    public function confirmIdRegeneration()
+    {
+        if (! $this->cohortFilter) {
+            session()->flash('error', 'Please select a cohort first to regenerate IDs.');
+
+            return;
+        }
+        $this->confirmingIdRegeneration = true;
+    }
+
+    /**
+     * Cancel ID regeneration
+     *
+     * @return void
+     */
+    public function cancelIdRegeneration()
+    {
+        $this->confirmingIdRegeneration = false;
+    }
+
+    /**
+     * Regenerate student IDs for the selected cohort
+     *
+     * @return void
+     */
+    public function regenerateIds(\App\Services\StudentIdGenerationService $service)
+    {
+        if (! $this->cohortFilter) {
+            return;
+        }
+
+        try {
+            $results = $service->regenerateStudentIdsForCohort($this->cohortFilter);
+
+            if (isset($results['success']) && $results['success'] > 0) {
+                session()->flash('success', "Successfully regenerated IDs for {$results['success']} students.");
+            } elseif (isset($results['message'])) {
+                session()->flash('error', 'Failed to regenerate IDs: '.$results['message']);
+            } else {
+                session()->flash('info', 'No students found or no IDs updated.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error regenerating IDs: '.$e->getMessage());
+            session()->flash('error', 'An error occurred while regenerating IDs.');
+        }
+
+        $this->confirmingIdRegeneration = false;
     }
 
     /**
