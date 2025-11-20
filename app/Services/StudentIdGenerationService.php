@@ -214,6 +214,15 @@ class StudentIdGenerationService
         $programCode = $this->getProgramCode($collegeClassId);
         $academicYear = $this->getAcademicYearCode($academicYearId);
 
+        // CRITICAL: Ensure program code is never empty to avoid double-slash IDs like "PNMTC//25/001"
+        if (empty($programCode)) {
+            Log::warning('Empty program code detected during custom ID generation', [
+                'college_class_id' => $collegeClassId,
+                'student_name' => "{$firstName} {$lastName}",
+            ]);
+            $programCode = 'GEN'; // Fallback to GEN if program code resolution fails
+        }
+
         // Replace placeholders in custom pattern
         $replacements = [
             '{INSTITUTION}' => $institutionPrefix,
@@ -235,6 +244,7 @@ class StudentIdGenerationService
             'student_id' => $studentId,
             'format' => 'custom',
             'pattern' => $customPattern,
+            'replacements' => $replacements, // Log actual replacement values for debugging
             'student_name' => "{$firstName} {$lastName}",
         ]);
 
@@ -287,6 +297,8 @@ class StudentIdGenerationService
             $collegeClass = CollegeClass::find($collegeClassId);
 
             if (! $collegeClass) {
+                Log::warning('College class not found', ['college_class_id' => $collegeClassId]);
+
                 return 'GEN';
             }
 
@@ -295,17 +307,50 @@ class StudentIdGenerationService
             if (method_exists($collegeClass, 'getProgramCode')) {
                 $programCode = $collegeClass->getProgramCode();
                 if (! empty($programCode) && $programCode !== 'PROG') {
+                    Log::debug('Program code from model method', [
+                        'college_class_id' => $collegeClassId,
+                        'program_code' => $programCode,
+                        'source' => 'getProgramCode()',
+                    ]);
+
                     return $programCode;
                 }
             }
 
             // Second priority: Use short_name field directly if available
             if (! empty($collegeClass->short_name)) {
-                return strtoupper($collegeClass->short_name);
+                $code = strtoupper($collegeClass->short_name);
+                Log::debug('Program code from short_name', [
+                    'college_class_id' => $collegeClassId,
+                    'program_code' => $code,
+                    'source' => 'short_name',
+                ]);
+
+                return $code;
             }
 
             // Fallback: Use existing extraction logic for backward compatibility
-            return $this->extractProgramCode($collegeClass->name);
+            $extracted = $this->extractProgramCode($collegeClass->name);
+
+            // Final safety: never return empty string
+            if (empty($extracted)) {
+                Log::error('Program code extraction returned empty - using GEN fallback', [
+                    'college_class_id' => $collegeClassId,
+                    'class_name' => $collegeClass->name ?? 'N/A',
+                    'class_short_name' => $collegeClass->short_name ?? null,
+                    'has_getProgramCode_method' => method_exists($collegeClass, 'getProgramCode'),
+                ]);
+
+                return 'GEN';
+            }
+
+            Log::debug('Program code from name extraction', [
+                'college_class_id' => $collegeClassId,
+                'program_code' => $extracted,
+                'source' => 'extractProgramCode',
+            ]);
+
+            return $extracted;
 
         } catch (\Exception $e) {
             Log::warning('Could not determine program code', [
@@ -666,10 +711,16 @@ class StudentIdGenerationService
 
     /**
      * Validate if a student ID format is correct
+     * NOTE: This is for informational/diagnostic purposes only.
+     * Regeneration should ALWAYS process all students regardless of format validity.
      */
     public function isValidStudentIdFormat(string $studentId): bool
     {
-        // Check structured format: PREFIX/PROGRAM/YY/YY/NNN
+        if (empty($studentId)) {
+            return false;
+        }
+
+        // Check structured format: PREFIX/PROGRAM/YY/YY/NNN (e.g., COLLEGE/DEPT/GEN/25/26/001)
         $structuredPattern = '/^[A-Z\/]+\/[A-Z]+\/\d{2}\/\d{2}\/\d{3}$/';
         if (preg_match($structuredPattern, $studentId)) {
             return true;
@@ -681,7 +732,13 @@ class StudentIdGenerationService
             return true;
         }
 
-        // Check old format: PREFIXYYYYNNNN
+        // Check legacy format: PREFIX/PROGRAMDIGITS (e.g., PNMTC/DA20254329)
+        $legacyPattern = '/^[A-Z]+\/[A-Z]+\d{6,10}$/';
+        if (preg_match($legacyPattern, $studentId)) {
+            return true;
+        }
+
+        // Check old numeric format: PREFIXYYYYNNNN
         $oldPattern = '/^[A-Z]+\d{8}$/';
 
         return preg_match($oldPattern, $studentId);
@@ -703,24 +760,43 @@ class StudentIdGenerationService
         try {
             DB::beginTransaction();
 
-            // Get all students in the cohort
+            // Get all students in the cohort - EVERY student, no filters
             $students = Student::where('cohort_id', $cohortId)
                 ->orderBy('last_name', 'asc')
                 ->orderBy('first_name', 'asc')
-                ->lockForUpdate() // Lock them
+                ->lockForUpdate() // Lock them to prevent concurrent modifications
                 ->get();
+
+            Log::info('Cohort regeneration: starting', [
+                'cohort_id' => $cohortId,
+                'total_students' => $students->count(),
+                'student_ids_before' => $students->pluck('student_id', 'id')->toArray(),
+            ]);
 
             if ($students->isEmpty()) {
                 DB::rollBack();
+                Log::warning('Cohort regeneration: no students found', ['cohort_id' => $cohortId]);
 
                 return $results;
             }
 
             // First, clear their IDs to allow proper re-sequencing
+            $clearedIds = [];
             foreach ($students as $student) {
+                $clearedIds[] = [
+                    'id' => $student->id,
+                    'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
+                    'old_id' => $student->student_id,
+                ];
                 $student->student_id = null;
                 $student->saveQuietly();
             }
+
+            Log::info('Cohort regeneration: cleared all IDs', [
+                'cohort_id' => $cohortId,
+                'students_cleared' => count($clearedIds),
+                'sample_cleared' => array_slice($clearedIds, 0, 5),
+            ]);
 
             // Now regenerate
             foreach ($students as $student) {
@@ -735,13 +811,17 @@ class StudentIdGenerationService
                     $student->student_id = $newId;
                     $student->save();
 
-                    $results['updated_students'][] = [
+                    $studentInfo = [
                         'id' => $student->id,
                         'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
                         'new_id' => $newId,
                     ];
 
+                    $results['updated_students'][] = $studentInfo;
                     $results['success']++;
+
+                    // Log each successful regeneration
+                    Log::debug('Regenerated student ID', array_merge($studentInfo, ['cohort_id' => $cohortId]));
 
                 } catch (\Throwable $e) {
                     $results['errors']++;
@@ -762,11 +842,18 @@ class StudentIdGenerationService
 
             DB::commit();
 
+            Log::info('Cohort regeneration: transaction committed', [
+                'cohort_id' => $cohortId,
+                'success' => $results['success'],
+                'errors' => $results['errors'],
+            ]);
+
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Error in cohort student ID regeneration', [
                 'cohort_id' => $cohortId,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $results['success'] = 0;
