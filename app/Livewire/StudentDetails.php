@@ -101,11 +101,6 @@ class StudentDetails extends Component
         $exam = $session->exam;
         if (!$exam) return 'Unknown Exam';
 
-        // If exam has a single question set, use its name
-        if ($exam->questionSets->count() === 1) {
-            return $exam->questionSets->first()->name;
-        }
-
         // Fallback to Course Code - Type
         $courseCode = $exam->course->course_code ?? '';
         $type = ucfirst($exam->type ?? 'Exam');
