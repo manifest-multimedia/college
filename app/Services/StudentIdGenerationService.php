@@ -697,6 +697,7 @@ class StudentIdGenerationService
             'success' => 0,
             'errors' => 0,
             'updated_students' => [],
+            'failed_students' => [],
         ];
 
         try {
@@ -725,8 +726,8 @@ class StudentIdGenerationService
             foreach ($students as $student) {
                 try {
                     $newId = $this->generateStudentId(
-                        $student->first_name,
-                        $student->last_name,
+                        $student->first_name ?? '',
+                        $student->last_name ?? '',
                         $student->college_class_id,
                         $student->academic_year_id
                     );
@@ -736,25 +737,32 @@ class StudentIdGenerationService
 
                     $results['updated_students'][] = [
                         'id' => $student->id,
-                        'name' => "{$student->first_name} {$student->last_name}",
+                        'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
                         'new_id' => $newId,
                     ];
 
                     $results['success']++;
 
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $results['errors']++;
+                    $results['failed_students'][] = [
+                        'id' => $student->id,
+                        'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
+                        'previous_id' => $student->student_id,
+                        'error' => $e->getMessage(),
+                    ];
                     Log::error('Error regenerating ID for student in cohort', [
                         'student_id' => $student->id,
+                        'cohort_id' => $cohortId,
                         'error' => $e->getMessage(),
                     ]);
-                    throw $e;
+                    // Do NOT throw; continue with other students so partial progress is preserved
                 }
             }
 
             DB::commit();
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Error in cohort student ID regeneration', [
                 'cohort_id' => $cohortId,
