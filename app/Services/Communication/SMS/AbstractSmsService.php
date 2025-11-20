@@ -12,16 +12,14 @@ abstract class AbstractSmsService implements SmsServiceInterface
     /**
      * Send an SMS message to a single recipient.
      *
-     * @param string $recipient
-     * @param string $message
-     * @param array $options
      * @return array
      */
     public function sendSingle(string $recipient, string $message, array $options = [])
     {
         // Validate phone number
-        if (!$this->validatePhoneNumber($recipient)) {
+        if (! $this->validatePhoneNumber($recipient)) {
             Log::error('Invalid phone number', ['recipient' => $recipient]);
+
             return [
                 'success' => false,
                 'message' => 'Invalid phone number format',
@@ -48,7 +46,7 @@ abstract class AbstractSmsService implements SmsServiceInterface
 
             return [
                 'success' => false,
-                'message' => 'Failed to send SMS: ' . $e->getMessage(),
+                'message' => 'Failed to send SMS: '.$e->getMessage(),
             ];
         }
     }
@@ -56,9 +54,6 @@ abstract class AbstractSmsService implements SmsServiceInterface
     /**
      * Send the same SMS message to multiple recipients.
      *
-     * @param array $recipients
-     * @param string $message
-     * @param array $options
      * @return array
      */
     public function sendBulk(array $recipients, string $message, array $options = [])
@@ -73,13 +68,13 @@ abstract class AbstractSmsService implements SmsServiceInterface
 
         foreach ($recipients as $recipient) {
             $result = $this->sendSingle($recipient, $message, $options);
-            
+
             if ($result['success']) {
                 $results['sent']++;
             } else {
                 $results['failed']++;
             }
-            
+
             $results['details'][] = [
                 'recipient' => $recipient,
                 'status' => $result['success'] ? 'sent' : 'failed',
@@ -93,9 +88,6 @@ abstract class AbstractSmsService implements SmsServiceInterface
     /**
      * Send an SMS message to a predefined group.
      *
-     * @param int $groupId
-     * @param string $message
-     * @param array $options
      * @return array
      */
     public function sendToGroup(int $groupId, string $message, array $options = [])
@@ -118,7 +110,7 @@ abstract class AbstractSmsService implements SmsServiceInterface
 
             // Add group ID to options for tracking
             $options['group_id'] = $groupId;
-            
+
             return $this->sendBulk($recipients, $message, $options);
         } catch (\Exception $e) {
             Log::error('Group SMS sending failed', [
@@ -128,16 +120,13 @@ abstract class AbstractSmsService implements SmsServiceInterface
 
             return [
                 'success' => false,
-                'message' => 'Failed to send group SMS: ' . $e->getMessage(),
+                'message' => 'Failed to send group SMS: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Validate a phone number format.
-     * 
-     * @param string $phoneNumber
-     * @return bool
      */
     public function validatePhoneNumber(string $phoneNumber): bool
     {
@@ -145,26 +134,18 @@ abstract class AbstractSmsService implements SmsServiceInterface
             'phone' => 'required|regex:/^\+?[0-9]{10,15}$/',
         ]);
 
-        return !$validator->fails();
+        return ! $validator->fails();
     }
 
     /**
      * Log SMS details to the database.
-     *
-     * @param string $recipient
-     * @param string $message
-     * @param array $result
-     * @param string $type
-     * @param int|null $userId
-     * @param string|null $groupId
-     * @return void
      */
     protected function logSms(
-        string $recipient, 
-        string $message, 
-        array $result, 
-        string $type = 'single', 
-        ?int $userId = null, 
+        string $recipient,
+        string $message,
+        array $result,
+        string $type = 'single',
+        ?int $userId = null,
         ?string $groupId = null
     ): void {
         try {
@@ -188,18 +169,11 @@ abstract class AbstractSmsService implements SmsServiceInterface
 
     /**
      * Send an SMS message using the specific provider implementation.
-     *
-     * @param string $recipient
-     * @param string $message
-     * @param array $options
-     * @return array
      */
     abstract protected function send(string $recipient, string $message, array $options = []): array;
 
     /**
      * Get the name of the SMS provider.
-     *
-     * @return string
      */
     abstract protected function getProviderName(): string;
 }

@@ -52,7 +52,7 @@ class ChatMessage extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Check if this message is a document.
      */
@@ -60,41 +60,42 @@ class ChatMessage extends Model
     {
         return $this->is_document;
     }
-    
+
     /**
      * Get the file extension of the document.
      */
     public function getFileExtension(): ?string
     {
-        if (!$this->file_name) {
+        if (! $this->file_name) {
             return null;
         }
-        
+
         return pathinfo($this->file_name, PATHINFO_EXTENSION);
     }
-    
+
     /**
      * Check if the document is an image.
      */
     public function isImage(): bool
     {
-        if (!$this->is_document) {
+        if (! $this->is_document) {
             return false;
         }
-        
+
         $imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+
         return in_array($this->mime_type, $imageTypes);
     }
-    
+
     /**
      * Check if the document is a PDF.
      */
     public function isPdf(): bool
     {
-        if (!$this->is_document) {
+        if (! $this->is_document) {
             return false;
         }
-        
+
         return $this->mime_type === 'application/pdf';
     }
 }

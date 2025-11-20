@@ -2,18 +2,17 @@
 
 namespace App\Livewire\Admin;
 
+use App\Exports\BulkTranscriptExport;
+use App\Models\AcademicYear;
+use App\Models\CollegeClass;
+use App\Models\Semester;
+use App\Models\Student;
+use App\Services\TranscriptService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Student;
-use App\Models\CollegeClass;
-use App\Models\AcademicYear;
-use App\Models\Semester;
-use App\Services\TranscriptService;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use ZipArchive;
-use App\Exports\BulkTranscriptExport;
 
 class TranscriptGeneration extends Component
 {
@@ -21,21 +20,31 @@ class TranscriptGeneration extends Component
 
     // Search and filter properties
     public $search = '';
+
     public $selectedClassId = null;
+
     public $selectedAcademicYearId = null;
+
     public $selectedSemesterId = null;
+
     public $selectedFormat = 'pdf';
+
     public $perPage = 15;
 
     // Individual transcript generation
     public $selectedStudentId = null;
+
     public $showTranscriptModal = false;
+
     public $transcriptData = null;
+
     public $isGenerating = false;
 
     // Bulk generation
     public $selectedStudents = [];
+
     public $bulkGeneration = false;
+
     public $bulkProgress = 0;
 
     public function mount()
@@ -71,7 +80,7 @@ class TranscriptGeneration extends Component
         $this->isGenerating = true;
 
         try {
-            $transcriptService = new TranscriptService();
+            $transcriptService = new TranscriptService;
             $this->transcriptData = $transcriptService->generateTranscriptData(
                 $studentId,
                 $this->selectedAcademicYearId,
@@ -83,13 +92,13 @@ class TranscriptGeneration extends Component
         } catch (\Exception $e) {
             Log::error('Error generating transcript', [
                 'student_id' => $studentId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Error generating transcript: ' . $e->getMessage(),
-                'timer' => 5000
+                'message' => 'Error generating transcript: '.$e->getMessage(),
+                'timer' => 5000,
             ]);
         }
 
@@ -98,20 +107,21 @@ class TranscriptGeneration extends Component
 
     public function downloadTranscript($format = null)
     {
-        if (!$this->transcriptData) {
+        if (! $this->transcriptData) {
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'No transcript data available.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
+
             return;
         }
 
         $format = $format ?? $this->selectedFormat;
 
         try {
-            $transcriptService = new TranscriptService();
-            
+            $transcriptService = new TranscriptService;
+
             if ($format === 'csv') {
                 return $this->downloadCSV();
             } elseif ($format === 'pdf') {
@@ -124,25 +134,25 @@ class TranscriptGeneration extends Component
             Log::error('Error downloading transcript', [
                 'student_id' => $this->selectedStudentId,
                 'format' => $format,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Error downloading transcript: ' . $e->getMessage(),
-                'timer' => 5000
+                'message' => 'Error downloading transcript: '.$e->getMessage(),
+                'timer' => 5000,
             ]);
         }
     }
 
     protected function downloadCSV()
     {
-        $transcriptService = new TranscriptService();
+        $transcriptService = new TranscriptService;
         $csvData = $transcriptService->generateCSV($this->transcriptData);
         $student = $this->transcriptData['student'];
-        $filename = 'transcript_' . $student->student_id . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'transcript_'.$student->student_id.'_'.now()->format('Y-m-d').'.csv';
 
-        $callback = function() use ($csvData) {
+        $callback = function () use ($csvData) {
             $file = fopen('php://output', 'w');
             foreach ($csvData as $row) {
                 fputcsv($file, $row);
@@ -152,14 +162,14 @@ class TranscriptGeneration extends Component
 
         return Response::stream($callback, 200, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
     public function toggleStudentSelection($studentId)
     {
         if (in_array($studentId, $this->selectedStudents)) {
-            $this->selectedStudents = array_filter($this->selectedStudents, function($id) use ($studentId) {
+            $this->selectedStudents = array_filter($this->selectedStudents, function ($id) use ($studentId) {
                 return $id != $studentId;
             });
         } else {
@@ -184,8 +194,9 @@ class TranscriptGeneration extends Component
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'Please select at least one student.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
+
             return;
         }
 
@@ -194,7 +205,7 @@ class TranscriptGeneration extends Component
 
         try {
             $totalStudents = count($this->selectedStudents);
-            $transcriptService = new TranscriptService();
+            $transcriptService = new TranscriptService;
 
             if ($this->selectedFormat === 'pdf') {
                 return $this->bulkGeneratePDFs($transcriptService, $totalStudents);
@@ -207,13 +218,13 @@ class TranscriptGeneration extends Component
         } catch (\Exception $e) {
             Log::error('Error in bulk transcript generation', [
                 'error' => $e->getMessage(),
-                'selected_students' => $this->selectedStudents
+                'selected_students' => $this->selectedStudents,
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Error generating bulk transcripts: ' . $e->getMessage(),
-                'timer' => 5000
+                'message' => 'Error generating bulk transcripts: '.$e->getMessage(),
+                'timer' => 5000,
             ]);
         } finally {
             $this->bulkGeneration = false;
@@ -225,8 +236,8 @@ class TranscriptGeneration extends Component
     protected function bulkGeneratePDFs($transcriptService, $totalStudents)
     {
         // Create temporary directory for PDFs
-        $tempDir = storage_path('app/temp/transcripts/' . uniqid());
-        if (!file_exists($tempDir)) {
+        $tempDir = storage_path('app/temp/transcripts/'.uniqid());
+        if (! file_exists($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
 
@@ -241,9 +252,9 @@ class TranscriptGeneration extends Component
 
             // Generate PDF content
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.transcript-pdf', $transcriptData);
-            $fileName = 'transcript_' . $transcriptData['student']->student_id . '.pdf';
-            $filePath = $tempDir . '/' . $fileName;
-            
+            $fileName = 'transcript_'.$transcriptData['student']->student_id.'.pdf';
+            $filePath = $tempDir.'/'.$fileName;
+
             file_put_contents($filePath, $pdf->output());
             $fileNames[] = $filePath;
 
@@ -251,24 +262,24 @@ class TranscriptGeneration extends Component
         }
 
         // Create ZIP file
-        $zipFileName = 'transcripts_' . now()->format('Y-m-d_H-i-s') . '.zip';
-        $zipPath = storage_path('app/temp/' . $zipFileName);
-        
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+        $zipFileName = 'transcripts_'.now()->format('Y-m-d_H-i-s').'.zip';
+        $zipPath = storage_path('app/temp/'.$zipFileName);
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
             foreach ($fileNames as $filePath) {
                 $zip->addFile($filePath, basename($filePath));
             }
             $zip->close();
-            
+
             // Clean up individual PDF files
             foreach ($fileNames as $filePath) {
                 unlink($filePath);
             }
             rmdir($tempDir);
-            
+
             $this->bulkProgress = 100;
-            
+
             // Return the ZIP file for download
             return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
         } else {
@@ -280,7 +291,7 @@ class TranscriptGeneration extends Component
     {
         // For Excel, we'll create one file with multiple sheets
         $allTranscriptData = [];
-        
+
         foreach ($this->selectedStudents as $index => $studentId) {
             $transcriptData = $transcriptService->generateTranscriptData(
                 $studentId,
@@ -288,14 +299,15 @@ class TranscriptGeneration extends Component
                 $this->selectedSemesterId
             );
             $allTranscriptData[] = $transcriptData;
-            
+
             $this->bulkProgress = round((($index + 1) / $totalStudents) * 100);
         }
 
         // Generate Excel file with multiple sheets
-        $fileName = 'bulk_transcripts_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+        $fileName = 'bulk_transcripts_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new BulkTranscriptExport($allTranscriptData), 
+            new BulkTranscriptExport($allTranscriptData),
             $fileName
         );
     }
@@ -303,31 +315,31 @@ class TranscriptGeneration extends Component
     protected function bulkGenerateCSV($transcriptService, $totalStudents)
     {
         $allCsvData = [];
-        
+
         foreach ($this->selectedStudents as $index => $studentId) {
             $transcriptData = $transcriptService->generateTranscriptData(
                 $studentId,
                 $this->selectedAcademicYearId,
                 $this->selectedSemesterId
             );
-            
+
             $csvData = $transcriptService->generateCSV($transcriptData);
-            
+
             // Add separator between students
             if ($index > 0) {
                 $allCsvData[] = []; // Empty row
                 $allCsvData[] = ['==========================================='];
                 $allCsvData[] = []; // Empty row
             }
-            
+
             $allCsvData = array_merge($allCsvData, $csvData);
-            
+
             $this->bulkProgress = round((($index + 1) / $totalStudents) * 100);
         }
 
-        $fileName = 'bulk_transcripts_' . now()->format('Y-m-d_H-i-s') . '.csv';
+        $fileName = 'bulk_transcripts_'.now()->format('Y-m-d_H-i-s').'.csv';
 
-        $callback = function() use ($allCsvData) {
+        $callback = function () use ($allCsvData) {
             $file = fopen('php://output', 'w');
             foreach ($allCsvData as $row) {
                 fputcsv($file, $row);
@@ -337,7 +349,7 @@ class TranscriptGeneration extends Component
 
         return Response::stream($callback, 200, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ]);
     }
 
@@ -357,11 +369,11 @@ class TranscriptGeneration extends Component
         }
 
         if ($this->search) {
-            $query->where(function($q) {
-                $q->where('student_id', 'like', '%' . $this->search . '%')
-                  ->orWhere('first_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('last_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%');
+            $query->where(function ($q) {
+                $q->where('student_id', 'like', '%'.$this->search.'%')
+                    ->orWhere('first_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('last_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('email', 'like', '%'.$this->search.'%');
             });
         }
 
@@ -371,7 +383,7 @@ class TranscriptGeneration extends Component
     public function render()
     {
         $students = $this->getFilteredStudents()->paginate($this->perPage);
-        
+
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::orderBy('name')->get();

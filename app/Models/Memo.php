@@ -36,8 +36,8 @@ class Memo extends Model
 
         static::creating(function ($memo) {
             // Generate a unique reference number if not provided
-            if (!$memo->reference_number) {
-                $memo->reference_number = 'MEMO-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+            if (! $memo->reference_number) {
+                $memo->reference_number = 'MEMO-'.date('Ymd').'-'.strtoupper(Str::random(5));
             }
         });
     }

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -15,7 +15,7 @@ return new class extends Migration
         try {
             Schema::table('permissions', function (Blueprint $table) {
                 // Check if the column doesn't already exist
-                if (!Schema::hasColumn('permissions', 'description')) {
+                if (! Schema::hasColumn('permissions', 'description')) {
                     $table->string('description')->nullable()->after('name');
                     Log::info('Added description column to permissions table');
                 } else {
@@ -23,7 +23,7 @@ return new class extends Migration
                 }
             });
         } catch (\Exception $e) {
-            Log::error('Migration error when adding description to permissions table: ' . $e->getMessage());
+            Log::error('Migration error when adding description to permissions table: '.$e->getMessage());
             throw $e;
         }
     }

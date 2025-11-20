@@ -4,15 +4,17 @@ namespace App\Exports;
 
 use App\Models\Student;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class StudentExport implements FromCollection, WithHeadings, WithMapping, WithTitle, ShouldAutoSize
+class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithTitle
 {
     protected $search;
+
     protected $programFilter;
+
     protected $cohortFilter;
 
     public function __construct($search = '', $programFilter = '', $cohortFilter = '')
@@ -25,18 +27,18 @@ class StudentExport implements FromCollection, WithHeadings, WithMapping, WithTi
     public function collection()
     {
         return Student::query()
-            ->when($this->search, function($query) {
-                return $query->where(function($q) {
-                    $q->where('student_id', 'like', '%' . $this->search . '%')
-                      ->orWhere('first_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('last_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('student_id', 'like', '%'.$this->search.'%')
+                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->programFilter, function($query) {
+            ->when($this->programFilter, function ($query) {
                 return $query->where('college_class_id', $this->programFilter);
             })
-            ->when($this->cohortFilter, function($query) {
+            ->when($this->cohortFilter, function ($query) {
                 return $query->where('cohort_id', $this->cohortFilter);
             })
             ->with(['collegeClass', 'cohort'])

@@ -35,12 +35,12 @@ class ExamClearanceNotification extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         $channels = ['database'];
-        
+
         // Add mail channel if the user has an email
         if ($notifiable->email) {
             $channels[] = 'mail';
         }
-        
+
         return $channels;
     }
 
@@ -54,23 +54,24 @@ class ExamClearanceNotification extends Notification implements ShouldQueue
         $examTitle = $exam->title ?? ($exam->course->title ?? 'Exam');
         $status = $this->clearance->is_cleared ? 'Cleared' : 'Not Cleared';
         $action = $this->clearance->is_cleared ? 'View Entry Ticket' : 'Check Fee Status';
-        
+
         return (new MailMessage)
             ->subject("Exam Clearance Status: {$status}")
             ->greeting("Hello {$notifiable->name},")
             ->line("Your clearance status for {$examType}: {$examTitle} is: {$status}.")
             ->when($this->clearance->is_cleared, function ($message) use ($exam) {
                 $venue = $this->clearance->isOfflineExam() ? "Venue: {$exam->venue}" : '';
-                $date = $this->clearance->isOfflineExam() 
-                    ? "Date: " . $exam->date->format('l, F j, Y \a\t g:i A')
+                $date = $this->clearance->isOfflineExam()
+                    ? 'Date: '.$exam->date->format('l, F j, Y \a\t g:i A')
                     : '';
-                
-                return $message->line("Your exam entry ticket has been issued.")
+
+                return $message->line('Your exam entry ticket has been issued.')
                     ->line($venue)
                     ->line($date);
             })
-            ->when(!$this->clearance->is_cleared, function ($message) use ($exam) {
+            ->when(! $this->clearance->is_cleared, function ($message) use ($exam) {
                 $threshold = $exam->clearance_threshold ?? 60;
+
                 return $message->line("You need to pay at least {$threshold}% of your fees to be cleared for this exam.");
             })
             ->action($action, $this->getActionUrl())
@@ -88,7 +89,7 @@ class ExamClearanceNotification extends Notification implements ShouldQueue
         $exam = $this->clearance->clearable;
         $examType = $this->clearance->isOnlineExam() ? 'Online Exam' : 'Offline Exam';
         $examTitle = $exam->title ?? ($exam->course->title ?? 'Exam');
-        
+
         return [
             'clearance_id' => $this->clearance->id,
             'exam_id' => $exam->id,
@@ -102,11 +103,9 @@ class ExamClearanceNotification extends Notification implements ShouldQueue
                 : "You have not been cleared for {$examType}: {$examTitle}. Please check your fee status.",
         ];
     }
-    
+
     /**
      * Get the action URL for the notification.
-     * 
-     * @return string
      */
     protected function getActionUrl(): string
     {

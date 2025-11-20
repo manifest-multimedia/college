@@ -26,7 +26,7 @@ class OfflineExam extends Model
         'proctor_id', // User who supervises the exam
         'venue',
         'clearance_threshold', // Percentage of fees required for clearance
-        'passing_percentage'
+        'passing_percentage',
     ];
 
     /**
@@ -124,14 +124,14 @@ class OfflineExam extends Model
 
     /**
      * Get the full title of the offline exam including course and type.
-     * 
+     *
      * @return string
      */
     public function getFullTitleAttribute()
     {
         $courseTitle = $this->course ? $this->course->title : 'No Course';
         $typeName = $this->type ? $this->type->name : 'General';
-        
+
         return "{$this->title} - {$courseTitle} ({$typeName})";
     }
 }

@@ -4,16 +4,16 @@
  * Create sample data for MCP testing
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__.'/vendor/autoload.php';
 
 // Bootstrap Laravel
-$app = require_once __DIR__ . '/bootstrap/app.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 try {
     // First check if we have existing subjects to use for testing
     $existingSubjects = App\Models\Subject::limit(5)->get();
-    
+
     if ($existingSubjects->count() > 0) {
         echo "✅ Using existing courses for testing:\n";
         foreach ($existingSubjects as $subject) {
@@ -34,7 +34,7 @@ try {
     // List all courses
     echo "📚 All available courses:\n";
     $courses = App\Models\Subject::select('course_code', 'name')->limit(10)->get();
-    
+
     foreach ($courses as $course) {
         echo "   - {$course->course_code}: {$course->name}\n";
     }
@@ -48,6 +48,6 @@ try {
     echo "Now you can run: php mcp_test.php --run\n";
 
 } catch (Exception $e) {
-    echo "❌ Error setting up sample data: " . $e->getMessage() . "\n";
-    echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
+    echo '❌ Error setting up sample data: '.$e->getMessage()."\n";
+    echo "Stack trace:\n".$e->getTraceAsString()."\n";
 }

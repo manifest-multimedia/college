@@ -2,19 +2,20 @@
 
 namespace App\Exports;
 
+use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Student;
-use App\Models\ScoredQuestion;
-use App\Models\Exam;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class ExamResultExport implements FromCollection, WithHeadings
 {
     protected $exam_id;
+
     protected $student_id;
+
     protected $student;
-   
+
     public function __construct($exam_id, $student_id)
     {
         $this->exam_id = $exam_id;
@@ -25,30 +26,27 @@ class ExamResultExport implements FromCollection, WithHeadings
     public function collection()
     {
         $exam = Exam::find($this->exam_id);
-    //   dd($this->student->name, $this->student->user->id,$exam->id, $exam->course->name);
+        //   dd($this->student->name, $this->student->user->id,$exam->id, $exam->course->name);
 
         $sessions = ExamSession::with([
             'student',
             'responses.question.options',
-            'exam.course'
+            'exam.course',
         ])
-        ->where('exam_id', $this->exam_id)
-        ->where('student_id', $this->student->id)
-        ->get();
+            ->where('exam_id', $this->exam_id)
+            ->where('student_id', $this->student->id)
+            ->get();
 
-       
-        
         if ($sessions->isEmpty()) {
             dd('No exam session found for given exam_id and student_id');
         }
-
 
         return $sessions->flatMap(function ($session) {
             return $session->responses->map(function ($response, $index) use ($session) {
                 $question = $response->question;
                 $selectedOption = $question->options->firstWhere('id', $response->selected_option);
                 $correctOption = $question->options->firstWhere('is_correct', true);
-                
+
                 return [
                     'number' => $index + 1,
                     'exam_session_id' => $session->id,
@@ -76,7 +74,7 @@ class ExamResultExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-           
+
             '#',
             'exam_session_id',
             'session_started_at',
@@ -94,7 +92,7 @@ class ExamResultExport implements FromCollection, WithHeadings
             'is_correct',
             'response_time',
             'exam_mode',
-            'college_class_id'
+            'college_class_id',
         ];
     }
-} 
+}

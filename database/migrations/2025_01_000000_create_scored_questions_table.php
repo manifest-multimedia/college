@@ -20,19 +20,19 @@ return new class extends Migration
 
             // Add foreign key constraints
             $table->foreign('exam_session_id')
-                  ->references('id')
-                  ->on('exam_sessions')
-                  ->onDelete('cascade');
-                  
+                ->references('id')
+                ->on('exam_sessions')
+                ->onDelete('cascade');
+
             $table->foreign('question_id')
-                  ->references('id')
-                  ->on('questions')
-                  ->onDelete('cascade');
-                  
+                ->references('id')
+                ->on('questions')
+                ->onDelete('cascade');
+
             $table->foreign('response_id')
-                  ->references('id')
-                  ->on('responses')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('responses')
+                ->onDelete('cascade');
 
             // Ensure we don't store duplicate questions for a session
             $table->unique(['exam_session_id', 'question_id']);
@@ -43,4 +43,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('scored_questions');
     }
-}; 
+};

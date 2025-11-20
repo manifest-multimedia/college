@@ -63,7 +63,7 @@ class SmsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send SMS: ' . $e->getMessage(),
+                'message' => 'Failed to send SMS: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -105,7 +105,7 @@ class SmsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send bulk SMS: ' . $e->getMessage(),
+                'message' => 'Failed to send bulk SMS: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -147,7 +147,7 @@ class SmsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send group SMS: ' . $e->getMessage(),
+                'message' => 'Failed to send group SMS: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -164,13 +164,13 @@ class SmsController extends Controller
             if ($request->has('type')) {
                 $query->where('type', $request->input('type'));
             }
-            
+
             if ($request->has('status')) {
                 $query->where('status', $request->input('status'));
             }
-            
+
             if ($request->has('recipient')) {
-                $query->where('recipient', 'like', '%' . $request->input('recipient') . '%');
+                $query->where('recipient', 'like', '%'.$request->input('recipient').'%');
             }
 
             // Pagination
@@ -188,7 +188,7 @@ class SmsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get SMS logs: ' . $e->getMessage(),
+                'message' => 'Failed to get SMS logs: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -220,7 +220,7 @@ class SmsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get recipient lists: ' . $e->getMessage(),
+                'message' => 'Failed to get recipient lists: '.$e->getMessage(),
             ], 500);
         }
     }

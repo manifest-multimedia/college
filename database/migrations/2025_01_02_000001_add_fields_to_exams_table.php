@@ -13,7 +13,7 @@ return new class extends Migration
                 ->nullable()
                 ->after('duration')
                 ->comment('Number of questions to be answered per session');
-                
+
             $table->decimal('passing_percentage', 5, 2)
                 ->nullable()
                 ->after('questions_per_session')
@@ -27,8 +27,8 @@ return new class extends Migration
         Schema::table('exams', function (Blueprint $table) {
             $table->dropColumn([
                 'questions_per_session',
-                'passing_percentage'
+                'passing_percentage',
             ]);
         });
     }
-}; 
+};

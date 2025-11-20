@@ -22,7 +22,7 @@ return new class extends Migration
             // Foreign key constraints
             $table->foreign('exam_id')->references('id')->on('exams')->onDelete('cascade');
             $table->foreign('question_set_id')->references('id')->on('question_sets')->onDelete('cascade');
-            
+
             // Unique constraint to prevent duplicate entries
             $table->unique(['exam_id', 'question_set_id']);
         });

@@ -2,18 +2,17 @@
 
 namespace App\Livewire;
 
+use App\Models\AcademicYear;
+use App\Models\CollegeClass;
+use App\Models\FeeStructure;
+use App\Models\FeeType;
+use App\Models\Semester;
+use App\Models\Student;
+use App\Models\StudentFeeBill;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Student;
-use App\Models\FeeType;
-use App\Models\FeeStructure;
-use App\Models\StudentFeeBill;
-use App\Models\Payment;
-use App\Models\CollegeClass;
-use App\Models\AcademicYear;
-use App\Models\Semester;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
 
 class StudentFeeBillingManager extends Component
 {
@@ -23,30 +22,42 @@ class StudentFeeBillingManager extends Component
 
     // Filters
     public $search = '';
+
     public $selectedClass = '';
+
     public $selectedAcademicYear = '';
+
     public $selectedSemester = '';
+
     public $statusFilter = '';
 
     // Bulk Billing
     public $bulkBillingClass = '';
+
     public $bulkBillingAcademicYear = '';
+
     public $bulkBillingSemester = '';
+
     public $bulkBillDate = '';
 
     // Individual student view
     public $selectedStudentId = '';
+
     public $selectedStudent = null;
+
     public $studentFeeBills = [];
 
     // Modals
     public $feeTypeModalOpen = false;
+
     public $feeStructureModalOpen = false;
+
     public $newFeeType = [
         'name' => '',
         'code' => '',
         'description' => '',
     ];
+
     public $newFeeStructure = [
         'fee_type_id' => '',
         'college_class_id' => '',
@@ -58,6 +69,7 @@ class StudentFeeBillingManager extends Component
 
     // Messages
     public $successMessage = '';
+
     public $errorMessage = '';
 
     protected function rules()
@@ -66,21 +78,21 @@ class StudentFeeBillingManager extends Component
             'newFeeType.name' => 'required|min:3|max:100',
             'newFeeType.code' => 'required|min:2|max:20|unique:fee_types,code',
             'newFeeType.description' => 'nullable|max:255',
-            
+
             'newFeeStructure.fee_type_id' => 'required|exists:fee_types,id',
             'newFeeStructure.college_class_id' => 'required|exists:college_classes,id',
             'newFeeStructure.academic_year_id' => 'required|exists:academic_years,id',
             'newFeeStructure.semester_id' => 'required|exists:semesters,id',
             'newFeeStructure.amount' => 'required|numeric|min:0',
             'newFeeStructure.is_mandatory' => 'boolean',
-            
+
             'bulkBillingClass' => 'required_for_bulk_billing|exists:college_classes,id',
             'bulkBillingAcademicYear' => 'required_for_bulk_billing|exists:academic_years,id',
             'bulkBillingSemester' => 'required_for_bulk_billing|exists:semesters,id',
             'bulkBillDate' => 'required_for_bulk_billing|date',
         ];
     }
-    
+
     protected function messages()
     {
         return [
@@ -117,9 +129,9 @@ class StudentFeeBillingManager extends Component
         return StudentFeeBill::with(['student.collegeClass', 'academicYear', 'semester'])
             ->when($this->search, function ($query) {
                 return $query->whereHas('student', function ($q) {
-                    $q->where('first_name', 'like', '%' . $this->search . '%')
-                        ->orWhere('last_name', 'like', '%' . $this->search . '%')
-                        ->orWhere('student_id', 'like', '%' . $this->search . '%');
+                    $q->where('first_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('student_id', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->selectedClass, function ($query) {
@@ -146,6 +158,7 @@ class StudentFeeBillingManager extends Component
         if (empty($this->selectedStudentId)) {
             $this->selectedStudent = null;
             $this->studentFeeBills = [];
+
             return;
         }
 
@@ -167,7 +180,7 @@ class StudentFeeBillingManager extends Component
             'newFeeType.description' => 'nullable|max:255',
         ]);
 
-        $feeType = new FeeType();
+        $feeType = new FeeType;
         $feeType->name = $this->newFeeType['name'];
         $feeType->code = strtoupper($this->newFeeType['code']);
         $feeType->description = $this->newFeeType['description'] ?? null;
@@ -199,10 +212,11 @@ class StudentFeeBillingManager extends Component
 
         if ($existing) {
             $this->errorMessage = 'A fee structure with these criteria already exists!';
+
             return;
         }
 
-        $feeStructure = new FeeStructure();
+        $feeStructure = new FeeStructure;
         $feeStructure->fee_type_id = $this->newFeeStructure['fee_type_id'];
         $feeStructure->college_class_id = $this->newFeeStructure['college_class_id'];
         $feeStructure->academic_year_id = $this->newFeeStructure['academic_year_id'];
@@ -240,6 +254,7 @@ class StudentFeeBillingManager extends Component
 
         if ($feeStructures->isEmpty()) {
             $this->errorMessage = 'No fee structures found for the selected criteria!';
+
             return;
         }
 
@@ -258,6 +273,7 @@ class StudentFeeBillingManager extends Component
 
                 if ($existingBill) {
                     $duplicateCount++;
+
                     continue;
                 }
 
@@ -265,7 +281,7 @@ class StudentFeeBillingManager extends Component
                 $totalAmount = $feeStructures->sum('amount');
 
                 // Create a new bill
-                $bill = new StudentFeeBill();
+                $bill = new StudentFeeBill;
                 $bill->student_id = $student->id;
                 $bill->academic_year_id = $this->bulkBillingAcademicYear;
                 $bill->semester_id = $this->bulkBillingSemester;
@@ -292,7 +308,7 @@ class StudentFeeBillingManager extends Component
             $this->successMessage = "Generated $billCount bills successfully! ($duplicateCount duplicates were skipped)";
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->errorMessage = "Error generating bills: " . $e->getMessage();
+            $this->errorMessage = 'Error generating bills: '.$e->getMessage();
         }
     }
 

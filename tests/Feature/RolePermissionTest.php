@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class RolePermissionTest extends TestCase
 {
@@ -15,7 +15,7 @@ class RolePermissionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create permissions
         Permission::create(['name' => 'view dashboard']);
         Permission::create(['name' => 'view finance']);
@@ -26,13 +26,13 @@ class RolePermissionTest extends TestCase
         $adminRole = Role::create(['name' => 'Administrator']);
         $financeRole = Role::create(['name' => 'Finance Manager']);
         $studentRole = Role::create(['name' => 'Student']);
-        
+
         // Assign permissions to roles
         $adminRole->givePermissionTo(['view dashboard', 'view finance', 'view students']);
         $financeRole->givePermissionTo(['view dashboard', 'view finance', 'create invoices']);
         $studentRole->givePermissionTo(['view dashboard']);
     }
-    
+
     /**
      * Test role assignment during user creation.
      */
@@ -42,17 +42,17 @@ class RolePermissionTest extends TestCase
         $user = User::factory()->create([
             'name' => 'John Doe',
             'email' => 'john@example.com',
-            'role' => 'Administrator'
+            'role' => 'Administrator',
         ]);
-        
+
         // Mimic the behavior of AuthController/SyncUserRoles middleware
         $role = Role::where('name', $user->role)->first();
         $user->assignRole($role);
-        
+
         // Assert that the user has the Administrator role
         $this->assertTrue($user->hasRole('Administrator'));
     }
-    
+
     /**
      * Test that assigned roles have the correct permissions.
      */
@@ -62,19 +62,19 @@ class RolePermissionTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Jane Smith',
             'email' => 'jane@example.com',
-            'role' => 'Finance Manager'
+            'role' => 'Finance Manager',
         ]);
-        
+
         // Assign the role
         $role = Role::where('name', $user->role)->first();
         $user->assignRole($role);
-        
+
         // Assert that the user has the correct permissions
         $this->assertTrue($user->can('view finance'));
         $this->assertTrue($user->can('create invoices'));
         $this->assertFalse($user->can('view students'));
     }
-    
+
     /**
      * Test route access based on roles and permissions.
      */
@@ -84,16 +84,16 @@ class RolePermissionTest extends TestCase
         $admin = User::factory()->create(['role' => 'Administrator']);
         $adminRole = Role::where('name', 'Administrator')->first();
         $admin->assignRole($adminRole);
-        
+
         // Create a student user
         $student = User::factory()->create(['role' => 'Student']);
         $studentRole = Role::where('name', 'Student')->first();
         $student->assignRole($studentRole);
-        
+
         // Test admin access to protected route
         $response = $this->actingAs($admin)->get(route('students'));
         $response->assertStatus(200);
-        
+
         // Test student attempted access to protected route (should redirect)
         $response = $this->actingAs($student)->get(route('students'));
         $response->assertStatus(403);

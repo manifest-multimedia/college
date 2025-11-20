@@ -2,16 +2,15 @@
 
 namespace App\Exports;
 
+use App\Models\ExamSession;
 use App\Models\Student;
 use App\Models\User;
-use App\Models\ExamSession;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, WithMapping
+class ResultsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     protected $filters;
 
@@ -26,11 +25,11 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
         $studentsQuery = Student::query();
 
         if (isset($this->filters['filter_student_id'])) {
-            $studentsQuery->where('student_id', 'like', '%' . $this->filters['filter_student_id'] . '%');
+            $studentsQuery->where('student_id', 'like', '%'.$this->filters['filter_student_id'].'%');
         }
 
         if (isset($this->filters['filter_email'])) {
-            $studentsQuery->where('email', 'like', '%' . $this->filters['filter_email'] . '%');
+            $studentsQuery->where('email', 'like', '%'.$this->filters['filter_email'].'%');
         }
 
         if (isset($this->filters['filter_by_exam'])) {
@@ -41,13 +40,13 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
                 ->pluck('student_id') // student_id here is actually the User ID
                 ->toArray();
 
-            if (!empty($userIds)) {
+            if (! empty($userIds)) {
                 // Get emails of Users with these IDs
                 $userEmails = User::whereIn('id', $userIds)
                     ->pluck('email')
                     ->toArray();
 
-                if (!empty($userEmails)) {
+                if (! empty($userEmails)) {
                     // Filter students by email
                     $studentsQuery->whereIn('email', $userEmails);
                 } else {
@@ -65,14 +64,12 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             });
         }
 
-     
         $studentsQuery->orderByRaw("
         CAST(SUBSTRING_INDEX(student_id, '/', -1) AS UNSIGNED) ASC
     ");
 
         // Eager load only relevant exam sessions
         $examId = $this->filters['filter_by_exam'] ?? null;
-
 
         return $studentsQuery->with(['examSessions' => function ($query) use ($examId) {
             if ($examId) {
@@ -95,7 +92,7 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             $rows[] = [
                 $student->student_id,
                 $examSession->created_at->format('Y-m-d H:i:s'),
-                $student->first_name . ' ' . $student->last_name,
+                $student->first_name.' '.$student->last_name,
                 $courseName,
                 $score,
                 $answered,
@@ -105,7 +102,6 @@ class ResultsExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
 
         return $rows;
     }
-
 
     public function headings(): array
     {

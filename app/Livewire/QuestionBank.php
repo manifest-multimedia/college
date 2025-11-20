@@ -2,37 +2,49 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Exam;
-use App\Models\Question;
 use App\Models\Option;
+use App\Models\Question;
 use App\Models\QuestionSet;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Arr;
-
+use Livewire\Component;
 
 class QuestionBank extends Component
 {
     public $exam_id;
+
     public $questions = [];
+
     public $question_set_id;
+
     public $question_sets = [];
+
     public $subjects = [];
+
     public $subject_id;
+
     public $filtered_question_sets;
+
     public $createNewSet = false;
+
     public $newSetName = '';
+
     public $newSetDescription = '';
+
     public $newSetDifficulty = 'medium';
+
     public $selectedQuestionType = 'MCQ';
+
     public $viewingQuestionSet = false;
+
     public $difficultyLevels = [
         'easy' => 'Easy',
         'medium' => 'Medium',
         'hard' => 'Hard',
     ];
+
     public $questionTypes = [
         'MCQ' => 'Multiple Choice (Single Answer)',
         // Prepared for future types:
@@ -41,30 +53,43 @@ class QuestionBank extends Component
         // 'ESSAY' => 'Essay Question',
         // 'MATCH' => 'Matching Question',
     ];
-    
+
     // Advanced management features
     public $bulkMode = false;
+
     public $selectedQuestions = [];
+
     public $searchTerm = '';
+
     public $filterType = '';
+
     public $filterDifficulty = '';
+
     public $showAdvancedFilters = false;
+
     public $showStatistics = false;
+
     public $duplicateSetId = null;
+
     public $newDuplicateSetName = '';
+
     public $targetQuestionSetForMove = '';
+
     public $showQuestionImport = false;
+
     public $importFile = null;
-    
+
     // Mode and routing properties
     public $mode = 'default'; // default, create_set, show_set, edit_set, manage_questions
+
     public $questionSetId = null;
+
     public $selectedQuestionSet = null;
+
     public $viewMode = 'sets'; // sets, questions, create_set
 
-
-
     public $uploadPath;
+
     protected $rules = [
         'questions.*.question_text' => 'required|string',
         'questions.*.options.*.option_text' => 'required|string|max:255',
@@ -86,24 +111,24 @@ class QuestionBank extends Component
         $this->exam_id = $exam_id;
         $this->mode = $mode;
         $this->questionSetId = $questionSetId;
-        
+
         // Initialize collections
         $this->filtered_question_sets = collect();
-        
+
         // Load initial data
         $this->loadSubjects();
         $this->loadAllQuestionSets();
         $this->applyQuestionSetFilter();
-        
+
         // Debug: Log the counts
         Log::info('QuestionBank Mount Debug:', [
             'subjects_count' => count($this->subjects),
             'question_sets_count' => count($this->question_sets),
             'filtered_sets_count' => $this->filtered_question_sets->count(),
             'mode' => $this->mode,
-            'viewingQuestionSet' => $this->viewingQuestionSet
+            'viewingQuestionSet' => $this->viewingQuestionSet,
         ]);
-        
+
         // If we have a questionSetId, load it
         if ($this->questionSetId) {
             $this->selectedQuestionSet = QuestionSet::find($this->questionSetId);
@@ -114,7 +139,7 @@ class QuestionBank extends Component
                 $this->loadQuestions();
             }
         }
-        
+
         // Set view mode based on mode
         switch ($this->mode) {
             case 'create_set':
@@ -162,10 +187,10 @@ class QuestionBank extends Component
 
     public function applyQuestionSetFilter()
     {
-        if (!$this->subject_id) {
+        if (! $this->subject_id) {
             $this->filtered_question_sets = collect($this->question_sets);
         } else {
-            $this->filtered_question_sets = collect($this->question_sets)->filter(function($set) {
+            $this->filtered_question_sets = collect($this->question_sets)->filter(function ($set) {
                 return $set->course_id == $this->subject_id;
             })->values();
         }
@@ -215,8 +240,6 @@ class QuestionBank extends Component
         $this->questions = [];
     }
 
-
-
     public function loadQuestions()
     {
         if ($this->exam_id) {
@@ -243,27 +266,27 @@ class QuestionBank extends Component
             $this->questions = [];
         }
     }
-    
+
     public function applyFiltersToQuery($query)
     {
         // Search by question text
-        if (!empty($this->searchTerm)) {
-            $query->where('question_text', 'LIKE', '%' . $this->searchTerm . '%');
+        if (! empty($this->searchTerm)) {
+            $query->where('question_text', 'LIKE', '%'.$this->searchTerm.'%');
         }
-        
+
         // Filter by type
-        if (!empty($this->filterType)) {
+        if (! empty($this->filterType)) {
             $query->where('type', $this->filterType);
         }
-        
+
         // Filter by difficulty
-        if (!empty($this->filterDifficulty)) {
+        if (! empty($this->filterDifficulty)) {
             $query->where('difficulty_level', $this->filterDifficulty);
         }
-        
+
         return $query;
     }
-    
+
     public function clearFilters()
     {
         $this->searchTerm = '';
@@ -271,7 +294,6 @@ class QuestionBank extends Component
         $this->filterDifficulty = '';
         $this->loadQuestions();
     }
-
 
     public function createQuestionSet()
     {
@@ -295,7 +317,7 @@ class QuestionBank extends Component
         $this->createNewSet = false;
         $this->newSetName = '';
         $this->newSetDescription = '';
-        
+
         session()->flash('message', 'Question set created successfully.');
     }
 
@@ -310,8 +332,8 @@ class QuestionBank extends Component
             'difficulty_level' => 'medium',
             'options' => [
                 ['option_text' => '', 'is_correct' => false],
-                ['option_text' => '', 'is_correct' => false]
-            ]
+                ['option_text' => '', 'is_correct' => false],
+            ],
         ];
     }
 
@@ -337,8 +359,6 @@ class QuestionBank extends Component
         }
     }
 
-
-
     public function saveQuestions()
     {
         $this->validate();
@@ -346,7 +366,7 @@ class QuestionBank extends Component
         // Validate that MCQ questions have at least one correct option
         foreach ($this->questions as $index => $questionData) {
             $type = $questionData['type'] ?? 'MCQ';
-            
+
             if ($type === 'MCQ') {
                 $hasCorrectOption = false;
                 foreach ($questionData['options'] as $option) {
@@ -355,9 +375,10 @@ class QuestionBank extends Component
                         break;
                     }
                 }
-                
-                if (!$hasCorrectOption) {
-                    session()->flash('error', 'Question #' . ($index + 1) . ' must have at least one correct option.');
+
+                if (! $hasCorrectOption) {
+                    session()->flash('error', 'Question #'.($index + 1).' must have at least one correct option.');
+
                     return;
                 }
             }
@@ -365,21 +386,22 @@ class QuestionBank extends Component
 
         foreach ($this->questions as $index => $questionData) {
             $questionData['type'] = $questionData['type'] ?? 'MCQ';
-            
+
             // Determine target (exam or question set)
             $targetQuestionSetId = null;
             if ($this->exam_id) {
                 $exam = Exam::find($this->exam_id);
                 $targetQuestionSetId = $exam ? $exam->questionSets()->first()?->id : null;
-                
-                if (!$targetQuestionSetId) {
+
+                if (! $targetQuestionSetId) {
                     session()->flash('error', 'No question set found for this exam. Please create a question set first.');
+
                     return;
                 }
             } else {
                 $targetQuestionSetId = $this->question_set_id;
             }
-            
+
             $question = Question::updateOrCreate(
                 ['id' => $questionData['id'] ?? null],
                 [
@@ -410,8 +432,6 @@ class QuestionBank extends Component
         $this->loadQuestions();
     }
 
-
-
     public function deleteQuestion($questionId)
     {
         Question::find($questionId)->delete();
@@ -423,10 +443,10 @@ class QuestionBank extends Component
     {
         // Validate single question
         $this->validateOnly("questions.$index");
-        
+
         $questionData = $this->questions[$index];
         $questionData['type'] = $questionData['type'] ?? 'MCQ';
-        
+
         // For MCQ, validate that there is at least one correct option
         if ($questionData['type'] === 'MCQ') {
             $hasCorrectOption = false;
@@ -436,13 +456,14 @@ class QuestionBank extends Component
                     break;
                 }
             }
-            
-            if (!$hasCorrectOption) {
+
+            if (! $hasCorrectOption) {
                 session()->flash('error', 'Question must have at least one correct option.');
+
                 return;
             }
         }
-        
+
         // Determine target (exam or question set)
         $targetQuestionSetId = null;
         if ($this->exam_id) {
@@ -451,7 +472,7 @@ class QuestionBank extends Component
         } else {
             $targetQuestionSetId = $this->question_set_id;
         }
-        
+
         $question = Question::updateOrCreate(
             ['id' => $questionData['id'] ?? null],
             [
@@ -477,78 +498,81 @@ class QuestionBank extends Component
                 'is_correct' => $optionData['is_correct'],
             ]);
         }
-        
+
         // Update the question ID in the array (needed for new questions)
         $this->questions[$index]['id'] = $question->id;
-        
+
         session()->flash('message', 'Question saved successfully.');
     }
-
-
 
     public function deleteQuestionSet($setId)
     {
         $questionSet = QuestionSet::find($setId);
-        
-        if (!$questionSet) {
+
+        if (! $questionSet) {
             session()->flash('error', 'Question set not found.');
+
             return;
         }
-        
+
         // Check permissions - only creator or Super Admin can delete
-        if (!Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to delete this question set.');
+
             return;
         }
-        
+
         // Check if the question set has questions
         $questionCount = Question::where('question_set_id', $setId)->count();
-        
+
         if ($questionCount > 0) {
             session()->flash('error', 'Cannot delete question set with questions. Please delete all questions first.');
+
             return;
         }
-        
+
         $questionSet->delete();
         session()->flash('message', 'Question set deleted successfully.');
         $this->loadAllQuestionSets();
         $this->applyQuestionSetFilter();
     }
-    
+
     // Advanced Question Set Management Methods
     public function duplicateQuestionSet($setId)
     {
         $this->duplicateSetId = $setId;
         $originalSet = QuestionSet::find($setId);
-        $this->newDuplicateSetName = $originalSet->name . ' (Copy)';
+        $this->newDuplicateSetName = $originalSet->name.' (Copy)';
     }
-    
+
     public function confirmDuplicate()
     {
         $this->validate(['newDuplicateSetName' => 'required|string|max:255']);
-        
+
         $originalSet = QuestionSet::with('questions.options')->find($this->duplicateSetId);
-        
-        if (!$originalSet) {
+
+        if (! $originalSet) {
             session()->flash('error', 'Original question set not found.');
+
             return;
         }
-        
+
         // Check permissions - only creator or Super Admin can duplicate
-        if (!Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $originalSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $originalSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to duplicate this question set.');
+
             return;
         }
-        
+
         // Create duplicate question set
         $duplicateSet = QuestionSet::create([
             'name' => $this->newDuplicateSetName,
-            'description' => $originalSet->description . ' (Duplicated)',
+            'description' => $originalSet->description.' (Duplicated)',
             'course_id' => $originalSet->course_id,
             'created_by' => Auth::id(),
             'difficulty_level' => $originalSet->difficulty_level,
         ]);
-        
+
         // Duplicate all questions and their options
         foreach ($originalSet->questions as $question) {
             $newQuestion = Question::create([
@@ -560,7 +584,7 @@ class QuestionBank extends Component
                 'type' => $question->type,
                 'difficulty_level' => $question->difficulty_level,
             ]);
-            
+
             // Duplicate options
             foreach ($question->options as $option) {
                 Option::create([
@@ -570,103 +594,108 @@ class QuestionBank extends Component
                 ]);
             }
         }
-        
+
         $this->loadAllQuestionSets();
         $this->applyQuestionSetFilter();
         $this->duplicateSetId = null;
         $this->newDuplicateSetName = '';
-        
-        session()->flash('message', 'Question set duplicated successfully with ' . $originalSet->questions->count() . ' questions.');
+
+        session()->flash('message', 'Question set duplicated successfully with '.$originalSet->questions->count().' questions.');
     }
-    
+
     public function toggleBulkMode()
     {
-        $this->bulkMode = !$this->bulkMode;
+        $this->bulkMode = ! $this->bulkMode;
         $this->selectedQuestions = [];
     }
-    
+
     public function selectAllQuestions()
     {
         $questionIds = collect($this->questions)->pluck('id')->toArray();
         $this->selectedQuestions = $questionIds;
     }
-    
+
     public function deselectAllQuestions()
     {
         $this->selectedQuestions = [];
     }
-    
+
     public function bulkDeleteQuestions()
     {
         if (empty($this->selectedQuestions)) {
             session()->flash('error', 'No questions selected for deletion.');
+
             return;
         }
-        
+
         Question::whereIn('id', $this->selectedQuestions)->delete();
-        
-        session()->flash('message', count($this->selectedQuestions) . ' questions deleted successfully.');
+
+        session()->flash('message', count($this->selectedQuestions).' questions deleted successfully.');
         $this->selectedQuestions = [];
         $this->loadQuestions();
     }
-    
+
     public function bulkMoveQuestions()
     {
         $this->validate(['targetQuestionSetForMove' => 'required|exists:question_sets,id']);
-        
+
         if (empty($this->selectedQuestions)) {
             session()->flash('error', 'No questions selected for moving.');
+
             return;
         }
-        
+
         Question::whereIn('id', $this->selectedQuestions)
             ->update([
                 'question_set_id' => $this->targetQuestionSetForMove,
-                'exam_id' => null
+                'exam_id' => null,
             ]);
-        
+
         $targetSet = QuestionSet::find($this->targetQuestionSetForMove);
-        session()->flash('message', count($this->selectedQuestions) . ' questions moved to "' . $targetSet->name . '" successfully.');
-        
+        session()->flash('message', count($this->selectedQuestions).' questions moved to "'.$targetSet->name.'" successfully.');
+
         $this->selectedQuestions = [];
         $this->targetQuestionSetForMove = '';
         $this->loadQuestions();
     }
-    
+
     public function bulkUpdateDifficulty($difficulty)
     {
         if (empty($this->selectedQuestions)) {
             session()->flash('error', 'No questions selected for difficulty update.');
+
             return;
         }
-        
+
         Question::whereIn('id', $this->selectedQuestions)
             ->update(['difficulty_level' => $difficulty]);
-        
-        session()->flash('message', count($this->selectedQuestions) . ' questions updated to ' . ucfirst($difficulty) . ' difficulty.');
+
+        session()->flash('message', count($this->selectedQuestions).' questions updated to '.ucfirst($difficulty).' difficulty.');
         $this->selectedQuestions = [];
         $this->loadQuestions();
     }
-    
+
     public function getQuestionSets()
     {
         // Ensure we have loaded question sets
         if (empty($this->question_sets)) {
             $this->loadAllQuestionSets();
         }
-        
+
         // Apply current filter
         $this->applyQuestionSetFilter();
-        
+
         return $this->filtered_question_sets;
     }
 
     public function getQuestionSetStatistics($questionSetId)
     {
         $questionSet = QuestionSet::find($questionSetId);
-        
-        if (!$questionSet) return null;
-        
+
+        if (! $questionSet) {
+            return null;
+        }
+
         $stats = [
             'total_questions' => $questionSet->questions()->count(),
             'difficulty_breakdown' => [
@@ -681,7 +710,7 @@ class QuestionBank extends Component
             'avg_marks_per_question' => $questionSet->questions()->avg('mark'),
             'questions_with_explanations' => $questionSet->questions()->whereNotNull('explanation')->where('explanation', '!=', '')->count(),
         ];
-        
+
         return $stats;
     }
 
@@ -702,14 +731,14 @@ class QuestionBank extends Component
                 $questionSetStats = $this->getQuestionSetStatistics($this->question_set_id);
             }
         }
-        
+
         // Get available question sets for bulk move operations
-        $availableQuestionSetsForMove = collect($this->question_sets)->filter(function($set) {
+        $availableQuestionSetsForMove = collect($this->question_sets)->filter(function ($set) {
             return $set->id !== $this->question_set_id;
         });
 
         return view('livewire.question-bank-enhanced', [
-            'exams' => $exams, 
+            'exams' => $exams,
             'questions' => $this->questions,
             'filteredQuestionSets' => $this->getQuestionSets(),
             'subjects' => $this->subjects,

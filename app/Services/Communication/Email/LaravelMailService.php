@@ -11,11 +11,7 @@ class LaravelMailService extends AbstractEmailService
     /**
      * Send an email using Laravel's built-in Mail system.
      *
-     * @param string $recipient
-     * @param string $subject
-     * @param string|array $message
-     * @param array $options
-     * @return array
+     * @param  string|array  $message
      */
     protected function send(string $recipient, string $subject, $message, array $options = []): array
     {
@@ -30,10 +26,10 @@ class LaravelMailService extends AbstractEmailService
 
             // Send the email
             Mail::to($recipient)
-                ->when(!empty($options['cc']), function ($mail) use ($options) {
+                ->when(! empty($options['cc']), function ($mail) use ($options) {
                     return $mail->cc($options['cc']);
                 })
-                ->when(!empty($options['bcc']), function ($mail) use ($options) {
+                ->when(! empty($options['bcc']), function ($mail) use ($options) {
                     return $mail->bcc($options['bcc']);
                 })
                 ->queue(new GenericEmail($emailData));
@@ -59,8 +55,6 @@ class LaravelMailService extends AbstractEmailService
 
     /**
      * Get the provider name.
-     *
-     * @return string
      */
     protected function getProviderName(): string
     {

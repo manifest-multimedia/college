@@ -2,18 +2,23 @@
 
 namespace App\Livewire\Finance;
 
-use App\Models\StudentFeeBill;
 use App\Models\FeePayment;
+use App\Models\StudentFeeBill;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class BillDetailViewer extends Component
 {
     public $billId;
+
     public $bill;
+
     public $payments;
+
     public $totalPaid = 0;
+
     public $balance = 0;
+
     public $loading = true;
 
     public function mount($billId)
@@ -26,27 +31,27 @@ class BillDetailViewer extends Component
     {
         try {
             $this->bill = StudentFeeBill::with([
-                'student', 
-                'academicYear', 
-                'semester', 
-                'billItems.feeType'
+                'student',
+                'academicYear',
+                'semester',
+                'billItems.feeType',
             ])->findOrFail($this->billId);
-            
+
             $this->payments = FeePayment::where('student_fee_bill_id', $this->billId)
                 ->orderBy('payment_date', 'desc')
                 ->get();
-                
+
             $this->totalPaid = $this->payments->sum('amount');
             $this->balance = $this->bill->total_amount - $this->totalPaid;
-            
+
             $this->loading = false;
         } catch (\Exception $e) {
             Log::error('Error loading bill details', [
                 'billId' => $this->billId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
-            session()->flash('error', 'Error loading bill details: ' . $e->getMessage());
+
+            session()->flash('error', 'Error loading bill details: '.$e->getMessage());
             $this->loading = false;
         }
     }

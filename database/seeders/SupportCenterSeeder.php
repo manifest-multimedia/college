@@ -128,4 +128,3 @@ class SupportCenterSeeder extends Seeder
         $this->command->info('Support Center and Knowledge Base categories created successfully!');
     }
 }
-

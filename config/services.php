@@ -61,7 +61,7 @@ return [
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
         'files_url' => env('OPENAI_FILES_API_URL', 'https://api.openai.com/v1/files'),
         'model' => env('OPENAI_MODEL', 'gpt-4-turbo'),
-        'assistant_id' => env('OPENAI_ASSISTANT_ID','asst_NazjcT8qxaTUYexZuvcjiDss'),
+        'assistant_id' => env('OPENAI_ASSISTANT_ID', 'asst_NazjcT8qxaTUYexZuvcjiDss'),
     ],
 
 ];

@@ -28,7 +28,7 @@ return new class extends Migration
             $table->timestamp('cleared_at')->nullable();
             $table->string('clearance_code')->unique();
             $table->timestamps();
-            
+
             // Unique constraint to prevent duplicate clearances
             $table->unique(['student_id', 'academic_year_id', 'semester_id', 'exam_type_id'], 'unique_student_exam_clearance');
         });

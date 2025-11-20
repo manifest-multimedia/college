@@ -16,7 +16,7 @@ class FeeStructure extends Model
         'semester_id',
         'amount',
         'is_mandatory',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [

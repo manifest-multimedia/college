@@ -42,34 +42,36 @@ class ResetUserPassword extends Command
         // Find the user
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->error("User with email '{$email}' not found.");
+
             return Command::FAILURE;
         }
 
         // Generate password if not provided
-        if (!$password) {
-            $password = Str::random(12) . '!';
+        if (! $password) {
+            $password = Str::random(12).'!';
             $this->info("Generated random password: {$password}");
         }
 
         // Check if this is likely an AuthCentral user
         $isAuthCentralUser = $this->authService->isLikelyAuthCentralUser($user);
         if ($isAuthCentralUser) {
-            $this->warn("This appears to be an AuthCentral user. Syncing password for dual authentication support.");
+            $this->warn('This appears to be an AuthCentral user. Syncing password for dual authentication support.');
         }
 
         // Use AuthenticationService for consistency and logging
         $success = $this->authService->syncAuthCentralUserPassword($email, $password);
 
-        if (!$success) {
+        if (! $success) {
             $this->error("Failed to reset password for user: {$email}");
+
             return Command::FAILURE;
         }
 
         $this->info("Password reset successfully for user: {$user->name} ({$email})");
-        $this->warn("Please share this password securely with the user.");
-        $this->warn("User should change this password after first login.");
+        $this->warn('Please share this password securely with the user.');
+        $this->warn('User should change this password after first login.');
 
         // Show login instructions
         $this->line('');
@@ -77,7 +79,7 @@ class ResetUserPassword extends Command
         $this->line('1. Login with email/password using the credentials above');
         $this->line('2. Continue using AuthCentral SSO (if available)');
         $this->line('3. Use "Forgot Password" to set their own password');
-        
+
         if ($isAuthCentralUser) {
             $this->line('');
             $this->warn('Note: This user can now authenticate using BOTH methods:');

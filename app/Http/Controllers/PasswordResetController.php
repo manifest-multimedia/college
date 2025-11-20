@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\AuthenticationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log;
-use App\Models\User;
 
 class PasswordResetController extends Controller
 {
@@ -25,7 +25,7 @@ class PasswordResetController extends Controller
      */
     public function showLinkRequestForm()
     {
-        if (!$this->authService->isRegular()) {
+        if (! $this->authService->isRegular()) {
             return redirect()->route('login')
                 ->withErrors(['password_reset' => 'Password reset is only available for regular authentication.']);
         }
@@ -36,12 +36,11 @@ class PasswordResetController extends Controller
     /**
      * Send a password reset link to the user.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function sendResetLinkEmail(Request $request)
     {
-        if (!$this->authService->isRegular()) {
+        if (! $this->authService->isRegular()) {
             return redirect()->route('login')
                 ->withErrors(['password_reset' => 'Password reset is only available for regular authentication.']);
         }
@@ -83,12 +82,11 @@ class PasswordResetController extends Controller
     /**
      * Show the password reset form.
      *
-     * @param Request $request
      * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
      */
     public function showResetForm(Request $request)
     {
-        if (!$this->authService->isRegular()) {
+        if (! $this->authService->isRegular()) {
             return redirect()->route('login')
                 ->withErrors(['password_reset' => 'Password reset is only available for regular authentication.']);
         }
@@ -99,12 +97,11 @@ class PasswordResetController extends Controller
     /**
      * Reset the user's password.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function reset(Request $request)
     {
-        if (!$this->authService->isRegular()) {
+        if (! $this->authService->isRegular()) {
             return redirect()->route('login')
                 ->withErrors(['password_reset' => 'Password reset is only available for regular authentication.']);
         }

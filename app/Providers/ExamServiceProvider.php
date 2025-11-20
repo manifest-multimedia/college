@@ -20,7 +20,7 @@ class ExamServiceProvider extends ServiceProvider
     {
         // Register the ExamClearanceService in the service container
         $this->app->singleton(ExamClearanceService::class, function ($app) {
-            return new ExamClearanceService();
+            return new ExamClearanceService;
         });
     }
 

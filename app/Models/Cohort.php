@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Cohort extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'name',
         'description',
@@ -17,9 +17,9 @@ class Cohort extends Model
         'start_date',
         'end_date',
         'is_active',
-        'is_deleted'
+        'is_deleted',
     ];
-    
+
     protected $casts = [
         'is_active' => 'boolean',
         'is_deleted' => 'boolean',

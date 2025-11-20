@@ -41,13 +41,15 @@ class CreateAdminCommand extends Command
             foreach ($validator->errors()->all() as $error) {
                 $this->error($error);
             }
+
             return 1;
         }
 
         // Check if role exists
-        if (!Role::where('name', $role)->exists()) {
+        if (! Role::where('name', $role)->exists()) {
             $this->error("Role '{$role}' does not exist.");
-            $this->info('Available roles: ' . Role::pluck('name')->implode(', '));
+            $this->info('Available roles: '.Role::pluck('name')->implode(', '));
+
             return 1;
         }
 
@@ -63,7 +65,7 @@ class CreateAdminCommand extends Command
             // Assign role
             $user->assignRole($role);
 
-            $this->info("✅ Admin user created successfully!");
+            $this->info('✅ Admin user created successfully!');
             $this->table(['Field', 'Value'], [
                 ['Name', $user->name],
                 ['Email', $user->email],
@@ -74,7 +76,8 @@ class CreateAdminCommand extends Command
 
             return 0;
         } catch (\Exception $e) {
-            $this->error("Failed to create admin user: " . $e->getMessage());
+            $this->error('Failed to create admin user: '.$e->getMessage());
+
             return 1;
         }
     }

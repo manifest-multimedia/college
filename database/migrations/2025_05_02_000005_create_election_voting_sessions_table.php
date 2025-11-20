@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('ip_address')->nullable();
             $table->string('session_id')->unique();
             $table->timestamps();
-            
+
             // Ensure a student can only have one voting session per election
             $table->unique(['election_id', 'student_id']);
         });

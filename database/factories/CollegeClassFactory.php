@@ -17,6 +17,7 @@ class CollegeClassFactory extends Factory
     public function definition(): array
     {
         $name = fake()->words(2, true);
+
         return [
             'name' => $name,
             'short_name' => strtoupper(substr($name, 0, 3)),

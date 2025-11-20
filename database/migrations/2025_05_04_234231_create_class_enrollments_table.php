@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('grade')->nullable();
             $table->text('comments')->nullable();
             $table->timestamps();
-            
+
             // Add unique constraint to prevent duplicate enrollments
             $table->unique(['class_id', 'student_id']);
         });

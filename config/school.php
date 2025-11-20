@@ -8,7 +8,6 @@
  * @return array
  */
 
-
 return [
     'prefix' => 'COLLEGE/DEPT',
 ];

@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Permission;
 
 class PermissionObserver
 {
@@ -40,9 +40,10 @@ class PermissionObserver
         try {
             $webhookUrl = config('auth.authcentral.webhook_url') ?: env('AUTHCENTRAL_WEBHOOK_URL');
             $apiKey = config('auth.authcentral.webhook_api_key') ?: env('AUTHCENTRAL_WEBHOOK_API_KEY');
-            
-            if (!$webhookUrl || !$apiKey) {
+
+            if (! $webhookUrl || ! $apiKey) {
                 Log::warning('AuthCentral webhook not configured');
+
                 return;
             }
 
@@ -67,7 +68,7 @@ class PermissionObserver
                     ],
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Failed to send permission webhook to AuthCentral', [
                     'permission_id' => $permission->id,
                     'event_type' => $eventType,

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->unsignedBigInteger('graded_by')->nullable();
             $table->foreign('graded_by')->references('id')->on('users')->onDelete('set null');
             $table->timestamps();
-            
+
             // Unique constraint to prevent duplicate grades for the same student and class
             $table->unique(['student_id', 'college_class_id']);
         });

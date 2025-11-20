@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::create('exam_entry_tickets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('exam_clearance_id')->constrained()->onDelete('cascade');

@@ -22,4 +22,4 @@ class ScoredQuestion extends Model
     {
         return $this->belongsTo(Response::class);
     }
-} 
+}

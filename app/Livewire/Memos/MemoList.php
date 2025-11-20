@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Memos;
 
-use App\Models\Memo;
 use App\Models\Department;
+use App\Models\Memo;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Builder;
 
 class MemoList extends Component
 {
@@ -18,18 +18,25 @@ class MemoList extends Component
 
     // Filters
     public $statusFilter = '';
+
     public $priorityFilter = '';
+
     public $searchTerm = '';
+
     public $dateFrom = '';
+
     public $dateTo = '';
+
     public $viewType = 'all';
 
     // For department filter
     public $departments = [];
+
     public $selectedDepartment = '';
 
     // For user search
     public $users = [];
+
     public $selectedUser = '';
 
     protected $queryString = [
@@ -47,15 +54,15 @@ class MemoList extends Component
     {
         // Load departments for filter
         $this->departments = Department::orderBy('name')->get();
-        
+
         // Load staff users only for filter (exclude Student and Parent roles)
-        $this->users = User::whereHas('roles', function($query) {
-                $query->whereNotIn('name', ['Student', 'Parent']);
-            })
-            ->orWhere(function($query) {
+        $this->users = User::whereHas('roles', function ($query) {
+            $query->whereNotIn('name', ['Student', 'Parent']);
+        })
+            ->orWhere(function ($query) {
                 // Also include users with legacy 'role' column (for backward compatibility)
                 $query->whereNotIn('role', ['Student', 'Parent'])
-                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+                    ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
             })
             ->orderBy('name')
             ->limit(100)
@@ -107,11 +114,11 @@ class MemoList extends Component
     public function render()
     {
         $memos = $this->buildQuery()->paginate(10);
-        
+
         return view('livewire.memos.memo-list', [
             'memos' => $memos,
         ])
-        ->layout('components.dashboard.default');
+            ->layout('components.dashboard.default');
     }
 
     protected function buildQuery(): Builder
@@ -131,9 +138,9 @@ class MemoList extends Component
         // Search by title, reference or description
         if ($this->searchTerm) {
             $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('reference_number', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('description', 'like', '%' . $this->searchTerm . '%');
+                $q->where('title', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('reference_number', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('description', 'like', '%'.$this->searchTerm.'%');
             });
         }
 
@@ -150,7 +157,7 @@ class MemoList extends Component
         if ($this->selectedDepartment) {
             $query->where(function ($q) {
                 $q->where('department_id', $this->selectedDepartment)
-                  ->orWhere('recipient_department_id', $this->selectedDepartment);
+                    ->orWhere('recipient_department_id', $this->selectedDepartment);
             });
         }
 
@@ -158,7 +165,7 @@ class MemoList extends Component
         if ($this->selectedUser) {
             $query->where(function ($q) {
                 $q->where('user_id', $this->selectedUser)
-                  ->orWhere('recipient_id', $this->selectedUser);
+                    ->orWhere('recipient_id', $this->selectedUser);
             });
         }
 
@@ -179,34 +186,34 @@ class MemoList extends Component
             case 'pending_approval':
                 // Memos that require current user's approval
                 $query->where('status', 'pending')
-                      ->where(function ($q) {
-                          $q->where('recipient_id', Auth::id())
+                    ->where(function ($q) {
+                        $q->where('recipient_id', Auth::id())
                             ->orWhere(function ($q2) {
                                 $myDepartmentId = Auth::user()->department_id ?? null;
                                 if ($myDepartmentId) {
                                     $q2->where('recipient_department_id', $myDepartmentId);
                                 }
                             });
-                      });
+                    });
                 break;
             case 'needs_action':
                 // Memos that require some action from the current user
                 $query->whereIn('status', ['pending', 'forwarded'])
-                      ->where(function ($q) {
-                          $q->where('recipient_id', Auth::id())
+                    ->where(function ($q) {
+                        $q->where('recipient_id', Auth::id())
                             ->orWhere(function ($q2) {
                                 $myDepartmentId = Auth::user()->department_id ?? null;
                                 if ($myDepartmentId) {
                                     $q2->where('recipient_department_id', $myDepartmentId);
                                 }
                             });
-                      });
+                    });
                 break;
             case 'recent_activity':
                 // Memos with recent activity (last 7 days)
                 $query->where('updated_at', '>=', now()->subDays(7));
                 break;
-            // 'all' case doesn't need special handling
+                // 'all' case doesn't need special handling
         }
 
         return $query->orderBy('created_at', 'desc');

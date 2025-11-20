@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\OfflineExam;
-use App\Models\ExamType;
 use App\Jobs\ProcessExamClearanceJob;
+use App\Models\ExamType;
+use App\Models\OfflineExam;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -18,37 +18,57 @@ class OfflineExams extends Component
 
     // Properties for the offline exam form
     public $title;
+
     public $description;
+
     public $date;
+
     public $duration;
+
     public $course_id;
+
     public $type_id;
+
     public $proctor_id;
+
     public $venue;
+
     public $clearance_threshold = 60;
+
     public $passing_percentage = 50;
+
     public $status = 'draft';
 
     // Properties for the exam details modal
     public $selectedExam = null;
+
     public $examTypes = [];
 
     // Properties for filtering
     public $search = '';
+
     public $statusFilter = '';
+
     public $typeFilter = '';
+
     public $perPage = 10;
 
     // Component state
     public $showForm = false;
+
     public $isEditing = false;
+
     public $formMode = 'create';
+
     public $editingId = null;
 
     // For confirmation modals
     public $confirmingDeletion = false;
+
     public $examToDelete = null;
+
     public $confirmingClearanceProcess = false;
+
     public $examToProcess = null;
 
     protected $rules = [
@@ -116,9 +136,9 @@ class OfflineExams extends Component
         $this->formMode = 'edit';
         $this->editingId = $examId;
         $this->isEditing = true;
-        
+
         $exam = OfflineExam::findOrFail($examId);
-        
+
         $this->title = $exam->title;
         $this->description = $exam->description;
         $this->date = $exam->date->format('Y-m-d\TH:i');
@@ -138,7 +158,7 @@ class OfflineExams extends Component
     {
         // Merge the basic rules with dynamic rules
         return array_merge($this->rules, [
-            'status' => ['required', Rule::in(['draft', 'published', 'completed', 'canceled'])]
+            'status' => ['required', Rule::in(['draft', 'published', 'completed', 'canceled'])],
         ]);
     }
 
@@ -147,17 +167,17 @@ class OfflineExams extends Component
         $this->validate($this->rules());
 
         if ($this->formMode === 'create') {
-            $exam = new OfflineExam();
+            $exam = new OfflineExam;
             $exam->user_id = Auth::id();
         } else {
             $exam = OfflineExam::findOrFail($this->editingId);
-            
+
             // Check if status is changing to published
             $wasPublished = $exam->status === 'published';
             $isNowPublished = $this->status === 'published';
-            
+
             // Determine if we need to process clearances after save
-            $needsClearanceProcessing = ($isNowPublished && !$wasPublished) || 
+            $needsClearanceProcessing = ($isNowPublished && ! $wasPublished) ||
                 ($isNowPublished && $exam->clearance_threshold != $this->clearance_threshold);
         }
 
@@ -172,29 +192,29 @@ class OfflineExams extends Component
         $exam->clearance_threshold = $this->clearance_threshold;
         $exam->passing_percentage = $this->passing_percentage;
         $exam->status = $this->status;
-        
+
         $exam->save();
-        
+
         // If publishing for the first time or changing clearance threshold, process clearances
         if (isset($needsClearanceProcessing) && $needsClearanceProcessing) {
             ProcessExamClearanceJob::dispatch($exam)
                 ->onQueue('exam_clearances');
-                
+
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Exam published. Student clearance processing started.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
         } else {
             $this->dispatch('notify', [
                 'type' => 'success',
-                'message' => $this->formMode === 'create' 
-                    ? 'Offline exam created successfully.' 
+                'message' => $this->formMode === 'create'
+                    ? 'Offline exam created successfully.'
                     : 'Offline exam updated successfully.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
         }
-        
+
         $this->showForm = false;
         $this->resetForm();
     }
@@ -208,26 +228,26 @@ class OfflineExams extends Component
     public function delete()
     {
         $exam = OfflineExam::findOrFail($this->examToDelete);
-        
+
         // Only allow deletion if no clearances or tickets exist
         $hasClearances = $exam->clearances()->count() > 0;
         $hasTickets = $exam->examEntryTickets()->count() > 0;
-        
+
         if ($hasClearances || $hasTickets) {
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'Cannot delete exam with associated clearances or tickets.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
         } else {
             $exam->delete();
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Offline exam deleted successfully.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
         }
-        
+
         $this->confirmingDeletion = false;
         $this->examToDelete = null;
     }
@@ -243,7 +263,7 @@ class OfflineExams extends Component
         $this->selectedExam = OfflineExam::with(['course', 'type', 'proctor', 'user'])
             ->withCount(['clearances', 'examEntryTickets'])
             ->findOrFail($examId);
-            
+
         $this->dispatch('open-details-modal');
     }
 
@@ -256,16 +276,16 @@ class OfflineExams extends Component
     public function processClearance()
     {
         $exam = OfflineExam::findOrFail($this->examToProcess);
-        
+
         ProcessExamClearanceJob::dispatch($exam)
             ->onQueue('exam_clearances');
-            
+
         $this->dispatch('notify', [
             'type' => 'success',
             'message' => 'Clearance processing started for the exam.',
-            'timer' => 3000
+            'timer' => 3000,
         ]);
-        
+
         $this->confirmingClearanceProcess = false;
         $this->examToProcess = null;
     }
@@ -280,9 +300,9 @@ class OfflineExams extends Component
     {
         $this->reset([
             'title', 'description', 'date', 'duration', 'course_id',
-            'type_id', 'proctor_id', 'venue', 'status', 'editingId'
+            'type_id', 'proctor_id', 'venue', 'status', 'editingId',
         ]);
-        
+
         $this->clearance_threshold = 60;
         $this->passing_percentage = 50;
     }
@@ -297,19 +317,19 @@ class OfflineExams extends Component
     {
         $examsQuery = OfflineExam::query()
             ->with(['course', 'type', 'proctor'])
-            ->when($this->search, function($query) {
-                $query->where(function($query) {
-                    $query->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('venue', 'like', '%' . $this->search . '%')
-                        ->orWhereHas('course', function($q) {
-                            $q->where('title', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($query) {
+                $query->where(function ($query) {
+                    $query->where('title', 'like', '%'.$this->search.'%')
+                        ->orWhere('venue', 'like', '%'.$this->search.'%')
+                        ->orWhereHas('course', function ($q) {
+                            $q->where('title', 'like', '%'.$this->search.'%');
                         });
                 });
             })
-            ->when($this->statusFilter, function($query) {
+            ->when($this->statusFilter, function ($query) {
                 $query->where('status', $this->statusFilter);
             })
-            ->when($this->typeFilter, function($query) {
+            ->when($this->typeFilter, function ($query) {
                 $query->where('type_id', $this->typeFilter);
             })
             ->latest();
@@ -319,7 +339,7 @@ class OfflineExams extends Component
 
         return view('livewire.admin.offline-exams', [
             'exams' => $exams,
-            'examTypes' => $examTypes
+            'examTypes' => $examTypes,
         ]);
     }
 }

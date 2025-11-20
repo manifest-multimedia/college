@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Option;
 use App\Models\Response;
+use Illuminate\Console\Command;
 
 class ProcessExamResponse extends Command
 {
@@ -27,27 +27,25 @@ class ProcessExamResponse extends Command
      */
     public function handle()
     {
-        
+
         // Retrieve all options from the database
         $options = Option::all();
 
+        $count = 0;
 
-        $count=0;
-
-       
-        foreach($options as $option){
+        foreach ($options as $option) {
             echo "Search for matches for $option->id \n";
 
             $responses = Response::where('selected_option', $option->id);
 
             if ($responses->count() > 0) { // Check if there are any responses
-                echo "Found " . $responses->count() . " matches for $option->id \n";
+                echo 'Found '.$responses->count()." matches for $option->id \n";
                 echo "Proceeding to update the collection. \n";
 
                 sleep(1);
 
                 $responses->update([
-                    'selected_option_text' => $option->option_text
+                    'selected_option_text' => $option->option_text,
                 ]);
 
                 echo "Update complete.\n";
@@ -67,11 +65,5 @@ class ProcessExamResponse extends Command
         sleep(1);
         echo "Records left: $countRemainingRecords \n";
 
-
-
-
-
     }
-
-    
 }

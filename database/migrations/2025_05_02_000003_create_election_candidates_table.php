@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('election_candidates')) {
+        if (! Schema::hasTable('election_candidates')) {
             Schema::create('election_candidates', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('election_id')->constrained()->onDelete('cascade');
@@ -29,7 +29,7 @@ return new class extends Migration
                 $table->boolean('is_active')->default(true);
                 $table->integer('display_order')->default(0);
                 $table->timestamps();
-                
+
                 // Ensure a student can only be a candidate once per position
                 $table->unique(['election_position_id', 'student_id']);
             });

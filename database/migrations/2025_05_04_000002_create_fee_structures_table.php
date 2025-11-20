@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('is_mandatory')->default(true);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             // Unique constraint for the combination
             $table->unique(['fee_type_id', 'college_class_id', 'academic_year_id', 'semester_id'], 'unique_fee_structure');
         });

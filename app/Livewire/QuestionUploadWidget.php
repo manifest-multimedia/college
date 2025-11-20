@@ -2,14 +2,13 @@
 
 namespace App\Livewire;
 
-use Livewire\Attributes\Validate;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionImport;
-use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Excel as MaatExcel;
-use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
 
 class QuestionUploadWidget extends Component
 {
@@ -17,6 +16,7 @@ class QuestionUploadWidget extends Component
 
     #[Validate('required|file|mimes:xlsx,csv,ods,tsv|max:10240')]
     public $file;
+
     public function render()
     {
         return view('livewire.question-upload-widget');
@@ -54,7 +54,6 @@ class QuestionUploadWidget extends Component
         }
     }
 
-
     // ...
 
     /*************  ✨ Codeium Command ⭐  *************/
@@ -89,22 +88,16 @@ class QuestionUploadWidget extends Component
     //     }
     // }
 
-
-
-
     /**
      * Determine the Reader Type based on the file extension.
-     *
-     * @param string $extension
-     * @return string|null
      */
     private function getReaderType(string $extension): ?string
     {
         return match (strtolower($extension)) {
             'xlsx' => \Maatwebsite\Excel\Excel::XLSX,
-            'csv'  => \Maatwebsite\Excel\Excel::CSV,
-            'ods'  => \Maatwebsite\Excel\Excel::ODS,
-            'tsv'  => \Maatwebsite\Excel\Excel::TSV,
+            'csv' => \Maatwebsite\Excel\Excel::CSV,
+            'ods' => \Maatwebsite\Excel\Excel::ODS,
+            'tsv' => \Maatwebsite\Excel\Excel::TSV,
             default => null,
         };
     }

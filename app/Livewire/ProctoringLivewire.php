@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\ProctoringSession;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class ProctoringLivewire extends Component
@@ -12,8 +12,11 @@ class ProctoringLivewire extends Component
     use WithFileUploads;
 
     public $user_id;
+
     public $proctor_id;
+
     public $exam_id;
+
     public $recordedVideo;
 
     public function mount($examId = null, $userId = null)
@@ -37,6 +40,7 @@ class ProctoringLivewire extends Component
     {
         $this->dispatch('saveRecording');
     }
+
     public function fileUpload($file)
     {
         if ($file) {

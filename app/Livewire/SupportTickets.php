@@ -6,7 +6,6 @@ use App\Models\SupportCategory;
 use App\Models\SupportTicket;
 use App\Models\TicketAttachment;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -15,12 +14,19 @@ class SupportTickets extends Component
     use WithFileUploads;
 
     public $statusFilter = 'all';
+
     public $subject = '';
+
     public $category_id = '';
+
     public $priority = 'Medium';
+
     public $message = '';
+
     public $attachments = [];
+
     public $selectedTicket = null;
+
     public $showCreateModal = false;
 
     protected $rules = [
@@ -76,10 +82,10 @@ class SupportTickets extends Component
         ]);
 
         // Handle file uploads
-        if (!empty($this->attachments)) {
+        if (! empty($this->attachments)) {
             foreach ($this->attachments as $file) {
                 $path = $file->store('support_attachments', 'public');
-                
+
                 TicketAttachment::create([
                     'attachable_type' => SupportTicket::class,
                     'attachable_id' => $ticket->id,
@@ -115,7 +121,7 @@ class SupportTickets extends Component
             ->where('user_id', Auth::id())
             ->first();
 
-        if ($ticket && !$ticket->isClosed()) {
+        if ($ticket && ! $ticket->isClosed()) {
             $ticket->update([
                 'status' => 'Closed',
                 'closed_at' => now(),

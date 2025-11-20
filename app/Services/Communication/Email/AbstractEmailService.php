@@ -12,17 +12,15 @@ abstract class AbstractEmailService implements EmailServiceInterface
     /**
      * Send an email to a single recipient.
      *
-     * @param string $recipient
-     * @param string $subject
-     * @param string|array $message
-     * @param array $options
+     * @param  string|array  $message
      * @return array
      */
     public function sendSingle(string $recipient, string $subject, $message, array $options = [])
     {
         // Validate email
-        if (!$this->validateEmail($recipient)) {
+        if (! $this->validateEmail($recipient)) {
             Log::error('Invalid email address', ['recipient' => $recipient]);
+
             return [
                 'success' => false,
                 'message' => 'Invalid email address format',
@@ -50,7 +48,7 @@ abstract class AbstractEmailService implements EmailServiceInterface
 
             return [
                 'success' => false,
-                'message' => 'Failed to send email: ' . $e->getMessage(),
+                'message' => 'Failed to send email: '.$e->getMessage(),
             ];
         }
     }
@@ -58,10 +56,7 @@ abstract class AbstractEmailService implements EmailServiceInterface
     /**
      * Send the same email to multiple recipients.
      *
-     * @param array $recipients
-     * @param string $subject
-     * @param string|array $message
-     * @param array $options
+     * @param  string|array  $message
      * @return array
      */
     public function sendBulk(array $recipients, string $subject, $message, array $options = [])
@@ -76,13 +71,13 @@ abstract class AbstractEmailService implements EmailServiceInterface
 
         foreach ($recipients as $recipient) {
             $result = $this->sendSingle($recipient, $subject, $message, $options);
-            
+
             if ($result['success']) {
                 $results['sent']++;
             } else {
                 $results['failed']++;
             }
-            
+
             $results['details'][] = [
                 'recipient' => $recipient,
                 'status' => $result['success'] ? 'sent' : 'failed',
@@ -96,10 +91,7 @@ abstract class AbstractEmailService implements EmailServiceInterface
     /**
      * Send an email to a predefined group.
      *
-     * @param int $groupId
-     * @param string $subject
-     * @param string|array $message
-     * @param array $options
+     * @param  string|array  $message
      * @return array
      */
     public function sendToGroup(int $groupId, string $subject, $message, array $options = [])
@@ -122,7 +114,7 @@ abstract class AbstractEmailService implements EmailServiceInterface
 
             // Add group ID to options for tracking
             $options['group_id'] = $groupId;
-            
+
             return $this->sendBulk($recipients, $subject, $message, $options);
         } catch (\Exception $e) {
             Log::error('Group email sending failed', [
@@ -132,16 +124,13 @@ abstract class AbstractEmailService implements EmailServiceInterface
 
             return [
                 'success' => false,
-                'message' => 'Failed to send group email: ' . $e->getMessage(),
+                'message' => 'Failed to send group email: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Validate an email address format.
-     * 
-     * @param string $email
-     * @return bool
      */
     public function validateEmail(string $email): bool
     {
@@ -149,19 +138,13 @@ abstract class AbstractEmailService implements EmailServiceInterface
             'email' => 'required|email',
         ]);
 
-        return !$validator->fails();
+        return ! $validator->fails();
     }
 
     /**
      * Log email details to the database.
      *
-     * @param string $recipient
-     * @param string $subject
-     * @param string|array $message
-     * @param array $result
-     * @param string $type
-     * @param array $options
-     * @return void
+     * @param  string|array  $message
      */
     protected function logEmail(
         string $recipient,
@@ -173,9 +156,9 @@ abstract class AbstractEmailService implements EmailServiceInterface
     ): void {
         try {
             // Convert message to string if it's an array (e.g., a view with data)
-            $messageText = is_array($message) 
-                ? json_encode($message) 
-                : (string)$message;
+            $messageText = is_array($message)
+                ? json_encode($message)
+                : (string) $message;
 
             EmailLog::create([
                 'user_id' => $options['user_id'] ?? null,
@@ -203,18 +186,12 @@ abstract class AbstractEmailService implements EmailServiceInterface
     /**
      * Send an email using the specific provider implementation.
      *
-     * @param string $recipient
-     * @param string $subject
-     * @param string|array $message
-     * @param array $options
-     * @return array
+     * @param  string|array  $message
      */
     abstract protected function send(string $recipient, string $subject, $message, array $options = []): array;
 
     /**
      * Get the name of the email provider.
-     *
-     * @return string
      */
     abstract protected function getProviderName(): string;
 }

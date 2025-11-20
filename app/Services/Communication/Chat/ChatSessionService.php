@@ -2,11 +2,10 @@
 
 namespace App\Services\Communication\Chat;
 
-use App\Models\ChatSession;
 use App\Models\ChatMessage;
+use App\Models\ChatSession;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ChatSessionService
 {
@@ -24,6 +23,7 @@ class ChatSessionService
         if ($session) {
             // Update last activity
             $session->update(['last_activity_at' => now()]);
+
             return $session;
         }
 
@@ -39,11 +39,11 @@ class ChatSessionService
         return ChatSession::create([
             'user_id' => $user->id,
             'session_id' => $threadId,
-            'title' => $title ?? 'New Chat - ' . now()->format('M j, Y g:i A'),
+            'title' => $title ?? 'New Chat - '.now()->format('M j, Y g:i A'),
             'status' => 'active',
             'metadata' => [
                 'assistant_id' => config('services.openai.assistant_id'),
-                'created_via' => 'ai_sensei_chat'
+                'created_via' => 'ai_sensei_chat',
             ],
             'last_activity_at' => now(),
         ]);
@@ -97,8 +97,9 @@ class ChatSessionService
         if ($session) {
             $session->update([
                 'title' => $title,
-                'last_activity_at' => now()
+                'last_activity_at' => now(),
             ]);
+
             return true;
         }
 
@@ -116,6 +117,7 @@ class ChatSessionService
 
         if ($session) {
             $session->update(['status' => 'archived']);
+
             return true;
         }
 
@@ -136,6 +138,7 @@ class ChatSessionService
             $session->messages()->delete();
             // Delete the session
             $session->delete();
+
             return true;
         }
 
@@ -160,7 +163,7 @@ class ChatSessionService
             'chat_session_id' => $session->id,
             'user_id' => $type === 'user' ? $session->user_id : null,
             'type' => $type,
-            'is_document' => !empty($fileName),
+            'is_document' => ! empty($fileName),
             'message' => $message,
             'file_path' => $filePath,
             'file_name' => $fileName,
@@ -205,12 +208,12 @@ class ChatSessionService
                 // Process message content
                 foreach ($openaiMessage['content'] as $contentItem) {
                     if ($contentItem['type'] === 'text') {
-                        $content .= $contentItem['text']['value'] . "\n";
+                        $content .= $contentItem['text']['value']."\n";
                     }
                 }
 
                 // Process attachments if any
-                if (!empty($openaiMessage['attachments'])) {
+                if (! empty($openaiMessage['attachments'])) {
                     $metadata['attachments'] = $openaiMessage['attachments'];
                 }
 
@@ -229,7 +232,7 @@ class ChatSessionService
         } catch (\Exception $e) {
             Log::error('Error syncing messages from OpenAI', [
                 'session_id' => $session->session_id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -247,35 +250,35 @@ class ChatSessionService
             ->toArray();
 
         if (empty($messages)) {
-            return 'New Chat - ' . $session->created_at->format('M j, Y');
+            return 'New Chat - '.$session->created_at->format('M j, Y');
         }
 
         $firstMessage = $messages[0];
-        
+
         // Extract key topics or create a summary
         $words = explode(' ', $firstMessage);
-        
+
         if (count($words) <= 6) {
             return ucfirst(trim($firstMessage, '.,!?'));
         }
 
         // Take first 6 words and add ellipsis
         $title = implode(' ', array_slice($words, 0, 6));
-        
+
         // Clean up and capitalize
-        $title = ucfirst(strtolower(trim($title, '.,!?'))) . '...';
-        
+        $title = ucfirst(strtolower(trim($title, '.,!?'))).'...';
+
         // Some smart detection for common patterns
         if (stripos($firstMessage, 'create') === 0) {
-            return 'Create Request - ' . $session->created_at->format('M j');
+            return 'Create Request - '.$session->created_at->format('M j');
         }
-        
+
         if (stripos($firstMessage, 'help') === 0 || stripos($firstMessage, 'how') === 0) {
-            return 'Help Request - ' . $session->created_at->format('M j');
+            return 'Help Request - '.$session->created_at->format('M j');
         }
-        
+
         if (stripos($firstMessage, 'explain') === 0) {
-            return 'Explanation - ' . $session->created_at->format('M j');
+            return 'Explanation - '.$session->created_at->format('M j');
         }
 
         return $title;
@@ -292,7 +295,7 @@ class ChatSessionService
             'total_sessions' => $sessions->count(),
             'active_sessions' => $sessions->where('status', 'active')->count(),
             'archived_sessions' => $sessions->where('status', 'archived')->count(),
-            'total_messages' => ChatMessage::whereIn('chat_session_id', 
+            'total_messages' => ChatMessage::whereIn('chat_session_id',
                 $sessions->pluck('id')
             )->count(),
             'this_month_sessions' => $sessions->where('created_at', '>=', now()->startOfMonth())->count(),
@@ -308,9 +311,9 @@ class ChatSessionService
             ->where('status', 'active')
             ->where(function ($q) use ($query) {
                 $q->where('title', 'LIKE', "%{$query}%")
-                  ->orWhereHas('messages', function ($messageQuery) use ($query) {
-                      $messageQuery->where('message', 'LIKE', "%{$query}%");
-                  });
+                    ->orWhereHas('messages', function ($messageQuery) use ($query) {
+                        $messageQuery->where('message', 'LIKE', "%{$query}%");
+                    });
             })
             ->orderBy('last_activity_at', 'desc')
             ->limit($limit)

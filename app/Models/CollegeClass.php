@@ -4,32 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * CollegeClass Model - Represents Academic Programs
- * 
+ *
  * IMPORTANT: Despite the model name "CollegeClass", this entity represents ACADEMIC PROGRAMS
  * offered by the college, NOT traditional classroom sessions or courses.
- * 
+ *
  * PURPOSE & DEFINITION:
  * - Academic Programs are structured educational offerings (e.g., "Computer Science Program", "Nursing Program")
  * - Programs are semester-independent and can run across multiple academic periods
  * - Programs are not tied to specific instructors as they represent institutional offerings
  * - Programs define the academic pathway students follow to complete their education
- * 
+ *
  * BUSINESS RULES:
  * - Programs are independent entities not bound by semester limitations
  * - Programs do not require instructor assignment (instructors teach courses within programs)
  * - Programs can have multiple courses associated with them
  * - Students enroll in programs and take courses within those programs
- * 
+ *
  * TERMINOLOGY STANDARDS:
- * - Frontend displays: "Program" / "Programs" 
+ * - Frontend displays: "Program" / "Programs"
  * - User-facing references: "Academic Program", "College Program"
  * - Internal model name remains CollegeClass for database compatibility
- * 
+ *
  * @deprecated The term "Class" in this context - use "Program" in all new development
  */
 class CollegeClass extends Model
@@ -60,7 +59,7 @@ class CollegeClass extends Model
     /**
      * DEPRECATED: Programs are no longer tied to specific instructors
      * Instructors teach courses within programs, not programs themselves
-     * 
+     *
      * @deprecated Use course-instructor relationships instead
      */
     // public function instructor(): BelongsTo
@@ -71,7 +70,7 @@ class CollegeClass extends Model
     /**
      * DEPRECATED: Programs are semester-independent academic offerings
      * Programs run across multiple semesters and are not limited by semester boundaries
-     * 
+     *
      * @deprecated Programs should not be bound to semesters
      */
     // public function semester(): BelongsTo
@@ -123,8 +122,8 @@ class CollegeClass extends Model
     /**
      * Generate short name from full program name
      * Uses intelligent algorithm to create meaningful abbreviations
-     * 
-     * @param string $programName The full program name
+     *
+     * @param  string  $programName  The full program name
      * @return string Generated short name (max 10 characters)
      */
     public static function generateShortName(string $programName): string
@@ -172,15 +171,17 @@ class CollegeClass extends Model
         // Generate from initials of significant words
         $words = explode(' ', $lowerName);
         $shortName = '';
-        
+
         foreach ($words as $word) {
             $word = trim($word);
             // Skip common words and focus on significant terms
             $skipWords = ['and', 'of', 'in', 'the', 'for', 'with', 'to', 'a', 'an'];
-            
-            if (!in_array($word, $skipWords) && strlen($word) > 2) {
+
+            if (! in_array($word, $skipWords) && strlen($word) > 2) {
                 $shortName .= strtoupper($word[0]);
-                if (strlen($shortName) >= 6) break; // Reasonable length limit
+                if (strlen($shortName) >= 6) {
+                    break;
+                } // Reasonable length limit
             }
         }
 
@@ -190,7 +191,9 @@ class CollegeClass extends Model
             foreach ($words as $word) {
                 if (strlen($word) > 0) {
                     $shortName .= strtoupper($word[0]);
-                    if (strlen($shortName) >= 5) break;
+                    if (strlen($shortName) >= 5) {
+                        break;
+                    }
                 }
             }
         }
@@ -201,18 +204,16 @@ class CollegeClass extends Model
     /**
      * Get the short name for this program
      * Returns the stored short_name or generates one if not set
-     * 
-     * @return string
      */
     public function getShortNameAttribute($value): string
     {
         // If short_name is set, use it
-        if (!empty($value)) {
+        if (! empty($value)) {
             return $value;
         }
 
         // If we have a name, generate short name
-        if (!empty($this->name)) {
+        if (! empty($this->name)) {
             return self::generateShortName($this->name);
         }
 
@@ -222,8 +223,6 @@ class CollegeClass extends Model
     /**
      * Get the effective short name for Student ID generation
      * This method is used by the StudentIdGenerationService
-     * 
-     * @return string
      */
     public function getProgramCode(): string
     {

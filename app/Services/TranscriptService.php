@@ -2,29 +2,26 @@
 
 namespace App\Services;
 
-use App\Models\Student;
-use App\Models\OfflineExamScore;
-use App\Models\ExamSession;
-use App\Models\Response;
-use App\Models\Question;
-use App\Models\Subject;
-use App\Models\AcademicYear;
-use App\Models\Semester;
-use App\Models\Exam;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TranscriptExport;
+use App\Models\AcademicYear;
+use App\Models\Exam;
+use App\Models\ExamSession;
+use App\Models\OfflineExamScore;
+use App\Models\Semester;
+use App\Models\Student;
+use App\Models\Subject;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TranscriptService
 {
     /**
      * Generate transcript data for a student
      *
-     * @param int $studentId
-     * @param int|null $academicYearId
-     * @param int|null $semesterId
+     * @param  int  $studentId
+     * @param  int|null  $academicYearId
+     * @param  int|null  $semesterId
      * @return array
      */
     public function generateTranscriptData($studentId, $academicYearId = null, $semesterId = null)
@@ -33,7 +30,7 @@ class TranscriptService
             $student = Student::with([
                 'collegeClass',
                 'cohort',
-                'user'
+                'user',
             ])->findOrFail($studentId);
 
             // Get academic context
@@ -53,10 +50,10 @@ class TranscriptService
                 $entry = $this->generateSubjectEntry($student, $subject);
                 if ($entry) {
                     $transcriptEntries[] = $entry;
-                    
+
                     if ($entry['credit_hours'] > 0) {
                         $totalCreditHoursAttempted += $entry['credit_hours'];
-                        
+
                         if ($entry['grade_points'] !== null) {
                             $totalCreditHours += $entry['credit_hours'];
                             $totalGradePoints += ($entry['grade_points'] * $entry['credit_hours']);
@@ -88,9 +85,9 @@ class TranscriptService
             Log::error('Error generating transcript data', [
                 'student_id' => $studentId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             throw $e;
         }
     }
@@ -126,12 +123,12 @@ class TranscriptService
     {
         // Get online exam scores for this subject
         $onlineScore = $this->getOnlineExamScore($student, $subject);
-        
+
         // Get offline exam scores for this subject
         $offlineScore = $this->getOfflineExamScore($student, $subject);
 
         // If no scores found, skip this subject
-        if (!$onlineScore && !$offlineScore) {
+        if (! $onlineScore && ! $offlineScore) {
             return null;
         }
 
@@ -154,7 +151,7 @@ class TranscriptService
             'exam_details' => [
                 'online' => $onlineScore,
                 'offline' => $offlineScore,
-            ]
+            ],
         ];
     }
 
@@ -164,24 +161,24 @@ class TranscriptService
     protected function getOnlineExamScore($student, $subject)
     {
         // Get the latest exam session for this student and subject
-        $examSession = ExamSession::whereHas('exam', function($query) use ($subject) {
-                $query->where('course_id', $subject->id);
-            })
-            ->whereHas('student', function($query) use ($student) {
+        $examSession = ExamSession::whereHas('exam', function ($query) use ($subject) {
+            $query->where('course_id', $subject->id);
+        })
+            ->whereHas('student', function ($query) use ($student) {
                 $query->where('email', $student->email);
             })
             ->whereNotNull('completed_at')
             ->latest('completed_at')
             ->first();
 
-        if (!$examSession) {
+        if (! $examSession) {
             return null;
         }
 
         // Calculate score
         $exam = $examSession->exam;
         $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
-        
+
         $responses = $examSession->responses()
             ->with('question.options')
             ->orderBy('created_at')
@@ -195,7 +192,9 @@ class TranscriptService
 
         foreach ($responses as $response) {
             $question = $response->question;
-            if (!$question) continue;
+            if (! $question) {
+                continue;
+            }
 
             $questionMark = $question->mark ?? 1;
             $totalMarks += $questionMark;
@@ -227,14 +226,14 @@ class TranscriptService
      */
     protected function getOfflineExamScore($student, $subject)
     {
-        $score = OfflineExamScore::whereHas('offlineExam', function($query) use ($subject) {
-                $query->where('course_id', $subject->id);
-            })
+        $score = OfflineExamScore::whereHas('offlineExam', function ($query) use ($subject) {
+            $query->where('course_id', $subject->id);
+        })
             ->where('student_id', $student->id)
             ->latest('created_at')
             ->first();
 
-        if (!$score) {
+        if (! $score) {
             return null;
         }
 
@@ -277,11 +276,22 @@ class TranscriptService
      */
     protected function getLetterGrade($percentage)
     {
-        if ($percentage >= 90) return 'A';
-        if ($percentage >= 80) return 'B';
-        if ($percentage >= 70) return 'C';
-        if ($percentage >= 60) return 'D';
-        if ($percentage >= 50) return 'E';
+        if ($percentage >= 90) {
+            return 'A';
+        }
+        if ($percentage >= 80) {
+            return 'B';
+        }
+        if ($percentage >= 70) {
+            return 'C';
+        }
+        if ($percentage >= 60) {
+            return 'D';
+        }
+        if ($percentage >= 50) {
+            return 'E';
+        }
+
         return 'F';
     }
 
@@ -316,22 +326,22 @@ class TranscriptService
     protected function calculateCumulativeGPA($student, $academicYear = null)
     {
         try {
-            $allSubjects = Subject::when($academicYear, function($query) use ($academicYear) {
+            $allSubjects = Subject::when($academicYear, function ($query) use ($academicYear) {
                 $query->where('year_id', '<=', $academicYear->id);
             })
-            ->when($student->college_class_id, function($query) use ($student) {
-                $query->where('college_class_id', $student->college_class_id);
-            })
-            ->orderBy('year_id')
-            ->orderBy('semester_id')
-            ->get();
+                ->when($student->college_class_id, function ($query) use ($student) {
+                    $query->where('college_class_id', $student->college_class_id);
+                })
+                ->orderBy('year_id')
+                ->orderBy('semester_id')
+                ->get();
 
             $totalGradePoints = 0;
             $totalCreditHours = 0;
 
             foreach ($allSubjects as $subject) {
                 $entry = $this->generateSubjectEntry($student, $subject);
-                
+
                 if ($entry && $entry['grade_points'] !== null && $entry['credit_hours'] > 0) {
                     $totalCreditHours += $entry['credit_hours'];
                     $totalGradePoints += ($entry['grade_points'] * $entry['credit_hours']);
@@ -339,12 +349,13 @@ class TranscriptService
             }
 
             return $totalCreditHours > 0 ? round($totalGradePoints / $totalCreditHours, 2) : 0.00;
-            
+
         } catch (\Exception $e) {
             Log::error('Error calculating cumulative GPA', [
                 'student_id' => $student->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return 0.00;
         }
     }
@@ -375,25 +386,25 @@ class TranscriptService
     {
         try {
             $pdf = Pdf::loadView('exports.transcript-pdf', $data);
-            
+
             // Set paper size and orientation
             $pdf->setPaper('a4', 'portrait');
-            
+
             // Generate filename
-            $filename = 'transcript_' . $data['student']->student_id . '_' . now()->format('Y-m-d') . '.pdf';
-            
+            $filename = 'transcript_'.$data['student']->student_id.'_'.now()->format('Y-m-d').'.pdf';
+
             return response()->streamDownload(
-                fn () => print($pdf->output()),
+                fn () => print ($pdf->output()),
                 $filename,
                 [
                     'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                    'Content-Disposition' => 'attachment; filename="'.$filename.'"',
                 ]
             );
         } catch (\Exception $e) {
             Log::error('Error generating PDF transcript', [
                 'student_id' => $data['student']->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -405,7 +416,7 @@ class TranscriptService
     public function generateCSV($data)
     {
         $csvData = [];
-        
+
         // Add header information
         $csvData[] = ['Student Transcript'];
         $csvData[] = ['Student ID', $data['student']->student_id];
@@ -419,14 +430,14 @@ class TranscriptService
         // Add course headers
         $csvData[] = [
             'Course Code',
-            'Course Name', 
+            'Course Name',
             'Credit Hours',
             'Online Score (%)',
             'Offline Score (%)',
             'Final Score (%)',
             'Letter Grade',
             'Grade Points',
-            'Status'
+            'Status',
         ];
 
         // Add course data
@@ -440,7 +451,7 @@ class TranscriptService
                 $entry['final_score'],
                 $entry['letter_grade'],
                 $entry['grade_points'],
-                $entry['status']
+                $entry['status'],
             ];
         }
 
@@ -462,13 +473,13 @@ class TranscriptService
     public function generateExcel($data)
     {
         try {
-            $filename = 'transcript_' . $data['student']->student_id . '_' . now()->format('Y-m-d') . '.xlsx';
-            
+            $filename = 'transcript_'.$data['student']->student_id.'_'.now()->format('Y-m-d').'.xlsx';
+
             return Excel::download(new TranscriptExport($data), $filename);
         } catch (\Exception $e) {
             Log::error('Error generating Excel transcript', [
                 'student_id' => $data['student']->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }

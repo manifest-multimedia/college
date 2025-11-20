@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Exam;
+use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
@@ -14,17 +14,20 @@ use Livewire\WithPagination;
 class ExamSessions extends Component
 {
     use WithPagination;
-    
+
     public $search = '';
+
     public $perPage = 10;
+
     public $sortField = 'created_at';
+
     public $sortDirection = 'desc';
-    
+
     public function updatingSearch()
     {
         $this->resetPage();
     }
-    
+
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
@@ -38,11 +41,11 @@ class ExamSessions extends Component
     public function render()
     {
         return view('livewire.exam-sessions', [
-            'examSessions' => Exam::whereHas('course', function($query) {
-                    $query->where('name', 'like', '%'.$this->search.'%');
-                })
+            'examSessions' => Exam::whereHas('course', function ($query) {
+                $query->where('name', 'like', '%'.$this->search.'%');
+            })
                 ->orderBy($this->sortField, $this->sortDirection)
-                ->paginate($this->perPage)
+                ->paginate($this->perPage),
         ])->layout('components.dashboard.default', [
             'title' => 'Exam Sessions',
             'description' => 'Manage exam sessions and their details.',

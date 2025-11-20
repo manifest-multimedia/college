@@ -3,10 +3,9 @@
 namespace App\Livewire\Communication;
 
 use App\Models\SmsLog;
-use App\Models\RecipientList;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\Log;
 
 class SmsLogs extends Component
 {
@@ -14,16 +13,21 @@ class SmsLogs extends Component
 
     // pagination theme = bootstrap
     protected $paginationTheme = 'bootstrap';
-    
-    
+
     public $searchTerm = '';
+
     public $statusFilter = '';
+
     public $typeFilter = '';
+
     public $providerFilter = '';
+
     public $startDate = '';
+
     public $endDate = '';
+
     public $selectedLog = null;
-    
+
     public function viewDetails($id)
     {
         try {
@@ -32,20 +36,20 @@ class SmsLogs extends Component
         } catch (\Exception $e) {
             Log::error('Failed to load SMS log details', [
                 'error' => $e->getMessage(),
-                'id' => $id
+                'id' => $id,
             ]);
             session()->flash('error', 'Failed to load SMS log details.');
         }
     }
-    
+
     public function resendSms($id)
     {
         try {
             $log = SmsLog::findOrFail($id);
-            
+
             // Get the SMS service from the container
             $smsService = app(\App\Services\Communication\SMS\SmsServiceInterface::class);
-            
+
             // Resend the SMS
             $result = $smsService->sendSingle(
                 $log->recipient,
@@ -54,37 +58,38 @@ class SmsLogs extends Component
                     'user_id' => auth()->id(),
                 ]
             );
-            
+
             if ($result['success']) {
                 session()->flash('success', 'SMS resent successfully.');
             } else {
-                session()->flash('error', 'Failed to resend SMS: ' . ($result['message'] ?? 'Unknown error'));
+                session()->flash('error', 'Failed to resend SMS: '.($result['message'] ?? 'Unknown error'));
             }
         } catch (\Exception $e) {
             Log::error('Failed to resend SMS', [
                 'error' => $e->getMessage(),
-                'id' => $id
+                'id' => $id,
             ]);
-            session()->flash('error', 'Failed to resend SMS: ' . $e->getMessage());
+            session()->flash('error', 'Failed to resend SMS: '.$e->getMessage());
         }
     }
-    
+
     public function updatedStatusFilter()
     {
         $this->resetPage();
     }
-    
+
     public function updatedTypeFilter()
     {
         $this->resetPage();
     }
-    
+
     public function updatedProviderFilter()
     {
         $this->resetPage();
     }
 
-    public function delete($id){
+    public function delete($id)
+    {
         try {
             $log = SmsLog::findOrFail($id);
             $log->delete();
@@ -92,52 +97,52 @@ class SmsLogs extends Component
         } catch (\Exception $e) {
             Log::error('Failed to delete SMS log', [
                 'error' => $e->getMessage(),
-                'id' => $id
+                'id' => $id,
             ]);
-            session()->flash('error', 'Failed to delete SMS log: ' . $e->getMessage());
+            session()->flash('error', 'Failed to delete SMS log: '.$e->getMessage());
         }
     }
-    
+
     public function render()
     {
         $query = SmsLog::query();
-        
+
         // Apply search filters
-        if (!empty($this->searchTerm)) {
+        if (! empty($this->searchTerm)) {
             $query->where(function ($q) {
-                $q->where('recipient', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('message', 'like', '%' . $this->searchTerm . '%');
+                $q->where('recipient', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('message', 'like', '%'.$this->searchTerm.'%');
             });
         }
-        
-        if (!empty($this->statusFilter)) {
+
+        if (! empty($this->statusFilter)) {
             $query->where('status', $this->statusFilter);
         }
-        
-        if (!empty($this->typeFilter)) {
+
+        if (! empty($this->typeFilter)) {
             $query->where('type', $this->typeFilter);
         }
-        
-        if (!empty($this->providerFilter)) {
+
+        if (! empty($this->providerFilter)) {
             $query->where('provider', $this->providerFilter);
         }
-        
-        if (!empty($this->startDate)) {
+
+        if (! empty($this->startDate)) {
             $query->whereDate('created_at', '>=', $this->startDate);
         }
-        
-        if (!empty($this->endDate)) {
+
+        if (! empty($this->endDate)) {
             $query->whereDate('created_at', '<=', $this->endDate);
         }
-        
+
         // Get distinct providers for filter dropdown
         $providers = SmsLog::select('provider')->distinct()->pluck('provider')->toArray();
-        
+
         // Get logs with pagination
         $logs = $query->with('user')
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(10);
-        
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('livewire.communication.sms-logs', [
             'logs' => $logs,
             'providers' => $providers,

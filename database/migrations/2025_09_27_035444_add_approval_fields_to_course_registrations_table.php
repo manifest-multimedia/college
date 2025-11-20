@@ -15,7 +15,7 @@ return new class extends Migration
             $table->timestamp('approved_at')->nullable()->after('is_approved');
             $table->unsignedBigInteger('approved_by')->nullable()->after('approved_at');
             $table->foreign('approved_by')->references('id')->on('users');
-            
+
             $table->timestamp('rejected_at')->nullable()->after('approved_by');
             $table->unsignedBigInteger('rejected_by')->nullable()->after('rejected_at');
             $table->foreign('rejected_by')->references('id')->on('users');
@@ -33,10 +33,10 @@ return new class extends Migration
             $table->dropForeign(['rejected_by']);
             $table->dropColumn([
                 'approved_at',
-                'approved_by', 
+                'approved_by',
                 'rejected_at',
                 'rejected_by',
-                'rejection_reason'
+                'rejection_reason',
             ]);
         });
     }

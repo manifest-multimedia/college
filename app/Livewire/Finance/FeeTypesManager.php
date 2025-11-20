@@ -11,11 +11,17 @@ class FeeTypesManager extends Component
     use WithPagination;
 
     public $name;
+
     public $code;
+
     public $description;
+
     public $is_active = true;
+
     public $editingFeeTypeId = null;
+
     public $feeTypeIdToDelete = null;
+
     public $search = '';
 
     protected $rules = [
@@ -28,16 +34,16 @@ class FeeTypesManager extends Component
     public function render()
     {
         $query = FeeType::query();
-        
+
         if ($this->search) {
-            $query->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('code', 'like', '%' . $this->search . '%');
+            $query->where('name', 'like', '%'.$this->search.'%')
+                ->orWhere('code', 'like', '%'.$this->search.'%');
         }
-        
+
         $feeTypes = $query->orderBy('name')->paginate(10);
 
         return view('livewire.finance.fee-types-manager', [
-            'feeTypes' => $feeTypes
+            'feeTypes' => $feeTypes,
         ])
             ->layout('components.dashboard.default');
     }
@@ -49,11 +55,12 @@ class FeeTypesManager extends Component
         }
 
         $this->validate();
-        
+
         // Check for uniqueness of code
         $existingCode = FeeType::where('code', $this->code)->first();
         if ($existingCode) {
             $this->addError('code', 'This code is already in use.');
+
             return;
         }
 
@@ -88,6 +95,7 @@ class FeeTypesManager extends Component
             ->first();
         if ($existingCode) {
             $this->addError('code', 'This code is already in use.');
+
             return;
         }
 
@@ -112,10 +120,11 @@ class FeeTypesManager extends Component
     public function deleteFeeType()
     {
         $feeType = FeeType::findOrFail($this->feeTypeIdToDelete);
-        
+
         // Check if fee type has any fee structures
         if ($feeType->feeStructures()->count() > 0) {
             session()->flash('error', 'Fee type cannot be deleted because it is associated with fee structures.');
+
             return;
         }
 

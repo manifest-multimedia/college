@@ -4,34 +4,43 @@ namespace App\Livewire;
 
 use App\Models\Election;
 use Illuminate\Container\Attributes\Log;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log as Logger;
-use Illuminate\Support\Carbon;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class ElectionManager extends Component
 {
-    use WithPagination, WithFileUploads;
-    
+    use WithFileUploads, WithPagination;
+
     public $name;
+
     public $description;
+
     public $start_time;
+
     public $end_time;
+
     public $voting_session_duration = 30;
+
     public $is_active = false;
-    
+
     public $electionId;
+
     public $isEditing = false;
+
     public $confirmingDeletion = false;
+
     public $electionIdToDelete;
-    
+
     public $showCreateForm = false;
+
     public $searchQuery = '';
-    
+
     public $templateElectionId;
-    
+
     protected $rules = [
         'name' => 'required|string|max:255',
         'description' => 'nullable|string',
@@ -40,52 +49,52 @@ class ElectionManager extends Component
         'voting_session_duration' => 'required|integer|min:1|max:120',
         'is_active' => 'boolean',
     ];
-    
+
     public function updatingSearchQuery()
     {
         $this->resetPage();
     }
-    
+
     public function create()
     {
         $this->resetErrorBag();
         $this->reset(['name', 'description', 'start_time', 'end_time', 'isEditing', 'electionId', 'templateElectionId']);
         $this->voting_session_duration = 30;
         $this->is_active = false;
-        
+
         // Set default start and end times to tomorrow and a week from now
         $this->start_time = now()->addDay()->format('Y-m-d\TH:i');
         $this->end_time = now()->addDays(8)->format('Y-m-d\TH:i');
-        
+
         $this->showCreateForm = true;
     }
-    
+
     public function save()
     {
         $validated = $this->validate();
-        
+
         // Convert string datetime values to Carbon instances
         $validated['start_time'] = Carbon::parse($validated['start_time']);
         $validated['end_time'] = Carbon::parse($validated['end_time']);
-        
+
         DB::beginTransaction();
         try {
             if ($this->isEditing) {
                 $election = Election::findOrFail($this->electionId);
                 $election->update($validated);
-                
+
                 // Log the update action
                 \App\Models\ElectionAuditLog::log(
                     $election,
                     'admin',
                     auth()->id(),
                     'election_updated',
-                    'Updated election: ' . $election->name
+                    'Updated election: '.$election->name
                 );
-                
+
                 $this->dispatch('alert', [
                     'type' => 'success',
-                    'message' => 'Election updated successfully!'
+                    'message' => 'Election updated successfully!',
                 ]);
             } else {
                 if ($this->templateElectionId) {
@@ -100,51 +109,51 @@ class ElectionManager extends Component
                     $election->voting_session_duration = $validated['voting_session_duration'];
                     $election->is_active = $validated['is_active'];
                     $election->save();
-                    
+
                     // Log the clone action
                     \App\Models\ElectionAuditLog::log(
                         $election,
                         'admin',
                         auth()->id(),
                         'election_cloned',
-                        'Created new election from template: ' . $template->name,
+                        'Created new election from template: '.$template->name,
                         ['template_id' => $template->id]
                     );
                 } else {
                     // Create a new election
                     $election = Election::create($validated);
-                    
+
                     // Log the creation action
                     \App\Models\ElectionAuditLog::log(
                         $election,
                         'admin',
                         auth()->id(),
                         'election_created',
-                        'Created new election: ' . $election->name
+                        'Created new election: '.$election->name
                     );
                 }
-                
+
                 $this->dispatch('alert', [
                     'type' => 'success',
-                    'message' => 'Election created successfully!'
+                    'message' => 'Election created successfully!',
                 ]);
             }
-            
+
             DB::commit();
             $this->reset(['name', 'description', 'start_time', 'end_time', 'isEditing', 'electionId', 'templateElectionId']);
             $this->showCreateForm = false;
-            
+
         } catch (\Exception $e) {
             // Log the error
-            Logger::error('Election creation/update error: ' . $e->getMessage());
+            Logger::error('Election creation/update error: '.$e->getMessage());
             DB::rollBack();
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'An error occurred: '.$e->getMessage(),
             ]);
         }
     }
-    
+
     public function edit(Election $election)
     {
         $this->resetErrorBag();
@@ -158,18 +167,18 @@ class ElectionManager extends Component
         $this->is_active = $election->is_active;
         $this->showCreateForm = true;
     }
-    
+
     public function confirmDelete(Election $election)
     {
         $this->confirmingDeletion = true;
         $this->electionIdToDelete = $election->id;
     }
-    
+
     public function delete()
     {
         $election = Election::findOrFail($this->electionIdToDelete);
         $electionName = $election->name;
-        
+
         DB::beginTransaction();
         try {
             // Log the delete action
@@ -178,35 +187,35 @@ class ElectionManager extends Component
                 'admin',
                 auth()->id(),
                 'election_deleted',
-                'Deleted election: ' . $electionName,
+                'Deleted election: '.$electionName,
                 ['election_id' => $election->id]
             );
-            
+
             $election->delete();
             DB::commit();
-            
+
             $this->confirmingDeletion = false;
             $this->electionIdToDelete = null;
-            
+
             $this->dispatch('alert', [
                 'type' => 'success',
-                'message' => 'Election deleted successfully!'
+                'message' => 'Election deleted successfully!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'An error occurred: '.$e->getMessage(),
             ]);
         }
     }
-    
+
     public function cancelDelete()
     {
         $this->confirmingDeletion = false;
         $this->electionIdToDelete = null;
     }
-    
+
     public function cancelEdit()
     {
         $this->reset(['name', 'description', 'start_time', 'end_time', 'isEditing', 'electionId', 'templateElectionId']);
@@ -216,8 +225,8 @@ class ElectionManager extends Component
     public function toggleActiveStatus(Election $election)
     {
         $wasActive = $election->is_active;
-        $nowActive = !$wasActive;
-        
+        $nowActive = ! $wasActive;
+
         // If we're activating the election and its start time is in the future,
         // ask the user if they want to start it now
         if ($nowActive && $election->start_time->isFuture()) {
@@ -226,42 +235,43 @@ class ElectionManager extends Component
                 'message' => 'This election\'s start time is in the future. Would you like to set the start time to now to allow immediate voting?',
                 'onConfirm' => 'startElectionNow',
                 'onCancel' => 'justToggleStatus',
-                'data' => ['id' => $election->id]
+                'data' => ['id' => $election->id],
             ]);
+
             return;
         }
-        
+
         $this->justToggleStatus($election->id);
     }
-    
+
     public function justToggleStatus($electionId)
     {
         $election = Election::findOrFail($electionId);
-        $election->update(['is_active' => !$election->is_active]);
-        
+        $election->update(['is_active' => ! $election->is_active]);
+
         \App\Models\ElectionAuditLog::log(
             $election,
             'admin',
             auth()->id(),
             'election_status_changed',
-            'Changed election status to: ' . ($election->is_active ? 'active' : 'inactive')
+            'Changed election status to: '.($election->is_active ? 'active' : 'inactive')
         );
-        
+
         $message = $election->is_active ? 'Election activated' : 'Election deactivated';
         $this->dispatch('alert', [
             'type' => 'success',
-            'message' => $message
+            'message' => $message,
         ]);
     }
-    
+
     public function startElectionNow($electionId)
     {
         $election = Election::findOrFail($electionId);
         $election->update([
             'is_active' => true,
-            'start_time' => now()
+            'start_time' => now(),
         ]);
-        
+
         \App\Models\ElectionAuditLog::log(
             $election,
             'admin',
@@ -269,26 +279,26 @@ class ElectionManager extends Component
             'election_started_now',
             'Activated election and set start time to now'
         );
-        
+
         $this->dispatch('alert', [
             'type' => 'success',
-            'message' => 'Election activated and set to start immediately'
+            'message' => 'Election activated and set to start immediately',
         ]);
     }
-    
+
     public function render()
     {
-        $searchQuery = '%' . $this->searchQuery . '%';
-        
+        $searchQuery = '%'.$this->searchQuery.'%';
+
         $elections = Election::where('name', 'like', $searchQuery)
             ->orderByDesc('created_at')
             ->paginate(10);
-            
+
         $templateElections = Election::orderByDesc('created_at')->get();
-        
+
         return view('livewire.election-manager', [
             'elections' => $elections,
-            'templateElections' => $templateElections
+            'templateElections' => $templateElections,
         ])->layout('components.dashboard.default', ['title' => 'Manage Elections']);
     }
 }

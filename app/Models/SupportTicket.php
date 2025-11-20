@@ -34,7 +34,7 @@ class SupportTicket extends Model
 
         static::creating(function ($ticket) {
             if (empty($ticket->ticket_number)) {
-                $ticket->ticket_number = 'TKT-' . str_pad(static::max('id') + 1, 6, '0', STR_PAD_LEFT);
+                $ticket->ticket_number = 'TKT-'.str_pad(static::max('id') + 1, 6, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -99,6 +99,6 @@ class SupportTicket extends Model
 
     public function canBeRepliedTo()
     {
-        return !$this->isClosed();
+        return ! $this->isClosed();
     }
 }

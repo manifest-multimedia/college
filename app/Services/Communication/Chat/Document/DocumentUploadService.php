@@ -18,7 +18,7 @@ class DocumentUploadService
      * OpenAI Files Service instance
      */
     protected OpenAIFilesService $openAIFilesService;
-    
+
     /**
      * Constructor
      */
@@ -26,13 +26,9 @@ class DocumentUploadService
     {
         $this->openAIFilesService = $openAIFilesService;
     }
-    
+
     /**
      * Upload a document to a chat session.
-     *
-     * @param string $sessionId
-     * @param UploadedFile $file
-     * @return array
      */
     public function uploadDocument(string $sessionId, UploadedFile $file): array
     {
@@ -41,20 +37,20 @@ class DocumentUploadService
             $session = ChatSession::where('session_id', $sessionId)
                 ->where('status', '!=', 'deleted')
                 ->firstOrFail();
-                
+
             // Validate file
             $this->validateFile($file);
-            
+
             // Generate a unique filename
             $fileName = $this->generateUniqueFileName($file);
-            
+
             // Store the file using the public disk instead of s3
             $path = $file->storeAs('chat_documents', $fileName, 'public');
-            
-            if (!$path) {
+
+            if (! $path) {
                 return [
                     'success' => false,
-                    'message' => 'Failed to store document'
+                    'message' => 'Failed to store document',
                 ];
             }
 
@@ -62,7 +58,7 @@ class DocumentUploadService
             $fullPath = Storage::disk('public')->path($path);
             $openAIUpload = $this->openAIFilesService->uploadFile($fullPath);
             $openAIFileId = null;
-            
+
             if ($openAIUpload['success']) {
                 $openAIFileId = $openAIUpload['file_id'];
                 Log::info('Document uploaded to OpenAI Files API', [
@@ -78,14 +74,14 @@ class DocumentUploadService
                     'session_id' => $sessionId,
                 ]);
             }
-            
+
             // Create chat message for document
             $message = ChatMessage::create([
                 'chat_session_id' => $session->id,
                 'user_id' => Auth::id(),
                 'type' => 'user',
                 'is_document' => true,
-                'message' => 'Document uploaded: ' . $file->getClientOriginalName(),
+                'message' => 'Document uploaded: '.$file->getClientOriginalName(),
                 'file_path' => $path,
                 'file_name' => $file->getClientOriginalName(),
                 'mime_type' => $file->getMimeType(),
@@ -94,12 +90,12 @@ class DocumentUploadService
                     'openai_file_id' => $openAIFileId,
                 ],
             ]);
-            
+
             // Update session last activity
             $session->update([
                 'last_activity_at' => now(),
             ]);
-            
+
             // Format message for response
             $messageData = [
                 'id' => $message->id,
@@ -113,16 +109,16 @@ class DocumentUploadService
                 'timestamp' => $message->created_at,
                 'openai_file_id' => $openAIFileId,
             ];
-            
+
             // Broadcast document uploaded event
             broadcast(new DocumentUploadedEvent($sessionId, $messageData))->toOthers();
-            
+
             return [
                 'success' => true,
                 'message' => 'Document uploaded successfully',
                 'file_path' => $path,
                 'openai_file_id' => $openAIFileId,
-                'data' => $messageData
+                'data' => $messageData,
             ];
         } catch (\Exception $e) {
             Log::error('Failed to upload document', [
@@ -130,18 +126,17 @@ class DocumentUploadService
                 'session_id' => $sessionId,
                 'file' => $file->getClientOriginalName(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Failed to upload document: ' . $e->getMessage()
+                'message' => 'Failed to upload document: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Validate the uploaded file.
      *
-     * @param UploadedFile $file
      * @throws \Exception
      */
     protected function validateFile(UploadedFile $file): void
@@ -151,39 +146,36 @@ class DocumentUploadService
         if ($file->getSize() > $maxSize) {
             throw new \Exception('File size exceeds the maximum allowed size (10MB)');
         }
-        
+
         // Check file type
         $allowedTypes = [
-            'application/pdf', 
-            'application/msword', 
+            'application/pdf',
+            'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'image/jpeg', 
-            'image/jpg', 
-            'image/png', 
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
             'image/gif',
             'application/vnd.ms-excel',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'text/plain',
-            'text/csv'
+            'text/csv',
         ];
-        
-        if (!in_array($file->getMimeType(), $allowedTypes)) {
+
+        if (! in_array($file->getMimeType(), $allowedTypes)) {
             throw new \Exception('File type not allowed');
         }
     }
-    
+
     /**
      * Generate a unique filename for the uploaded file.
-     *
-     * @param UploadedFile $file
-     * @return string
      */
     protected function generateUniqueFileName(UploadedFile $file): string
     {
         $extension = $file->getClientOriginalExtension();
         $baseName = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
         $uniqueId = Str::uuid()->toString();
-        
+
         return "{$baseName}-{$uniqueId}.{$extension}";
     }
 }

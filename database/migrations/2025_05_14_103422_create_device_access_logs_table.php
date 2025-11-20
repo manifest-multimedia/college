@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
-// Drop the table if it exists
+
+        // Drop the table if it exists
         Schema::dropIfExists('device_access_logs');
         // Create the device_access_logs table
         Schema::create('device_access_logs', function (Blueprint $table) {
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->boolean('is_conflict')->default(false);
             $table->timestamp('access_time');
             $table->timestamps();
-            
+
             // Define foreign keys
             $table->foreign('exam_session_id')->references('id')->on('exam_sessions');
             $table->foreign('student_user_id')->references('id')->on('users');

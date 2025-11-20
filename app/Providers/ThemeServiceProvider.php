@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class ThemeServiceProvider extends ServiceProvider
 {
@@ -14,7 +14,7 @@ class ThemeServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton('theme', function ($app) {
-            return new \App\Services\ThemeService();
+            return new \App\Services\ThemeService;
         });
     }
 
@@ -25,13 +25,13 @@ class ThemeServiceProvider extends ServiceProvider
     {
         // Share branding configuration with all views
         View::share('branding', config('branding'));
-        
+
         // Register theme-specific view paths
         $this->registerThemeViews();
-        
+
         // Register Blade directives for theming
         $this->registerBladeDirectives();
-        
+
         // Share theme variables with views
         $this->shareThemeVariables();
     }
@@ -42,13 +42,13 @@ class ThemeServiceProvider extends ServiceProvider
     protected function registerThemeViews(): void
     {
         $theme = config('branding.auth_theme', 'default');
-        
+
         // Add theme-specific view paths for custom-auth
         $themePath = resource_path("views/custom-auth/themes/{$theme}");
         if (is_dir($themePath)) {
             View::addNamespace('theme', $themePath);
         }
-        
+
         // Add fallback to default theme
         $defaultPath = resource_path('views/custom-auth/themes/default');
         if (is_dir($defaultPath)) {
@@ -73,6 +73,7 @@ class ThemeServiceProvider extends ServiceProvider
         // @themeStyle('style-name') - loads theme-specific CSS
         Blade::directive('themeStyle', function ($expression) {
             $theme = config('branding.auth_theme', 'default');
+
             return "<?php echo '<link rel=\"stylesheet\" href=\"' . asset(\"css/themes/{$theme}/\" . {$expression} . '.css') . '\">'; ?>";
         });
 
@@ -90,11 +91,11 @@ class ThemeServiceProvider extends ServiceProvider
         View::composer('*', function ($view) {
             $colors = config('branding.colors', []);
             $cssVariables = [];
-            
+
             foreach ($colors as $name => $value) {
                 $cssVariables["--brand-{$name}"] = $value;
             }
-            
+
             $view->with('brandColors', $cssVariables);
             $view->with('currentTheme', config('branding.auth_theme', 'default'));
         });

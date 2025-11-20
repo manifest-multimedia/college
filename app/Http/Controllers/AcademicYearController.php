@@ -15,14 +15,14 @@ class AcademicYearController extends Controller
     {
         // $this->middleware(['auth', 'permission:manage-academics']);
     }
-    
+
     /**
      * Display a listing of academic years.
      */
     public function index()
     {
         $academicYears = AcademicYear::orderBy('year', 'desc')->paginate(10);
-        
+
         return view('academics.academic-years.index', compact('academicYears'));
     }
 
@@ -44,10 +44,10 @@ class AcademicYearController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ]);
-        
+
         // Extract year from start date
         $year = date('Y', strtotime($validated['start_date']));
-        
+
         $academicYear = AcademicYear::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
@@ -56,7 +56,7 @@ class AcademicYearController extends Controller
             'year' => $year,
             'created_by' => auth()->id(),
         ]);
-        
+
         return redirect()->route('academics.academic-years.index')
             ->with('success', 'Academic year created successfully.');
     }
@@ -83,14 +83,14 @@ class AcademicYearController extends Controller
     public function update(Request $request, AcademicYear $academicYear)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:academic_years,name,' . $academicYear->id,
+            'name' => 'required|string|max:255|unique:academic_years,name,'.$academicYear->id,
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ]);
-        
+
         // Extract year from start date
         $year = date('Y', strtotime($validated['start_date']));
-        
+
         $academicYear->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
@@ -98,7 +98,7 @@ class AcademicYearController extends Controller
             'end_date' => $validated['end_date'],
             'year' => $year,
         ]);
-        
+
         return redirect()->route('academics.academic-years.index')
             ->with('success', 'Academic year updated successfully.');
     }
@@ -113,9 +113,9 @@ class AcademicYearController extends Controller
             return redirect()->route('academics.academic-years.index')
                 ->with('error', 'Cannot delete academic year with associated semesters.');
         }
-        
+
         $academicYear->delete();
-        
+
         return redirect()->route('academics.academic-years.index')
             ->with('success', 'Academic year deleted successfully.');
     }

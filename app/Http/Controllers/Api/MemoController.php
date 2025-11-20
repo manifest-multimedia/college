@@ -23,9 +23,6 @@ class MemoController extends Controller
 
     /**
      * Get a list of memos.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -68,16 +65,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get memos: ' . $e->getMessage(),
+                'message' => 'Failed to get memos: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Store a newly created memo.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -117,30 +111,27 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create memo: ' . $e->getMessage(),
+                'message' => 'Failed to create memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Display the specified memo.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
         try {
             $memo = Memo::with([
-                'user', 
-                'department', 
-                'recipient', 
+                'user',
+                'department',
+                'recipient',
                 'recipientDepartment',
                 'attachments',
                 'actions' => function ($query) {
                     $query->with(['user', 'forwardedToUser', 'forwardedToDepartment'])
-                          ->orderBy('created_at', 'desc');
-                }
+                        ->orderBy('created_at', 'desc');
+                },
             ])->findOrFail($id);
 
             // Record that the memo was viewed
@@ -160,17 +151,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get memo: ' . $e->getMessage(),
+                'message' => 'Failed to get memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Update the specified memo.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -210,17 +197,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update memo: ' . $e->getMessage(),
+                'message' => 'Failed to update memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Forward a memo to another user or department.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function forward(Request $request, int $id): JsonResponse
     {
@@ -251,17 +234,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to forward memo: ' . $e->getMessage(),
+                'message' => 'Failed to forward memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Approve a memo.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function approve(Request $request, int $id): JsonResponse
     {
@@ -290,17 +269,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to approve memo: ' . $e->getMessage(),
+                'message' => 'Failed to approve memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Reject a memo.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function reject(Request $request, int $id): JsonResponse
     {
@@ -329,17 +304,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reject memo: ' . $e->getMessage(),
+                'message' => 'Failed to reject memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Complete a memo.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function complete(Request $request, int $id): JsonResponse
     {
@@ -368,17 +339,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to complete memo: ' . $e->getMessage(),
+                'message' => 'Failed to complete memo: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Mark items as procured.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function markAsProcured(Request $request, int $id): JsonResponse
     {
@@ -407,17 +374,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to mark items as procured: ' . $e->getMessage(),
+                'message' => 'Failed to mark items as procured: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Mark items as delivered to stores.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function markAsDelivered(Request $request, int $id): JsonResponse
     {
@@ -446,17 +409,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to mark items as delivered: ' . $e->getMessage(),
+                'message' => 'Failed to mark items as delivered: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Mark items as audited by stores.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function markAsAudited(Request $request, int $id): JsonResponse
     {
@@ -485,17 +444,13 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to mark items as audited: ' . $e->getMessage(),
+                'message' => 'Failed to mark items as audited: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Delete an attachment.
-     *
-     * @param int $id
-     * @param int $attachmentId
-     * @return JsonResponse
      */
     public function deleteAttachment(int $id, int $attachmentId): JsonResponse
     {
@@ -520,7 +475,7 @@ class MemoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete attachment: ' . $e->getMessage(),
+                'message' => 'Failed to delete attachment: '.$e->getMessage(),
             ], 500);
         }
     }

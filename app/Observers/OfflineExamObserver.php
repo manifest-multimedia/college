@@ -28,12 +28,12 @@ class OfflineExamObserver
         if ($exam->isDirty('status') && $exam->status === 'published') {
             $this->processClearance($exam);
         }
-        
+
         // Check if the clearance_threshold was changed
         if ($exam->isDirty('clearance_threshold') && $exam->status === 'published') {
             $this->processClearance($exam);
         }
-        
+
         // Check if the venue was changed
         if ($exam->isDirty('venue') && $exam->status === 'published') {
             // Potentially notify students of venue change
@@ -51,10 +51,10 @@ class OfflineExamObserver
             ProcessExamClearanceJob::dispatch($exam)
                 ->onQueue('exam_clearances');
         } catch (\Exception $e) {
-            Log::error("Error dispatching exam clearance job: " . $e->getMessage());
+            Log::error('Error dispatching exam clearance job: '.$e->getMessage());
         }
     }
-    
+
     /**
      * Notify students of venue change
      */
@@ -63,7 +63,7 @@ class OfflineExamObserver
         // This would integrate with the Communication module
         // For now, just log the change
         Log::info("Venue changed for OfflineExam #{$exam->id}. New venue: {$exam->venue}");
-        
+
         // Future implementation would notify cleared students:
         // Get all clearances for this exam
         // Filter to only those that are cleared

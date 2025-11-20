@@ -9,8 +9,11 @@ use Livewire\Component;
 class KnowledgeBase extends Component
 {
     public $searchTerm = '';
+
     public $selectedCategorySlug = null;
+
     public $selectedArticleSlug = null;
+
     public $view = 'categories'; // categories, category-articles, article
 
     public function mount()
@@ -47,20 +50,20 @@ class KnowledgeBase extends Component
                 ->with(['category', 'creator'])
                 ->where('slug', $this->selectedArticleSlug)
                 ->first();
-            
+
             if ($selectedArticle) {
                 $selectedArticle->incrementViews();
             }
         }
 
         $searchResults = [];
-        if (!empty($this->searchTerm)) {
+        if (! empty($this->searchTerm)) {
             $searchResults = KnowledgeBaseArticle::published()
                 ->with('category')
                 ->where(function ($query) {
-                    $query->where('title', 'like', '%' . $this->searchTerm . '%')
-                        ->orWhere('content', 'like', '%' . $this->searchTerm . '%')
-                        ->orWhere('excerpt', 'like', '%' . $this->searchTerm . '%');
+                    $query->where('title', 'like', '%'.$this->searchTerm.'%')
+                        ->orWhere('content', 'like', '%'.$this->searchTerm.'%')
+                        ->orWhere('excerpt', 'like', '%'.$this->searchTerm.'%');
                 })
                 ->get();
         }
@@ -124,7 +127,7 @@ class KnowledgeBase extends Component
 
     public function updatedSearchTerm()
     {
-        if (!empty($this->searchTerm)) {
+        if (! empty($this->searchTerm)) {
             $this->view = 'search';
         } else {
             $this->backToCategories();

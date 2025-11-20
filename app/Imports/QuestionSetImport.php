@@ -2,18 +2,19 @@
 
 namespace App\Imports;
 
-use App\Models\Question;
 use App\Models\Option;
+use App\Models\Question;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
 
-class QuestionSetImport implements ToCollection, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading
+class QuestionSetImport implements ToCollection, WithBatchInserts, WithChunkReading, WithHeadingRow, WithValidation
 {
     protected $questionSetId;
+
     protected $importStats = [
         'total' => 0,
         'imported' => 0,
@@ -31,12 +32,12 @@ class QuestionSetImport implements ToCollection, WithHeadingRow, WithValidation,
         foreach ($rows as $index => $row) {
             try {
                 $this->importStats['total']++;
-                
+
                 // Skip empty rows
                 if (empty($row['question']) || trim($row['question']) === '') {
                     continue;
                 }
-                
+
                 // Create question
                 $question = Question::create([
                     'question_set_id' => $this->questionSetId,
@@ -70,7 +71,7 @@ class QuestionSetImport implements ToCollection, WithHeadingRow, WithValidation,
 
                 // Only create options that have text
                 foreach ($options as $option) {
-                    if (!empty(trim($option['option_text']))) {
+                    if (! empty(trim($option['option_text']))) {
                         Option::create([
                             'question_id' => $question->id,
                             'option_text' => $option['option_text'],
@@ -80,10 +81,10 @@ class QuestionSetImport implements ToCollection, WithHeadingRow, WithValidation,
                 }
 
                 $this->importStats['imported']++;
-                
+
             } catch (\Exception $e) {
                 $this->importStats['failed']++;
-                $this->importStats['errors'][] = "Row " . ($index + 2) . ": " . $e->getMessage();
+                $this->importStats['errors'][] = 'Row '.($index + 2).': '.$e->getMessage();
             }
         }
     }
@@ -94,7 +95,7 @@ class QuestionSetImport implements ToCollection, WithHeadingRow, WithValidation,
         if (is_bool($option)) {
             return $option ? 'True' : 'False';
         }
-        
+
         return $option;
     }
 
@@ -102,30 +103,30 @@ class QuestionSetImport implements ToCollection, WithHeadingRow, WithValidation,
     {
         $correctOption = strtolower(trim($correctOption));
         $currentOptionKey = strtolower(trim($currentOptionKey));
-        
+
         // Check by option key
-        if ($correctOption === $currentOptionKey || 
+        if ($correctOption === $currentOptionKey ||
             $correctOption === str_replace('_', ' ', $currentOptionKey)) {
             return true;
         }
-        
+
         // Check by option value (exact match)
         if (strtolower(trim($currentOptionValue)) === $correctOption) {
             return true;
         }
-        
+
         // Check by letter (A, B, C, D)
         $letterMap = [
             'a' => 'option_one',
-            'b' => 'option_two', 
+            'b' => 'option_two',
             'c' => 'option_three',
-            'd' => 'option_four'
+            'd' => 'option_four',
         ];
-        
+
         if (isset($letterMap[$correctOption]) && $letterMap[$correctOption] === $currentOptionKey) {
             return true;
         }
-        
+
         return false;
     }
 

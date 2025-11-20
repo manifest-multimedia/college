@@ -14,7 +14,7 @@ class ExamType extends Model
         'code',
         'payment_threshold',
         'description',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -24,7 +24,7 @@ class ExamType extends Model
 
     /**
      * Get the exam clearances associated with this exam type
-     * 
+     *
      * @deprecated This relationship is maintained for backward compatibility
      */
     public function examClearances()
@@ -50,7 +50,7 @@ class ExamType extends Model
 
     /**
      * Get all exams (both online and offline) associated with this exam type
-     * 
+     *
      * @return \Illuminate\Support\Collection
      */
     public function getAllExamsAttribute()

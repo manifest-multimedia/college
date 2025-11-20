@@ -26,7 +26,7 @@ return [
     |
     */
     'status_check_frequency' => env('SMS_STATUS_CHECK_FREQUENCY', 30),
-    
+
     /*
     |--------------------------------------------------------------------------
     | SMS Log Retention Period

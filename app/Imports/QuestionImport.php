@@ -2,8 +2,8 @@
 
 namespace App\Imports;
 
-use App\Models\Question;
 use App\Models\Option;
+use App\Models\Question;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -20,7 +20,7 @@ class QuestionImport implements ToModel, WithHeadingRow
     {
 
         // dd($row);
-        if (!isset($row['question'], $row['correct_option'])) {
+        if (! isset($row['question'], $row['correct_option'])) {
             return null; // Skip rows with insufficient data
         }
         $question = Question::create([
@@ -81,6 +81,7 @@ class QuestionImport implements ToModel, WithHeadingRow
 
         return $question;
     }
+
     private function replaceBooleanValue($option)
     {
         //  Check if option is boolean
@@ -96,19 +97,19 @@ class QuestionImport implements ToModel, WithHeadingRow
     {
         // Clean sanitize row and correct option value;
         try {
-            //code...
+            // code...
 
             $option = strtolower(trim($option));
             $correctOption = strtolower(trim($correctOption));
             if ($option === $correctOption) {
-                echo $value . PHP_EOL;
+                echo $value.PHP_EOL;
 
                 return $value;
             } else {
                 // echo "failed $option is not equal to $correctOption ";
             }
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
         }
     }
 }

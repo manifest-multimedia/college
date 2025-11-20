@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\AssetCategory;
 use App\Models\AssetSetting;
+use Illuminate\Database\Seeder;
 
 class AssetSeeder extends Seeder
 {
@@ -24,7 +24,7 @@ class AssetSeeder extends Seeder
                     ['name' => 'Network Equipment', 'description' => 'Routers, switches, and networking gear'],
                     ['name' => 'Printers', 'description' => 'Printing devices and scanners'],
                     ['name' => 'Software', 'description' => 'Software licenses and applications'],
-                ]
+                ],
             ],
             [
                 'name' => 'Furniture',
@@ -34,7 +34,7 @@ class AssetSeeder extends Seeder
                     ['name' => 'Chairs', 'description' => 'Office and classroom chairs'],
                     ['name' => 'Storage', 'description' => 'Cabinets, shelves, and storage units'],
                     ['name' => 'Tables', 'description' => 'Meeting and conference tables'],
-                ]
+                ],
             ],
             [
                 'name' => 'Classroom Equipment',
@@ -44,7 +44,7 @@ class AssetSeeder extends Seeder
                     ['name' => 'Audio Systems', 'description' => 'Sound systems and microphones'],
                     ['name' => 'Whiteboards', 'description' => 'Interactive and traditional whiteboards'],
                     ['name' => 'Laboratory Equipment', 'description' => 'Scientific and technical lab equipment'],
-                ]
+                ],
             ],
             [
                 'name' => 'Vehicles',
@@ -53,7 +53,7 @@ class AssetSeeder extends Seeder
                     ['name' => 'Cars', 'description' => 'Passenger vehicles'],
                     ['name' => 'Buses', 'description' => 'Student and staff transportation'],
                     ['name' => 'Maintenance Vehicles', 'description' => 'Maintenance and utility vehicles'],
-                ]
+                ],
             ],
             [
                 'name' => 'Maintenance Equipment',
@@ -62,8 +62,8 @@ class AssetSeeder extends Seeder
                     ['name' => 'Tools', 'description' => 'Hand tools and power tools'],
                     ['name' => 'Lawn Equipment', 'description' => 'Mowers and landscaping equipment'],
                     ['name' => 'HVAC Equipment', 'description' => 'Heating, ventilation, and air conditioning'],
-                ]
-            ]
+                ],
+            ],
         ];
 
         foreach ($categories as $categoryData) {

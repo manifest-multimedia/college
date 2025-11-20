@@ -22,11 +22,11 @@ class UpdateAssetCategoryRequest extends FormRequest
     public function rules(): array
     {
         $categoryId = $this->route('asset_category') ? $this->route('asset_category')->id : null;
-        
+
         return [
-            'name' => 'required|string|max:255|unique:asset_categories,name,' . $categoryId,
+            'name' => 'required|string|max:255|unique:asset_categories,name,'.$categoryId,
             'description' => 'nullable|string|max:1000',
-            'parent_id' => 'nullable|exists:asset_categories,id|not_in:' . $categoryId,
+            'parent_id' => 'nullable|exists:asset_categories,id|not_in:'.$categoryId,
         ];
     }
 

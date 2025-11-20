@@ -78,7 +78,7 @@ class StudentFeeBill extends Model
     {
         return $this->hasMany(FeePayment::class);
     }
-    
+
     /**
      * Check if student has paid at least the given percentage
      */
@@ -86,7 +86,7 @@ class StudentFeeBill extends Model
     {
         return $this->payment_percentage >= $percentage;
     }
-    
+
     /**
      * Recalculate payment status after a payment is recorded
      * Updates amount_paid, balance, payment_percentage and status fields
@@ -95,18 +95,18 @@ class StudentFeeBill extends Model
     {
         // Calculate total amount paid from all payments
         $totalPaid = $this->payments()->sum('amount');
-        
+
         // Update bill details
         $this->amount_paid = $totalPaid;
         $this->balance = max(0, $this->total_amount - $totalPaid);
-        
+
         // Calculate payment percentage (avoid division by zero)
         if ($this->total_amount > 0) {
             $this->payment_percentage = ($totalPaid / $this->total_amount) * 100;
         } else {
             $this->payment_percentage = 0;
         }
-        
+
         // Update status based on payment percentage
         if ($this->payment_percentage >= 100) {
             $this->status = 'Paid';
@@ -115,7 +115,7 @@ class StudentFeeBill extends Model
         } else {
             $this->status = 'Unpaid';
         }
-        
+
         return $this->save();
     }
 }

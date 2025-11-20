@@ -54,7 +54,7 @@ class ElectionVotingSession extends Model
      */
     public function isValid(): bool
     {
-        return !$this->vote_submitted && !$this->hasExpired() && $this->completed_at === null;
+        return ! $this->vote_submitted && ! $this->hasExpired() && $this->completed_at === null;
     }
 
     /**
@@ -83,7 +83,7 @@ class ElectionVotingSession extends Model
         // Use timestamp comparison to ensure correct direction
         $now = now();
         $secondsRemaining = $this->expires_at->timestamp - $now->timestamp;
-        
+
         // Ensure we don't return negative values
         return max(0, $secondsRemaining);
     }

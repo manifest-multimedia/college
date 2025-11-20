@@ -43,7 +43,7 @@ class AssetHistory extends Model
     /**
      * Log an action for an asset.
      */
-    public static function logAction(int $assetId, string $action, $oldValue = null, $newValue = null, int $userId = null)
+    public static function logAction(int $assetId, string $action, $oldValue = null, $newValue = null, ?int $userId = null)
     {
         return static::create([
             'asset_id' => $assetId,

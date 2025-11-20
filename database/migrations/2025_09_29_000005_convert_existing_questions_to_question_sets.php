@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
 use App\Models\Exam;
 use App\Models\Question;
 use App\Models\QuestionSet;
 use App\Models\User;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +12,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Convert existing questions that belong directly to exams into question sets.
      * This maintains backward compatibility while enabling the new question set feature.
      */
@@ -25,7 +25,7 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     * 
+     *
      * This would be complex to reverse perfectly, so we'll leave it as-is.
      * The backup created earlier can be used for full rollback if needed.
      */
@@ -42,16 +42,16 @@ return new class extends Migration
     private function convertExamQuestionsToQuestionSets()
     {
         Log::info('Starting conversion of existing questions to question sets');
-        
+
         // Get all exams that have questions directly assigned
         $examsWithQuestions = Exam::whereHas('questions')->with(['questions', 'course', 'user'])->get();
-        
+
         foreach ($examsWithQuestions as $exam) {
             $this->convertExamToQuestionSet($exam);
         }
-        
+
         Log::info('Completed conversion of existing questions to question sets', [
-            'exams_converted' => $examsWithQuestions->count()
+            'exams_converted' => $examsWithQuestions->count(),
         ]);
     }
 
@@ -64,7 +64,7 @@ return new class extends Migration
             // Create a question set for this exam
             $questionSet = QuestionSet::create([
                 'name' => $exam->title ?? "Question Set for Exam #{$exam->id}",
-                'description' => $exam->description ?? "Auto-generated question set from existing exam questions",
+                'description' => $exam->description ?? 'Auto-generated question set from existing exam questions',
                 'course_id' => $exam->course_id,
                 'difficulty_level' => 'medium', // Default difficulty
                 'created_by' => $exam->user_id ?? $this->getDefaultUserId(),
@@ -99,7 +99,7 @@ return new class extends Migration
                 'exam_id' => $exam->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             // Re-throw to rollback transaction
             throw $e;
         }
@@ -121,6 +121,7 @@ return new class extends Migration
 
         // Fallback to first user
         $firstUser = User::first();
+
         return $firstUser ? $firstUser->id : 1;
     }
 };

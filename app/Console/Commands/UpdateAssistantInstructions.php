@@ -36,8 +36,9 @@ class UpdateAssistantInstructions extends Command
     {
         $assistantId = $this->option('assistant-id') ?? Config::get('services.openai.assistant_id');
 
-        if (!$assistantId) {
+        if (! $assistantId) {
             $this->error('No assistant ID provided. Use --assistant-id option or set OPENAI_ASSISTANT_ID in your .env file.');
+
             return 1;
         }
 
@@ -47,7 +48,7 @@ class UpdateAssistantInstructions extends Command
 
         try {
             $data = [
-                'instructions' => $newInstructions
+                'instructions' => $newInstructions,
             ];
 
             $response = $this->assistantService->updateAssistant($assistantId, $data);
@@ -60,14 +61,16 @@ class UpdateAssistantInstructions extends Command
                 $this->info('• "What exam management tools do you have access to?"');
                 $this->info('• "Can you help me create a question set?"');
                 $this->info('• "List all available courses"');
-                
+
                 return 0;
             } else {
-                $this->error('❌ Failed to update assistant: ' . ($response['message'] ?? 'Unknown error'));
+                $this->error('❌ Failed to update assistant: '.($response['message'] ?? 'Unknown error'));
+
                 return 1;
             }
         } catch (\Exception $e) {
-            $this->error('❌ Exception occurred: ' . $e->getMessage());
+            $this->error('❌ Exception occurred: '.$e->getMessage());
+
             return 1;
         }
     }

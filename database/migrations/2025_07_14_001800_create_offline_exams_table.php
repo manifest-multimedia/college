@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function shouldRun(): bool
     {
-        return !Schema::hasTable('offline_exams');
+        return ! Schema::hasTable('offline_exams');
     }
 
     /**

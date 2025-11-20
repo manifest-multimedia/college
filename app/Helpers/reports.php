@@ -1,19 +1,19 @@
 <?php
+
 /*
 Contains functions for generating reports
 
 */
 
-use App\Models\Student;
 use App\Exports\ExportToExcel;
+use App\Models\Student;
 
-if (!function_exists('generateReport')) {
+if (! function_exists('generateReport')) {
     /*************  ✨ Codeium Command ⭐  *************/
     /**
      * Generates a report based on the provided request
-     * 
-     * @param Request $request The request object containing the report data
-     * 
+     *
+     * @param  Request  $request  The request object containing the report data
      * @return array The generated report
      */
     /******  8dc1a823-a575-4a27-9322-6e0f24b982d2  *******/
@@ -29,7 +29,7 @@ if (!function_exists('generateReport')) {
     }
 }
 
-if (!function_exists('filterData')) {
+if (! function_exists('filterData')) {
 
     function filterData($data)
     {
@@ -67,17 +67,17 @@ if (!function_exists('filterData')) {
                 $matchedFields = array_keys($data[0]); // Assumes data is not empty after filtering
                 // dd($matchedFields);
                 $selectedFields = $matchedFields;
+
                 return Excel::download(new ExportToExcel($data, $fieldNames, $columnNames), 'admission-report.xlsx');
             } catch (\Exception $e) {
                 // Log exception details
-                Log::info("message: " . $e->getMessage() . ", file: " . $e->getFile() . ", line: " . $e->getLine());
+                Log::info('message: '.$e->getMessage().', file: '.$e->getFile().', line: '.$e->getLine());
             }
         }
     }
 }
 
-
-if (!function_exists('getColumns')) {
+if (! function_exists('getColumns')) {
     function getColumns($reportOption)
     {
 
@@ -132,7 +132,7 @@ if (!function_exists('getColumns')) {
                     'section_id' => 'Section',
                     'ethnicity' => 'Ethnicity',
                     'weight' => 'Weight',
-                    'medical_history' => 'Medical History'
+                    'medical_history' => 'Medical History',
                 ];
                 break;
             case 'Student Gender Ratio':
@@ -178,6 +178,7 @@ if (!function_exists('getColumns')) {
                 $columns = []; // Handle unknown report types
                 break;
         }
+
         return $columns;
     }
 }

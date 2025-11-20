@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Office;
 use App\Models\Department;
+use App\Models\Office;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -12,21 +12,33 @@ class OfficeManager extends Component
     use WithPagination;
 
     public $departments;
+
     public $office_id;
+
     public $department_id;
+
     public $name;
+
     public $code;
+
     public $location;
+
     public $phone;
+
     public $email;
+
     public $description;
+
     public $is_active = true;
 
     public $search = '';
+
     public $filterDepartment = '';
+
     public $filterStatus = '';
 
     public $showModal = false;
+
     public $editMode = false;
 
     protected function rules()
@@ -34,7 +46,7 @@ class OfficeManager extends Component
         return [
             'department_id' => 'required|exists:departments,id',
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:offices,code,' . $this->office_id,
+            'code' => 'nullable|string|max:50|unique:offices,code,'.$this->office_id,
             'location' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
@@ -53,9 +65,9 @@ class OfficeManager extends Component
         $offices = Office::query()
             ->with('department')
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('code', 'like', '%' . $this->search . '%')
-                    ->orWhere('location', 'like', '%' . $this->search . '%');
+                $query->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('code', 'like', '%'.$this->search.'%')
+                    ->orWhere('location', 'like', '%'.$this->search.'%');
             })
             ->when($this->filterDepartment, function ($query) {
                 $query->where('department_id', $this->filterDepartment);
@@ -67,7 +79,7 @@ class OfficeManager extends Component
             ->paginate(10);
 
         return view('livewire.office-manager', [
-            'offices' => $offices
+            'offices' => $offices,
         ]);
     }
 
@@ -81,7 +93,7 @@ class OfficeManager extends Component
     public function openEditModal($officeId)
     {
         $office = Office::findOrFail($officeId);
-        
+
         $this->office_id = $office->id;
         $this->department_id = $office->department_id;
         $this->name = $office->name;
@@ -135,7 +147,7 @@ class OfficeManager extends Component
     public function toggleStatus($officeId)
     {
         $office = Office::findOrFail($officeId);
-        $office->update(['is_active' => !$office->is_active]);
+        $office->update(['is_active' => ! $office->is_active]);
 
         session()->flash('message', 'Office status updated successfully.');
     }
@@ -143,10 +155,11 @@ class OfficeManager extends Component
     public function delete($officeId)
     {
         $office = Office::findOrFail($officeId);
-        
+
         // Check if office has assets
         if ($office->assets()->count() > 0) {
             session()->flash('error', 'Cannot delete office with assigned assets.');
+
             return;
         }
 

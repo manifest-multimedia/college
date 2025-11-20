@@ -3,59 +3,64 @@
 namespace App\Imports;
 
 use App\Models\ExamSession;
-use App\Models\Student;
 use App\Models\Question;
 use App\Models\Response;
 use App\Models\ScoredQuestion;
-use App\Models\User;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use App\Models\Student;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class ResultImport implements ToCollection, WithHeadingRow
 {
     protected $exam_id;
+
     protected $importedRecords = 0;
+
     protected $totalRecords = 0;
+
     protected $skippedRecords = 0;
+
     protected $failedRecords = 0;
+
     public function __construct($exam_id)
     {
         $this->exam_id = $exam_id;
 
-       
     }
 
     public function collection(Collection $rows)
     {
         $this->totalRecords = $rows->count();
-        
+
         foreach ($rows as $row) {
             try {
-                if (!$this->validateRow($row)) {
+                if (! $this->validateRow($row)) {
                     $this->failedRecords++;
+
                     continue;
                 }
 
                 // Find or create student
                 $student = $this->findStudent($row);
-                if (!$student) {
+                if (! $student) {
                     $this->failedRecords++;
+
                     continue;
                 }
 
                 // Check if the exam session already exists
                 if ($this->examSessionExists($student)) {
                     $this->skippedRecords++;
+
                     continue;
                 }
 
                 // Process exam session
                 $session = $this->processExamSession($row, $student);
-                
+
                 // Process questions and responses
                 $this->processQuestions($row, $session);
 
@@ -71,12 +76,9 @@ class ResultImport implements ToCollection, WithHeadingRow
     private function validateRow($row)
     {
 
-        $validated=isset($row['student_email']) && isset($row['question_text']) && isset($row['selected_option_text']);
-
-       
+        $validated = isset($row['student_email']) && isset($row['question_text']) && isset($row['selected_option_text']);
 
         return $validated;
-              
 
     }
 
@@ -85,32 +87,30 @@ class ResultImport implements ToCollection, WithHeadingRow
 
         // dd($row['student_email']);
 
-        $student=Student::with('user')
+        $student = Student::with('user')
             ->where('email', $row['student_email'])
             ->orWhere('student_id', $row['student_id'] ?? '')
             ->first();
 
-          
-
-            if($student){
-                return $student;
-            }else{
-                return null;
-            }
+        if ($student) {
+            return $student;
+        } else {
+            return null;
+        }
     }
 
     private function examSessionExists($student)
     {
         return ExamSession::where('exam_id', $this->exam_id)
-                           ->where('student_id', $student->user->id)
-                           ->exists();
+            ->where('student_id', $student->user->id)
+            ->exists();
     }
 
     private function processExamSession($row, $student)
     {
-        if($student->name!=$row['student_name'] || $row['student_email']=="N/A" || $row['student_name']==null){
+        if ($student->name != $row['student_name'] || $row['student_email'] == 'N/A' || $row['student_name'] == null) {
             return null;
-           
+
         }
 
         return ExamSession::create([
@@ -129,8 +129,9 @@ class ResultImport implements ToCollection, WithHeadingRow
             ->where('exam_id', $this->exam_id)
             ->first();
 
-        if (!$question) {
+        if (! $question) {
             Log::warning('Question not found: '.$row['question_text']);
+
             return;
         }
 
@@ -139,8 +140,9 @@ class ResultImport implements ToCollection, WithHeadingRow
             ->orWhere('option_text', 'like', '%'.$row['selected_option_text'].'%')
             ->first();
 
-        if (!$option) {
+        if (! $option) {
             Log::warning('Option not found: '.$row['selected_option_text']);
+
             return;
         }
 
@@ -151,7 +153,7 @@ class ResultImport implements ToCollection, WithHeadingRow
             'option_id' => $option->id,
         ])->first();
 
-        if (!$response) {
+        if (! $response) {
             // Create a new response if it doesn't exist
             $response = Response::create([
                 'exam_session_id' => $session->id,
@@ -180,7 +182,7 @@ class ResultImport implements ToCollection, WithHeadingRow
             'total' => $this->totalRecords,
             'success' => $this->importedRecords,
             'failed' => $this->failedRecords,
-            'skipped' => $this->skippedRecords
+            'skipped' => $this->skippedRecords,
         ];
     }
 }

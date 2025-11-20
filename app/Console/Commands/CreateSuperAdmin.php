@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class CreateSuperAdmin extends Command
 {
@@ -33,11 +33,11 @@ class CreateSuperAdmin extends Command
 
         // Check if user already exists
         $user = User::where('email', 'admin@admin.com')->first();
-        
+
         if ($user) {
             $this->info('User already exists, updating...');
         } else {
-            $user = new User();
+            $user = new User;
         }
 
         $user->fill([
@@ -46,9 +46,9 @@ class CreateSuperAdmin extends Command
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
-        
+
         $user->save();
-        
+
         // Assign role
         $user->assignRole('Super Admin');
 

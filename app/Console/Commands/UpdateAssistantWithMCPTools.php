@@ -36,8 +36,9 @@ class UpdateAssistantWithMCPTools extends Command
     {
         $assistantId = $this->option('assistant-id') ?? Config::get('services.openai.assistant_id');
 
-        if (!$assistantId) {
+        if (! $assistantId) {
             $this->error('No assistant ID provided. Use --assistant-id option or set OPENAI_ASSISTANT_ID in your .env file.');
+
             return 1;
         }
 
@@ -55,18 +56,20 @@ class UpdateAssistantWithMCPTools extends Command
                 $this->info('• list_courses - List available courses');
                 $this->info('• list_question_sets - List question sets');
                 $this->info('• get_question_set_details - Get detailed question set information');
-                
+
                 $this->newLine();
                 $this->info('Your AI Assistant can now help with exam management tasks!');
                 $this->info('Try asking it to: "Create a new question set for Mathematics" or "List all available courses"');
-                
+
                 return 0;
             } else {
-                $this->error('❌ Failed to update assistant: ' . ($response['message'] ?? 'Unknown error'));
+                $this->error('❌ Failed to update assistant: '.($response['message'] ?? 'Unknown error'));
+
                 return 1;
             }
         } catch (\Exception $e) {
-            $this->error('❌ Exception occurred: ' . $e->getMessage());
+            $this->error('❌ Exception occurred: '.$e->getMessage());
+
             return 1;
         }
     }

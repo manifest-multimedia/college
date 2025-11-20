@@ -28,7 +28,7 @@ class ExamObserver
         if ($exam->isDirty('status') && $exam->status === 'published') {
             $this->processClearance($exam);
         }
-        
+
         // Check if the clearance_threshold was changed
         if ($exam->isDirty('clearance_threshold') && $exam->status === 'published') {
             $this->processClearance($exam);
@@ -45,7 +45,7 @@ class ExamObserver
             ProcessExamClearanceJob::dispatch($exam)
                 ->onQueue('exam_clearances');
         } catch (\Exception $e) {
-            Log::error("Error dispatching exam clearance job: " . $e->getMessage());
+            Log::error('Error dispatching exam clearance job: '.$e->getMessage());
         }
     }
 }

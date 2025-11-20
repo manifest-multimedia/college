@@ -40,8 +40,8 @@ class ElectionAuditLog extends Model
         string $event,
         string $description,
         array $metadata = [],
-        string $ipAddress = null,
-        string $userAgent = null
+        ?string $ipAddress = null,
+        ?string $userAgent = null
     ): self {
         return self::create([
             'election_id' => $election?->id,

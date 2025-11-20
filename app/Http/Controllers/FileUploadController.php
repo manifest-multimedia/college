@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\QuestionImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\QuestionImport;
 
 class FileUploadController extends Controller
 {
@@ -21,7 +21,7 @@ class FileUploadController extends Controller
         $file = $request->file('file');
 
         // Generate a unique, shorter name for the file
-        $filename = uniqid('upload_', true) . '.' . $file->getClientOriginalExtension();
+        $filename = uniqid('upload_', true).'.'.$file->getClientOriginalExtension();
 
         // Store the file on the 'uploads' disk with the new name
         $path = $file->storeAs('', $filename, 'uploads');

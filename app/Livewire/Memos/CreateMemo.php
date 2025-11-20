@@ -5,9 +5,9 @@ namespace App\Livewire\Memos;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\Memo\MemoService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Auth;
 
 class CreateMemo extends Component
 {
@@ -15,17 +15,26 @@ class CreateMemo extends Component
 
     // Form fields
     public $title = '';
+
     public $description = '';
+
     public $priority = 'medium';
+
     public $requestedAction = '';
+
     public $recipientType = 'user'; // 'user' or 'department'
+
     public $recipientId = null;
+
     public $recipientDepartmentId = null;
+
     public $status = 'pending'; // default to pending, could be 'draft'
+
     public $attachments = [];
 
     // Data for dropdowns
     public $users = [];
+
     public $departments = [];
 
     // MemoService instance
@@ -65,13 +74,13 @@ class CreateMemo extends Component
     public function loadUsers()
     {
         // Load staff users only (exclude Student and Parent roles)
-        $this->users = User::whereHas('roles', function($query) {
-                $query->whereNotIn('name', ['Student', 'Parent']);
-            })
-            ->orWhere(function($query) {
+        $this->users = User::whereHas('roles', function ($query) {
+            $query->whereNotIn('name', ['Student', 'Parent']);
+        })
+            ->orWhere(function ($query) {
                 // Also include users with legacy 'role' column (for backward compatibility)
                 $query->whereNotIn('role', ['Student', 'Parent'])
-                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+                    ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
             })
             ->where('id', '!=', Auth::id())
             ->orderBy('name')
@@ -131,6 +140,7 @@ class CreateMemo extends Component
 
         if ($result['success']) {
             session()->flash('success', 'Memo created successfully.');
+
             return redirect()->route('memo.view', $result['memo']->id);
         } else {
             session()->flash('error', $result['message']);

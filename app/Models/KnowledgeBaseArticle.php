@@ -45,7 +45,7 @@ class KnowledgeBaseArticle extends Model
             if (empty($article->slug)) {
                 $article->slug = Str::slug($article->title);
             }
-            if (empty($article->excerpt) && !empty($article->content)) {
+            if (empty($article->excerpt) && ! empty($article->content)) {
                 $article->excerpt = Str::limit(strip_tags($article->content), 200);
             }
         });
@@ -108,6 +108,7 @@ class KnowledgeBaseArticle extends Model
     public function getHelpfulPercentageAttribute()
     {
         $total = $this->helpful_count + $this->not_helpful_count;
+
         return $total > 0 ? round(($this->helpful_count / $total) * 100) : 0;
     }
 }

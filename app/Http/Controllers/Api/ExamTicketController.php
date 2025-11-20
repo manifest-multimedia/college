@@ -12,8 +12,7 @@ class ExamTicketController extends Controller
 {
     /**
      * Validate an exam entry ticket using its QR code
-     * 
-     * @param  \Illuminate\Http\Request  $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function validateTicket(Request $request)
@@ -24,39 +23,38 @@ class ExamTicketController extends Controller
             'verified_by' => 'required|integer|exists:users,id',
             'location' => 'nullable|string|max:255',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-        
+
         // Extract request data
         $qrCode = $request->input('qr_code');
         $verifiedBy = $request->input('verified_by');
         $location = $request->input('location');
         $ip = $request->ip();
-        
+
         try {
             // Use the ExamClearanceManager service to validate the ticket
-            $clearanceManager = new ExamClearanceManager();
+            $clearanceManager = new ExamClearanceManager;
             $result = $clearanceManager->verifyExamEntryTicket($qrCode, $verifiedBy, $location, $ip);
-            
+
             return response()->json($result, $result['success'] ? 200 : 400);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error validating exam ticket: ' . $e->getMessage()
+                'message' => 'Error validating exam ticket: '.$e->getMessage(),
             ], 500);
         }
     }
-    
+
     /**
      * Get detailed information about a ticket for debugging purposes
-     * 
-     * @param  \Illuminate\Http\Request  $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function ticketInfo(Request $request)
@@ -66,34 +64,34 @@ class ExamTicketController extends Controller
             'qr_code' => 'required|string',
             'api_key' => 'required|string', // For security, require an API key
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-        
+
         // Verify API key (compare with a constant or config value)
         $validApiKey = config('services.exam_validation.api_key', 'default_key');
         if ($request->input('api_key') !== $validApiKey) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid API key'
+                'message' => 'Invalid API key',
             ], 403);
         }
-        
+
         // Find ticket
         $ticket = ExamEntryTicket::where('qr_code', $request->input('qr_code'))->first();
-        
-        if (!$ticket) {
+
+        if (! $ticket) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ticket not found'
+                'message' => 'Ticket not found',
             ], 404);
         }
-        
+
         // Return ticket information
         return response()->json([
             'success' => true,
@@ -123,7 +121,7 @@ class ExamTicketController extends Controller
                     'is_cleared' => $ticket->examClearance->is_cleared,
                     'is_manual_override' => $ticket->examClearance->is_manual_override,
                 ],
-            ]
+            ],
         ]);
     }
 }

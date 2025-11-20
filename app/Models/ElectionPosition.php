@@ -83,11 +83,11 @@ class ElectionPosition extends Model
             ->groupBy('election_candidate_id')
             ->orderByDesc('vote_count')
             ->first();
-            
+
         if ($candidateVotes) {
             return ElectionCandidate::find($candidateVotes->election_candidate_id);
         }
-        
+
         return null;
     }
 
@@ -104,13 +104,13 @@ class ElectionPosition extends Model
      */
     public function getYesNoVotes()
     {
-        if (!$this->hasSingleCandidate()) {
+        if (! $this->hasSingleCandidate()) {
             return null;
         }
 
         $candidate = $this->candidates()->where('is_active', true)->first();
-        
-        if (!$candidate) {
+
+        if (! $candidate) {
             return null;
         }
 
@@ -118,19 +118,19 @@ class ElectionPosition extends Model
             ->where('election_candidate_id', $candidate->id)
             ->where('vote_type', 'yes')
             ->count();
-            
+
         $noVotes = $this->votes()
             ->where('election_candidate_id', $candidate->id)
             ->where('vote_type', 'no')
             ->count();
-            
+
         $totalVotes = $yesVotes + $noVotes;
-        
+
         $yesPercent = $totalVotes > 0 ? round(($yesVotes / $totalVotes) * 100, 1) : 0;
         $noPercent = $totalVotes > 0 ? round(($noVotes / $totalVotes) * 100, 1) : 0;
-        
+
         $hasWon = $yesVotes > $noVotes;
-        
+
         return [
             'candidate' => $candidate,
             'yes_votes' => $yesVotes,
@@ -151,7 +151,7 @@ class ElectionPosition extends Model
         if ($this->hasSingleCandidate()) {
             return $this->getYesNoVotes();
         }
-        
+
         // Standard multiple candidate vote counting
         $results = $this->votes()
             ->select('election_candidate_id')
@@ -160,18 +160,18 @@ class ElectionPosition extends Model
             ->get()
             ->pluck('vote_count', 'election_candidate_id')
             ->toArray();
-            
+
         // Make sure all candidates have an entry, even those with zero votes
         $completeResults = collect();
-        
+
         foreach ($this->candidates as $candidate) {
             $completeResults[$candidate->id] = [
                 'candidate' => $candidate,
-                'votes' => $results[$candidate->id] ?? 0
+                'votes' => $results[$candidate->id] ?? 0,
             ];
         }
-        
-        return $completeResults->sortByDesc(function($item) {
+
+        return $completeResults->sortByDesc(function ($item) {
             return $item['votes'];
         });
     }

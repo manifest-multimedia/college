@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 class BulkTranscriptExport implements WithMultipleSheets
@@ -14,9 +13,6 @@ class BulkTranscriptExport implements WithMultipleSheets
         $this->transcriptDataArray = $transcriptDataArray;
     }
 
-    /**
-     * @return array
-     */
     public function sheets(): array
     {
         $sheets = [];
@@ -24,7 +20,7 @@ class BulkTranscriptExport implements WithMultipleSheets
         foreach ($this->transcriptDataArray as $index => $transcriptData) {
             $student = $transcriptData['student'];
             $sheetName = substr($student->student_id, 0, 20); // Limit sheet name length
-            
+
             $sheets[] = new TranscriptExport($transcriptData);
         }
 

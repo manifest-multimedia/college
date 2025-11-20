@@ -30,7 +30,7 @@ class ElectionCandidate extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
-    
+
     protected $appends = [
         'photo_url',
     ];
@@ -66,32 +66,33 @@ class ElectionCandidate extends Model
     {
         return $this->votes()->count();
     }
-    
+
     /**
      * Get the URL for the candidate's photo.
      */
     public function getPhotoUrlAttribute(): string
     {
-        if ($this->photo && Storage::disk('public')->exists('candidates/' . $this->photo)) {
-            return Storage::url('candidates/' . $this->photo);
+        if ($this->photo && Storage::disk('public')->exists('candidates/'.$this->photo)) {
+            return Storage::url('candidates/'.$this->photo);
         }
-        
+
         // Return default avatar if no photo is available
         return asset('images/default-avatar.png');
     }
-    
+
     /**
      * Get the percentage of votes this candidate has received in their position.
      */
     public function getVotePercentage(): float
     {
         $totalVotes = $this->position->getTotalVotes();
-        
+
         if ($totalVotes === 0) {
             return 0;
         }
-        
+
         $candidateVotes = $this->getVoteCount();
+
         return round(($candidateVotes / $totalVotes) * 100, 1);
     }
 }

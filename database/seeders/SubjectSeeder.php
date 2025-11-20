@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Subject;
-use App\Models\Semester;
-use App\Models\Year;
 use App\Models\CollegeClass;
-use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Semester;
+use App\Models\Subject;
+use App\Models\Year;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SubjectSeeder extends Seeder
 {
@@ -25,17 +25,19 @@ class SubjectSeeder extends Seeder
         $data = $data->slice(1);
 
         // Check if data was loaded
-        if (!$data || $data->isEmpty()) {
-            Log::warning("No data found in the Excel sheet.");
-            $this->command->info("No data found in the Excel sheet.");
+        if (! $data || $data->isEmpty()) {
+            Log::warning('No data found in the Excel sheet.');
+            $this->command->info('No data found in the Excel sheet.');
+
             return;
         }
 
         // Loop through each row in the Excel sheet
         foreach ($data as $row) {
             // Ensure the necessary keys are present
-            if (!isset($row[0], $row[1], $row[2], $row[3], $row[4])) {
-                Log::warning("Skipping row due to missing required fields", $row->toArray());
+            if (! isset($row[0], $row[1], $row[2], $row[3], $row[4])) {
+                Log::warning('Skipping row due to missing required fields', $row->toArray());
+
                 continue;
             }
 
@@ -71,11 +73,11 @@ class SubjectSeeder extends Seeder
 
             // Confirm subject creation
             if ($subject->wasRecentlyCreated) {
-                Log::info("Subject created: " . $subject->name);
-                $this->command->info("Subject created: " . $subject->name);
+                Log::info('Subject created: '.$subject->name);
+                $this->command->info('Subject created: '.$subject->name);
             } else {
-                Log::info("Subject already exists: " . $subject->name);
-                $this->command->info("Subject already exists: " . $subject->name);
+                Log::info('Subject already exists: '.$subject->name);
+                $this->command->info('Subject already exists: '.$subject->name);
             }
         }
     }

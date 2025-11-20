@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
-
     // Use Should run to prevent this from running in production
     public function shouldRun(): bool
     {

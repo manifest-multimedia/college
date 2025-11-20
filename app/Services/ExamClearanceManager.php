@@ -2,43 +2,28 @@
 
 namespace App\Services;
 
-use App\Models\Student;
-use App\Models\ExamType;
+use App\Models\Exam;
 use App\Models\ExamClearance;
 use App\Models\ExamEntryTicket;
-use App\Models\Exam;
+use App\Models\ExamType;
+use App\Models\Student;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class ExamClearanceManager
 {
     /**
      * Check if a student is eligible for exam clearance based on fee payment status
-     * 
-     * @param Student $student
-     * @param int $academicYearId
-     * @param int $semesterId
-     * @param int $examTypeId
-     * @return bool
      */
     public function isEligibleForClearance(Student $student, int $academicYearId, int $semesterId, int $examTypeId): bool
     {
         return $student->isEligibleForExamClearance($academicYearId, $semesterId, $examTypeId);
     }
-    
+
     /**
      * Process exam clearance for a student
-     * 
-     * @param Student $student
-     * @param int $academicYearId
-     * @param int $semesterId
-     * @param int $examTypeId
-     * @param bool $manualOverride
-     * @param string|null $overrideReason
-     * @param int|null $clearedBy
-     * @return ExamClearance
      */
     public function processClearance(
         Student $student,
@@ -54,9 +39,9 @@ class ExamClearanceManager
             'academicYearId' => $academicYearId,
             'semesterId' => $semesterId,
             'examTypeId' => $examTypeId,
-            'manualOverride' => $manualOverride
+            'manualOverride' => $manualOverride,
         ]);
-        
+
         // Validate that examTypeId is a positive integer
         if (empty($examTypeId) || $examTypeId <= 0) {
             throw new \InvalidArgumentException('A valid exam type ID must be provided.');
@@ -78,19 +63,19 @@ class ExamClearanceManager
                     ->where('semester_id', $semesterId)
                     ->where('exam_type_id', $examTypeId)
                     ->first();
-                
+
                 Log::info('Checking existing clearance', [
-                    'exists' => !is_null($existingClearance),
-                    'clearanceId' => $existingClearance->id ?? 'none'
+                    'exists' => ! is_null($existingClearance),
+                    'clearanceId' => $existingClearance->id ?? 'none',
                 ]);
-                    
+
                 if ($existingClearance) {
                     // If a record exists, update its status
                     Log::info('Updating existing clearance', [
                         'clearanceId' => $existingClearance->id,
-                        'previousStatus' => $existingClearance->is_cleared
+                        'previousStatus' => $existingClearance->is_cleared,
                     ]);
-                    
+
                     $existingClearance->update([
                         'is_cleared' => true,
                         'is_manual_override' => $manualOverride,
@@ -98,23 +83,23 @@ class ExamClearanceManager
                         'cleared_by' => $clearedBy,
                         'cleared_at' => Carbon::now(),
                     ]);
-                    
+
                     Log::info('Existing clearance updated', [
                         'clearanceId' => $existingClearance->id,
-                        'newStatus' => true
+                        'newStatus' => true,
                     ]);
-                    
+
                     return $existingClearance->fresh();
                 }
-                
+
                 // Generate a unique clearance code
-                $clearanceCode = 'CLR-' . $student->student_id . '-' . strtoupper(Str::random(6));
-                
+                $clearanceCode = 'CLR-'.$student->student_id.'-'.strtoupper(Str::random(6));
+
                 Log::info('Creating new clearance record', [
                     'studentId' => $student->id,
-                    'clearanceCode' => $clearanceCode
+                    'clearanceCode' => $clearanceCode,
                 ]);
-                
+
                 // Create a new clearance record
                 $clearance = ExamClearance::create([
                     'student_id' => $student->id,
@@ -128,39 +113,36 @@ class ExamClearanceManager
                     'cleared_at' => Carbon::now(),
                     'clearance_code' => $clearanceCode,
                 ]);
-                
+
                 Log::info('New clearance created', [
                     'clearanceId' => $clearance->id,
                     'clearanceCode' => $clearance->clearance_code,
-                    'isCleared' => $clearance->is_cleared
+                    'isCleared' => $clearance->is_cleared,
                 ]);
-                
+
                 return $clearance;
             } catch (\Exception $e) {
                 Log::error('Error in processClearance transaction', [
                     'error' => $e->getMessage(),
                     'studentId' => $student->id,
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
                 throw $e;
             }
         });
     }
-    
+
     /**
      * Revoke a student's exam clearance
-     * 
-     * @param ExamClearance $clearance
-     * @return bool
      */
     public function revokeClearance(ExamClearance $clearance): bool
     {
         return DB::transaction(function () use ($clearance) {
             // Invalidate any existing exam entry tickets
             $clearance->examEntryTickets()->update([
-                'is_active' => false
+                'is_active' => false,
             ]);
-            
+
             // Update clearance status
             return $clearance->update([
                 'is_cleared' => false,
@@ -168,35 +150,30 @@ class ExamClearanceManager
             ]);
         });
     }
-    
+
     /**
      * Generate exam entry ticket for a cleared student
-     * 
-     * @param ExamClearance $clearance
-     * @param ExamType $examType
-     * @param Carbon|null $expiresAt
-     * @return ExamEntryTicket
      */
     public function generateExamEntryTicket(ExamClearance $clearance, ExamType $examType, ?Carbon $expiresAt = null): ExamEntryTicket
     {
-        if (!$clearance->is_cleared) {
+        if (! $clearance->is_cleared) {
             throw new \Exception('Cannot generate exam entry ticket for a student who is not cleared for exams.');
         }
-        
+
         // Check for any existing active tickets for this exam type
         $existingTicket = ExamEntryTicket::where('exam_clearance_id', $clearance->id)
             ->where('exam_type_id', $examType->id)
             ->where('is_active', true)
             ->first();
-            
+
         if ($existingTicket) {
             return $existingTicket;
         }
-        
+
         // Generate QR code and ticket number
-        $qrCode = 'QR-' . $clearance->student->student_id . '-' . $examType->id . '-' . Str::random(8);
-        $ticketNumber = 'TKT-' . strtoupper(Str::random(8));
-        
+        $qrCode = 'QR-'.$clearance->student->student_id.'-'.$examType->id.'-'.Str::random(8);
+        $ticketNumber = 'TKT-'.strtoupper(Str::random(8));
+
         // Create the entry ticket
         $ticket = ExamEntryTicket::create([
             'exam_clearance_id' => $clearance->id,
@@ -208,43 +185,37 @@ class ExamClearanceManager
             'is_active' => true,
             'expires_at' => $expiresAt,
         ]);
-        
+
         return $ticket;
     }
-    
+
     /**
      * Verify an exam entry ticket
-     * 
-     * @param string $qrCode
-     * @param int $verifiedBy
-     * @param string|null $location
-     * @param string|null $ip
-     * @return array
      */
     public function verifyExamEntryTicket(string $qrCode, int $verifiedBy, ?string $location = null, ?string $ip = null): array
     {
         $ticket = ExamEntryTicket::where('qr_code', $qrCode)->first();
-        
-        if (!$ticket) {
+
+        if (! $ticket) {
             return [
                 'success' => false,
                 'message' => 'Invalid QR code. Ticket not found.',
-                'data' => null
+                'data' => null,
             ];
         }
-        
-        if (!$ticket->is_active) {
+
+        if (! $ticket->is_active) {
             return [
                 'success' => false,
                 'message' => 'This ticket is no longer active.',
                 'data' => [
                     'student' => $ticket->student,
                     'examType' => $ticket->examType,
-                    'status' => 'inactive'
-                ]
+                    'status' => 'inactive',
+                ],
             ];
         }
-        
+
         if ($ticket->is_verified) {
             return [
                 'success' => false,
@@ -253,11 +224,11 @@ class ExamClearanceManager
                     'student' => $ticket->student,
                     'examType' => $ticket->examType,
                     'status' => 'already_used',
-                    'verified_at' => $ticket->verified_at
-                ]
+                    'verified_at' => $ticket->verified_at,
+                ],
             ];
         }
-        
+
         if ($ticket->expires_at && now()->isAfter($ticket->expires_at)) {
             return [
                 'success' => false,
@@ -266,11 +237,11 @@ class ExamClearanceManager
                     'student' => $ticket->student,
                     'examType' => $ticket->examType,
                     'status' => 'expired',
-                    'expired_at' => $ticket->expires_at
-                ]
+                    'expired_at' => $ticket->expires_at,
+                ],
             ];
         }
-        
+
         // Update the ticket status
         $ticket->update([
             'is_verified' => true,
@@ -279,7 +250,7 @@ class ExamClearanceManager
             'verification_location' => $location,
             'verification_ip' => $ip,
         ]);
-        
+
         return [
             'success' => true,
             'message' => 'Ticket verified successfully. Student is cleared for the exam.',
@@ -287,17 +258,14 @@ class ExamClearanceManager
                 'student' => $ticket->student,
                 'examType' => $ticket->examType,
                 'status' => 'cleared',
-                'verified_at' => $ticket->verified_at
-            ]
+                'verified_at' => $ticket->verified_at,
+            ],
         ];
     }
-    
+
     /**
      * Get all cleared students for an exam type in a specific academic year and semester
-     * 
-     * @param int $academicYearId
-     * @param int $semesterId
-     * @param int $examTypeId
+     *
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getClearedStudents(int $academicYearId, int $semesterId, int $examTypeId)

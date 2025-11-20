@@ -27,10 +27,7 @@ class AISenseiDocumentService implements DocumentUploadInterface
 
     /**
      * Upload a document to storage and register with OpenAI if needed
-     * 
-     * @param string $sessionId
-     * @param UploadedFile $file
-     * @param array $options
+     *
      * @return array
      */
     public function uploadDocument(string $sessionId, UploadedFile $file, array $options = [])
@@ -38,48 +35,48 @@ class AISenseiDocumentService implements DocumentUploadInterface
         try {
             // Check if session exists
             $session = ChatSession::where('session_id', $sessionId)->first();
-            
-            if (!$session) {
+
+            if (! $session) {
                 return [
                     'success' => false,
                     'message' => 'Chat session not found',
                 ];
             }
-            
+
             // Store the file locally first
             $fileName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension();
-            $sanitizedFileName = Str::slug($fileName) . '-' . time() . '.' . $extension;
-            
+            $sanitizedFileName = Str::slug($fileName).'-'.time().'.'.$extension;
+
             $path = $file->storeAs(
-                'chat_documents/' . $sessionId,
+                'chat_documents/'.$sessionId,
                 $sanitizedFileName,
                 'public'
             );
-            
-            if (!$path) {
+
+            if (! $path) {
                 return [
                     'success' => false,
                     'message' => 'Failed to save document',
                 ];
             }
-            
+
             $publicPath = Storage::url($path);
-            $fullPath = storage_path('app/public/' . $path);
-            
+            $fullPath = storage_path('app/public/'.$path);
+
             // Upload to OpenAI
             $uploadResult = $this->assistantsService->uploadFile($fullPath, 'assistants');
-            
-            if (!$uploadResult['success']) {
+
+            if (! $uploadResult['success']) {
                 Log::warning('Failed to upload document to OpenAI, but saved locally', [
                     'session_id' => $sessionId,
                     'file_path' => $path,
                     'error' => $uploadResult['message'] ?? 'Unknown error',
                 ]);
-                
+
                 // We continue even if OpenAI upload fails, since we have the local file
             }
-            
+
             // Save metadata about the file
             $fileMetadata = [
                 'original_name' => $file->getClientOriginalName(),
@@ -91,7 +88,7 @@ class AISenseiDocumentService implements DocumentUploadInterface
                 'openai_upload_status' => $uploadResult['success'] ? 'success' : 'failed',
                 'uploaded_at' => now()->toIso8601String(),
             ];
-            
+
             // Send event notification
             $uploadNotification = [
                 'session_id' => $sessionId,
@@ -101,9 +98,9 @@ class AISenseiDocumentService implements DocumentUploadInterface
                 'upload_status' => $uploadResult['success'] ? 'success' : 'partial',
                 'uploaded_at' => now(),
             ];
-            
+
             broadcast(new DocumentUploadedEvent($sessionId, $uploadNotification))->toOthers();
-            
+
             // Return success
             return [
                 'success' => true,
@@ -119,32 +116,31 @@ class AISenseiDocumentService implements DocumentUploadInterface
                 'session_id' => $sessionId,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Document upload failed: ' . $e->getMessage(),
+                'message' => 'Document upload failed: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Generate a download URL for a document
-     * 
-     * @param string $path
+     *
      * @return array
      */
     public function getDownloadUrl(string $path)
     {
         try {
-            if (!Storage::disk('public')->exists($path)) {
+            if (! Storage::disk('public')->exists($path)) {
                 return [
                     'success' => false,
                     'message' => 'Document not found',
                 ];
             }
-            
+
             $url = Storage::disk('public')->url($path);
-            
+
             return [
                 'success' => true,
                 'url' => $url,
@@ -154,7 +150,7 @@ class AISenseiDocumentService implements DocumentUploadInterface
                 'path' => $path,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => 'Failed to get document download URL',
@@ -164,35 +160,33 @@ class AISenseiDocumentService implements DocumentUploadInterface
 
     /**
      * Delete a document
-     * 
-     * @param string $path
-     * @param string|null $openaiFileId
+     *
      * @return array
      */
     public function deleteDocument(string $path, ?string $openaiFileId = null)
     {
         try {
             $deleted = Storage::disk('public')->delete($path);
-            
-            if (!$deleted) {
+
+            if (! $deleted) {
                 return [
                     'success' => false,
                     'message' => 'Document not found or could not be deleted',
                 ];
             }
-            
+
             // Also delete from OpenAI if we have a file ID
             if ($openaiFileId) {
                 $deleteResult = $this->assistantsService->deleteFile($openaiFileId);
-                
-                if (!$deleteResult['success']) {
+
+                if (! $deleteResult['success']) {
                     Log::warning('Failed to delete document from OpenAI', [
                         'openai_file_id' => $openaiFileId,
                         'error' => $deleteResult['message'] ?? 'Unknown error',
                     ]);
                 }
             }
-            
+
             return [
                 'success' => true,
                 'message' => 'Document deleted successfully',
@@ -203,10 +197,10 @@ class AISenseiDocumentService implements DocumentUploadInterface
                 'openai_file_id' => $openaiFileId,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Document deletion failed: ' . $e->getMessage(),
+                'message' => 'Document deletion failed: '.$e->getMessage(),
             ];
         }
     }

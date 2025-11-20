@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class AdminSeeder extends Seeder
 {
@@ -14,7 +13,7 @@ class AdminSeeder extends Seeder
         $this->command->info('Creating default admin accounts...');
 
         // Create default Super Admin if it doesn't exist
-        if (!User::where('email', 'admin@college.local')->exists()) {
+        if (! User::where('email', 'admin@college.local')->exists()) {
             $superAdmin = User::create([
                 'name' => 'System Administrator',
                 'email' => 'admin@college.local',
@@ -29,7 +28,7 @@ class AdminSeeder extends Seeder
         }
 
         // Create default IT Manager if it doesn't exist
-        if (!User::where('email', 'itmanager@college.local')->exists()) {
+        if (! User::where('email', 'itmanager@college.local')->exists()) {
             $itManager = User::create([
                 'name' => 'IT Manager',
                 'email' => 'itmanager@college.local',
@@ -44,7 +43,7 @@ class AdminSeeder extends Seeder
         }
 
         // Create default System user if it doesn't exist
-        if (!User::where('email', 'system@college.local')->exists()) {
+        if (! User::where('email', 'system@college.local')->exists()) {
             $systemUser = User::create([
                 'name' => 'System User',
                 'email' => 'system@college.local',

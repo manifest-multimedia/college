@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\QuestionSet;
 use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class QuestionSetAccessControlTest extends TestCase
 {
@@ -16,19 +16,19 @@ class QuestionSetAccessControlTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create roles
         Role::create(['name' => 'Super Admin']);
         Role::create(['name' => 'Administrator']);
         Role::create(['name' => 'Lecturer']);
     }
 
-    public function testLecturerCanOnlyAccessOwnQuestionSets()
+    public function test_lecturer_can_only_access_own_question_sets()
     {
         // Create users
         $lecturer1 = User::factory()->create(['name' => 'Lecturer One']);
         $lecturer2 = User::factory()->create(['name' => 'Lecturer Two']);
-        
+
         $lecturer1->assignRole('Lecturer');
         $lecturer2->assignRole('Lecturer');
 
@@ -60,12 +60,12 @@ class QuestionSetAccessControlTest extends TestCase
             ->assertSessionHas('error', 'You do not have permission to import questions to this question set.');
     }
 
-    public function testSuperAdminCanAccessAllQuestionSets()
+    public function test_super_admin_can_access_all_question_sets()
     {
         // Create users
         $superAdmin = User::factory()->create(['name' => 'Super Admin']);
         $lecturer = User::factory()->create(['name' => 'Lecturer']);
-        
+
         $superAdmin->assignRole('Super Admin');
         $lecturer->assignRole('Lecturer');
 
@@ -85,12 +85,12 @@ class QuestionSetAccessControlTest extends TestCase
             ->assertStatus(200);
     }
 
-    public function testAdministratorCanAccessAllQuestionSets()
+    public function test_administrator_can_access_all_question_sets()
     {
         // Create users
         $administrator = User::factory()->create(['name' => 'Administrator']);
         $lecturer = User::factory()->create(['name' => 'Lecturer']);
-        
+
         $administrator->assignRole('Administrator');
         $lecturer->assignRole('Lecturer');
 
@@ -110,12 +110,12 @@ class QuestionSetAccessControlTest extends TestCase
             ->assertStatus(200);
     }
 
-    public function testUnauthorizedUserCannotAccessImport()
+    public function test_unauthorized_user_cannot_access_import()
     {
         // Create users
         $lecturer1 = User::factory()->create(['name' => 'Lecturer One']);
         $lecturer2 = User::factory()->create(['name' => 'Lecturer Two']);
-        
+
         $lecturer1->assignRole('Lecturer');
         $lecturer2->assignRole('Lecturer');
 
@@ -139,7 +139,7 @@ class QuestionSetAccessControlTest extends TestCase
                     null,
                     true
                 ),
-                'format' => 'aiken'
+                'format' => 'aiken',
             ])
             ->assertStatus(403)
             ->assertJson(['error' => 'You do not have permission to import to this question set.']);

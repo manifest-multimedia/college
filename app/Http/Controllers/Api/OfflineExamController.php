@@ -22,8 +22,6 @@ class OfflineExamController extends Controller
 
     /**
      * Create a new controller instance.
-     *
-     * @param ExamClearanceService $clearanceService
      */
     public function __construct(ExamClearanceService $clearanceService)
     {
@@ -42,49 +40,49 @@ class OfflineExamController extends Controller
     {
         try {
             $query = OfflineExam::query();
-            
+
             // Filter by course
             if ($request->has('course_id')) {
                 $query->where('course_id', $request->course_id);
             }
-            
+
             // Filter by exam type
             if ($request->has('type_id')) {
                 $query->where('type_id', $request->type_id);
             }
-            
+
             // Filter by status
             if ($request->has('status')) {
                 $query->where('status', $request->status);
             }
-            
+
             // Filter by venue
             if ($request->has('venue')) {
-                $query->where('venue', 'like', '%' . $request->venue . '%');
+                $query->where('venue', 'like', '%'.$request->venue.'%');
             }
-            
+
             // Eager load relationships
             $query->with(['course', 'type', 'proctor']);
-            
+
             // Paginate or get all
             if ($request->has('per_page')) {
                 $exams = $query->paginate($request->per_page);
             } else {
                 $exams = $query->get();
             }
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $exams,
-                'message' => 'Offline exams retrieved successfully'
+                'message' => 'Offline exams retrieved successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error retrieving offline exams: ' . $e->getMessage());
-            
+            Log::error('Error retrieving offline exams: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error retrieving offline exams',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -96,36 +94,36 @@ class OfflineExamController extends Controller
     {
         try {
             $data = $request->validated();
-            
+
             // Set the current user as creator if not specified
-            if (!isset($data['user_id'])) {
+            if (! isset($data['user_id'])) {
                 $data['user_id'] = Auth::id();
             }
-            
+
             // Create the offline exam
             $offlineExam = OfflineExam::create($data);
-            
+
             // Eager load relationships for response
             $offlineExam->load(['course', 'type', 'proctor']);
-            
+
             // If the exam is published, trigger clearance processing
             if ($offlineExam->status === 'published') {
                 ProcessExamClearanceJob::dispatch($offlineExam)
                     ->onQueue('exam_clearances');
             }
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $offlineExam,
-                'message' => 'Offline exam created successfully'
+                'message' => 'Offline exam created successfully',
             ], Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            Log::error('Error creating offline exam: ' . $e->getMessage());
-            
+            Log::error('Error creating offline exam: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error creating offline exam',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -138,19 +136,19 @@ class OfflineExamController extends Controller
         try {
             $offlineExam = OfflineExam::with(['course', 'type', 'proctor'])
                 ->findOrFail($id);
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $offlineExam,
-                'message' => 'Offline exam retrieved successfully'
+                'message' => 'Offline exam retrieved successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error retrieving offline exam: ' . $e->getMessage());
-            
+            Log::error('Error retrieving offline exam: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error retrieving offline exam',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -163,35 +161,35 @@ class OfflineExamController extends Controller
         try {
             $offlineExam = OfflineExam::findOrFail($id);
             $data = $request->validated();
-            
+
             // Check if status is changing to published
             $wasPublished = $offlineExam->status === 'published';
-            
+
             // Update the offline exam
             $offlineExam->update($data);
-            
+
             // Reload the model with relationships
             $offlineExam->load(['course', 'type', 'proctor']);
-            
+
             // If the exam is newly published or clearance_threshold changed, trigger clearance processing
-            if (($offlineExam->status === 'published' && !$wasPublished) || 
+            if (($offlineExam->status === 'published' && ! $wasPublished) ||
                 (isset($data['clearance_threshold']) && $offlineExam->status === 'published')) {
                 ProcessExamClearanceJob::dispatch($offlineExam)
                     ->onQueue('exam_clearances');
             }
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $offlineExam,
-                'message' => 'Offline exam updated successfully'
+                'message' => 'Offline exam updated successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error updating offline exam: ' . $e->getMessage());
-            
+            Log::error('Error updating offline exam: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating offline exam',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -203,32 +201,32 @@ class OfflineExamController extends Controller
     {
         try {
             $offlineExam = OfflineExam::findOrFail($id);
-            
+
             // Check if there are any clearances or entry tickets
             if ($offlineExam->clearances()->count() > 0 || $offlineExam->examEntryTickets()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete offline exam with associated clearances or entry tickets'
+                    'message' => 'Cannot delete offline exam with associated clearances or entry tickets',
                 ], Response::HTTP_BAD_REQUEST);
             }
-            
+
             $offlineExam->delete();
-            
+
             return response()->json([
                 'success' => true,
-                'message' => 'Offline exam deleted successfully'
+                'message' => 'Offline exam deleted successfully',
             ]);
         } catch (\Exception $e) {
-            Log::error('Error deleting offline exam: ' . $e->getMessage());
-            
+            Log::error('Error deleting offline exam: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting offline exam',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    
+
     /**
      * Process clearance for a specific exam.
      */
@@ -236,26 +234,26 @@ class OfflineExamController extends Controller
     {
         try {
             $offlineExam = OfflineExam::findOrFail($id);
-            
+
             // Dispatch job to process clearances
             $job = ProcessExamClearanceJob::dispatch($offlineExam)
                 ->onQueue('exam_clearances');
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Clearance processing started for offline exam',
                 'data' => [
                     'exam_id' => $offlineExam->id,
-                    'job_id' => $job->getJobId() ?? null
-                ]
+                    'job_id' => $job->getJobId() ?? null,
+                ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Error processing clearance for offline exam: ' . $e->getMessage());
-            
+            Log::error('Error processing clearance for offline exam: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error processing clearance for offline exam',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

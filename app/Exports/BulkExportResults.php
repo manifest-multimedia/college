@@ -2,39 +2,38 @@
 
 namespace App\Exports;
 
+use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Student;
-use App\Models\ScoredQuestion;
-use App\Models\Exam;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class BulkExportResults implements FromCollection, WithHeadings
 {
     protected $exam_id;
-   
+
     public function __construct($exam_id)
     {
         $this->exam_id = $exam_id;
     }
 
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function collection()
     {
         $exam = Exam::find($this->exam_id);
-        if (!$exam) {
+        if (! $exam) {
             dd('No exam found for given exam_id');
         }
 
         $sessions = ExamSession::with([
             'student.user',
             'responses.question.options',
-            'exam.course'
+            'exam.course',
         ])
-        ->where('exam_id', $this->exam_id)
-        ->get();
+            ->where('exam_id', $this->exam_id)
+            ->get();
 
         if ($sessions->isEmpty()) {
             dd('No exam sessions found for given exam_id');
@@ -43,16 +42,16 @@ class BulkExportResults implements FromCollection, WithHeadings
         return $sessions->flatMap(function ($session) {
             return $session->responses->map(function ($response, $index) use ($session) {
                 // Check if the student relationship is not null
-                if (!$session->student) {
+                if (! $session->student) {
                     return [];
                 }
 
                 $question = $response->question;
                 $selectedOption = $question->options->firstWhere('id', $response->selected_option);
                 $correctOption = $question->options->firstWhere('is_correct', true);
-                
+
                 // Filter out students with no student_id or no name
-                if (!$session->student->student_id || !$session->student->name) {
+                if (! $session->student->student_id || ! $session->student->name) {
                     return [];
                 }
 
@@ -100,7 +99,7 @@ class BulkExportResults implements FromCollection, WithHeadings
             'is_correct',
             'response_time',
             'exam_mode',
-            'college_class_id'
+            'college_class_id',
         ];
     }
 }

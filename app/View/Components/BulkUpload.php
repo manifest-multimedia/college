@@ -12,6 +12,7 @@ class BulkUpload extends Component
      * Create a new component instance.
      */
     public $examId;
+
     public function __construct($examId = null)
     {
         // dd($exam_id);
@@ -24,7 +25,7 @@ class BulkUpload extends Component
     public function render(): View|Closure|string
     {
         return view('components.bulk-upload', [
-            'examId' => $this->examId
+            'examId' => $this->examId,
         ]);
     }
 }

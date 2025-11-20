@@ -2,21 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class StudentGrade extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'student_id',
         'college_class_id',
         'grade_id',
         'comments',
-        'graded_by'
+        'graded_by',
     ];
-    
+
     /**
      * Get the student associated with this grade
      */
@@ -24,7 +24,7 @@ class StudentGrade extends Model
     {
         return $this->belongsTo(Student::class);
     }
-    
+
     /**
      * Get the college class for this grade
      */
@@ -32,7 +32,7 @@ class StudentGrade extends Model
     {
         return $this->belongsTo(CollegeClass::class);
     }
-    
+
     /**
      * Get the grade type for this student grade
      */
@@ -40,7 +40,7 @@ class StudentGrade extends Model
     {
         return $this->belongsTo(Grade::class);
     }
-    
+
     /**
      * Get the user who graded this student
      */
@@ -48,7 +48,7 @@ class StudentGrade extends Model
     {
         return $this->belongsTo(User::class, 'graded_by');
     }
-    
+
     /**
      * Get the semester for this grade through the college class
      */
@@ -56,7 +56,7 @@ class StudentGrade extends Model
     {
         return $this->collegeClass->semester;
     }
-    
+
     /**
      * Get the academic year for this grade through the semester
      */

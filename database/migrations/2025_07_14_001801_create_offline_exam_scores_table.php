@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreign('recorded_by')->references('id')->on('users')->onDelete('restrict');
             $table->timestamp('exam_date')->nullable(); // Date when the exam was taken
             $table->timestamps();
-            
+
             // Unique constraint to prevent duplicate scores for same student and exam
             $table->unique(['offline_exam_id', 'student_id'], 'unique_offline_exam_student_score');
         });

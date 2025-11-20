@@ -2,53 +2,61 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\Exam;
-use Livewire\WithPagination;
-use App\Exports\ExamResultsExport;
-use App\Exports\ExamResultExport;
 use App\Exports\BulkExportResults;
-use App\Models\ExamSession;
-use App\Models\Student;
-use App\Models\User;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Str;
-use App\Models\ScoredQuestion;
+use App\Exports\ExamResultExport;
+use App\Exports\ExamResultsExport;
 use App\Models\CollegeClass;
+use App\Models\Exam;
+use App\Models\ExamSession;
+use App\Models\ScoredQuestion;
+use App\Models\Student;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExamResultsModule extends Component
 {
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
+
     protected $chunkSize = 100; // Process in chunks of 100
 
     public $mode = 'index';
-    public $selected_exam_id;
-    public $isGeneratingResults = false;
-    public $processingProgress = 0; // Track progress
-    public $results; // Add this line to store the results
-    public $selected_college_class_id;
-    public $collegeClasses; 
 
-    public function mount(){
+    public $selected_exam_id;
+
+    public $isGeneratingResults = false;
+
+    public $processingProgress = 0; // Track progress
+
+    public $results; // Add this line to store the results
+
+    public $selected_college_class_id;
+
+    public $collegeClasses;
+
+    public function mount()
+    {
         $this->results = collect();
         $this->selected_college_class_id = null;
         $this->collegeClasses = CollegeClass::all();
     }
 
-    public function updated($property){
-        if($property == 'selected_exam_id'){
+    public function updated($property)
+    {
+        if ($property == 'selected_exam_id') {
             // Fetch distinct college classes for students who took the selected exam
-            $this->collegeClasses = CollegeClass::distinct()->whereIn('id', function($query) {
+            $this->collegeClasses = CollegeClass::distinct()->whereIn('id', function ($query) {
                 $query->select('college_class_id')
-                      ->from('students')
-                      ->whereIn('id', function($subQuery) {
-                         $subQuery->select('student_id')
-                                  ->from('exam_sessions')
-                                  ->where('exam_id', $this->selected_exam_id);
-                      });
+                    ->from('students')
+                    ->whereIn('id', function ($subQuery) {
+                        $subQuery->select('student_id')
+                            ->from('exam_sessions')
+                            ->where('exam_id', $this->selected_exam_id);
+                    });
             })->get();
         }
     }
@@ -72,7 +80,7 @@ class ExamResultsModule extends Component
                 'exam.course',
                 'scoredQuestions' => function ($query) {
                     $query->with(['question.options', 'response']);
-                }
+                },
             ])
             ->get();
 
@@ -80,7 +88,8 @@ class ExamResultsModule extends Component
         $this->results = $this->results->sortBy(function ($session) {
             // Extract the numeric part of student_id
             preg_match('/\d+$/', $session['student_id'], $matches);
-            return (int)($matches[0] ?? 0);
+
+            return (int) ($matches[0] ?? 0);
         });
 
         $this->isGeneratingResults = false;
@@ -100,8 +109,8 @@ class ExamResultsModule extends Component
                         $correct_option = $scoredQuestion->question->options
                             ->where('is_correct', true)
                             ->first();
-                        
-                        return $correct_option && 
+
+                        return $correct_option &&
                             $scoredQuestion->response->selected_option == $correct_option->id;
                     })
                     ->count();
@@ -114,18 +123,19 @@ class ExamResultsModule extends Component
                     'student_id' => $session->student->student_id ?? 'N/A',
                     'student_name' => $session->student->user->name ?? 'N/A',
                     'course' => $session->exam->course->name ?? 'N/A',
-                    'score' => $correct_answers . '/' . $questions_per_session,
-                    'answered' => $total_answered . '/' . $questions_per_session,
-                    'percentage' => $questions_per_session > 0 
+                    'score' => $correct_answers.'/'.$questions_per_session,
+                    'answered' => $total_answered.'/'.$questions_per_session,
+                    'percentage' => $questions_per_session > 0
                         ? round(($correct_answers / $questions_per_session) * 100, 2)
                         : 0,
-                    'session_id' => $session->id
+                    'session_id' => $session->id,
                 ];
             } catch (\Exception $e) {
                 Log::error('Error processing exam session', [
                     'session_id' => $session->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
+
                 return null;
             }
         })->filter();
@@ -133,11 +143,11 @@ class ExamResultsModule extends Component
 
     public function render()
     {
-       
+
         return view('livewire.exam-results-module', [
             'exams' => Exam::with('course')->get(),
             'results' => $this->results ?? collect(),
-         
+
         ]);
     }
 
@@ -157,7 +167,7 @@ class ExamResultsModule extends Component
                 ScoredQuestion::create([
                     'exam_session_id' => $session->id,
                     'question_id' => $response->question_id,
-                    'response_id' => $response->id
+                    'response_id' => $response->id,
                 ]);
             }
 
@@ -171,37 +181,36 @@ class ExamResultsModule extends Component
 
     public function exportResults()
     {
-        if (!$this->selected_exam_id && !$this->selected_college_class_id) {
+        if (! $this->selected_exam_id && ! $this->selected_college_class_id) {
             return;
         }
-        
+
         $exam = Exam::find($this->selected_exam_id);
         $collegeClass = CollegeClass::find($this->selected_college_class_id);
-        
+
         // Properly sanitize class name to remove any invalid characters
         $sanitizedClassName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $collegeClass->name);
-        
-        $filename = Str::slug($exam->course->name) . '-' . $sanitizedClassName . '-results.xlsx';
-        
+
+        $filename = Str::slug($exam->course->name).'-'.$sanitizedClassName.'-results.xlsx';
+
         return Excel::download(new ExamResultsExport($this->selected_exam_id, $this->selected_college_class_id), $filename);
     }
 
-  
     public function exportStudentResult($student_id)
     {
         $formatted_id = str_replace('/', '-', $student_id);
 
         $exam = Exam::find($this->selected_exam_id);
-        $filename = Str::slug($exam->course->name) . '-' . $formatted_id . '-results-for-sync.xlsx';
+        $filename = Str::slug($exam->course->name).'-'.$formatted_id.'-results-for-sync.xlsx';
+
         return Excel::download(new ExamResultExport($this->selected_exam_id, $student_id), $filename);
     }
 
     public function exportBulkResults()
     {
         $exam = Exam::find($this->selected_exam_id);
-        $filename = Str::slug($exam->course->name) . '-bulk-results.xlsx';
+        $filename = Str::slug($exam->course->name).'-bulk-results.xlsx';
+
         return Excel::download(new BulkExportResults($this->selected_exam_id), $filename);
     }
-
-   
 }

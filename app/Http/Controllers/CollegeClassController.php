@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CollegeClass;
 use App\Models\Semester;
-use App\Models\User;
 use App\Services\AcademicsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -159,7 +158,7 @@ class CollegeClassController extends Controller
     {
         $request->validate([
             'student_ids' => 'required|array',
-            'student_ids.*' => 'exists:students,id'
+            'student_ids.*' => 'exists:students,id',
         ]);
 
         // Use direct foreign key assignment since students belong to programs directly

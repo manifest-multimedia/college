@@ -2,11 +2,10 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
 
 class SyncStudentUserIdsTest extends TestCase
 {
@@ -15,11 +14,11 @@ class SyncStudentUserIdsTest extends TestCase
     /**
      * Test syncing students with existing user accounts.
      */
-    public function testSyncStudentsWithExistingUsers()
+    public function test_sync_students_with_existing_users()
     {
         // Create a user account
         $user = User::factory()->create([
-            'email' => 'existing-student@example.com'
+            'email' => 'existing-student@example.com',
         ]);
 
         // Create a student with matching email but no user_id
@@ -45,7 +44,7 @@ class SyncStudentUserIdsTest extends TestCase
     /**
      * Test creating new user accounts for students.
      */
-    public function testCreateNewUsersForStudents()
+    public function test_create_new_users_for_students()
     {
         // Create a student with no matching user
         $student = Student::create([
@@ -77,7 +76,7 @@ class SyncStudentUserIdsTest extends TestCase
     /**
      * Test dry run mode.
      */
-    public function testDryRunMode()
+    public function test_dry_run_mode()
     {
         // Create a student with no matching user
         $student = Student::create([
@@ -106,7 +105,7 @@ class SyncStudentUserIdsTest extends TestCase
     /**
      * Test handling of invalid emails.
      */
-    public function testInvalidEmails()
+    public function test_invalid_emails()
     {
         // Create a student with an invalid email
         $student = Student::create([
@@ -134,13 +133,13 @@ class SyncStudentUserIdsTest extends TestCase
     /**
      * Test batch processing.
      */
-    public function testBatchProcessing()
+    public function test_batch_processing()
     {
         // Create 25 students
         for ($i = 1; $i <= 25; $i++) {
             Student::create([
                 'first_name' => "Student{$i}",
-                'last_name' => "Batch",
+                'last_name' => 'Batch',
                 'email' => "batch-student{$i}@example.com",
                 // Other required fields...
             ]);

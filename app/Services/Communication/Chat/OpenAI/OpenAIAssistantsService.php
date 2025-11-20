@@ -12,8 +12,9 @@ class OpenAIAssistantsService
      * OpenAI API URLs and model (non-sensitive configuration)
      */
     protected $baseUrl;
+
     protected $model;
-    
+
     /**
      * Constructor
      */
@@ -22,26 +23,19 @@ class OpenAIAssistantsService
         $this->baseUrl = Config::get('services.openai.base_url', 'https://api.openai.com/v1');
         $this->model = Config::get('services.openai.model', 'gpt-4-turbo');
     }
-    
+
     /**
      * Get the API key dynamically from config
      * This prevents caching of sensitive credentials in singleton instances
-     * 
-     * @return string|null
      */
     protected function getApiKey(): ?string
     {
         return Config::get('services.openai.key');
     }
-    
+
     /**
      * Create a new assistant
-     * 
-     * @param string $name
-     * @param string $instructions
-     * @param array $tools
-     * @param array $fileIds
-     * @param string|null $model
+     *
      * @return array
      */
     public function createAssistant(
@@ -57,29 +51,29 @@ class OpenAIAssistantsService
                 'instructions' => $instructions,
                 'model' => $model ?? $this->model,
             ];
-            
-            if (!empty($tools)) {
+
+            if (! empty($tools)) {
                 $payload['tools'] = $tools;
             }
-            
+
             // Note: For assistants, file attachments are now handled through tool_resources
             // file_ids parameter is deprecated in v2 API for assistants
-            if (!empty($fileIds)) {
+            if (! empty($fileIds)) {
                 // Convert to tool_resources format for v2 API
                 $payload['tool_resources'] = [
                     'file_search' => ['file_ids' => $fileIds],
-                    'code_interpreter' => ['file_ids' => $fileIds]
+                    'code_interpreter' => ['file_ids' => $fileIds],
                 ];
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/assistants", $payload);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -90,7 +84,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'name' => $name,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown assistant creation error',
@@ -101,48 +95,44 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'name' => $name,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Assistant creation failed: ' . $e->getMessage(),
+                'message' => 'Assistant creation failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * List assistants
-     * 
-     * @param int $limit
-     * @param string|null $order
-     * @param string|null $after
-     * @param string|null $before
+     *
      * @return array
      */
     public function listAssistants(int $limit = 20, ?string $order = null, ?string $after = null, ?string $before = null)
     {
         try {
             $queryParams = ['limit' => $limit];
-            
+
             if ($order) {
                 $queryParams['order'] = $order;
             }
-            
+
             if ($after) {
                 $queryParams['after'] = $after;
             }
-            
+
             if ($before) {
                 $queryParams['before'] = $before;
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
-            ])->get("{$this->baseUrl}/assistants?" . http_build_query($queryParams));
-            
+            ])->get("{$this->baseUrl}/assistants?".http_build_query($queryParams));
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -152,7 +142,7 @@ class OpenAIAssistantsService
                 Log::error('OpenAI assistants listing error', [
                     'error' => $responseData['error'] ?? 'Unknown error',
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown assistants listing error',
@@ -162,18 +152,17 @@ class OpenAIAssistantsService
             Log::error('OpenAI assistants listing failed', [
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Assistants listing failed: ' . $e->getMessage(),
+                'message' => 'Assistants listing failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Retrieve an assistant
-     * 
-     * @param string $assistantId
+     *
      * @return array
      */
     public function getAssistant(string $assistantId)
@@ -184,9 +173,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/assistants/{$assistantId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -197,7 +186,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'assistant_id' => $assistantId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown assistant retrieval error',
@@ -208,19 +197,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'assistant_id' => $assistantId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Assistant retrieval failed: ' . $e->getMessage(),
+                'message' => 'Assistant retrieval failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Modify an assistant
-     * 
-     * @param string $assistantId
-     * @param array $data
+     *
      * @return array
      */
     public function updateAssistant(string $assistantId, array $data)
@@ -231,9 +218,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/assistants/{$assistantId}", $data);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -244,7 +231,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'assistant_id' => $assistantId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown assistant update error',
@@ -255,18 +242,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'assistant_id' => $assistantId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Assistant update failed: ' . $e->getMessage(),
+                'message' => 'Assistant update failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Delete an assistant
-     * 
-     * @param string $assistantId
+     *
      * @return array
      */
     public function deleteAssistant(string $assistantId)
@@ -277,9 +263,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->delete("{$this->baseUrl}/assistants/{$assistantId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -290,7 +276,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'assistant_id' => $assistantId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown assistant deletion error',
@@ -301,42 +287,40 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'assistant_id' => $assistantId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Assistant deletion failed: ' . $e->getMessage(),
+                'message' => 'Assistant deletion failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Create a new thread
-     * 
-     * @param array|null $messages
-     * @param array|null $metadata
+     *
      * @return array
      */
     public function createThread(?array $messages = null, ?array $metadata = null)
     {
         try {
             $payload = [];
-            
+
             if ($messages) {
                 $payload['messages'] = $messages;
             }
-            
+
             if ($metadata) {
                 $payload['metadata'] = $metadata;
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads", $payload);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -346,7 +330,7 @@ class OpenAIAssistantsService
                 Log::error('OpenAI thread creation error', [
                     'error' => $responseData['error'] ?? 'Unknown error',
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown thread creation error',
@@ -356,18 +340,17 @@ class OpenAIAssistantsService
             Log::error('OpenAI thread creation failed', [
                 'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Thread creation failed: ' . $e->getMessage(),
+                'message' => 'Thread creation failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Retrieve a thread
-     * 
-     * @param string $threadId
+     *
      * @return array
      */
     public function getThread(string $threadId)
@@ -378,9 +361,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -391,7 +374,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown thread retrieval error',
@@ -402,19 +385,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Thread retrieval failed: ' . $e->getMessage(),
+                'message' => 'Thread retrieval failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Modify a thread
-     * 
-     * @param string $threadId
-     * @param array $metadata
+     *
      * @return array
      */
     public function updateThread(string $threadId, array $metadata)
@@ -423,15 +404,15 @@ class OpenAIAssistantsService
             $payload = [
                 'metadata' => $metadata,
             ];
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}", $payload);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -442,7 +423,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown thread update error',
@@ -453,18 +434,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Thread update failed: ' . $e->getMessage(),
+                'message' => 'Thread update failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Delete a thread
-     * 
-     * @param string $threadId
+     *
      * @return array
      */
     public function deleteThread(string $threadId)
@@ -475,9 +455,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->delete("{$this->baseUrl}/threads/{$threadId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -488,7 +468,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown thread deletion error',
@@ -499,23 +479,19 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Thread deletion failed: ' . $e->getMessage(),
+                'message' => 'Thread deletion failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Add a message to a thread
-     * 
-     * @param string $threadId
-     * @param string $content
-     * @param string $role
-     * @param array|null $fileIds (deprecated - use attachments instead)
-     * @param array|null $metadata
-     * @param array|null $attachments - New format: [['file_id' => 'file-xxx', 'tools' => [...]]]
+     *
+     * @param  array|null  $fileIds  (deprecated - use attachments instead)
+     * @param  array|null  $attachments  - New format: [['file_id' => 'file-xxx', 'tools' => [...]]]
      * @return array
      */
     public function addMessage(
@@ -531,36 +507,36 @@ class OpenAIAssistantsService
                 'role' => $role,
                 'content' => $content,
             ];
-            
+
             // Handle new attachments format (v2 API)
             if ($attachments) {
                 $payload['attachments'] = $attachments;
-            } 
+            }
             // Handle legacy file_ids format for backward compatibility
             elseif ($fileIds) {
-                $payload['attachments'] = array_map(function($fileId) {
+                $payload['attachments'] = array_map(function ($fileId) {
                     return [
                         'file_id' => $fileId,
                         'tools' => [
                             ['type' => 'code_interpreter'],
-                            ['type' => 'file_search']
-                        ]
+                            ['type' => 'file_search'],
+                        ],
                     ];
                 }, $fileIds);
             }
-            
+
             if ($metadata) {
                 $payload['metadata'] = $metadata;
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/messages", $payload);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -571,7 +547,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown message creation error',
@@ -582,22 +558,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Message creation failed: ' . $e->getMessage(),
+                'message' => 'Message creation failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * List messages in a thread
-     * 
-     * @param string $threadId
-     * @param int $limit
-     * @param string|null $order
-     * @param string|null $after
-     * @param string|null $before
+     *
      * @return array
      */
     public function listMessages(
@@ -609,27 +580,27 @@ class OpenAIAssistantsService
     ) {
         try {
             $queryParams = ['limit' => $limit];
-            
+
             if ($order) {
                 $queryParams['order'] = $order;
             }
-            
+
             if ($after) {
                 $queryParams['after'] = $after;
             }
-            
+
             if ($before) {
                 $queryParams['before'] = $before;
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
-            ])->get("{$this->baseUrl}/threads/{$threadId}/messages?" . http_build_query($queryParams));
-            
+            ])->get("{$this->baseUrl}/threads/{$threadId}/messages?".http_build_query($queryParams));
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -640,7 +611,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown messages listing error',
@@ -651,19 +622,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Messages listing failed: ' . $e->getMessage(),
+                'message' => 'Messages listing failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Retrieve a message
-     * 
-     * @param string $threadId
-     * @param string $messageId
+     *
      * @return array
      */
     public function getMessage(string $threadId, string $messageId)
@@ -674,9 +643,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/messages/{$messageId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -688,7 +657,7 @@ class OpenAIAssistantsService
                     'thread_id' => $threadId,
                     'message_id' => $messageId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown message retrieval error',
@@ -700,22 +669,17 @@ class OpenAIAssistantsService
                 'thread_id' => $threadId,
                 'message_id' => $messageId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Message retrieval failed: ' . $e->getMessage(),
+                'message' => 'Message retrieval failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Run an assistant on a thread
-     * 
-     * @param string $threadId
-     * @param string $assistantId
-     * @param string|null $instructions
-     * @param array|null $tools
-     * @param array|null $metadata
+     *
      * @return array
      */
     public function createRun(
@@ -729,27 +693,27 @@ class OpenAIAssistantsService
             $payload = [
                 'assistant_id' => $assistantId,
             ];
-            
+
             if ($instructions) {
                 $payload['instructions'] = $instructions;
             }
-            
+
             if ($tools) {
                 $payload['tools'] = $tools;
             }
-            
+
             if ($metadata) {
                 $payload['metadata'] = $metadata;
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/runs", $payload);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -761,7 +725,7 @@ class OpenAIAssistantsService
                     'thread_id' => $threadId,
                     'assistant_id' => $assistantId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown run creation error',
@@ -773,19 +737,17 @@ class OpenAIAssistantsService
                 'thread_id' => $threadId,
                 'assistant_id' => $assistantId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Run creation failed: ' . $e->getMessage(),
+                'message' => 'Run creation failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Retrieve the status of a run
-     * 
-     * @param string $threadId
-     * @param string $runId
+     *
      * @return array
      */
     public function retrieveRun(string $threadId, string $runId)
@@ -796,9 +758,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/threads/{$threadId}/runs/{$runId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -810,7 +772,7 @@ class OpenAIAssistantsService
                     'thread_id' => $threadId,
                     'run_id' => $runId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown run retrieval error',
@@ -822,22 +784,17 @@ class OpenAIAssistantsService
                 'thread_id' => $threadId,
                 'run_id' => $runId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Run retrieval failed: ' . $e->getMessage(),
+                'message' => 'Run retrieval failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * List runs for a thread
-     * 
-     * @param string $threadId
-     * @param int $limit
-     * @param string|null $order
-     * @param string|null $after
-     * @param string|null $before
+     *
      * @return array
      */
     public function listRuns(
@@ -849,27 +806,27 @@ class OpenAIAssistantsService
     ) {
         try {
             $queryParams = ['limit' => $limit];
-            
+
             if ($order) {
                 $queryParams['order'] = $order;
             }
-            
+
             if ($after) {
                 $queryParams['after'] = $after;
             }
-            
+
             if ($before) {
                 $queryParams['before'] = $before;
             }
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
-            ])->get("{$this->baseUrl}/threads/{$threadId}/runs?" . http_build_query($queryParams));
-            
+            ])->get("{$this->baseUrl}/threads/{$threadId}/runs?".http_build_query($queryParams));
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -880,7 +837,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown thread runs listing error',
@@ -891,19 +848,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Thread runs listing failed: ' . $e->getMessage(),
+                'message' => 'Thread runs listing failed: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Cancel a run
-     * 
-     * @param string $threadId
-     * @param string $runId
+     *
      * @return array
      */
     public function cancelRun(string $threadId, string $runId)
@@ -914,9 +869,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/runs/{$runId}/cancel");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -928,7 +883,7 @@ class OpenAIAssistantsService
                     'thread_id' => $threadId,
                     'run_id' => $runId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown run cancellation error',
@@ -940,19 +895,17 @@ class OpenAIAssistantsService
                 'thread_id' => $threadId,
                 'run_id' => $runId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Run cancellation failed: ' . $e->getMessage(),
+                'message' => 'Run cancellation failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Attach a file to a thread
-     * 
-     * @param string $threadId
-     * @param string $fileId
+     *
      * @return array
      */
     public function attachFileToThread(string $threadId, string $fileId, string $content = "I've uploaded a file for you to analyze.")
@@ -967,20 +920,20 @@ class OpenAIAssistantsService
                         'file_id' => $fileId,
                         'tools' => [
                             ['type' => 'code_interpreter'],
-                            ['type' => 'file_search']
-                        ]
-                    ]
-                ]
+                            ['type' => 'file_search'],
+                        ],
+                    ],
+                ],
             ];
-            
+
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->post("{$this->baseUrl}/threads/{$threadId}/messages", $payload);
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -993,7 +946,7 @@ class OpenAIAssistantsService
                     'file_id' => $fileId,
                     'response' => $responseData,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown file attachment error',
@@ -1005,22 +958,17 @@ class OpenAIAssistantsService
                 'thread_id' => $threadId,
                 'file_id' => $fileId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'File attachment failed: ' . $e->getMessage(),
+                'message' => 'File attachment failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * List files attached to a thread
-     * 
-     * @param string $threadId
-     * @param int $limit
-     * @param string|null $order
-     * @param string|null $after
-     * @param string|null $before
+     *
      * @return array
      */
     public function listThreadFiles(
@@ -1032,29 +980,29 @@ class OpenAIAssistantsService
     ) {
         try {
             $queryParams = ['limit' => $limit];
-            
+
             if ($order) {
                 $queryParams['order'] = $order;
             }
-            
+
             if ($after) {
                 $queryParams['after'] = $after;
             }
-            
+
             if ($before) {
                 $queryParams['before'] = $before;
             }
-            
+
             // Use v2 API as v1 is deprecated
             // In v2, we need to list all messages and collect their file IDs
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
-            ])->get("{$this->baseUrl}/threads/{$threadId}/messages?" . http_build_query($queryParams));
-            
+            ])->get("{$this->baseUrl}/threads/{$threadId}/messages?".http_build_query($queryParams));
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 // Process messages to extract file information
                 $files = [];
@@ -1069,7 +1017,7 @@ class OpenAIAssistantsService
                                 }
                             }
                         }
-                        
+
                         // Also check content for any files
                         if (isset($message['content']) && is_array($message['content'])) {
                             foreach ($message['content'] as $content) {
@@ -1083,11 +1031,11 @@ class OpenAIAssistantsService
                         }
                     }
                 }
-                
+
                 return [
                     'success' => true,
                     'data' => [
-                        'data' => $files
+                        'data' => $files,
                     ],
                 ];
             } else {
@@ -1095,7 +1043,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'thread_id' => $threadId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown thread files listing error',
@@ -1106,18 +1054,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Thread files listing failed: ' . $e->getMessage(),
+                'message' => 'Thread files listing failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Get file details from OpenAI
-     * 
-     * @param string $fileId
+     *
      * @return array
      */
     protected function getFileDetails(string $fileId)
@@ -1128,9 +1075,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->get("{$this->baseUrl}/files/{$fileId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -1141,7 +1088,7 @@ class OpenAIAssistantsService
                     'error' => $responseData['error'] ?? 'Unknown error',
                     'file_id' => $fileId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown file details retrieval error',
@@ -1152,19 +1099,17 @@ class OpenAIAssistantsService
                 'error' => $e->getMessage(),
                 'file_id' => $fileId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'File details retrieval failed: ' . $e->getMessage(),
+                'message' => 'File details retrieval failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Retrieve a file attached to a thread
-     * 
-     * @param string $threadId
-     * @param string $fileId
+     *
      * @return array
      */
     public function getThreadFile(string $threadId, string $fileId)
@@ -1172,12 +1117,10 @@ class OpenAIAssistantsService
         // In v2, we directly get the file details
         return $this->getFileDetails($fileId);
     }
-    
+
     /**
      * Remove a file from a thread
-     * 
-     * @param string $threadId
-     * @param string $fileId
+     *
      * @return array
      */
     public function removeFileFromThread(string $threadId, string $fileId)
@@ -1190,9 +1133,9 @@ class OpenAIAssistantsService
                 'Content-Type' => 'application/json',
                 'OpenAI-Beta' => 'assistants=v2',
             ])->delete("{$this->baseUrl}/files/{$fileId}");
-            
+
             $responseData = $response->json();
-            
+
             if ($response->successful()) {
                 return [
                     'success' => true,
@@ -1204,7 +1147,7 @@ class OpenAIAssistantsService
                     'thread_id' => $threadId,
                     'file_id' => $fileId,
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => $responseData['error']['message'] ?? 'Unknown file removal error',
@@ -1216,27 +1159,24 @@ class OpenAIAssistantsService
                 'thread_id' => $threadId,
                 'file_id' => $fileId,
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'File removal failed: ' . $e->getMessage(),
+                'message' => 'File removal failed: '.$e->getMessage(),
             ];
         }
     }
-    
+
     /**
      * Upload file and create message with attachment in one step
      * This is a convenience method that handles the complete workflow
-     * 
-     * @param string $threadId
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param string $content
-     * @param array $tools - Tools to enable for the file ['code_interpreter', 'file_search']
+     *
+     * @param  array  $tools  - Tools to enable for the file ['code_interpreter', 'file_search']
      * @return array
      */
     public function uploadFileAndCreateMessage(
-        string $threadId, 
-        \Illuminate\Http\UploadedFile $file, 
+        string $threadId,
+        \Illuminate\Http\UploadedFile $file,
         string $content = "I've uploaded a file for you to analyze.",
         array $tools = ['code_interpreter', 'file_search']
     ) {
@@ -1244,25 +1184,25 @@ class OpenAIAssistantsService
             // Step 1: Upload file to OpenAI
             $filesService = app(\App\Services\Communication\Chat\OpenAI\OpenAIFilesService::class);
             $uploadResult = $filesService->uploadFile($file, 'assistants');
-            
-            if (!$uploadResult['success']) {
+
+            if (! $uploadResult['success']) {
                 return [
                     'success' => false,
-                    'message' => 'File upload failed: ' . $uploadResult['message'],
-                    'step' => 'file_upload'
+                    'message' => 'File upload failed: '.$uploadResult['message'],
+                    'step' => 'file_upload',
                 ];
             }
-            
+
             $fileId = $uploadResult['data']['file_id'];
-            
+
             // Step 2: Create message with file attachment
             $attachments = [
                 [
                     'file_id' => $fileId,
-                    'tools' => array_map(fn($tool) => ['type' => $tool], $tools)
-                ]
+                    'tools' => array_map(fn ($tool) => ['type' => $tool], $tools),
+                ],
             ];
-            
+
             $messageResult = $this->addMessage(
                 $threadId,
                 $content,
@@ -1271,140 +1211,137 @@ class OpenAIAssistantsService
                 null, // metadata
                 $attachments // new attachments format
             );
-            
-            if (!$messageResult['success']) {
+
+            if (! $messageResult['success']) {
                 return [
                     'success' => false,
-                    'message' => 'Message creation failed: ' . $messageResult['message'],
+                    'message' => 'Message creation failed: '.$messageResult['message'],
                     'step' => 'message_creation',
-                    'file_id' => $fileId
+                    'file_id' => $fileId,
                 ];
             }
-            
+
             return [
                 'success' => true,
                 'data' => [
                     'file_id' => $fileId,
                     'message' => $messageResult['data'],
-                    'file_info' => $uploadResult['data']
-                ]
+                    'file_info' => $uploadResult['data'],
+                ],
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('Complete file upload and message creation failed', [
                 'error' => $e->getMessage(),
                 'thread_id' => $threadId,
                 'file_name' => $file->getClientOriginalName(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'Complete file processing failed: ' . $e->getMessage(),
-                'step' => 'exception'
+                'message' => 'Complete file processing failed: '.$e->getMessage(),
+                'step' => 'exception',
             ];
         }
     }
-    
+
     /**
      * Process uploaded file and get AI response
      * This method handles the complete workflow including running the assistant
-     * 
-     * @param string $threadId
-     * @param string $assistantId
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param string $query - What to ask about the file
-     * @param array $tools - Tools to enable for the file
+     *
+     * @param  string  $query  - What to ask about the file
+     * @param  array  $tools  - Tools to enable for the file
      * @return array
      */
     public function processFileWithAI(
         string $threadId,
         string $assistantId,
         \Illuminate\Http\UploadedFile $file,
-        string $query = "Please analyze this file and provide a summary.",
+        string $query = 'Please analyze this file and provide a summary.',
         array $tools = ['code_interpreter', 'file_search']
     ) {
         try {
             // Step 1: Upload file and create message
             $uploadResult = $this->uploadFileAndCreateMessage($threadId, $file, $query, $tools);
-            
-            if (!$uploadResult['success']) {
+
+            if (! $uploadResult['success']) {
                 return $uploadResult;
             }
-            
+
             // Step 2: Run the assistant
             $runResult = $this->createRun($threadId, $assistantId);
-            
-            if (!$runResult['success']) {
+
+            if (! $runResult['success']) {
                 return [
                     'success' => false,
-                    'message' => 'Failed to run assistant: ' . $runResult['message'],
+                    'message' => 'Failed to run assistant: '.$runResult['message'],
                     'step' => 'assistant_run',
-                    'file_info' => $uploadResult['data']
+                    'file_info' => $uploadResult['data'],
                 ];
             }
-            
+
             $runId = $runResult['data']['id'];
-            
+
             // Step 3: Wait for completion (with timeout)
             $maxAttempts = 60; // 60 attempts = ~2 minutes
             $attempt = 0;
-            
+
             do {
                 sleep(2); // Wait 2 seconds between checks
                 $attempt++;
-                
+
                 $statusResult = $this->retrieveRun($threadId, $runId);
-                
-                if (!$statusResult['success']) {
+
+                if (! $statusResult['success']) {
                     return [
                         'success' => false,
-                        'message' => 'Failed to check run status: ' . $statusResult['message'],
+                        'message' => 'Failed to check run status: '.$statusResult['message'],
                         'step' => 'status_check',
-                        'file_info' => $uploadResult['data']
+                        'file_info' => $uploadResult['data'],
                     ];
                 }
-                
+
                 $status = $statusResult['data']['status'];
-                
+
                 if ($status === 'completed') {
                     // Step 4: Get the response
                     $messagesResult = $this->listMessages($threadId, 1, 'desc');
-                    
-                    if (!$messagesResult['success']) {
+
+                    if (! $messagesResult['success']) {
                         return [
                             'success' => false,
-                            'message' => 'Failed to retrieve AI response: ' . $messagesResult['message'],
+                            'message' => 'Failed to retrieve AI response: '.$messagesResult['message'],
                             'step' => 'response_retrieval',
-                            'file_info' => $uploadResult['data']
+                            'file_info' => $uploadResult['data'],
                         ];
                     }
-                    
+
                     $messages = $messagesResult['data']['data'] ?? [];
                     $latestMessage = $messages[0] ?? null;
-                    
+
                     return [
                         'success' => true,
                         'data' => [
                             'file_info' => $uploadResult['data'],
                             'run_id' => $runId,
                             'response' => $latestMessage,
-                            'status' => 'completed'
-                        ]
+                            'status' => 'completed',
+                        ],
                     ];
                 }
-                
+
                 if (in_array($status, ['failed', 'cancelled', 'expired'])) {
                     return [
                         'success' => false,
                         'message' => "Assistant run failed with status: {$status}",
                         'step' => 'assistant_execution',
                         'file_info' => $uploadResult['data'],
-                        'run_status' => $status
+                        'run_status' => $status,
                     ];
                 }
-                
+
             } while ($attempt < $maxAttempts && in_array($status, ['queued', 'in_progress', 'requires_action']));
-            
+
             // Timeout reached
             return [
                 'success' => false,
@@ -1412,9 +1349,9 @@ class OpenAIAssistantsService
                 'step' => 'timeout',
                 'file_info' => $uploadResult['data'],
                 'run_id' => $runId,
-                'last_status' => $status ?? 'unknown'
+                'last_status' => $status ?? 'unknown',
             ];
-            
+
         } catch (\Exception $e) {
             Log::error('Complete file processing with AI failed', [
                 'error' => $e->getMessage(),
@@ -1422,20 +1359,17 @@ class OpenAIAssistantsService
                 'assistant_id' => $assistantId,
                 'file_name' => $file->getClientOriginalName(),
             ]);
-            
+
             return [
                 'success' => false,
-                'message' => 'File processing with AI failed: ' . $e->getMessage(),
-                'step' => 'exception'
+                'message' => 'File processing with AI failed: '.$e->getMessage(),
+                'step' => 'exception',
             ];
         }
     }
 
     /**
      * Retrieve assistant details
-     * 
-     * @param string $assistantId
-     * @return array
      */
     public function retrieveAssistant(string $assistantId): array
     {
@@ -1472,24 +1406,21 @@ class OpenAIAssistantsService
 
             return [
                 'success' => false,
-                'message' => 'Assistant retrieval failed: ' . $e->getMessage(),
+                'message' => 'Assistant retrieval failed: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Submit tool outputs for a run that requires action
-     * 
-     * @param string $threadId
-     * @param string $runId  
-     * @param array $toolOutputs - Format: [['tool_call_id' => 'call_xxx', 'output' => 'result']]
-     * @return array
+     *
+     * @param  array  $toolOutputs  - Format: [['tool_call_id' => 'call_xxx', 'output' => 'result']]
      */
     public function submitToolOutputs(string $threadId, string $runId, array $toolOutputs): array
     {
         try {
             $payload = [
-                'tool_outputs' => $toolOutputs
+                'tool_outputs' => $toolOutputs,
             ];
 
             $response = Http::withHeaders([
@@ -1527,7 +1458,7 @@ class OpenAIAssistantsService
 
             return [
                 'success' => false,
-                'message' => 'Tool outputs submission failed: ' . $e->getMessage(),
+                'message' => 'Tool outputs submission failed: '.$e->getMessage(),
             ];
         }
     }

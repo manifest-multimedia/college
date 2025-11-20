@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class Student extends Model
 {
@@ -44,10 +44,10 @@ class Student extends Model
         $firstName = $this->first_name ?? 'N/A';
         $otherName = $this->other_name ?? '';
         $lastName = $this->last_name ?? 'N/A';
-        
+
         return trim("$firstName $otherName $lastName");
     }
-    
+
     /**
      * Get the full name of the student
      */
@@ -56,7 +56,7 @@ class Student extends Model
         $firstName = $this->first_name ?? '';
         $otherName = $this->other_name ?? '';
         $lastName = $this->last_name ?? '';
-        
+
         // Filter out empty values and join with space
         return trim(implode(' ', array_filter([$firstName, $otherName, $lastName])));
     }
@@ -101,21 +101,19 @@ class Student extends Model
         // Check FeeCollections if student_id is present and if is_eligble is true
         $feeCollection = FeeCollection::where('student_id', $this->student_id)->first();
         // dd($feeCollection->is_eligble);
-        if (!$feeCollection || !$feeCollection->is_eligble) {
+        if (! $feeCollection || ! $feeCollection->is_eligble) {
             return false;
         } else {
 
             return true;
         }
 
-
-
         // Add your eligibility criteria here
     }
 
     /**
      * Get the user associated with this student
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function user()
@@ -126,31 +124,32 @@ class Student extends Model
     public function createUser()
     {
         // Only create a user if a valid email exists and there is no existing user with the same email
-        if ($this->email && !User::where('email', $this->email)->exists()) {
+        if ($this->email && ! User::where('email', $this->email)->exists()) {
             $user = User::create([
-                'name' => ($this->first_name ?? 'N/A') . ' ' . ($this->other_name ?? 'N/A') . ' ' . ($this->last_name ?? 'N/A'),
+                'name' => ($this->first_name ?? 'N/A').' '.($this->other_name ?? 'N/A').' '.($this->last_name ?? 'N/A'),
                 'email' => $this->email,
                 'password' => Hash::make('password'),
             ]);
-            
+
             // Assign Student role to newly created user
             $studentRole = \Spatie\Permission\Models\Role::where('name', 'Student')->first();
             if ($studentRole) {
                 $user->assignRole($studentRole);
                 Log::info("Assigned Student role to user {$user->email}");
             } else {
-                Log::warning("Student role not found in system");
+                Log::warning('Student role not found in system');
             }
-            
+
             // Link the user to this student
             $this->user_id = $user->id;
             $this->save();
-            
+
             return $user;
         }
-        
+
         return null;
     }
+
     public function examSessions()
     {
         return $this->hasManyThrough(
@@ -213,9 +212,9 @@ class Student extends Model
 
     /**
      * Get current fee bill for student in specified academic year and semester
-     * 
-     * @param int $academicYearId
-     * @param int $semesterId
+     *
+     * @param  int  $academicYearId
+     * @param  int  $semesterId
      * @return StudentFeeBill|null
      */
     public function getCurrentFeeBill($academicYearId, $semesterId)
@@ -229,54 +228,54 @@ class Student extends Model
 
     /**
      * Check if student is eligible for course registration (at least 60% fee payment)
-     * 
-     * @param int $academicYearId
-     * @param int $semesterId
+     *
+     * @param  int  $academicYearId
+     * @param  int  $semesterId
      * @return bool
      */
     public function isEligibleForCourseRegistration($academicYearId, $semesterId)
     {
         $feeBill = $this->getCurrentFeeBill($academicYearId, $semesterId);
-        
-        if (!$feeBill) {
+
+        if (! $feeBill) {
             return false;
         }
-        
+
         return $feeBill->payment_percentage >= 60.0;
     }
 
     /**
      * Check if student is eligible for exam clearance based on exam type
-     * 
-     * @param int $academicYearId
-     * @param int $semesterId
-     * @param int $examTypeId
+     *
+     * @param  int  $academicYearId
+     * @param  int  $semesterId
+     * @param  int  $examTypeId
      * @return bool
      */
     public function isEligibleForExamClearance($academicYearId, $semesterId, $examTypeId)
     {
         $feeBill = $this->getCurrentFeeBill($academicYearId, $semesterId);
-        
-        if (!$feeBill) {
+
+        if (! $feeBill) {
             return false;
         }
-        
+
         // Get the exam type and its required payment threshold
         $examType = ExamType::find($examTypeId);
-        
-        if (!$examType) {
+
+        if (! $examType) {
             return false;
         }
-        
+
         return $feeBill->payment_percentage >= $examType->payment_threshold;
     }
 
     /**
      * Check if student has active exam clearance for an exam type
-     * 
-     * @param int $academicYearId
-     * @param int $semesterId
-     * @param int $examTypeId
+     *
+     * @param  int  $academicYearId
+     * @param  int  $semesterId
+     * @param  int  $examTypeId
      * @return ExamClearance|null
      */
     public function getActiveExamClearance($academicYearId, $semesterId, $examTypeId)

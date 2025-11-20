@@ -133,14 +133,14 @@ return [
         'format' => env('STUDENT_ID_FORMAT', 'structured'), // structured, simple, custom
         'custom_pattern' => env('STUDENT_ID_CUSTOM_PATTERN', null), // Custom pattern for student IDs
         'enable_alphabetical_ordering' => env('STUDENT_ID_ALPHABETICAL_ORDERING', true), // Maintain alphabetical order in sequence
-        
+
         // Placeholder Configuration
         'institution_prefix' => env('STUDENT_ID_INSTITUTION_PREFIX', 'COLLEGE/DEPT'), // Institution prefix (replaces school_name_prefix)
         'institution_simple' => env('STUDENT_ID_INSTITUTION_SIMPLE', 'COLLEGE'), // Simple institution code
-        
-        // Academic Year Configuration  
+
+        // Academic Year Configuration
         'use_academic_year' => env('STUDENT_ID_USE_ACADEMIC_YEAR', true), // Use academic year vs calendar year
-        
+
         // Sequence Configuration
         'sequence_start' => env('STUDENT_ID_SEQUENCE_START', 1), // Starting sequence number
         'sequence_reset_yearly' => env('STUDENT_ID_SEQUENCE_RESET_YEARLY', true), // Reset sequence each academic year

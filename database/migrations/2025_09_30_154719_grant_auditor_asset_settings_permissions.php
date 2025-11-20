@@ -1,10 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 return new class extends Migration
 {
@@ -15,17 +13,17 @@ return new class extends Migration
     {
         // Grant asset settings permissions to Auditor role
         $auditorRole = Role::where('name', 'Auditor')->first();
-        
+
         if ($auditorRole) {
             // Grant asset settings permissions that were missing
             $permissions = [
                 'asset-settings.view',
                 'asset-settings.edit',
             ];
-            
+
             foreach ($permissions as $permissionName) {
                 $permission = Permission::where('name', $permissionName)->first();
-                if ($permission && !$auditorRole->hasPermissionTo($permission)) {
+                if ($permission && ! $auditorRole->hasPermissionTo($permission)) {
                     $auditorRole->givePermissionTo($permission);
                 }
             }
@@ -39,13 +37,13 @@ return new class extends Migration
     {
         // Remove asset settings permissions from Auditor role
         $auditorRole = Role::where('name', 'Auditor')->first();
-        
+
         if ($auditorRole) {
             $permissions = [
                 'asset-settings.view',
                 'asset-settings.edit',
             ];
-            
+
             foreach ($permissions as $permissionName) {
                 $permission = Permission::where('name', $permissionName)->first();
                 if ($permission && $auditorRole->hasPermissionTo($permission)) {

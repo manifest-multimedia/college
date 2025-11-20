@@ -15,14 +15,14 @@ class CohortController extends Controller
     {
         // $this->middleware(['auth', 'permission:manage-academics']);
     }
-    
+
     /**
      * Display a listing of cohorts.
      */
     public function index()
     {
         $cohorts = Cohort::paginate(10);
-        
+
         return view('academics.cohorts.index', compact('cohorts'));
     }
 
@@ -46,7 +46,7 @@ class CohortController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'is_active' => 'boolean',
         ]);
-        
+
         $cohort = Cohort::create([
             'name' => $validated['name'],
             'description' => $validated['description'],
@@ -57,7 +57,7 @@ class CohortController extends Controller
             'is_deleted' => false,
             'created_by' => auth()->id(),
         ]);
-        
+
         return redirect()->route('academics.cohorts.index')
             ->with('success', 'Cohort created successfully.');
     }
@@ -68,6 +68,7 @@ class CohortController extends Controller
     public function show(Cohort $cohort)
     {
         $cohort->load('students');
+
         return view('academics.cohorts.show', compact('cohort'));
     }
 
@@ -85,13 +86,13 @@ class CohortController extends Controller
     public function update(Request $request, Cohort $cohort)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:cohorts,name,' . $cohort->id,
+            'name' => 'required|string|max:255|unique:cohorts,name,'.$cohort->id,
             'description' => 'nullable|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'is_active' => 'boolean',
         ]);
-        
+
         $cohort->update([
             'name' => $validated['name'],
             'description' => $validated['description'],
@@ -100,7 +101,7 @@ class CohortController extends Controller
             'end_date' => $validated['end_date'] ?? null,
             'is_active' => $validated['is_active'] ?? false,
         ]);
-        
+
         return redirect()->route('academics.cohorts.index')
             ->with('success', 'Cohort updated successfully.');
     }
@@ -115,9 +116,9 @@ class CohortController extends Controller
             return redirect()->route('academics.cohorts.index')
                 ->with('error', 'Cannot delete cohort with associated students.');
         }
-        
+
         $cohort->delete();
-        
+
         return redirect()->route('academics.cohorts.index')
             ->with('success', 'Cohort deleted successfully.');
     }

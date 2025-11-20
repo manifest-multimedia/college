@@ -41,19 +41,19 @@ class ExamEntryTicket extends Model
         static::creating(function ($ticket) {
             // Generate a unique QR code if not provided
             if (empty($ticket->qr_code)) {
-                $ticket->qr_code = 'QR-' . Str::uuid()->toString();
+                $ticket->qr_code = 'QR-'.Str::uuid()->toString();
             }
-            
+
             // Generate a unique ticket number if not provided
             if (empty($ticket->ticket_number)) {
-                $ticket->ticket_number = 'TKT-' . Str::upper(Str::random(8));
+                $ticket->ticket_number = 'TKT-'.Str::upper(Str::random(8));
             }
         });
     }
 
     /**
      * Get the related exam (online or offline)
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function ticketable()
@@ -79,7 +79,7 @@ class ExamEntryTicket extends Model
 
     /**
      * Get the exam type associated with this entry ticket
-     * 
+     *
      * @deprecated Use ticketable relationship instead
      */
     public function examType()
@@ -100,18 +100,18 @@ class ExamEntryTicket extends Model
      */
     public function isValid(): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
-        
+
         if ($this->is_verified) {
             return false; // Already used
         }
-        
+
         if ($this->expires_at && now()->isAfter($this->expires_at)) {
             return false; // Expired
         }
-        
+
         return true;
     }
 
@@ -124,7 +124,7 @@ class ExamEntryTicket extends Model
     {
         return $this->ticketable_type === 'App\\Models\\Exam';
     }
-    
+
     /**
      * Determine if the ticket is for an offline exam.
      *

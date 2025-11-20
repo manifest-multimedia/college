@@ -50,7 +50,7 @@ class ChatDocumentController extends Controller
                 $request->file('file')
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return response()->json($result, 500);
             }
 
@@ -64,7 +64,7 @@ class ChatDocumentController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to upload document: ' . $e->getMessage(),
+                'message' => 'Failed to upload document: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -89,17 +89,17 @@ class ChatDocumentController extends Controller
 
         try {
             $path = $request->input('path');
-            
-            if (!Storage::disk('s3')->exists($path)) {
+
+            if (! Storage::disk('s3')->exists($path)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'File not found',
                 ], 404);
             }
-            
+
             // Generate a temporary signed URL that expires after 60 minutes
             $url = Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(60));
-            
+
             return response()->json([
                 'success' => true,
                 'url' => $url,
@@ -112,7 +112,7 @@ class ChatDocumentController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get download URL: ' . $e->getMessage(),
+                'message' => 'Failed to get download URL: '.$e->getMessage(),
             ], 500);
         }
     }

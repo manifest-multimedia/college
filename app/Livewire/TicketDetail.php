@@ -14,8 +14,11 @@ class TicketDetail extends Component
     use WithFileUploads;
 
     public $ticketId;
+
     public $ticket;
+
     public $replyMessage = '';
+
     public $attachments = [];
 
     protected $rules = [
@@ -37,7 +40,7 @@ class TicketDetail extends Component
             'assignedTo',
             'replies.user',
             'replies.attachments',
-            'attachments'
+            'attachments',
         ])
             ->where('id', $this->ticketId)
             ->where('user_id', Auth::id())
@@ -53,6 +56,7 @@ class TicketDetail extends Component
     {
         if ($this->ticket->isClosed()) {
             session()->flash('error', 'Cannot reply to a closed ticket.');
+
             return;
         }
 
@@ -67,10 +71,10 @@ class TicketDetail extends Component
         ]);
 
         // Handle file uploads
-        if (!empty($this->attachments)) {
+        if (! empty($this->attachments)) {
             foreach ($this->attachments as $file) {
                 $path = $file->store('support_attachments', 'public');
-                
+
                 TicketAttachment::create([
                     'attachable_type' => TicketReply::class,
                     'attachable_id' => $reply->id,
@@ -96,7 +100,7 @@ class TicketDetail extends Component
 
     public function closeTicket()
     {
-        if (!$this->ticket->isClosed()) {
+        if (! $this->ticket->isClosed()) {
             $this->ticket->update([
                 'status' => 'Closed',
                 'closed_at' => now(),

@@ -36,8 +36,9 @@ class DebugAssistantConfig extends Command
     {
         $assistantId = $this->option('assistant-id') ?? Config::get('services.openai.assistant_id');
 
-        if (!$assistantId) {
+        if (! $assistantId) {
             $this->error('No assistant ID provided. Use --assistant-id option or set OPENAI_ASSISTANT_ID in your .env file.');
+
             return 1;
         }
 
@@ -48,28 +49,29 @@ class DebugAssistantConfig extends Command
             // Retrieve assistant details
             $response = $this->assistantService->retrieveAssistant($assistantId);
 
-            if (!$response['success']) {
-                $this->error('❌ Failed to retrieve assistant: ' . ($response['message'] ?? 'Unknown error'));
+            if (! $response['success']) {
+                $this->error('❌ Failed to retrieve assistant: '.($response['message'] ?? 'Unknown error'));
+
                 return 1;
             }
 
             $assistant = $response['data'];
 
             $this->info('📋 Assistant Configuration:');
-            $this->info('Name: ' . ($assistant['name'] ?? 'N/A'));
-            $this->info('Model: ' . ($assistant['model'] ?? 'N/A'));
-            $this->info('Created: ' . date('Y-m-d H:i:s', $assistant['created_at'] ?? 0));
-            
+            $this->info('Name: '.($assistant['name'] ?? 'N/A'));
+            $this->info('Model: '.($assistant['model'] ?? 'N/A'));
+            $this->info('Created: '.date('Y-m-d H:i:s', $assistant['created_at'] ?? 0));
+
             $this->newLine();
             $this->info('🔧 Tools Configuration:');
-            
-            if (!empty($assistant['tools'])) {
-                $this->info('Found ' . count($assistant['tools']) . ' tools:');
+
+            if (! empty($assistant['tools'])) {
+                $this->info('Found '.count($assistant['tools']).' tools:');
                 foreach ($assistant['tools'] as $index => $tool) {
-                    $this->info("  {$index}. Type: " . $tool['type']);
+                    $this->info("  {$index}. Type: ".$tool['type']);
                     if ($tool['type'] === 'function') {
-                        $this->info("     Function: " . ($tool['function']['name'] ?? 'N/A'));
-                        $this->info("     Description: " . ($tool['function']['description'] ?? 'N/A'));
+                        $this->info('     Function: '.($tool['function']['name'] ?? 'N/A'));
+                        $this->info('     Description: '.($tool['function']['description'] ?? 'N/A'));
                     }
                 }
             } else {
@@ -79,12 +81,13 @@ class DebugAssistantConfig extends Command
             $this->newLine();
             $this->info('📝 Instructions (first 200 chars):');
             $instructions = $assistant['instructions'] ?? 'No instructions set';
-            $this->info(substr($instructions, 0, 200) . (strlen($instructions) > 200 ? '...' : ''));
+            $this->info(substr($instructions, 0, 200).(strlen($instructions) > 200 ? '...' : ''));
 
             return 0;
 
         } catch (\Exception $e) {
-            $this->error('❌ Exception occurred: ' . $e->getMessage());
+            $this->error('❌ Exception occurred: '.$e->getMessage());
+
             return 1;
         }
     }

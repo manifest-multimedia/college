@@ -2,10 +2,10 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\FeeCollection;
 use App\Models\Student;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ExamClearanceWidget extends Component
 {
@@ -14,8 +14,11 @@ class ExamClearanceWidget extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $search = ''; // Search input
+
     public $student_id;
+
     public $student_name;
+
     public $is_eligble = 0; // Default eligibility value
 
     public $mode;
@@ -43,7 +46,7 @@ class ExamClearanceWidget extends Component
             $student = Student::where('student_id', $this->student_id)->first();
             if ($student) {
 
-                $this->student_name = $student->first_name . ' ' . $student->last_name . ' ' . $student->other_name;
+                $this->student_name = $student->first_name.' '.$student->last_name.' '.$student->other_name;
             } else {
                 $this->student_name = '';
             }
@@ -53,7 +56,7 @@ class ExamClearanceWidget extends Component
     public function toggleEligibility($id)
     {
         $student = FeeCollection::findOrFail($id);
-        $student->is_eligble = !$student->is_eligble;
+        $student->is_eligble = ! $student->is_eligble;
         $student->save();
     }
 

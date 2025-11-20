@@ -15,14 +15,14 @@ class GradeController extends Controller
     {
         // $this->middleware(['auth', 'permission:manage-academics']);
     }
-    
+
     /**
      * Display a listing of grade types.
      */
     public function index()
     {
         $grades = Grade::paginate(10);
-        
+
         return view('academics.grades.index', compact('grades'));
     }
 
@@ -45,7 +45,7 @@ class GradeController extends Controller
             'value' => 'nullable|string|max:255',
             'description' => 'nullable|string',
         ]);
-        
+
         $grade = Grade::create([
             'name' => $validated['name'],
             'type' => $validated['type'],
@@ -54,7 +54,7 @@ class GradeController extends Controller
             'slug' => Str::slug($validated['name']),
             'created_by' => auth()->id(),
         ]);
-        
+
         return redirect()->route('academics.grades.index')
             ->with('success', 'Grade type created successfully.');
     }
@@ -81,12 +81,12 @@ class GradeController extends Controller
     public function update(Request $request, Grade $grade)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:grades,name,' . $grade->id,
+            'name' => 'required|string|max:255|unique:grades,name,'.$grade->id,
             'type' => 'nullable|string|max:255',
             'value' => 'nullable|string|max:255',
             'description' => 'nullable|string',
         ]);
-        
+
         $grade->update([
             'name' => $validated['name'],
             'type' => $validated['type'],
@@ -94,7 +94,7 @@ class GradeController extends Controller
             'description' => $validated['description'],
             'slug' => Str::slug($validated['name']),
         ]);
-        
+
         return redirect()->route('academics.grades.index')
             ->with('success', 'Grade type updated successfully.');
     }
@@ -109,9 +109,9 @@ class GradeController extends Controller
             return redirect()->route('academics.grades.index')
                 ->with('error', 'Cannot delete grade type with associated student grades.');
         }
-        
+
         $grade->delete();
-        
+
         return redirect()->route('academics.grades.index')
             ->with('success', 'Grade type deleted successfully.');
     }

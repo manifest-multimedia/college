@@ -2,22 +2,22 @@
 
 namespace App\Livewire;
 
+use App\Models\CollegeClass;
+use App\Models\Semester;
+use App\Models\Subject;
+use App\Models\Year;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Subject;
-use App\Models\Semester;
-use App\Models\Year;
-use App\Models\CollegeClass;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class CourseImport extends Component
 {
     use WithFileUploads;
 
     public $file;
+
     public $progress = 0;
+
     public $importing = false;
 
     protected $rules = [
@@ -50,9 +50,10 @@ class CourseImport extends Component
         $data = $data->slice(1); // Skip the header row
 
         // Check if data was loaded
-        if (!$data || $data->isEmpty()) {
+        if (! $data || $data->isEmpty()) {
             session()->flash('error', 'No data found in the Excel sheet.');
             $this->importing = false;
+
             return;
         }
 
@@ -60,11 +61,11 @@ class CourseImport extends Component
         $processedRows = 0;
 
         foreach ($data as $row) {
-            if (!$this->importing) {
+            if (! $this->importing) {
                 break;
             }
 
-            if (!isset($row[0], $row[1], $row[2], $row[3], $row[4])) {
+            if (! isset($row[0], $row[1], $row[2], $row[3], $row[4])) {
                 continue; // Skip rows with missing data
             }
 
@@ -96,7 +97,7 @@ class CourseImport extends Component
             $processedRows++;
 
             // Calculate the progress (rounded percentage)
-            $this->progress = (int)(($processedRows / $totalRows) * 100);
+            $this->progress = (int) (($processedRows / $totalRows) * 100);
 
             // Simulate progress with a slight delay (for UI responsiveness)
             usleep(50000); // Sleep for 50ms (simulate a small delay per row)

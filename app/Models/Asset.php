@@ -49,6 +49,7 @@ class Asset extends Model
     {
         $attributes = parent::getAttributes();
         unset($attributes['_original_data']);
+
         return $attributes;
     }
 
@@ -60,6 +61,7 @@ class Asset extends Model
     {
         $attributes = parent::attributesToArray();
         unset($attributes['_original_data']);
+
         return $attributes;
     }
 
@@ -69,12 +71,12 @@ class Asset extends Model
 
         // Auto-generate asset tag on creating
         static::creating(function ($asset) {
-            if (!$asset->asset_tag) {
+            if (! $asset->asset_tag) {
                 $asset->asset_tag = static::generateAssetTag();
             }
-            
+
             // Set created_by
-            if (!$asset->created_by && auth()->check()) {
+            if (! $asset->created_by && auth()->check()) {
                 $asset->created_by = auth()->id();
             }
 
@@ -92,7 +94,7 @@ class Asset extends Model
 
         // Log updates
         static::updating(function ($asset) {
-            if (!$asset->updated_by && auth()->check()) {
+            if (! $asset->updated_by && auth()->check()) {
                 $asset->updated_by = auth()->id();
             }
 
@@ -105,8 +107,8 @@ class Asset extends Model
                 $changes = $asset->getChanges();
                 // Remove _original_data from changes if it somehow got included
                 unset($changes['_original_data']);
-                
-                if (!empty($changes)) {
+
+                if (! empty($changes)) {
                     AssetHistory::logAction(
                         $asset->id,
                         'updated',
@@ -115,7 +117,7 @@ class Asset extends Model
                         $asset->updated_by
                     );
                 }
-                
+
                 // Clean up temporary data
                 unset($asset->_original_data);
             }
@@ -139,11 +141,11 @@ class Asset extends Model
     public static function generateAssetTag()
     {
         $prefix = AssetSetting::getAssetTagPrefix();
-        
+
         // Get the highest existing asset number
         $lastAsset = static::withTrashed()
-            ->where('asset_tag', 'like', $prefix . '%')
-            ->orderByRaw('CAST(SUBSTRING(asset_tag, ' . (strlen($prefix) + 1) . ') AS UNSIGNED) DESC')
+            ->where('asset_tag', 'like', $prefix.'%')
+            ->orderByRaw('CAST(SUBSTRING(asset_tag, '.(strlen($prefix) + 1).') AS UNSIGNED) DESC')
             ->first();
 
         $nextNumber = 1;
@@ -152,7 +154,7 @@ class Asset extends Model
             $nextNumber = $lastNumber + 1;
         }
 
-        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -234,9 +236,9 @@ class Asset extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('asset_tag', 'like', "%{$search}%")
-              ->orWhere('name', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%")
-              ->orWhere('location', 'like', "%{$search}%");
+                ->orWhere('name', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('location', 'like', "%{$search}%");
         });
     }
 

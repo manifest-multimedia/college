@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AssetCategory;
 use App\Http\Requests\StoreAssetCategoryRequest;
 use App\Http\Requests\UpdateAssetCategoryRequest;
-use Illuminate\Http\Request;
+use App\Models\AssetCategory;
 
 class AssetCategoryController extends Controller
 {
@@ -17,7 +16,7 @@ class AssetCategoryController extends Controller
         $categories = AssetCategory::with(['parent', 'children'])
             ->orderBy('name')
             ->get();
-            
+
         return view('assets.categories.index', compact('categories'));
     }
 
@@ -27,6 +26,7 @@ class AssetCategoryController extends Controller
     public function create()
     {
         $categories = AssetCategory::all();
+
         return view('assets.categories.create', compact('categories'));
     }
 
@@ -47,7 +47,7 @@ class AssetCategoryController extends Controller
     public function show(AssetCategory $assetCategory)
     {
         $assetCategory->load(['parent', 'children', 'assets']);
-        
+
         return view('assets.categories.show', compact('assetCategory'));
     }
 
@@ -57,6 +57,7 @@ class AssetCategoryController extends Controller
     public function edit(AssetCategory $assetCategory)
     {
         $categories = AssetCategory::where('id', '!=', $assetCategory->id)->get();
+
         return view('assets.categories.edit', compact('assetCategory', 'categories'));
     }
 

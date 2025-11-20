@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Asset;
-use App\Models\AssetCategory;
 use App\Http\Requests\StoreAssetRequest;
 use App\Http\Requests\UpdateAssetRequest;
+use App\Models\Asset;
+use App\Models\AssetCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class AssetController extends Controller
 {
@@ -57,6 +56,7 @@ class AssetController extends Controller
     {
         $categories = AssetCategory::all();
         $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+
         return view('assets.create', compact('categories', 'departments'));
     }
 
@@ -68,7 +68,7 @@ class AssetController extends Controller
         $asset = Asset::create($request->validated());
 
         return redirect()->route('admin.assets.show', $asset)
-            ->with('success', 'Asset created successfully with tag: ' . $asset->asset_tag);
+            ->with('success', 'Asset created successfully with tag: '.$asset->asset_tag);
     }
 
     /**
@@ -77,7 +77,7 @@ class AssetController extends Controller
     public function show(Asset $asset)
     {
         $asset->load(['category', 'department', 'createdBy', 'updatedBy', 'histories.user']);
-        
+
         return view('assets.show', compact('asset'));
     }
 
@@ -88,10 +88,11 @@ class AssetController extends Controller
     {
         $categories = AssetCategory::all();
         $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+
         return view('assets.edit', compact('asset', 'categories', 'departments'));
     }
 
-        /**
+    /**
      * Update the specified asset in storage.
      */
     public function update(UpdateAssetRequest $request, Asset $asset)

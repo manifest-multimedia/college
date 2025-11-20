@@ -34,7 +34,7 @@ class ExamClearance extends Model
 
     /**
      * Get the parent clearable model (Exam or OfflineExam).
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
     public function clearable()
@@ -68,7 +68,7 @@ class ExamClearance extends Model
 
     /**
      * Get the exam type associated with this exam clearance
-     * 
+     *
      * @deprecated Use clearable relationship instead
      */
     public function examType()
@@ -109,9 +109,10 @@ class ExamClearance extends Model
         if ($this->clearable_type === 'App\\Models\\OfflineExam') {
             return $this->belongsTo(OfflineExam::class, 'clearable_id');
         }
+
         return null;
     }
-    
+
     /**
      * Determine if the clearance is for an online exam.
      *
@@ -121,7 +122,7 @@ class ExamClearance extends Model
     {
         return $this->clearable_type === 'App\\Models\\Exam';
     }
-    
+
     /**
      * Determine if the clearance is for an offline exam.
      *
@@ -141,6 +142,6 @@ class ExamClearance extends Model
      */
     public function scopeOfType($query, $type)
     {
-        return $query->where('clearable_type', 'App\\Models\\' . $type);
+        return $query->where('clearable_type', 'App\\Models\\'.$type);
     }
 }

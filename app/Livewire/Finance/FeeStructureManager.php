@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Finance;
 
-use App\Models\FeeType;
-use App\Models\FeeStructure;
-use App\Models\CollegeClass;
 use App\Models\AcademicYear;
+use App\Models\CollegeClass;
+use App\Models\FeeStructure;
+use App\Models\FeeType;
 use App\Models\Semester;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,18 +15,29 @@ class FeeStructureManager extends Component
     use WithPagination;
 
     public $fee_type_id;
+
     public $college_class_id;
+
     public $academic_year_id;
+
     public $semester_id;
+
     public $amount;
+
     public $is_mandatory = true;
+
     public $is_active = true;
+
     public $editingFeeStructureId = null;
+
     public $feeStructureIdToDelete = null;
+
     public $search = '';
-    
+
     public $selectedClass = '';
+
     public $selectedYear = '';
+
     public $selectedSemester = '';
 
     protected $rules = [
@@ -43,28 +54,28 @@ class FeeStructureManager extends Component
     {
         $query = FeeStructure::query()
             ->with(['feeType', 'collegeClass', 'academicYear', 'semester']);
-        
+
         if ($this->search) {
             $query->whereHas('feeType', function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('code', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('code', 'like', '%'.$this->search.'%');
             });
         }
-        
+
         if ($this->selectedClass) {
             $query->where('college_class_id', $this->selectedClass);
         }
-        
+
         if ($this->selectedYear) {
             $query->where('academic_year_id', $this->selectedYear);
         }
-        
+
         if ($this->selectedSemester) {
             $query->where('semester_id', $this->selectedSemester);
         }
-        
+
         $feeStructures = $query->orderBy('created_at', 'desc')->paginate(10);
-        
+
         $feeTypes = FeeType::where('is_active', true)->orderBy('name')->get();
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('name')->get();
@@ -95,16 +106,17 @@ class FeeStructureManager extends Component
         }
 
         $this->validate();
-        
+
         // Check for duplicate fee structure
         $existingStructure = FeeStructure::where('fee_type_id', $this->fee_type_id)
             ->where('college_class_id', $this->college_class_id)
             ->where('academic_year_id', $this->academic_year_id)
             ->where('semester_id', $this->semester_id)
             ->first();
-            
+
         if ($existingStructure) {
             session()->flash('error', 'A fee structure with these details already exists.');
+
             return;
         }
 
@@ -146,9 +158,10 @@ class FeeStructureManager extends Component
             ->where('semester_id', $this->semester_id)
             ->where('id', '!=', $this->editingFeeStructureId)
             ->first();
-            
+
         if ($existingStructure) {
             session()->flash('error', 'A fee structure with these details already exists.');
+
             return;
         }
 
@@ -176,10 +189,11 @@ class FeeStructureManager extends Component
     public function deleteFeeStructure()
     {
         $feeStructure = FeeStructure::findOrFail($this->feeStructureIdToDelete);
-        
+
         // Check if fee structure has any student billings
         if ($feeStructure->studentBillings()->count() > 0) {
             session()->flash('error', 'Fee structure cannot be deleted because it is associated with student billings.');
+
             return;
         }
 

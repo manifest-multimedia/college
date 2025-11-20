@@ -3,24 +3,19 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
-
-
-class ExportToExcel implements FromCollection, WithHeadings, ShouldAutoSize
+class ExportToExcel implements FromCollection, ShouldAutoSize, WithHeadings
 {
-
     /**
      * @return \Illuminate\Support\Collection
      */
-
     protected $data;
-    protected $fieldNames;
-    protected $columnNames;
 
+    protected $fieldNames;
+
+    protected $columnNames;
 
     public function __construct($data, array $fieldNames, array $columnNames)
     {
@@ -29,6 +24,7 @@ class ExportToExcel implements FromCollection, WithHeadings, ShouldAutoSize
         $this->fieldNames = $fieldNames;
         $this->columnNames = $columnNames;
     }
+
     public function collection()
     {
 

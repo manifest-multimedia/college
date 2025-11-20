@@ -2,11 +2,11 @@
 
 namespace App\Services\Memo;
 
+use App\Models\Department;
 use App\Models\Memo;
 use App\Models\MemoAction;
 use App\Models\MemoAttachment;
 use App\Models\User;
-use App\Models\Department;
 use App\Services\Communication\Email\EmailServiceInterface;
 use App\Services\Communication\SMS\SmsServiceInterface;
 use Illuminate\Http\UploadedFile;
@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 class MemoService
 {
     protected $emailService;
+
     protected $smsService;
 
     public function __construct(EmailServiceInterface $emailService, SmsServiceInterface $smsService)
@@ -28,10 +29,6 @@ class MemoService
 
     /**
      * Create a new memo
-     *
-     * @param array $data
-     * @param array $attachments
-     * @return array
      */
     public function createMemo(array $data, array $attachments = []): array
     {
@@ -55,7 +52,7 @@ class MemoService
             $this->recordAction($memo->id, 'created');
 
             // Process attachments if any
-            if (!empty($attachments)) {
+            if (! empty($attachments)) {
                 foreach ($attachments as $attachment) {
                     $this->addAttachment($memo->id, $attachment);
                 }
@@ -76,23 +73,18 @@ class MemoService
             Log::error('Error creating memo', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to create memo: ' . $e->getMessage(),
+                'message' => 'Failed to create memo: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Update an existing memo
-     *
-     * @param int $memoId
-     * @param array $data
-     * @param array $attachments
-     * @return array
      */
     public function updateMemo(int $memoId, array $data, array $attachments = []): array
     {
@@ -121,7 +113,7 @@ class MemoService
             ]);
 
             // Process new attachments if any
-            if (!empty($attachments)) {
+            if (! empty($attachments)) {
                 foreach ($attachments as $attachment) {
                     $this->addAttachment($memoId, $attachment);
                 }
@@ -140,22 +132,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to update memo: ' . $e->getMessage(),
+                'message' => 'Failed to update memo: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Forward a memo to another user or department
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function forwardMemo(int $memoId, array $data): array
     {
@@ -163,7 +151,7 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Update memo status
             $memo->update([
                 'status' => 'forwarded',
@@ -173,8 +161,8 @@ class MemoService
 
             // Record the action
             $this->recordAction(
-                $memoId, 
-                'forwarded', 
+                $memoId,
+                'forwarded',
                 $data['comment'] ?? null,
                 $data['forward_to_user_id'] ?? null,
                 $data['forward_to_department_id'] ?? null
@@ -182,7 +170,7 @@ class MemoService
 
             // Send notifications
             $this->sendMemoNotifications($memo, 'forwarded');
-            
+
             DB::commit();
 
             return [
@@ -196,22 +184,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to forward memo: ' . $e->getMessage(),
+                'message' => 'Failed to forward memo: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Approve a memo
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function approveMemo(int $memoId, array $data): array
     {
@@ -219,7 +203,7 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Update memo status
             $memo->update([
                 'status' => 'approved',
@@ -230,7 +214,7 @@ class MemoService
 
             // Send notifications
             $this->sendMemoNotifications($memo, 'approved');
-            
+
             DB::commit();
 
             return [
@@ -244,22 +228,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to approve memo: ' . $e->getMessage(),
+                'message' => 'Failed to approve memo: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Reject a memo
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function rejectMemo(int $memoId, array $data): array
     {
@@ -267,7 +247,7 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Update memo status
             $memo->update([
                 'status' => 'rejected',
@@ -278,7 +258,7 @@ class MemoService
 
             // Send notifications
             $this->sendMemoNotifications($memo, 'rejected');
-            
+
             DB::commit();
 
             return [
@@ -292,22 +272,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to reject memo: ' . $e->getMessage(),
+                'message' => 'Failed to reject memo: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Mark a memo as completed
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function completeMemo(int $memoId, array $data): array
     {
@@ -315,7 +291,7 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Update memo status
             $memo->update([
                 'status' => 'completed',
@@ -326,7 +302,7 @@ class MemoService
 
             // Send notifications
             $this->sendMemoNotifications($memo, 'completed');
-            
+
             DB::commit();
 
             return [
@@ -340,22 +316,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to complete memo: ' . $e->getMessage(),
+                'message' => 'Failed to complete memo: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Mark items as procured
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function markAsProcured(int $memoId, array $data): array
     {
@@ -363,13 +335,13 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Record the action
             $this->recordAction($memoId, 'procured', $data['comment'] ?? null);
 
             // Send notifications
             $this->sendMemoNotifications($memo, 'procured');
-            
+
             DB::commit();
 
             return [
@@ -382,22 +354,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to mark as procured: ' . $e->getMessage(),
+                'message' => 'Failed to mark as procured: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Mark items as delivered to stores
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function markAsDelivered(int $memoId, array $data): array
     {
@@ -405,13 +373,13 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Record the action
             $this->recordAction($memoId, 'delivered', $data['comment'] ?? null);
 
             // Send notifications to stores manager
             $this->sendMemoNotifications($memo, 'delivered');
-            
+
             DB::commit();
 
             return [
@@ -424,22 +392,18 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to mark as delivered: ' . $e->getMessage(),
+                'message' => 'Failed to mark as delivered: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Mark items as audited by stores
-     *
-     * @param int $memoId
-     * @param array $data
-     * @return array
      */
     public function markAsAudited(int $memoId, array $data): array
     {
@@ -447,13 +411,13 @@ class MemoService
             DB::beginTransaction();
 
             $memo = Memo::findOrFail($memoId);
-            
+
             // Record the action
             $this->recordAction($memoId, 'audited', $data['comment'] ?? null);
 
             // Send notifications to memo creator
             $this->sendMemoNotifications($memo, 'audited');
-            
+
             DB::commit();
 
             return [
@@ -466,28 +430,24 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'message' => 'Failed to mark as audited: ' . $e->getMessage(),
+                'message' => 'Failed to mark as audited: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Add an attachment to a memo
-     *
-     * @param int $memoId
-     * @param UploadedFile $file
-     * @return MemoAttachment|null
      */
     public function addAttachment(int $memoId, UploadedFile $file): ?MemoAttachment
     {
         try {
             // Store the file
-            $filename = uniqid() . '_' . $file->getClientOriginalName();
+            $filename = uniqid().'_'.$file->getClientOriginalName();
             $path = $file->storeAs('memo-attachments', $filename, 'public');
 
             // Create attachment record
@@ -505,7 +465,7 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memoId,
-                'filename' => $file->getClientOriginalName()
+                'filename' => $file->getClientOriginalName(),
             ]);
 
             return null;
@@ -514,51 +474,41 @@ class MemoService
 
     /**
      * Delete an attachment
-     *
-     * @param int $attachmentId
-     * @return bool
      */
     public function deleteAttachment(int $attachmentId): bool
     {
         try {
             $attachment = MemoAttachment::findOrFail($attachmentId);
-            
+
             // Only the creator of the attachment or the memo creator can delete
             if (Auth::id() !== $attachment->user_id && Auth::id() !== $attachment->memo->user_id) {
                 return false;
             }
-            
+
             // Delete the file
             Storage::disk('public')->delete($attachment->file_path);
-            
+
             // Delete the record
             $attachment->delete();
-            
+
             return true;
         } catch (\Exception $e) {
             Log::error('Error deleting memo attachment', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'attachment_id' => $attachmentId
+                'attachment_id' => $attachmentId,
             ]);
-            
+
             return false;
         }
     }
 
     /**
      * Record an action on a memo
-     *
-     * @param int $memoId
-     * @param string $actionType
-     * @param string|null $comment
-     * @param int|null $forwardedToUserId
-     * @param int|null $forwardedToDepartmentId
-     * @return MemoAction
      */
     protected function recordAction(
-        int $memoId, 
-        string $actionType, 
+        int $memoId,
+        string $actionType,
         ?string $comment = null,
         ?int $forwardedToUserId = null,
         ?int $forwardedToDepartmentId = null
@@ -575,17 +525,13 @@ class MemoService
 
     /**
      * Send notifications related to memo actions
-     *
-     * @param Memo $memo
-     * @param string $action
-     * @return void
      */
     protected function sendMemoNotifications(Memo $memo, string $action): void
     {
         try {
             // Determine who should be notified
             $recipients = $this->getNotificationRecipients($memo, $action);
-            
+
             if (empty($recipients)) {
                 return;
             }
@@ -593,11 +539,11 @@ class MemoService
             // Prepare notification content
             $subject = $this->getNotificationSubject($memo, $action);
             $message = $this->getNotificationMessage($memo, $action);
-            
+
             // Send email notifications
             foreach ($recipients as $recipient) {
                 // Only send if user has an email
-                if (!empty($recipient->email)) {
+                if (! empty($recipient->email)) {
                     $this->emailService->sendSingle(
                         $recipient->email,
                         $subject,
@@ -609,7 +555,7 @@ class MemoService
                 }
 
                 // Send SMS if user has a phone number and action is important enough
-                if (!empty($recipient->phone) && in_array($action, ['approved', 'rejected', 'completed', 'audited'])) {
+                if (! empty($recipient->phone) && in_array($action, ['approved', 'rejected', 'completed', 'audited'])) {
                     $smsMessage = $this->getSmsNotificationMessage($memo, $action);
                     $this->smsService->sendSingle(
                         $recipient->phone,
@@ -625,17 +571,13 @@ class MemoService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'memo_id' => $memo->id,
-                'action' => $action
+                'action' => $action,
             ]);
         }
     }
 
     /**
      * Get recipients for notifications based on memo action
-     *
-     * @param Memo $memo
-     * @param string $action
-     * @return array
      */
     protected function getNotificationRecipients(Memo $memo, string $action): array
     {
@@ -655,7 +597,7 @@ class MemoService
             case 'forwarded':
                 // Latest forwarded action to find out who it was forwarded to
                 $forwardAction = $memo->actions()->where('action_type', 'forwarded')->latest()->first();
-                
+
                 if ($forwardAction && $forwardAction->forwarded_to_user_id) {
                     $recipients[] = User::find($forwardAction->forwarded_to_user_id);
                 } elseif ($forwardAction && $forwardAction->forwarded_to_department_id) {
@@ -675,7 +617,7 @@ class MemoService
                 $storesManagers = User::whereHas('roles', function ($query) {
                     $query->where('name', 'Stores Manager');
                 })->get();
-                
+
                 $recipients = array_merge($recipients, $storesManagers->all());
                 break;
 
@@ -684,7 +626,7 @@ class MemoService
                 $storesManagers = User::whereHas('roles', function ($query) {
                     $query->where('name', 'Stores Manager');
                 })->get();
-                
+
                 $recipients = array_merge($recipients, $storesManagers->all());
                 break;
 
@@ -696,18 +638,18 @@ class MemoService
             case 'completed':
                 // Notify all involved parties
                 $recipients[] = $memo->user; // Creator
-                
+
                 if ($memo->recipient_id) {
                     $recipients[] = User::find($memo->recipient_id);
                 }
-                
+
                 // Include any approvers
                 $approverIds = $memo->actions()
                     ->where('action_type', 'approved')
                     ->pluck('user_id')
                     ->unique()
                     ->toArray();
-                    
+
                 $approvers = User::whereIn('id', $approverIds)->get();
                 $recipients = array_merge($recipients, $approvers->all());
                 break;
@@ -719,15 +661,11 @@ class MemoService
 
     /**
      * Get notification subject based on memo action
-     *
-     * @param Memo $memo
-     * @param string $action
-     * @return string
      */
     protected function getNotificationSubject(Memo $memo, string $action): string
     {
         $refNum = $memo->reference_number;
-        
+
         switch ($action) {
             case 'created':
                 return "New Memo: {$refNum} - {$memo->title}";
@@ -752,10 +690,6 @@ class MemoService
 
     /**
      * Get notification message based on memo action
-     *
-     * @param Memo $memo
-     * @param string $action
-     * @return string
      */
     protected function getNotificationMessage(Memo $memo, string $action): string
     {
@@ -763,38 +697,41 @@ class MemoService
         $userName = $user ? $user->name : 'A user';
         $memoUrl = route('memo.show', $memo->id);
         $refNum = $memo->reference_number;
-        
+
         switch ($action) {
             case 'created':
                 return "A new memo ({$refNum}) titled \"{$memo->title}\" has been created by {$userName} and requires your attention. Please review it at {$memoUrl}";
-                
+
             case 'forwarded':
                 $latestAction = $memo->getLatestAction('forwarded');
-                $comment = $latestAction && $latestAction->comment ? "Comment: {$latestAction->comment}" : "";
+                $comment = $latestAction && $latestAction->comment ? "Comment: {$latestAction->comment}" : '';
+
                 return "A memo ({$refNum}) titled \"{$memo->title}\" has been forwarded to you by {$userName}. {$comment}. Please review it at {$memoUrl}";
-                
+
             case 'approved':
                 $latestAction = $memo->getLatestAction('approved');
-                $comment = $latestAction && $latestAction->comment ? "Comment: {$latestAction->comment}" : "";
+                $comment = $latestAction && $latestAction->comment ? "Comment: {$latestAction->comment}" : '';
+
                 return "Your memo ({$refNum}) titled \"{$memo->title}\" has been approved by {$userName}. {$comment}. You can view the details at {$memoUrl}";
-                
+
             case 'rejected':
                 $latestAction = $memo->getLatestAction('rejected');
-                $comment = $latestAction && $latestAction->comment ? "Reason: {$latestAction->comment}" : "";
+                $comment = $latestAction && $latestAction->comment ? "Reason: {$latestAction->comment}" : '';
+
                 return "Your memo ({$refNum}) titled \"{$memo->title}\" has been rejected by {$userName}. {$comment}. You can view the details at {$memoUrl}";
-                
+
             case 'procured':
                 return "Items requested in memo ({$refNum}) titled \"{$memo->title}\" have been procured by {$userName}. The items will be delivered to stores for audit.";
-                
+
             case 'delivered':
                 return "Items requested in memo ({$refNum}) titled \"{$memo->title}\" have been delivered to stores by {$userName} and are pending audit.";
-                
+
             case 'audited':
                 return "Items requested in your memo ({$refNum}) titled \"{$memo->title}\" have been audited by stores and are ready for collection.";
-                
+
             case 'completed':
                 return "Memo ({$refNum}) titled \"{$memo->title}\" has been marked as completed by {$userName}.";
-                
+
             default:
                 return "There has been an update to memo ({$refNum}) titled \"{$memo->title}\". Please check the details at {$memoUrl}";
         }
@@ -802,28 +739,24 @@ class MemoService
 
     /**
      * Get SMS notification message (shorter version)
-     *
-     * @param Memo $memo
-     * @param string $action
-     * @return string
      */
     protected function getSmsNotificationMessage(Memo $memo, string $action): string
     {
         $refNum = $memo->reference_number;
-        
+
         switch ($action) {
             case 'approved':
                 return "MEMO {$refNum} has been APPROVED. Check your email for details.";
-                
+
             case 'rejected':
                 return "MEMO {$refNum} has been REJECTED. Check your email for details.";
-                
+
             case 'audited':
                 return "Items for MEMO {$refNum} are ready for collection.";
-                
+
             case 'completed':
                 return "MEMO {$refNum} has been marked as COMPLETED.";
-                
+
             default:
                 return "Update on MEMO {$refNum}. Check your email for details.";
         }

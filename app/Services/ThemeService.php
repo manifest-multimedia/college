@@ -26,11 +26,11 @@ class ThemeService
     public function getThemeView(string $view): string
     {
         $theme = $this->getCurrentTheme();
-        
+
         $candidates = [
             "custom-auth.themes.{$theme}.{$view}",
             "custom-auth.themes.default.{$view}",
-            "custom-auth.{$view}"
+            "custom-auth.{$view}",
         ];
 
         foreach ($candidates as $candidate) {
@@ -64,6 +64,7 @@ class ThemeService
     public function getLogo(string $type = 'primary'): string
     {
         $logos = $this->getLogos();
+
         return $logos[$type] ?? $logos['primary'] ?? '/images/logos/default-logo.svg';
     }
 
@@ -74,11 +75,11 @@ class ThemeService
     {
         $colors = config('branding.colors', []);
         $variables = [];
-        
+
         foreach ($colors as $name => $value) {
             $variables["--brand-{$name}"] = $value;
         }
-        
+
         return $variables;
     }
 
@@ -96,6 +97,7 @@ class ThemeService
     public function themeExists(string $theme): bool
     {
         $available = $this->getAvailableThemes();
+
         return isset($available[$theme]);
     }
 
@@ -105,6 +107,7 @@ class ThemeService
     public function getThemeConfig(string $theme): array
     {
         $available = $this->getAvailableThemes();
+
         return $available[$theme] ?? [];
     }
 

@@ -13,6 +13,7 @@ use Spatie\Permission\Models\Role;
 class CreateDemoAccounts extends Command
 {
     protected $signature = 'demo:create-accounts';
+
     protected $description = 'Create demo accounts with predefined roles';
 
     public function handle()

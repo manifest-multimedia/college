@@ -2,11 +2,10 @@
 
 namespace App\Services\Communication\SMS;
 
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 
 class NaloSmsService extends AbstractSmsService
 {
@@ -14,12 +13,19 @@ class NaloSmsService extends AbstractSmsService
      * Nalo API credentials and settings
      */
     protected $apiKey;
+
     protected $username;
+
     protected $password;
+
     protected $senderId;
+
     protected $apiUrl;
+
     protected $baseUrl;
+
     protected $resellerPrefix;
+
     protected $isConfigured = false;
 
     /**
@@ -32,12 +38,12 @@ class NaloSmsService extends AbstractSmsService
         $this->password = Config::get('services.nalo.password');
         $this->senderId = Config::get('services.nalo.sender_id', 'PNMTC');
         $this->resellerPrefix = Config::get('services.nalo.reseller_prefix', 'Resl_Nalo');
-        
+
         // Check if credentials are properly set
-        if (!empty($this->apiKey) || (!empty($this->username) && !empty($this->password))) {
+        if (! empty($this->apiKey) || (! empty($this->username) && ! empty($this->password))) {
             $this->isConfigured = true;
             // Set base URL from documentation
-            $this->baseUrl = "https://sms.nalosolutions.com/smsbackend";
+            $this->baseUrl = 'https://sms.nalosolutions.com/smsbackend';
         } else {
             Log::error('Manifest Digital SMS service not properly configured. Missing API key or username/password.');
         }
@@ -45,271 +51,256 @@ class NaloSmsService extends AbstractSmsService
 
     /**
      * Send an SMS message using Nalo API.
-     *
-     * @param string $recipient
-     * @param string $message
-     * @param array $options
-     * @return array
      */
     protected function send(string $recipient, string $message, array $options = []): array
     {
         // Check if service is properly configured
-        if (!$this->isConfigured) {
+        if (! $this->isConfigured) {
             Log::error('Manifest Digital SMS service not configured properly. Message not sent.', [
-                'recipient' => $recipient
+                'recipient' => $recipient,
             ]);
-            
+
             return [
                 'success' => false,
                 'error_message' => 'SMS service not properly configured',
             ];
         }
-        
+
         try {
             // Format phone number - ensure it starts with country code (e.g., 233 for Ghana)
             // Remove any + prefix
             $recipient = ltrim($recipient, '+');
-            
+
             // Determine method to use based on options
             $method = $options['method'] ?? 'json';
-            
+
             if ($method === 'get') {
                 return $this->sendWithGetMethod($recipient, $message, $options);
             } else {
                 return $this->sendWithPostMethod($recipient, $message, $options);
             }
-            
+
         } catch (GuzzleException $e) {
             Log::error('Manifest Digital SMS Guzzle exception', [
                 'recipient' => $recipient,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
-                'error_message' => 'GuzzleException: ' . $e->getMessage()
+                'error_message' => 'GuzzleException: '.$e->getMessage(),
             ];
         } catch (\Exception $e) {
             Log::error('Manifest Digital SMS general exception', [
                 'recipient' => $recipient,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-            
+
             return [
                 'success' => false,
-                'error_message' => 'Exception: ' . $e->getMessage()
+                'error_message' => 'Exception: '.$e->getMessage(),
             ];
         }
     }
 
     /**
      * Send SMS using GET method
-     * 
-     * @param string $recipient
-     * @param string $message
-     * @param array $options
-     * @return array
      */
     protected function sendWithGetMethod(string $recipient, string $message, array $options = []): array
     {
         $client = new Client([
             'verify' => false, // Disable SSL verification
             'timeout' => 15,
-            'connect_timeout' => 15
+            'connect_timeout' => 15,
         ]);
-        
+
         // Build URL for GET request
         $endpoint = "{$this->baseUrl}/clientapi/{$this->resellerPrefix}/send-message/";
-        
+
         // Prepare query parameters - prefer API key if available, otherwise use username/password
         $queryParams = [];
-        
-        if (!empty($this->apiKey)) {
+
+        if (! empty($this->apiKey)) {
             $queryParams['key'] = $this->apiKey;
         } else {
             $queryParams['username'] = $this->username;
             $queryParams['password'] = $this->password;
         }
-        
+
         // Add required parameters as per documentation
         $queryParams['type'] = $options['type'] ?? '0';
         $queryParams['destination'] = $recipient;
         $queryParams['dir'] = $options['dir'] ?? '1'; // Default to 1 for outbound messages
         $queryParams['source'] = $options['sender'] ?? $this->senderId;
         $queryParams['message'] = urlencode($message);
-        
+
         $response = $client->get($endpoint, [
-            'query' => $queryParams
+            'query' => $queryParams,
         ]);
-        
+
         $responseBody = $response->getBody()->getContents();
-        
+
         // Parse response according to the documentation
         // Expected format: 1701|233XXXXXXXXX|ATXid_123
         if (strpos($responseBody, '1701|') === 0) {
             $parts = explode('|', $responseBody);
+
             return [
                 'success' => true,
                 'message_id' => $parts[2] ?? null,
-                'response' => $responseBody
+                'response' => $responseBody,
             ];
         }
-        
+
         // Check if we got a JSON response instead of plain text
         $jsonResponse = json_decode($responseBody, true);
         if (is_array($jsonResponse)) {
             // Check for success in JSON response format
-            if (isset($jsonResponse['status']) && (string)$jsonResponse['status'] === "1701") {
+            if (isset($jsonResponse['status']) && (string) $jsonResponse['status'] === '1701') {
                 return [
                     'success' => true,
                     'message_id' => $jsonResponse['job_id'] ?? null,
-                    'response' => $jsonResponse
+                    'response' => $jsonResponse,
                 ];
             }
-            
+
             // Special case: If we have a job_id, this is likely still a success
             if (isset($jsonResponse['job_id'])) {
                 return [
                     'success' => true,
                     'message_id' => $jsonResponse['job_id'],
-                    'response' => $jsonResponse
+                    'response' => $jsonResponse,
                 ];
             }
-            
+
             $errorCode = $jsonResponse['code'] ?? $jsonResponse['status'] ?? 1710;
             $errorMessage = $this->getErrorMessage($errorCode);
-            
+
             Log::error('Manifest Digital SMS sending failed (JSON response)', [
                 'recipient' => $recipient,
                 'error_code' => $errorCode,
                 'error' => $errorMessage,
-                'response' => $jsonResponse
+                'response' => $jsonResponse,
             ]);
-            
+
             return [
                 'success' => false,
                 'error_code' => $errorCode,
                 'error_message' => $errorMessage,
-                'response' => $jsonResponse
+                'response' => $jsonResponse,
             ];
         }
-        
+
         // Handle error codes
         $errorCode = intval(trim($responseBody));
         $errorMessage = $this->getErrorMessage($errorCode);
-        
+
         Log::error('Manifest Digital SMS sending failed', [
             'recipient' => $recipient,
             'error_code' => $errorCode,
             'error' => $errorMessage,
-            'response' => $responseBody
+            'response' => $responseBody,
         ]);
-        
+
         return [
             'success' => false,
             'error_code' => $errorCode,
             'error_message' => $errorMessage,
-            'response' => $responseBody
+            'response' => $responseBody,
         ];
     }
 
     /**
      * Send SMS using POST method with JSON
-     * 
-     * @param string $recipient
-     * @param string $message
-     * @param array $options
-     * @return array
      */
     protected function sendWithPostMethod(string $recipient, string $message, array $options = []): array
     {
         $client = new Client([
             'verify' => false, // Disable SSL verification
             'timeout' => 15,
-            'connect_timeout' => 15
+            'connect_timeout' => 15,
         ]);
-        
+
         // Build endpoint for POST request
         $endpoint = "{$this->baseUrl}/{$this->resellerPrefix}/send-message/";
-        
+
         // Prepare payload according to the documentation
         $payload = [];
-        
+
         // Use API key or username/password
-        if (!empty($this->apiKey)) {
+        if (! empty($this->apiKey)) {
             $payload['key'] = $this->apiKey;
         } else {
             $payload['username'] = $this->username;
             $payload['password'] = $this->password;
         }
-        
+
         // Multiple recipients separated by comma
         $recipients = is_array($recipient) ? implode(',', $recipient) : $recipient;
         $payload['msisdn'] = $recipients;
         $payload['message'] = $message;
         $payload['sender_id'] = $options['sender'] ?? $this->senderId;
-        
+
         $response = $client->post($endpoint, [
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ],
-            'json' => $payload
+            'json' => $payload,
         ]);
-        
+
         $responseBody = $response->getBody()->getContents();
         $responseData = json_decode($responseBody, true);
-        
+
         // Check for the two possible success formats from Nalo API:
         // 1. Response with code 1701
         // 2. Response with status 1701 (or as string "1701")
         if (
             (is_array($responseData) && isset($responseData['code']) && $responseData['code'] == 1701) ||
-            (is_array($responseData) && isset($responseData['status']) && (string)$responseData['status'] === "1701")
+            (is_array($responseData) && isset($responseData['status']) && (string) $responseData['status'] === '1701')
         ) {
             $messageId = $responseData['message_id'] ?? $responseData['job_id'] ?? null;
-            
+
             return [
                 'success' => true,
                 'message_id' => $messageId,
-                'response' => $responseData
+                'response' => $responseData,
             ];
         }
-        
+
         // Handle error
         $errorCode = $responseData['code'] ?? $responseData['status'] ?? 1710; // Default to internal error
         $errorMessage = $this->getErrorMessage($errorCode);
-        
-        // Special case: If we have a job_id but status isn't clearly 1701, 
+
+        // Special case: If we have a job_id but status isn't clearly 1701,
         // this is likely still a success based on the provided example
         if (is_array($responseData) && isset($responseData['job_id'])) {
             return [
                 'success' => true,
                 'message_id' => $responseData['job_id'],
-                'response' => $responseData
+                'response' => $responseData,
             ];
         }
-        
+
         Log::error('Manifest Digital SMS sending failed', [
             'recipient' => $recipient,
             'error_code' => $errorCode,
             'error' => $errorMessage,
-            'response' => $responseData
+            'response' => $responseData,
         ]);
-        
+
         return [
             'success' => false,
             'error_code' => $errorCode,
             'error_message' => $errorMessage,
-            'response' => $responseData
+            'response' => $responseData,
         ];
     }
 
     /**
      * Translate error codes to meaningful messages
-     * 
-     * @param int $code
-     * @return string
+     *
+     * @param  int  $code
      */
     protected function getErrorMessage($code): string
     {
@@ -330,8 +321,6 @@ class NaloSmsService extends AbstractSmsService
 
     /**
      * Get the provider name.
-     *
-     * @return string
      */
     protected function getProviderName(): string
     {

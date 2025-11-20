@@ -13,6 +13,7 @@ class AssetSettingController extends Controller
     public function index()
     {
         $settings = AssetSetting::orderBy('key')->get();
+
         return view('assets.settings.index', compact('settings'));
     }
 
@@ -26,7 +27,7 @@ class AssetSettingController extends Controller
         ]);
 
         AssetSetting::setValue(
-            'asset_tag_prefix', 
+            'asset_tag_prefix',
             $validated['asset_tag_prefix'],
             'Prefix used for auto-generated asset tags'
         );

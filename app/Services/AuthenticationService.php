@@ -13,8 +13,6 @@ class AuthenticationService
 {
     /**
      * Get the current authentication method from configuration.
-     *
-     * @return string
      */
     public function getAuthMethod(): string
     {
@@ -23,8 +21,6 @@ class AuthenticationService
 
     /**
      * Check if the current authentication method is AuthCentral.
-     *
-     * @return bool
      */
     public function isAuthCentral(): bool
     {
@@ -33,8 +29,6 @@ class AuthenticationService
 
     /**
      * Check if the current authentication method is regular.
-     *
-     * @return bool
      */
     public function isRegular(): bool
     {
@@ -43,8 +37,6 @@ class AuthenticationService
 
     /**
      * Get AuthCentral configuration.
-     *
-     * @return array
      */
     public function getAuthCentralConfig(): array
     {
@@ -53,8 +45,6 @@ class AuthenticationService
 
     /**
      * Get regular authentication configuration.
-     *
-     * @return array
      */
     public function getRegularConfig(): array
     {
@@ -63,8 +53,6 @@ class AuthenticationService
 
     /**
      * Get registration configuration.
-     *
-     * @return array
      */
     public function getRegistrationConfig(): array
     {
@@ -73,8 +61,6 @@ class AuthenticationService
 
     /**
      * Get security configuration.
-     *
-     * @return array
      */
     public function getSecurityConfig(): array
     {
@@ -83,8 +69,6 @@ class AuthenticationService
 
     /**
      * Get role mapping configuration.
-     *
-     * @return array
      */
     public function getRoleConfig(): array
     {
@@ -93,8 +77,6 @@ class AuthenticationService
 
     /**
      * Get password synchronization configuration.
-     *
-     * @return array
      */
     public function getPasswordSyncConfig(): array
     {
@@ -104,22 +86,18 @@ class AuthenticationService
     /**
      * Get the AuthCentral login URL with callback redirect.
      * Available regardless of current AUTH_METHOD setting for user flexibility.
-     *
-     * @return string
      */
     public function getAuthCentralLoginUrl(): string
     {
         // Use environment variables directly as fallback for cross-mode compatibility
         $loginUrl = config('authentication.authcentral.login_url') ?? env('AUTHCENTRAL_LOGIN_URL', 'https://auth.pnmtc.edu.gh/login');
         $callbackUrl = route('auth.callback');
-        
-        return $loginUrl . '?redirect_url=' . urlencode($callbackUrl);
+
+        return $loginUrl.'?redirect_url='.urlencode($callbackUrl);
     }
 
     /**
      * Get the AuthCentral API URL.
-     *
-     * @return string
      */
     public function getAuthCentralApiUrl(): string
     {
@@ -128,8 +106,6 @@ class AuthenticationService
 
     /**
      * Get the signup URL based on authentication method.
-     *
-     * @return string|null
      */
     public function getSignupUrl(): ?string
     {
@@ -143,11 +119,9 @@ class AuthenticationService
 
         return null;
     }
-    
+
     /**
      * Get the staff signup URL.
-     *
-     * @return string|null
      */
     public function getStaffSignupUrl(): ?string
     {
@@ -162,11 +136,9 @@ class AuthenticationService
 
         return null;
     }
-    
+
     /**
      * Get the student signup URL.
-     *
-     * @return string|null
      */
     public function getStudentSignupUrl(): ?string
     {
@@ -185,8 +157,6 @@ class AuthenticationService
 
     /**
      * Get the student registration URL.
-     *
-     * @return string|null
      */
     public function getStudentRegistrationUrl(): ?string
     {
@@ -202,10 +172,7 @@ class AuthenticationService
     /**
      * Create or update user from AuthCentral data.
      *
-     * @param array $userData
-     * @param array $roles
-     * @param string|null $password Plain text password to sync (optional)
-     * @return User
+     * @param  string|null  $password  Plain text password to sync (optional)
      */
     public function createOrUpdateAuthCentralUser(array $userData, array $roles = [], ?string $password = null): User
     {
@@ -217,7 +184,7 @@ class AuthenticationService
         } else {
             // Case 2: No password provided (standard OAuth flow)
             $existingUser = User::where('email', $userData['email'])->first();
-            
+
             if ($existingUser && $existingUser->password) {
                 // Preserve existing password if user already exists
                 $hashedPassword = $existingUser->password;
@@ -244,7 +211,7 @@ class AuthenticationService
 
         Log::info("AuthCentral user created/updated: {$user->email}", [
             'roles' => $roles,
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
 
         return $user;
@@ -252,10 +219,6 @@ class AuthenticationService
 
     /**
      * Create or update user for regular authentication.
-     *
-     * @param array $userData
-     * @param string $userType
-     * @return User
      */
     public function createRegularUser(array $userData, string $userType = 'staff'): User
     {
@@ -267,7 +230,7 @@ class AuthenticationService
 
         // Assign role based on user type
         $roleConfig = $this->getRoleConfig();
-        $role = $userType === 'student' 
+        $role = $userType === 'student'
             ? ($roleConfig['student_default'] ?? 'Student')
             : ($roleConfig['staff_default'] ?? $this->getRegularConfig()['default_role'] ?? 'Staff');
         $this->syncUserRoles($user, [$role], 'regular');
@@ -275,52 +238,43 @@ class AuthenticationService
         Log::info("Regular user created: {$user->email}", [
             'user_type' => $userType,
             'assigned_role' => $role,
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
 
         return $user;
     }
-    
+
     /**
      * Create a staff user via regular authentication.
-     *
-     * @param array $userData
-     * @return User
      */
     public function createStaffUser(array $userData): User
     {
         return $this->createRegularUser($userData, 'staff');
     }
-    
+
     /**
      * Create a student user via regular authentication.
-     *
-     * @param array $userData
-     * @return User
      */
     public function createStudentUser(array $userData): User
     {
         $user = $this->createRegularUser($userData, 'student');
-        
+
         // Create corresponding student record
         $this->createStudentRecord($user, $userData);
-        
+
         return $user;
     }
-    
+
     /**
      * Create a student record linked to a user.
-     *
-     * @param User $user
-     * @param array $userData
-     * @return \App\Models\Student|null
      */
     private function createStudentRecord(User $user, array $userData): ?\App\Models\Student
     {
         try {
             // Check if Student model exists
-            if (!class_exists(\App\Models\Student::class)) {
+            if (! class_exists(\App\Models\Student::class)) {
                 Log::warning("Student model not found, skipping student record creation for user: {$user->email}");
+
                 return null;
             }
 
@@ -349,19 +303,15 @@ class AuthenticationService
                 'error' => $e->getMessage(),
                 'user_id' => $user->id,
             ]);
+
             return null;
         }
     }
 
     /**
      * Sync user roles based on authentication method.
-     *
-     * @param User $user
-     * @param array $roles
-     * @param string $authMethod
-     * @return void
      */
-    public function syncUserRoles(User $user, array $roles, string $authMethod = null): void
+    public function syncUserRoles(User $user, array $roles, ?string $authMethod = null): void
     {
         $authMethod = $authMethod ?? $this->getAuthMethod();
 
@@ -384,10 +334,10 @@ class AuthenticationService
         // If no roles were assigned, assign a default role
         if (empty($assignedRoles)) {
             $roleConfig = $this->getRoleConfig();
-            $defaultRole = $authMethod === 'regular' 
+            $defaultRole = $authMethod === 'regular'
                 ? ($roleConfig['staff_default'] ?? $this->getRegularConfig()['default_role'] ?? 'Staff')
                 : ($roleConfig['authcentral_fallback'] ?? 'Staff');
-                
+
             $role = Role::where('name', $defaultRole)->first();
             if ($role) {
                 $user->assignRole($role);
@@ -400,26 +350,23 @@ class AuthenticationService
 
     /**
      * Authenticate user using regular Laravel authentication.
-     *
-     * @param array $credentials
-     * @return bool
      */
     public function attemptRegularLogin(array $credentials): bool
     {
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
             Log::info("Regular authentication successful: {$user->email}");
+
             return true;
         }
 
-        Log::info("Regular authentication failed for email: " . ($credentials['email'] ?? 'unknown'));
+        Log::info('Regular authentication failed for email: '.($credentials['email'] ?? 'unknown'));
+
         return false;
     }
 
     /**
      * Get available authentication methods.
-     *
-     * @return array
      */
     public function getAvailableMethods(): array
     {
@@ -431,9 +378,6 @@ class AuthenticationService
 
     /**
      * Validate authentication method.
-     *
-     * @param string $method
-     * @return bool
      */
     public function isValidMethod(string $method): bool
     {
@@ -443,47 +387,43 @@ class AuthenticationService
     /**
      * Sync password for AuthCentral user to enable local authentication.
      *
-     * @param string $email
-     * @param string $password Plain text password
-     * @return bool
+     * @param  string  $password  Plain text password
      */
     public function syncAuthCentralUserPassword(string $email, string $password): bool
     {
         $user = User::where('email', $email)->first();
-        
-        if (!$user) {
+
+        if (! $user) {
             Log::warning("Attempted to sync password for non-existent user: {$email}");
+
             return false;
         }
-        
+
         $user->password = Hash::make($password);
         $success = $user->save();
-        
+
         if ($success) {
             Log::info("Password synced successfully for AuthCentral user: {$email}");
         } else {
             Log::error("Failed to sync password for AuthCentral user: {$email}");
         }
-        
+
         return $success;
     }
 
     /**
      * Check if a user likely came from AuthCentral (has random password pattern).
-     *
-     * @param User $user
-     * @return bool
      */
     public function isLikelyAuthCentralUser(User $user): bool
     {
         // This is a heuristic - AuthCentral users typically have:
         // 1. Random password that user wouldn't know
         // 2. May lack certain profile fields set during regular registration
-        
+
         // For now, we'll check if user has roles that suggest AuthCentral origin
         // This could be enhanced with additional metadata
         $authCentralRoles = $this->getRoleConfig()['authcentral_roles'] ?? ['Tutor', 'Super Admin', 'Admin'];
-        
+
         return $user->hasAnyRole($authCentralRoles);
     }
 }

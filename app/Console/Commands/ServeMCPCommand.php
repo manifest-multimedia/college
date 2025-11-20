@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\Communication\Chat\MCP\ExamManagementMCPService;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class ServeMCPCommand extends Command
@@ -35,8 +35,8 @@ class ServeMCPCommand extends Command
         $port = $this->option('port');
 
         $this->info("Starting MCP Server on {$host}:{$port}");
-        $this->info("Available tools:");
-        
+        $this->info('Available tools:');
+
         foreach ($this->mcpService->getTools() as $tool) {
             $this->line("- {$tool['name']}: {$tool['description']}");
         }
@@ -59,11 +59,11 @@ class ServeMCPCommand extends Command
         socket_listen($socket, 5);
 
         $this->info("MCP Server running at http://{$host}:{$port}");
-        $this->info("Press Ctrl+C to stop");
+        $this->info('Press Ctrl+C to stop');
 
         while (true) {
             $client = socket_accept($socket);
-            
+
             if ($client) {
                 $this->handleRequest($client);
                 socket_close($client);
@@ -91,12 +91,12 @@ class ServeMCPCommand extends Command
             // Parse request
             $lines = explode("\r\n", $request);
             $firstLine = $lines[0] ?? '';
-            
+
             if (strpos($firstLine, 'POST') === 0) {
                 // Extract JSON body
                 $bodyStart = strpos($request, "\r\n\r\n") + 4;
                 $body = substr($request, $bodyStart);
-                
+
                 $this->handleMCPRequest($client, $body);
             } elseif (strpos($firstLine, 'GET') === 0) {
                 // Handle health check or capabilities request
@@ -116,9 +116,10 @@ class ServeMCPCommand extends Command
     private function handleMCPRequest($client, string $body): void
     {
         $data = json_decode($body, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             $this->sendResponse($client, 400, 'Invalid JSON');
+
             return;
         }
 
@@ -139,8 +140,8 @@ class ServeMCPCommand extends Command
                     'id' => $data['id'] ?? null,
                     'error' => [
                         'code' => -32601,
-                        'message' => 'Method not found'
-                    ]
+                        'message' => 'Method not found',
+                    ],
                 ];
         }
 
@@ -156,14 +157,14 @@ class ServeMCPCommand extends Command
             $capabilities = [
                 'server' => [
                     'name' => 'Exam Management MCP Server',
-                    'version' => '1.0.0'
+                    'version' => '1.0.0',
                 ],
                 'capabilities' => [
-                    'tools' => true
+                    'tools' => true,
                 ],
-                'tools' => $this->mcpService->getTools()
+                'tools' => $this->mcpService->getTools(),
             ];
-            
+
             $this->sendJSONResponse($client, $capabilities);
         } elseif (strpos($requestLine, '/health') !== false) {
             $this->sendJSONResponse($client, ['status' => 'healthy', 'timestamp' => now()->toISOString()]);
@@ -184,14 +185,14 @@ class ServeMCPCommand extends Command
                 'protocolVersion' => '2024-11-05',
                 'capabilities' => [
                     'tools' => [
-                        'listChanged' => false
-                    ]
+                        'listChanged' => false,
+                    ],
                 ],
                 'serverInfo' => [
                     'name' => 'Exam Management MCP Server',
-                    'version' => '1.0.0'
-                ]
-            ]
+                    'version' => '1.0.0',
+                ],
+            ],
         ];
     }
 
@@ -204,8 +205,8 @@ class ServeMCPCommand extends Command
             'jsonrpc' => '2.0',
             'id' => $data['id'] ?? null,
             'result' => [
-                'tools' => $this->mcpService->getTools()
-            ]
+                'tools' => $this->mcpService->getTools(),
+            ],
         ];
     }
 
@@ -219,7 +220,7 @@ class ServeMCPCommand extends Command
         $arguments = $params['arguments'] ?? [];
 
         $this->line("Tool call: {$toolName}");
-        
+
         $result = $this->mcpService->handleToolCall($toolName, $arguments);
 
         return [
@@ -229,10 +230,10 @@ class ServeMCPCommand extends Command
                 'content' => [
                     [
                         'type' => 'text',
-                        'text' => json_encode($result, JSON_PRETTY_PRINT)
-                    ]
-                ]
-            ]
+                        'text' => json_encode($result, JSON_PRETTY_PRINT),
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -243,7 +244,7 @@ class ServeMCPCommand extends Command
     {
         $response = "HTTP/1.1 {$code} {$message}\r\n";
         $response .= "Content-Type: {$contentType}\r\n";
-        $response .= "Content-Length: " . strlen($message) . "\r\n";
+        $response .= 'Content-Length: '.strlen($message)."\r\n";
         $response .= "Access-Control-Allow-Origin: *\r\n";
         $response .= "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n";
         $response .= "Access-Control-Allow-Headers: Content-Type\r\n";

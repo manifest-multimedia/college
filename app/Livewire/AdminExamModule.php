@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\ExamSession;
 use App\Models\Exam;
+use App\Models\ExamSession;
 use App\Models\Student;
 use App\Models\User;
 use Livewire\Component;
@@ -11,7 +11,9 @@ use Livewire\Component;
 class AdminExamModule extends Component
 {
     public $selected_student = null;
+
     public $selected_exam = null;
+
     public $selected_session = null;
 
     public function render()

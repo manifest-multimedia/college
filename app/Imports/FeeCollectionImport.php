@@ -12,7 +12,6 @@ class FeeCollectionImport implements ToCollection, WithHeadingRow
     /**
      * Handle the collection of rows from the Excel file.
      *
-     * @param Collection $rows
      * @return void
      */
     public function collection(Collection $rows)

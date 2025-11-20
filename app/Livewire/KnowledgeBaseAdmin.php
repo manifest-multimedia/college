@@ -2,34 +2,44 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\KnowledgeBaseArticle;
 use App\Models\KnowledgeBaseCategory;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class KnowledgeBaseAdmin extends Component
 {
     use WithPagination;
 
     public $categories;
+
     public $showModal = false;
+
     public $editMode = false;
+
     public $articleId;
-    
+
     // Form fields
     public $title = '';
+
     public $knowledge_base_category_id = '';
+
     public $excerpt = '';
+
     public $content = '';
+
     public $is_published = false;
+
     public $is_featured = false;
+
     public $meta_tags = [];
-    
+
     // Filters
     public $searchTerm = '';
+
     public $categoryFilter = '';
+
     public $statusFilter = '';
 
     protected $paginationTheme = 'bootstrap';
@@ -46,7 +56,7 @@ class KnowledgeBaseAdmin extends Component
     public function mount()
     {
         // Check authorization
-        if (!auth()->user()->hasAnyRole(['System', 'IT Manager', 'Super Admin'])) {
+        if (! auth()->user()->hasAnyRole(['System', 'IT Manager', 'Super Admin'])) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -60,10 +70,10 @@ class KnowledgeBaseAdmin extends Component
 
         // Apply search filter
         if ($this->searchTerm) {
-            $query->where(function($q) {
-                $q->where('title', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('excerpt', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('content', 'like', '%' . $this->searchTerm . '%');
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('excerpt', 'like', '%'.$this->searchTerm.'%')
+                    ->orWhere('content', 'like', '%'.$this->searchTerm.'%');
             });
         }
 
@@ -113,7 +123,7 @@ class KnowledgeBaseAdmin extends Component
     public function openEditModal($articleId)
     {
         $article = KnowledgeBaseArticle::withTrashed()->findOrFail($articleId);
-        
+
         $this->articleId = $article->id;
         $this->title = $article->title;
         $this->knowledge_base_category_id = $article->knowledge_base_category_id;
@@ -122,7 +132,7 @@ class KnowledgeBaseAdmin extends Component
         $this->is_published = $article->is_published;
         $this->is_featured = $article->is_featured;
         $this->meta_tags = $article->meta_tags ?? [];
-        
+
         $this->editMode = true;
         $this->showModal = true;
     }
@@ -167,8 +177,8 @@ class KnowledgeBaseAdmin extends Component
     {
         $article = KnowledgeBaseArticle::findOrFail($articleId);
         $article->update([
-            'is_published' => !$article->is_published,
-            'published_at' => !$article->is_published ? now() : $article->published_at,
+            'is_published' => ! $article->is_published,
+            'published_at' => ! $article->is_published ? now() : $article->published_at,
             'updated_by' => auth()->id(),
         ]);
 
@@ -180,7 +190,7 @@ class KnowledgeBaseAdmin extends Component
     {
         $article = KnowledgeBaseArticle::findOrFail($articleId);
         $article->update([
-            'is_featured' => !$article->is_featured,
+            'is_featured' => ! $article->is_featured,
             'updated_by' => auth()->id(),
         ]);
 

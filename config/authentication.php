@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option defines the default authentication method for the application.
-    | 
+    |
     | Supported methods:
     | - "authcentral": Uses AuthCentral service for authentication
     | - "regular": Uses standard Laravel username/password authentication

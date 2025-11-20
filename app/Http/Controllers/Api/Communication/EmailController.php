@@ -57,7 +57,7 @@ class EmailController extends Controller
                 'bcc' => $request->input('bcc'),
                 'template' => $request->input('template'),
             ];
-            
+
             if ($request->has('attachments')) {
                 $options['attachments'] = $request->input('attachments');
             }
@@ -78,7 +78,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send email: ' . $e->getMessage(),
+                'message' => 'Failed to send email: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -115,7 +115,7 @@ class EmailController extends Controller
                 'bcc' => $request->input('bcc'),
                 'template' => $request->input('template'),
             ];
-            
+
             if ($request->has('attachments')) {
                 $options['attachments'] = $request->input('attachments');
             }
@@ -135,7 +135,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send bulk email: ' . $e->getMessage(),
+                'message' => 'Failed to send bulk email: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -171,7 +171,7 @@ class EmailController extends Controller
                 'bcc' => $request->input('bcc'),
                 'template' => $request->input('template'),
             ];
-            
+
             if ($request->has('attachments')) {
                 $options['attachments'] = $request->input('attachments');
             }
@@ -192,7 +192,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send group email: ' . $e->getMessage(),
+                'message' => 'Failed to send group email: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -209,17 +209,17 @@ class EmailController extends Controller
             if ($request->has('type')) {
                 $query->where('type', $request->input('type'));
             }
-            
+
             if ($request->has('status')) {
                 $query->where('status', $request->input('status'));
             }
-            
+
             if ($request->has('recipient')) {
-                $query->where('recipient', 'like', '%' . $request->input('recipient') . '%');
+                $query->where('recipient', 'like', '%'.$request->input('recipient').'%');
             }
-            
+
             if ($request->has('subject')) {
-                $query->where('subject', 'like', '%' . $request->input('subject') . '%');
+                $query->where('subject', 'like', '%'.$request->input('subject').'%');
             }
 
             // Pagination
@@ -237,7 +237,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get email logs: ' . $e->getMessage(),
+                'message' => 'Failed to get email logs: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -269,7 +269,7 @@ class EmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get recipient lists: ' . $e->getMessage(),
+                'message' => 'Failed to get recipient lists: '.$e->getMessage(),
             ], 500);
         }
     }

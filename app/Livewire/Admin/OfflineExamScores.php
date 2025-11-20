@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Admin;
 
-use Livewire\Component;
-use Livewire\WithPagination;
+use App\Exports\OfflineExamScoresExport;
+use App\Models\AcademicYear;
+use App\Models\CollegeClass;
 use App\Models\OfflineExam;
 use App\Models\OfflineExamScore;
-use App\Models\Student;
-use App\Models\CollegeClass;
-use App\Models\AcademicYear;
 use App\Models\Semester;
-use App\Exports\OfflineExamScoresExport;
+use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
 class OfflineExamScores extends Component
@@ -21,12 +21,17 @@ class OfflineExamScores extends Component
 
     // Form properties
     public $selectedExamId = null;
+
     public $selectedClassId = null;
+
     public $selectedAcademicYearId = null;
+
     public $selectedSemesterId = null;
+
     public $showForm = false;
+
     public $editingScore = null;
-    
+
     // Score form properties
     public $scoreForm = [
         'student_id' => null,
@@ -38,12 +43,16 @@ class OfflineExamScores extends Component
 
     // Bulk entry properties
     public $bulkEntry = false;
+
     public $studentScores = [];
+
     public $bulkProgress = 0;
+
     public $isBulkSaving = false;
 
     // Search and filter
     public $search = '';
+
     public $perPage = 15;
 
     protected $rules = [
@@ -84,7 +93,7 @@ class OfflineExamScores extends Component
 
     public function toggleBulkEntry()
     {
-        $this->bulkEntry = !$this->bulkEntry;
+        $this->bulkEntry = ! $this->bulkEntry;
         if ($this->bulkEntry) {
             $this->loadStudentsForBulkEntry();
         } else {
@@ -94,7 +103,7 @@ class OfflineExamScores extends Component
 
     public function loadStudentsForBulkEntry()
     {
-        if (!$this->selectedExamId || !$this->selectedClassId) {
+        if (! $this->selectedExamId || ! $this->selectedClassId) {
             return;
         }
 
@@ -104,7 +113,7 @@ class OfflineExamScores extends Component
             ->get();
 
         $this->studentScores = [];
-        
+
         foreach ($students as $student) {
             $existingScore = OfflineExamScore::where('offline_exam_id', $this->selectedExamId)
                 ->where('student_id', $student->id)
@@ -132,7 +141,7 @@ class OfflineExamScores extends Component
     public function editScore($scoreId)
     {
         $score = OfflineExamScore::with('student')->findOrFail($scoreId);
-        
+
         $this->scoreForm = [
             'student_id' => $score->student_id,
             'score' => $score->score,
@@ -149,12 +158,13 @@ class OfflineExamScores extends Component
     {
         $this->validate();
 
-        if (!$this->selectedExamId) {
+        if (! $this->selectedExamId) {
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'Please select an offline exam first.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
+
             return;
         }
 
@@ -162,31 +172,32 @@ class OfflineExamScores extends Component
             $data = $this->scoreForm;
             $data['offline_exam_id'] = $this->selectedExamId;
             $data['recorded_by'] = Auth::id();
-            
+
             if ($data['exam_date']) {
-                $data['exam_date'] = $data['exam_date'] . ' 00:00:00';
+                $data['exam_date'] = $data['exam_date'].' 00:00:00';
             }
 
             if ($this->editingScore) {
                 $score = OfflineExamScore::findOrFail($this->editingScore);
-                
+
                 // Check if student is changing and if new combination already exists
                 if ($score->student_id != $data['student_id']) {
                     $existing = OfflineExamScore::where('offline_exam_id', $data['offline_exam_id'])
                         ->where('student_id', $data['student_id'])
                         ->where('id', '!=', $this->editingScore)
                         ->first();
-                        
+
                     if ($existing) {
                         $this->dispatch('notify', [
                             'type' => 'error',
                             'message' => 'A score already exists for this student in the selected exam.',
-                            'timer' => 3000
+                            'timer' => 3000,
                         ]);
+
                         return;
                     }
                 }
-                
+
                 $score->update($data);
                 $message = 'Score updated successfully.';
 
@@ -197,20 +208,21 @@ class OfflineExamScores extends Component
                     'student_id' => $data['student_id'],
                     'updated_by' => Auth::id(),
                     'old_score' => $score->getOriginal('score'),
-                    'new_score' => $data['score']
+                    'new_score' => $data['score'],
                 ]);
             } else {
                 // Check if score already exists for this student and exam
                 $existing = OfflineExamScore::where('offline_exam_id', $data['offline_exam_id'])
                     ->where('student_id', $data['student_id'])
                     ->first();
-                    
+
                 if ($existing) {
                     $this->dispatch('notify', [
                         'type' => 'error',
                         'message' => 'A score already exists for this student in the selected exam.',
-                        'timer' => 3000
+                        'timer' => 3000,
                     ]);
+
                     return;
                 }
 
@@ -223,14 +235,14 @@ class OfflineExamScores extends Component
                     'exam_id' => $data['offline_exam_id'],
                     'student_id' => $data['student_id'],
                     'score' => $data['score'],
-                    'recorded_by' => Auth::id()
+                    'recorded_by' => Auth::id(),
                 ]);
             }
 
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => $message,
-                'timer' => 3000
+                'timer' => 3000,
             ]);
 
             $this->resetForm();
@@ -242,36 +254,37 @@ class OfflineExamScores extends Component
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'data' => $data ?? null,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Error saving score: ' . $e->getMessage(),
-                'timer' => 5000
+                'message' => 'Error saving score: '.$e->getMessage(),
+                'timer' => 5000,
             ]);
         }
     }
 
     public function saveBulkScores()
     {
-        if (!$this->selectedExamId) {
+        if (! $this->selectedExamId) {
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'Please select an offline exam first.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
+
             return;
         }
 
         try {
             $this->isBulkSaving = true;
             $this->bulkProgress = 0;
-            
+
             $savedCount = 0;
             $errorCount = 0;
-            $totalScores = collect($this->studentScores)->filter(function($score) {
-                return !empty($score['score']);
+            $totalScores = collect($this->studentScores)->filter(function ($score) {
+                return ! empty($score['score']);
             })->count();
 
             foreach ($this->studentScores as $index => $studentScore) {
@@ -280,13 +293,15 @@ class OfflineExamScores extends Component
                 }
 
                 // Validate score
-                if (!is_numeric($studentScore['score']) || $studentScore['score'] < 0) {
+                if (! is_numeric($studentScore['score']) || $studentScore['score'] < 0) {
                     $errorCount++;
+
                     continue;
                 }
 
-                if (!is_numeric($studentScore['total_marks']) || $studentScore['total_marks'] < 1) {
+                if (! is_numeric($studentScore['total_marks']) || $studentScore['total_marks'] < 1) {
                     $errorCount++;
+
                     continue;
                 }
 
@@ -316,12 +331,12 @@ class OfflineExamScores extends Component
 
                     // Update progress
                     $this->bulkProgress = round(($savedCount / $totalScores) * 100);
-                    
+
                 } catch (\Exception $e) {
                     Log::error('Error saving individual bulk score', [
                         'error' => $e->getMessage(),
                         'student_id' => $studentScore['student_id'],
-                        'exam_id' => $this->selectedExamId
+                        'exam_id' => $this->selectedExamId,
                     ]);
                     $errorCount++;
                 }
@@ -336,13 +351,13 @@ class OfflineExamScores extends Component
                 'exam_id' => $this->selectedExamId,
                 'saved_count' => $savedCount,
                 'error_count' => $errorCount,
-                'saved_by' => Auth::id()
+                'saved_by' => Auth::id(),
             ]);
 
             $this->dispatch('notify', [
                 'type' => $errorCount > 0 ? 'warning' : 'success',
                 'message' => $message,
-                'timer' => 5000
+                'timer' => 5000,
             ]);
 
             $this->resetBulkEntry();
@@ -352,13 +367,13 @@ class OfflineExamScores extends Component
             Log::error('Error saving bulk offline exam scores', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'exam_id' => $this->selectedExamId
+                'exam_id' => $this->selectedExamId,
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Error saving bulk scores: ' . $e->getMessage(),
-                'timer' => 5000
+                'message' => 'Error saving bulk scores: '.$e->getMessage(),
+                'timer' => 5000,
             ]);
         } finally {
             $this->isBulkSaving = false;
@@ -375,19 +390,19 @@ class OfflineExamScores extends Component
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Score deleted successfully.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error deleting offline exam score', [
                 'error' => $e->getMessage(),
-                'score_id' => $scoreId
+                'score_id' => $scoreId,
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'Error deleting score.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
         }
     }
@@ -411,12 +426,13 @@ class OfflineExamScores extends Component
 
     public function exportScores()
     {
-        if (!$this->selectedExamId) {
+        if (! $this->selectedExamId) {
             $this->dispatch('notify', [
                 'type' => 'error',
                 'message' => 'Please select an exam to export scores.',
-                'timer' => 3000
+                'timer' => 3000,
             ]);
+
             return;
         }
 
@@ -424,14 +440,14 @@ class OfflineExamScores extends Component
             $exam = OfflineExam::with('course')->find($this->selectedExamId);
             $examName = $exam->title ?? 'Offline Exam';
             $courseName = $exam->course->name ?? 'Unknown Course';
-            
-            $filename = str_replace([' ', '/'], ['_', '-'], $examName . '_' . $courseName) . '_scores_' . now()->format('Y-m-d') . '.xlsx';
-            
+
+            $filename = str_replace([' ', '/'], ['_', '-'], $examName.'_'.$courseName).'_scores_'.now()->format('Y-m-d').'.xlsx';
+
             Log::info('Exporting offline exam scores', [
                 'exam_id' => $this->selectedExamId,
                 'class_id' => $this->selectedClassId,
                 'exported_by' => Auth::id(),
-                'filename' => $filename
+                'filename' => $filename,
             ]);
 
             return Excel::download(
@@ -443,13 +459,13 @@ class OfflineExamScores extends Component
             Log::error('Error exporting offline exam scores', [
                 'error' => $e->getMessage(),
                 'exam_id' => $this->selectedExamId,
-                'class_id' => $this->selectedClassId
+                'class_id' => $this->selectedClassId,
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'error',
-                'message' => 'Error exporting scores: ' . $e->getMessage(),
-                'timer' => 5000
+                'message' => 'Error exporting scores: '.$e->getMessage(),
+                'timer' => 5000,
             ]);
         }
     }
@@ -457,13 +473,13 @@ class OfflineExamScores extends Component
     public function render()
     {
         $offlineExams = OfflineExam::with('course')
-            ->when($this->selectedAcademicYearId, function($query) {
-                $query->whereHas('course', function($q) {
+            ->when($this->selectedAcademicYearId, function ($query) {
+                $query->whereHas('course', function ($q) {
                     $q->where('year_id', $this->selectedAcademicYearId);
                 });
             })
-            ->when($this->selectedSemesterId, function($query) {
-                $query->whereHas('course', function($q) {
+            ->when($this->selectedSemesterId, function ($query) {
+                $query->whereHas('course', function ($q) {
                     $q->where('semester_id', $this->selectedSemesterId);
                 });
             })
@@ -480,7 +496,7 @@ class OfflineExamScores extends Component
                 ->orderBy('student_id')
                 ->get()
                 ->mapWithKeys(function ($student) {
-                    return [$student->id => $student->student_id . ' - ' . $student->full_name];
+                    return [$student->id => $student->student_id.' - '.$student->full_name];
                 });
         }
 
@@ -490,16 +506,16 @@ class OfflineExamScores extends Component
                 ->where('offline_exam_id', $this->selectedExamId);
 
             if ($this->selectedClassId) {
-                $query->whereHas('student', function($q) {
+                $query->whereHas('student', function ($q) {
                     $q->where('college_class_id', $this->selectedClassId);
                 });
             }
 
             if ($this->search) {
-                $query->whereHas('student', function($q) {
-                    $q->where('student_id', 'like', '%' . $this->search . '%')
-                      ->orWhere('first_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('last_name', 'like', '%' . $this->search . '%');
+                $query->whereHas('student', function ($q) {
+                    $q->where('student_id', 'like', '%'.$this->search.'%')
+                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('last_name', 'like', '%'.$this->search.'%');
                 });
             }
 

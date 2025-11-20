@@ -4,27 +4,35 @@ namespace App\Livewire;
 
 use App\Models\Election;
 use App\Models\ElectionPosition;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ElectionPositionManager extends Component
 {
     use WithPagination;
 
     public $election;
+
     public $positions = [];
+
     public $newPositions = [];
 
     public $name;
+
     public $description;
+
     public $max_votes_allowed = 1;
+
     public $display_order = 0;
 
     public $positionId;
+
     public $isEditing = false;
+
     public $confirmingDeletion = false;
+
     public $positionIdToDelete;
 
     protected $rules = [
@@ -65,7 +73,7 @@ class ElectionPositionManager extends Component
     {
         Log::info('saveNewPositions method called');
         Log::debug('New positions data:', $this->newPositions);
-        
+
         try {
             $this->validate([
                 'newPositions.*.name' => 'required|string|max:255',
@@ -73,15 +81,15 @@ class ElectionPositionManager extends Component
                 'newPositions.*.max_votes_allowed' => 'required|integer|min:1|max:10',
                 'newPositions.*.display_order' => 'required|integer|min:0',
             ]);
-            
+
             Log::info('Validation passed successfully');
 
             DB::beginTransaction();
-            
+
             $positionCount = 0;
             foreach ($this->newPositions as $position) {
                 Log::info('Creating position:', ['name' => $position['name']]);
-                
+
                 $newPosition = ElectionPosition::create([
                     'election_id' => $this->election->id,
                     'name' => $position['name'],
@@ -90,7 +98,7 @@ class ElectionPositionManager extends Component
                     'display_order' => $position['display_order'],
                     'is_active' => true,
                 ]);
-                
+
                 Log::info('Position created successfully', ['id' => $newPosition->id]);
                 $positionCount++;
 
@@ -99,26 +107,26 @@ class ElectionPositionManager extends Component
                     'admin',
                     auth()->id(),
                     'position_created',
-                    'Created position: ' . $newPosition->name,
+                    'Created position: '.$newPosition->name,
                     ['position_id' => $newPosition->id]
                 );
             }
 
             DB::commit();
             Log::info('Transaction committed successfully', ['positions_created' => $positionCount]);
-            
+
             $this->newPositions = [];
             $this->loadPositions();
             $this->dispatch('alert', [
                 'type' => 'success',
-                'message' => 'Positions created successfully!'
+                'message' => 'Positions created successfully!',
             ]);
-            
+
             Log::info('Alert dispatched and component state reset');
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed', [
                 'errors' => $e->errors(),
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         } catch (\Exception $e) {
@@ -127,15 +135,15 @@ class ElectionPositionManager extends Component
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
-            
+
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'An error occurred: '.$e->getMessage(),
             ]);
         }
-        
+
         Log::info('saveNewPositions method completed');
     }
 
@@ -158,14 +166,14 @@ class ElectionPositionManager extends Component
     public function save()
     {
         $validated = $this->validate();
-        
-        Log::info('Updating position ID: ' . $this->positionId);
+
+        Log::info('Updating position ID: '.$this->positionId);
         Log::debug('Position update data:', $validated);
-        
+
         DB::beginTransaction();
         try {
             $position = ElectionPosition::findOrFail($this->positionId);
-            
+
             // Map the validated fields to the correct database columns
             $position->update([
                 'name' => $validated['name'],
@@ -173,25 +181,25 @@ class ElectionPositionManager extends Component
                 'max_selections' => $validated['max_votes_allowed'],
                 'display_order' => $validated['display_order'],
             ]);
-            
+
             \App\Models\ElectionAuditLog::log(
                 $this->election,
                 'admin',
                 auth()->id(),
                 'position_updated',
-                'Updated position: ' . $position->name,
+                'Updated position: '.$position->name,
                 ['position_id' => $position->id]
             );
-            
+
             DB::commit();
             $this->reset(['name', 'description', 'max_votes_allowed', 'display_order', 'isEditing', 'positionId']);
             $this->loadPositions();
-            
+
             $this->dispatch('alert', [
                 'type' => 'success',
-                'message' => 'Position updated successfully!'
+                'message' => 'Position updated successfully!',
             ]);
-            
+
             Log::info('Position updated successfully', ['id' => $position->id]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -199,12 +207,12 @@ class ElectionPositionManager extends Component
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
             ]);
-            
+
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'An error occurred: '.$e->getMessage(),
             ]);
         }
     }
@@ -219,48 +227,49 @@ class ElectionPositionManager extends Component
     {
         $position = ElectionPosition::findOrFail($this->positionIdToDelete);
         $positionName = $position->name;
-        
+
         DB::beginTransaction();
         try {
             // Check if there are candidates or votes for this position
             $candidatesCount = $position->candidates()->count();
             $votesCount = $position->votes()->count();
-            
+
             if ($candidatesCount > 0 || $votesCount > 0) {
                 $this->dispatch('alert', [
                     'type' => 'error',
-                    'message' => 'Cannot delete this position. It has candidates or votes associated with it.'
+                    'message' => 'Cannot delete this position. It has candidates or votes associated with it.',
                 ]);
                 $this->confirmingDeletion = false;
                 $this->positionIdToDelete = null;
+
                 return;
             }
-            
+
             \App\Models\ElectionAuditLog::log(
                 $this->election,
                 'admin',
                 auth()->id(),
                 'position_deleted',
-                'Deleted position: ' . $positionName,
+                'Deleted position: '.$positionName,
                 ['position_id' => $position->id]
             );
-            
+
             $position->delete();
             DB::commit();
-            
+
             $this->confirmingDeletion = false;
             $this->positionIdToDelete = null;
             $this->loadPositions();
-            
+
             $this->dispatch('alert', [
                 'type' => 'success',
-                'message' => 'Position deleted successfully!'
+                'message' => 'Position deleted successfully!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('alert', [
                 'type' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'An error occurred: '.$e->getMessage(),
             ]);
         }
     }

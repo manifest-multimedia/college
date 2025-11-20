@@ -13,18 +13,18 @@ return new class extends Migration
     {
         Schema::table('exam_sessions', function (Blueprint $table) {
             // Check if columns don't exist before adding them
-            if (!Schema::hasColumn('exam_sessions', 'extra_time_minutes')) {
+            if (! Schema::hasColumn('exam_sessions', 'extra_time_minutes')) {
                 $table->integer('extra_time_minutes')->default(0)->after('completed_at');
             }
-            
-            if (!Schema::hasColumn('exam_sessions', 'extra_time_added_by')) {
+
+            if (! Schema::hasColumn('exam_sessions', 'extra_time_added_by')) {
                 $table->bigInteger('extra_time_added_by')->nullable()->after('extra_time_minutes');
             }
-            
-            if (!Schema::hasColumn('exam_sessions', 'extra_time_added_at')) {
+
+            if (! Schema::hasColumn('exam_sessions', 'extra_time_added_at')) {
                 $table->timestamp('extra_time_added_at')->nullable()->after('extra_time_added_by');
             }
-            
+
             // Note: We're removing the foreign key constraint to avoid compatibility issues
         });
     }

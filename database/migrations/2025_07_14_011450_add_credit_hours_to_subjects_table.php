@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('subjects', function (Blueprint $table) {
             $table->decimal('credit_hours', 3, 1)->default(3.0)->after('college_class_id')
-                  ->comment('Credit hours for this subject (e.g., 3.0, 4.5)');
+                ->comment('Credit hours for this subject (e.g., 3.0, 4.5)');
         });
     }
 

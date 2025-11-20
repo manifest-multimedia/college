@@ -4,19 +4,20 @@ namespace App\Exports;
 
 use App\Models\OfflineExamScore;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OfflineExamScoresExport implements FromCollection, WithHeadings, WithMapping, WithTitle, WithStyles, ShouldAutoSize
+class OfflineExamScoresExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected $examId;
+
     protected $classId;
 
     public function __construct($examId, $classId = null)
@@ -31,7 +32,7 @@ class OfflineExamScoresExport implements FromCollection, WithHeadings, WithMappi
             ->where('offline_exam_id', $this->examId);
 
         if ($this->classId) {
-            $query->whereHas('student', function($q) {
+            $query->whereHas('student', function ($q) {
                 $q->where('college_class_id', $this->classId);
             });
         }
@@ -47,13 +48,13 @@ class OfflineExamScoresExport implements FromCollection, WithHeadings, WithMappi
             $score->student->collegeClass->name ?? 'N/A',
             $score->score,
             $score->total_marks,
-            number_format($score->percentage, 1) . '%',
+            number_format($score->percentage, 1).'%',
             $score->grade_letter,
             $score->is_passed ? 'Passed' : 'Failed',
             $score->remarks ?? '',
             $score->recordedBy->name ?? 'N/A',
             $score->created_at->format('d/m/Y H:i'),
-            $score->exam_date ? $score->exam_date->format('d/m/Y') : 'N/A'
+            $score->exam_date ? $score->exam_date->format('d/m/Y') : 'N/A',
         ];
     }
 
@@ -71,7 +72,7 @@ class OfflineExamScoresExport implements FromCollection, WithHeadings, WithMappi
             'Remarks',
             'Recorded By',
             'Recorded Date',
-            'Exam Date'
+            'Exam Date',
         ];
     }
 
@@ -91,7 +92,7 @@ class OfflineExamScoresExport implements FromCollection, WithHeadings, WithMappi
                 ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '366092']
+                    'startColor' => ['rgb' => '366092'],
                 ],
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,

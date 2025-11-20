@@ -2,16 +2,18 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Election;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
 
 class PublicElections extends Component
 {
     public $activeElections;
+
     public $upcomingElections;
+
     public $completedElections;
-    
+
     public function mount()
     {
         try {
@@ -34,7 +36,7 @@ class PublicElections extends Component
                 ->orderBy('end_time', 'desc') // Show most recently ended first
                 ->limit(3) // Only show 3 most recent completed elections
                 ->get();
-                
+
             Log::info('Public Elections page loaded', [
                 'active_count' => $this->activeElections->count(),
                 'upcoming_count' => $this->upcomingElections->count(),
@@ -43,14 +45,14 @@ class PublicElections extends Component
         } catch (\Exception $e) {
             Log::error('Error loading public elections', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             $this->activeElections = collect();
             $this->upcomingElections = collect();
             $this->completedElections = collect();
         }
     }
-    
+
     public function render()
     {
         return view('livewire.public-elections')

@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -26,7 +26,7 @@ return new class extends Migration
                 SET s1.student_id = CONCAT(s1.student_id, '_', s1.id)
                 WHERE s1.id != s2.min_id
             ");
-            
+
             // Add unique constraint on student_id (only for non-null values)
             $table->unique('student_id');
         });

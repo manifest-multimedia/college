@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Student;
 use App\Models\CollegeClass;
+use App\Models\Student;
+use Illuminate\Database\Seeder;
 
 class CorrectionSeeder extends Seeder
 {
@@ -15,23 +14,23 @@ class CorrectionSeeder extends Seeder
     public function run()
     {
         // Dataset Location: public/datasets/students.csv
-        $student_id = "PNMTC/DA/RGN/22/23/218";
-        $first_name = "Leticia";
-        $last_name = "Agyei";
-        $other_names = "Abankwa";
-        $gender = "female";
-        $date_of_birth = "1998-11-01";
-        $country_of_residence = "GHANA";
-        $marital_status = "single";
-        $home_region = "Bono";
-        $home_town = "Dormaa Ahenkro";
-        $religion = "Christian";
-        $mobile_number = "024 123 4567";
-        $email = "letabankwa1@gmail.com";
-        $postal_address = "POST OFFICE BOX 4";
-        $gps_address = "BD-0004-9981";
-        $residential_address = "SM 27,DORMAA AHENKRO";
-        $class = "Registered General Nursing";
+        $student_id = 'PNMTC/DA/RGN/22/23/218';
+        $first_name = 'Leticia';
+        $last_name = 'Agyei';
+        $other_names = 'Abankwa';
+        $gender = 'female';
+        $date_of_birth = '1998-11-01';
+        $country_of_residence = 'GHANA';
+        $marital_status = 'single';
+        $home_region = 'Bono';
+        $home_town = 'Dormaa Ahenkro';
+        $religion = 'Christian';
+        $mobile_number = '024 123 4567';
+        $email = 'letabankwa1@gmail.com';
+        $postal_address = 'POST OFFICE BOX 4';
+        $gps_address = 'BD-0004-9981';
+        $residential_address = 'SM 27,DORMAA AHENKRO';
+        $class = 'Registered General Nursing';
 
         $student = Student::firstOrCreate([
             'student_id' => ucfirst(strtolower($student_id)),

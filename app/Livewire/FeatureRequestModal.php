@@ -2,14 +2,15 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class FeatureRequestModal extends Component
 {
     public $feature_title;
+
     public $feature_description;
 
     #[On('showFeatureRequestModal')]
@@ -19,7 +20,8 @@ class FeatureRequestModal extends Component
     }
 
     #[On('closeFeatureRequestModal')]
-    public function hideModal(){
+    public function hideModal()
+    {
         $this->reset(['feature_title', 'feature_description']);
     }
 
@@ -51,7 +53,7 @@ class FeatureRequestModal extends Component
         // Send an Email to johnson@pnmtc.edu.gh with request details
         Mail::send('emails.feature_request', $validatedData, function ($message) use ($validatedData) {
             $message->to('johnson@pnmtc.edu.gh')
-                    ->subject('New Feature Request: ' . $validatedData['feature_title']);
+                ->subject('New Feature Request: '.$validatedData['feature_title']);
         });
 
         session()->flash('success', 'Congratulations! Your new feature request has been successfully sent.');

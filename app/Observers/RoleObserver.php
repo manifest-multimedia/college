@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class RoleObserver
 {
@@ -40,9 +40,10 @@ class RoleObserver
         try {
             $webhookUrl = config('auth.authcentral.webhook_url') ?: env('AUTHCENTRAL_WEBHOOK_URL');
             $apiKey = config('auth.authcentral.webhook_api_key') ?: env('AUTHCENTRAL_WEBHOOK_API_KEY');
-            
-            if (!$webhookUrl || !$apiKey) {
+
+            if (! $webhookUrl || ! $apiKey) {
                 Log::warning('AuthCentral webhook not configured');
+
                 return;
             }
 
@@ -68,7 +69,7 @@ class RoleObserver
                     ],
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Failed to send role webhook to AuthCentral', [
                     'role_id' => $role->id,
                     'event_type' => $eventType,
@@ -91,18 +92,21 @@ class RoleObserver
      */
     public function pivotAttached($role, $relationName, $pivotIds, $pivotIdsAttributes)
     {
-        if ($relationName !== 'permissions') return;
+        if ($relationName !== 'permissions') {
+            return;
+        }
 
         // Get permission details
         $permissions = $role->permissions()->whereIn('id', $pivotIds)->get();
-        
+
         foreach ($permissions as $permission) {
             try {
                 $webhookUrl = config('auth.authcentral.webhook_url') ?: env('AUTHCENTRAL_WEBHOOK_URL');
                 $apiKey = config('auth.authcentral.webhook_api_key') ?: env('AUTHCENTRAL_WEBHOOK_API_KEY');
-                
-                if (!$webhookUrl || !$apiKey) {
+
+                if (! $webhookUrl || ! $apiKey) {
                     Log::warning('AuthCentral webhook not configured');
+
                     return;
                 }
 
@@ -138,18 +142,21 @@ class RoleObserver
      */
     public function pivotDetached($role, $relationName, $pivotIds)
     {
-        if ($relationName !== 'permissions') return;
+        if ($relationName !== 'permissions') {
+            return;
+        }
 
         // Get permission details (from detached records)
         $permissions = \Spatie\Permission\Models\Permission::whereIn('id', $pivotIds)->get();
-        
+
         foreach ($permissions as $permission) {
             try {
                 $webhookUrl = config('auth.authcentral.webhook_url') ?: env('AUTHCENTRAL_WEBHOOK_URL');
                 $apiKey = config('auth.authcentral.webhook_api_key') ?: env('AUTHCENTRAL_WEBHOOK_API_KEY');
-                
-                if (!$webhookUrl || !$apiKey) {
+
+                if (! $webhookUrl || ! $apiKey) {
                     Log::warning('AuthCentral webhook not configured');
+
                     return;
                 }
 

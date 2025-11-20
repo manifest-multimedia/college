@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Services\AuthenticationService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class RegularAuthController extends Controller
 {
@@ -21,8 +21,6 @@ class RegularAuthController extends Controller
     /**
      * Handle a regular login request.
      *
-     * @param Request $request
-     * @return RedirectResponse
      * @throws ValidationException
      */
     public function login(Request $request): RedirectResponse
@@ -55,7 +53,7 @@ class RegularAuthController extends Controller
         // Attempt authentication
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            
+
             $user = Auth::user();
             Log::info('Regular authentication successful', [
                 'user_id' => $user->id,
@@ -81,27 +79,24 @@ class RegularAuthController extends Controller
 
         // Check if user exists to provide better error messaging
         $user = \App\Models\User::where('email', $request->email)->first();
-        
+
         // Generic authentication failure message for security
         // Don't reveal whether user exists or password is wrong
         throw ValidationException::withMessages([
             'email' => [
-                'Authentication failed. Please check your credentials and try again. ' .
-                'If your account was created with AuthCentral, you may also use the "Sign In with AuthCentral" option above.'
+                'Authentication failed. Please check your credentials and try again. '.
+                'If your account was created with AuthCentral, you may also use the "Sign In with AuthCentral" option above.',
             ],
         ]);
     }
 
     /**
      * Handle a logout request.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function logout(Request $request): RedirectResponse
     {
         $user = Auth::user();
-        
+
         if ($user) {
             Log::info('User logged out', [
                 'user_id' => $user->id,
@@ -125,13 +120,13 @@ class RegularAuthController extends Controller
      */
     public function showStaffRegistrationForm()
     {
-        if (!$this->authService->isRegular()) {
+        if (! $this->authService->isRegular()) {
             return redirect()->route('login')
                 ->withErrors(['registration' => 'Staff registration is not available with the current authentication method.']);
         }
 
         $config = $this->authService->getRegularConfig();
-        if (!($config['allow_registration'] ?? false)) {
+        if (! ($config['allow_registration'] ?? false)) {
             return redirect()->route('login')
                 ->withErrors(['registration' => 'Staff registration is currently disabled.']);
         }
@@ -152,19 +147,16 @@ class RegularAuthController extends Controller
 
     /**
      * Handle a staff registration request.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function registerStaff(Request $request): RedirectResponse
     {
-        if (!$this->authService->isRegular()) {
+        if (! $this->authService->isRegular()) {
             return redirect()->route('login')
                 ->withErrors(['registration' => 'Staff registration is not available with the current authentication method.']);
         }
 
         $config = $this->authService->getRegularConfig();
-        if (!($config['allow_registration'] ?? false)) {
+        if (! ($config['allow_registration'] ?? false)) {
             return redirect()->route('login')
                 ->withErrors(['registration' => 'Staff registration is currently disabled.']);
         }
@@ -200,9 +192,6 @@ class RegularAuthController extends Controller
 
     /**
      * Handle a student registration request.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function registerStudent(Request $request): RedirectResponse
     {
@@ -248,9 +237,6 @@ class RegularAuthController extends Controller
 
     /**
      * Handle a registration request (legacy - redirects to staff registration).
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function register(Request $request): RedirectResponse
     {

@@ -17,7 +17,7 @@ class Office extends Model
         'phone',
         'email',
         'description',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [

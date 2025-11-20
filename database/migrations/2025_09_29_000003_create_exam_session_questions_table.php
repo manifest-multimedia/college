@@ -21,10 +21,10 @@ return new class extends Migration
             // Foreign key constraints
             $table->foreign('exam_session_id')->references('id')->on('exam_sessions')->onDelete('cascade');
             $table->foreign('question_id')->references('id')->on('questions')->onDelete('cascade');
-            
+
             // Unique constraint to prevent duplicate questions in same session
             $table->unique(['exam_session_id', 'question_id']);
-            
+
             // Index for ordering
             $table->index(['exam_session_id', 'display_order']);
         });

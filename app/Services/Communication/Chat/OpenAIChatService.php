@@ -3,7 +3,6 @@
 namespace App\Services\Communication\Chat;
 
 use App\Models\ChatMessage;
-use App\Models\ChatSession;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -15,8 +14,9 @@ class OpenAIChatService extends AbstractChatService
      * OpenAI API URLs and model (non-sensitive configuration)
      */
     protected $apiUrl;
+
     protected $model;
-    
+
     /**
      * OpenAI Files Service instance
      */
@@ -31,12 +31,10 @@ class OpenAIChatService extends AbstractChatService
         $this->model = Config::get('services.openai.model', 'gpt-4-turbo');
         $this->openAIFilesService = $openAIFilesService;
     }
-    
+
     /**
      * Get the API key dynamically from config
      * This prevents caching of sensitive credentials in singleton instances
-     * 
-     * @return string|null
      */
     protected function getApiKey(): ?string
     {
@@ -45,11 +43,6 @@ class OpenAIChatService extends AbstractChatService
 
     /**
      * Get a response from the AI model.
-     *
-     * @param int $chatSessionId
-     * @param string $message
-     * @param array $options
-     * @return array
      */
     protected function getAiResponse(int $chatSessionId, string $message, array $options = []): array
     {
@@ -83,25 +76,25 @@ class OpenAIChatService extends AbstractChatService
                 // Get document file ID from OpenAI if available
                 $openAiFileId = $options['openai_file_id'] ?? null;
                 $documentPath = $options['document_path'] ?? null;
-                $documentInfo = "This message contains a document reference. ";
-                
+                $documentInfo = 'This message contains a document reference. ';
+
                 if ($openAiFileId) {
                     // If we have an OpenAI file ID, include it in the message
                     $documentInfo .= "Document has been processed and is available as OpenAI file ID: $openAiFileId. ";
-                    
+
                     // Get file information from OpenAI to include additional context
                     $fileInfo = $this->openAIFilesService->retrieveFile($openAiFileId);
                     if ($fileInfo['success']) {
-                        $documentInfo .= "File details: " . json_encode($fileInfo['data']) . ". ";
+                        $documentInfo .= 'File details: '.json_encode($fileInfo['data']).'. ';
                     }
-                } else if ($documentPath) {
+                } elseif ($documentPath) {
                     // Fallback if file wasn't uploaded to OpenAI
                     $documentInfo .= "Document can be accessed at path: $documentPath. ";
                 }
-                
+
                 // Combine the document info with the user message
-                $fullMessage = $documentInfo . $message;
-                
+                $fullMessage = $documentInfo.$message;
+
                 $messages[] = [
                     'role' => 'user',
                     'content' => $fullMessage,
@@ -121,16 +114,16 @@ class OpenAIChatService extends AbstractChatService
                 'max_tokens' => $options['max_tokens'] ?? 1000,
                 'temperature' => $options['temperature'] ?? 0.7,
             ];
-            
+
             // If we have file references, add them to the request for models that support it
-            if (!empty($options['openai_file_id'])) {
+            if (! empty($options['openai_file_id'])) {
                 $model = $options['model'] ?? $this->model;
                 // Only add file references for models that support it
                 if (in_array($model, ['gpt-4-turbo', 'gpt-4', 'gpt-4o'])) {
                     $requestParams['file_ids'] = [$options['openai_file_id']];
                 }
             }
-            
+
             // Make API request to OpenAI
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->getApiKey()}",
@@ -141,7 +134,7 @@ class OpenAIChatService extends AbstractChatService
 
             if ($response->successful() && isset($responseData['choices'][0]['message']['content'])) {
                 $aiResponseText = $responseData['choices'][0]['message']['content'];
-                
+
                 return [
                     'success' => true,
                     'message' => $aiResponseText,
@@ -160,7 +153,7 @@ class OpenAIChatService extends AbstractChatService
 
             return [
                 'success' => false,
-                'message' => 'Failed to get AI response: ' . ($responseData['error']['message'] ?? 'Unknown error'),
+                'message' => 'Failed to get AI response: '.($responseData['error']['message'] ?? 'Unknown error'),
             ];
         } catch (\Exception $e) {
             Log::error('OpenAI service error', [
@@ -170,7 +163,7 @@ class OpenAIChatService extends AbstractChatService
 
             return [
                 'success' => false,
-                'message' => 'Error processing AI response: ' . $e->getMessage(),
+                'message' => 'Error processing AI response: '.$e->getMessage(),
             ];
         }
     }

@@ -2,19 +2,20 @@
 
 namespace App\Jobs;
 
+use App\Models\ExamSession;
+use App\Models\ScoredQuestion;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\ExamSession;
-use App\Models\ScoredQuestion;
 
 class ProcessExamSessionChunk implements ShouldQueue
 {
     use Batchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $sessionIds;
+
     protected $questionsPerSession;
 
     public function __construct($sessionIds, $questionsPerSession)
@@ -30,18 +31,18 @@ class ProcessExamSessionChunk implements ShouldQueue
         }
 
         ExamSession::with([
-            'student.user:id,name,student_id', 
+            'student.user:id,name,student_id',
             'exam.course:id,name',
             'scoredQuestions.question.options:id,question_id,is_correct',
-            'scoredQuestions.response:id,selected_option'
+            'scoredQuestions.response:id,selected_option',
         ])
-        ->whereIn('id', $this->sessionIds)
-        ->each(function ($session) {
-            // Process each session
-            $this->ensureScoredQuestionsExist($session);
-            // Calculate and store results
-            // ... existing processing logic ...
-        });
+            ->whereIn('id', $this->sessionIds)
+            ->each(function ($session) {
+                // Process each session
+                $this->ensureScoredQuestionsExist($session);
+                // Calculate and store results
+                // ... existing processing logic ...
+            });
     }
 
     protected function ensureScoredQuestionsExist($session)
@@ -57,7 +58,7 @@ class ProcessExamSessionChunk implements ShouldQueue
                 return [
                     'exam_session_id' => $session->id,
                     'question_id' => $response->question_id,
-                    'response_id' => $response->id
+                    'response_id' => $response->id,
                 ];
             });
 
@@ -65,4 +66,4 @@ class ProcessExamSessionChunk implements ShouldQueue
             $session->load('scoredQuestions.question.options', 'scoredQuestions.response');
         }
     }
-} 
+}

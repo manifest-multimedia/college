@@ -16,7 +16,8 @@ class CohortFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->words(2, true) . ' Cohort';
+        $name = fake()->words(2, true).' Cohort';
+
         return [
             'name' => $name,
             'description' => fake()->sentence(),
@@ -24,7 +25,7 @@ class CohortFactory extends Factory
             'is_active' => true,
             'is_deleted' => false,
             'created_by' => 'system',
-            'academic_year' => fake()->year() . '/' . (fake()->year() + 1),
+            'academic_year' => fake()->year().'/'.(fake()->year() + 1),
             'start_date' => fake()->date(),
             'end_date' => fake()->date(),
         ];

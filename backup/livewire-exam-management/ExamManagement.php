@@ -2,52 +2,71 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
+use App\Models\AcademicYear;
+use App\Models\CollegeClass;
 use App\Models\Exam;
 use App\Models\QuestionSet;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Subject;
-use App\Models\CollegeClass;
-use App\Models\Year;
 use App\Models\Semester;
-use App\Models\AcademicYear;
+use App\Models\Subject;
 use App\Models\User;
+use App\Models\Year;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Livewire\Component;
 
 class ExamManagement extends Component
 {
     public $course_code;
+
     public $exam_type = 'mcq'; // Default to 'mcq'
+
     public $exam_duration;
+
     public $exam_password;
+
     public $semester;
+
     public $class;
+
     public $year;
+
     public $academic_year_id;
+
     public $slug;
+
     public $user_id;
+
     public $questions_per_session;
+
     public $start_date;
+
     public $end_date;
+
     public $enable_proctoring = false;
+
     public $exam_title;
+
     public $exam_description;
+
     public $passing_mark;
-    
+
     // Question sets management
     public $availableQuestionSets = [];
+
     public $selectedQuestionSets = [];
+
     public $questionSetConfigs = [];
-    
+
     // Status options
     public $status = 'draft';
+
     public $statusOptions = [
         'draft' => 'Draft',
         'published' => 'Published',
         'ongoing' => 'Ongoing',
-        'completed' => 'Completed'
+        'completed' => 'Completed',
     ];
 
     // Validation rules for form input
@@ -93,10 +112,10 @@ class ExamManagement extends Component
         // Set default dates
         $this->start_date = now()->format('Y-m-d\TH:i');
         $this->end_date = now()->addDays(7)->format('Y-m-d\TH:i');
-        
+
         // Automatically generate an exam password
         $this->exam_password = $this->regeneratePassword();
-        
+
         // Set current academic year if available
         $currentAcademicYear = AcademicYear::where('is_current', true)->first();
         if ($currentAcademicYear) {
@@ -108,11 +127,11 @@ class ExamManagement extends Component
     {
         if ($value) {
             $this->loadQuestionSets();
-            
+
             // Set a default title based on the course
             $course = Subject::find($value);
             if ($course) {
-                $this->exam_title = $course->name . ' ' . ucfirst($this->exam_type) . ' Exam';
+                $this->exam_title = $course->name.' '.ucfirst($this->exam_type).' Exam';
             }
         } else {
             $this->availableQuestionSets = [];
@@ -120,7 +139,7 @@ class ExamManagement extends Component
             $this->questionSetConfigs = [];
         }
     }
-    
+
     // Handle updates to filter fields without affecting question sets
     public function updatedClass($value)
     {
@@ -135,7 +154,7 @@ class ExamManagement extends Component
             }
         }
     }
-    
+
     public function updatedYear($value)
     {
         // Only clear course selection if the current course doesn't belong to the new year
@@ -149,7 +168,7 @@ class ExamManagement extends Component
             }
         }
     }
-    
+
     public function updatedSemester($value)
     {
         // Only clear course selection if the current course doesn't belong to the new semester
@@ -163,7 +182,7 @@ class ExamManagement extends Component
             }
         }
     }
-    
+
     // User selection should not affect question sets
     public function updatedUserId($value)
     {
@@ -172,7 +191,7 @@ class ExamManagement extends Component
         Log::info('User ID updated', [
             'user_id' => $value,
             'available_question_sets_count' => count($this->availableQuestionSets),
-            'selected_question_sets_count' => count($this->selectedQuestionSets)
+            'selected_question_sets_count' => count($this->selectedQuestionSets),
         ]);
     }
 
@@ -182,19 +201,19 @@ class ExamManagement extends Component
             $newQuestionSets = QuestionSet::where('course_id', $this->course_code)
                 ->withCount('questions')
                 ->get();
-            
+
             $this->availableQuestionSets = $newQuestionSets;
-            
+
             // Only reset selections if the available sets have actually changed
             $newSetIds = $newQuestionSets->pluck('id')->toArray();
             $currentSelectedIds = $this->selectedQuestionSets;
-            
+
             // Remove any selected question sets that are no longer available
             $this->selectedQuestionSets = array_intersect($currentSelectedIds, $newSetIds);
-            
+
             // Clean up configurations for sets that are no longer available
             foreach ($this->questionSetConfigs as $setId => $config) {
-                if (!in_array($setId, $newSetIds)) {
+                if (! in_array($setId, $newSetIds)) {
                     unset($this->questionSetConfigs[$setId]);
                 }
             }
@@ -209,7 +228,7 @@ class ExamManagement extends Component
     {
         if (in_array($questionSetId, $this->selectedQuestionSets)) {
             // Remove from selected
-            $this->selectedQuestionSets = array_filter($this->selectedQuestionSets, function($id) use ($questionSetId) {
+            $this->selectedQuestionSets = array_filter($this->selectedQuestionSets, function ($id) use ($questionSetId) {
                 return $id != $questionSetId;
             });
             // Remove configuration
@@ -220,10 +239,10 @@ class ExamManagement extends Component
             // Set default configuration
             $this->questionSetConfigs[$questionSetId] = [
                 'shuffle_questions' => true,
-                'questions_to_pick' => null // null means all questions
+                'questions_to_pick' => null, // null means all questions
             ];
         }
-        
+
         // Re-index the selected array
         $this->selectedQuestionSets = array_values($this->selectedQuestionSets);
     }
@@ -272,44 +291,45 @@ class ExamManagement extends Component
                 'course_code', 'exam_type', 'exam_duration', 'exam_password',
                 'questions_per_session', 'start_date', 'end_date', 'exam_title',
                 'exam_description', 'passing_mark', 'selectedQuestionSets',
-                'questionSetConfigs', 'status'
+                'questionSetConfigs', 'status',
             ]);
-            
+
             // Set default dates again
             $this->start_date = now()->format('Y-m-d\TH:i');
             $this->end_date = now()->addDays(7)->format('Y-m-d\TH:i');
-            
+
             // Regenerate password
             $this->exam_password = $this->regeneratePassword();
 
             // Flash success message and redirect
             session()->flash('message', 'Exam created successfully!');
+
             return redirect()->route('examcenter');
-            
+
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle database query exceptions (including foreign key constraint violations)
             $errorCode = $e->errorInfo[1] ?? '';
-            
+
             if ($errorCode == 1452) { // Foreign key constraint violation in MySQL
                 session()->flash('error', 'Error: The selected course does not exist. Please select a valid course.');
                 Log::error('Foreign key constraint violation in ExamManagement:', [
                     'course_id' => $this->course_code,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             } else {
                 session()->flash('error', 'Database error occurred. Please try again or contact support.');
                 Log::error('Database error in ExamManagement:', [
                     'error' => $e->getMessage(),
-                    'exception' => $e
+                    'exception' => $e,
                 ]);
             }
-            
+
         } catch (\Exception $e) {
             // Handle other general exceptions
             session()->flash('error', 'An unexpected error occurred. Please try again or contact support.');
             Log::error('Unexpected error in ExamManagement:', [
                 'error' => $e->getMessage(),
-                'exception' => $e
+                'exception' => $e,
             ]);
         }
     }
@@ -318,7 +338,7 @@ class ExamManagement extends Component
     {
         // Load courses in ascending order
         $coursesQuery = Subject::query();
-        
+
         // Apply filters only if they are set
         if ($this->class) {
             $coursesQuery->where('college_class_id', $this->class);
@@ -329,17 +349,17 @@ class ExamManagement extends Component
         if ($this->semester) {
             $coursesQuery->where('semester_id', $this->semester);
         }
-        
+
         $courses = $coursesQuery->orderBy('name', 'asc')->get();
-        
+
         // If a course is selected but not in the filtered results, add it to maintain selection
-        if ($this->course_code && !$courses->contains('id', $this->course_code)) {
+        if ($this->course_code && ! $courses->contains('id', $this->course_code)) {
             $selectedCourse = Subject::find($this->course_code);
             if ($selectedCourse) {
                 $courses->prepend($selectedCourse);
             }
         }
-        
+
         $classes = CollegeClass::all();
         $years = Year::all();
         $semesters = Semester::all();
@@ -347,13 +367,13 @@ class ExamManagement extends Component
 
         // Get staff users using Spatie's role system
         // This queries users who have any role except Student and Parent
-        $staffUsers = User::whereHas('roles', function($query) {
-                $query->whereNotIn('name', ['Student', 'Parent']);
-            })
-            ->orWhere(function($query) {
+        $staffUsers = User::whereHas('roles', function ($query) {
+            $query->whereNotIn('name', ['Student', 'Parent']);
+        })
+            ->orWhere(function ($query) {
                 // Also include users with 'role' column (for backward compatibility)
                 $query->whereNotIn('role', ['Student', 'Parent'])
-                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+                    ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
             })
             ->orderBy('name', 'asc')
             ->get();
@@ -378,19 +398,20 @@ class ExamManagement extends Component
         }
 
         $this->exam_password = $password;
+
         return $password;
     }
 
     public function generateSlug()
     {
         // Generate Unique Slug from Exam Title, Date and Time
-        $baseSlug = $this->exam_title ?: ($this->course_code . '-exam');
-        $slug = Str::slug($baseSlug . '-' . now()->format('Y-m-d-H-i-s'));
-        
+        $baseSlug = $this->exam_title ?: ($this->course_code.'-exam');
+        $slug = Str::slug($baseSlug.'-'.now()->format('Y-m-d-H-i-s'));
+
         while (Exam::where('slug', $slug)->exists()) {
-            $slug = Str::slug($baseSlug . '-' . now()->format('Y-m-d-H-i-s'));
+            $slug = Str::slug($baseSlug.'-'.now()->format('Y-m-d-H-i-s'));
         }
-        
+
         return $slug;
     }
 }

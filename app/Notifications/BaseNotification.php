@@ -3,14 +3,15 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Notification;
 
 abstract class BaseNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
     protected $data;
+
     protected $type = 'info';
 
     /**
@@ -37,7 +38,7 @@ abstract class BaseNotification extends Notification implements ShouldQueue
             'created_at' => now()->toIso8601String(),
         ], $this->data);
     }
-    
+
     /**
      * Get the broadcastable representation of the notification.
      *

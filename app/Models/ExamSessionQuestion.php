@@ -9,7 +9,7 @@ class ExamSessionQuestion extends Model
     protected $fillable = [
         'exam_session_id',
         'question_id',
-        'display_order'
+        'display_order',
     ];
 
     protected $casts = [

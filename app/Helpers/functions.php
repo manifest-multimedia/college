@@ -1,33 +1,29 @@
 <?php
 
-use App\Models\Student;
+use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Option;
-use App\Models\Exam;
-use App\Models\Response;
-
+use App\Models\Student;
 use Illuminate\Support\Str;
 
-
-if (!function_exists('getAge')) {
+if (! function_exists('getAge')) {
     function getAge($date_of_birth)
     {
         $age = date_diff(date_create($date_of_birth), date_create('today'))->y;
+
         return $age;
     }
 }
 
-
-// GenerateSlugFunction 
-if (!function_exists('generateSlug')) {
+// GenerateSlugFunction
+if (! function_exists('generateSlug')) {
     function generateSlug($string)
     {
         return Str::slug($string);
     }
 }
 
-
-if (!function_exists('getTitle')) {
+if (! function_exists('getTitle')) {
     function getTitle($gender = null, $age = null, $marital_status = null)
     {
         $titles = [
@@ -40,7 +36,7 @@ if (!function_exists('getTitle')) {
             'Rev',
             'Sr',
             'Jr',
-            'Master'
+            'Master',
         ];
 
         // Default title for unknown gender or age
@@ -72,7 +68,7 @@ if (!function_exists('getTitle')) {
 
         // Handle suffixes (Sr., Jr.)
         if (in_array($marital_status, ['Sr', 'Jr'])) {
-            $title .= ' ' . $marital_status;
+            $title .= ' '.$marital_status;
         }
 
         return $title;
@@ -80,15 +76,15 @@ if (!function_exists('getTitle')) {
 }
 
 // Get First Letter
-if (!function_exists('getFirstLetter')) {
+if (! function_exists('getFirstLetter')) {
     function getFirstLetter($string)
     {
         return substr($string, 0, 1);
     }
 }
 
-//Generate Student ID
-if (!function_exists('generateStudentID')) {
+// Generate Student ID
+if (! function_exists('generateStudentID')) {
     /**
      * This function is used to generate student IDS based on the student group
      * The student group returns the list of all students without IDS for a particular class
@@ -97,8 +93,8 @@ if (!function_exists('generateStudentID')) {
      * Classes are: RM and RGN where RM= Registered Midwifery and RGN is Registered General Nursing
      * The function updates the student database with the generated IDS
      *
-     * @param \App\Models\Student[]|null $student_group The list of all students without IDS for a particular class
-     * @param string|null $class The class of the students which the IDS are being generated for
+     * @param  \App\Models\Student[]|null  $student_group  The list of all students without IDS for a particular class
+     * @param  string|null  $class  The class of the students which the IDS are being generated for
      * @return void
      */
     function generateStudentID($class = null)
@@ -117,15 +113,15 @@ if (!function_exists('generateStudentID')) {
             $start_number = 1; // Reset numbering for each class
 
             // Replace 'DM' class prefix with 'RM'
-            if ($className == "DM") {
-                $className = "RM";
+            if ($className == 'DM') {
+                $className = 'RM';
             }
 
             $prefix = generateStudentIdPrefix($className, '24/25');
 
             foreach ($sortedStudentsInClass as $student) {
-                $numbering = sprintf("%03d", $start_number);
-                $student->student_id = $prefix . $numbering;
+                $numbering = sprintf('%03d', $start_number);
+                $student->student_id = $prefix.$numbering;
                 $student->save();
                 $start_number++;
             }
@@ -133,14 +129,13 @@ if (!function_exists('generateStudentID')) {
     }
 }
 
-if (!function_exists('generateStudentIdPrefix')) {
+if (! function_exists('generateStudentIdPrefix')) {
     /*************  ✨ Codeium Command ⭐  *************/
     /**
      * Generates the prefix for student ids based on their class and academic year
-     * 
-     * @param string $class The class of the student (RM or RGN)
-     * @param string $academic_year The academic year of the student
-     * 
+     *
+     * @param  string  $class  The class of the student (RM or RGN)
+     * @param  string  $academic_year  The academic year of the student
      * @return string The generated prefix for the student id
      */
     /******  8dc1a823-a575-4a27-9322-6e0f24b982d2  *******/
@@ -148,11 +143,12 @@ if (!function_exists('generateStudentIdPrefix')) {
     function generateStudentIdPrefix($class, $academic_year)
     {
         $school_prefix = config('school.prefix');
+
         return "$school_prefix/$class/$academic_year/";
     }
 }
 
-if (!function_exists('getAcademicYear')) {
+if (! function_exists('getAcademicYear')) {
     function getAcademicYear()
     {
 
@@ -160,15 +156,14 @@ if (!function_exists('getAcademicYear')) {
     }
 }
 
-
-if (!function_exists('computeResults')) {
+if (! function_exists('computeResults')) {
     function computeResults($examSession, $type = 'percentage')
     {
         // Retrieve the ExamSession using the provided ID
         $session = ExamSession::find($examSession);
 
         // Check if the ExamSession exists
-        if (!$session) {
+        if (! $session) {
             return match ($type) {
                 'percentage' => '0%',
                 'total_answered' => 0,
@@ -201,8 +196,8 @@ if (!function_exists('computeResults')) {
             if (
                 $response->selected_option &&
                 Option::where('id', $response->selected_option)
-                ->where('is_correct', true)
-                ->exists()
+                    ->where('is_correct', true)
+                    ->exists()
             ) {
                 $correct_answers++;
             }
@@ -215,7 +210,7 @@ if (!function_exists('computeResults')) {
         // Return the result based on the requested type
         return match ($type) {
             'score' => $score,
-            'percentage' => $score_percent . '%',
+            'percentage' => $score_percent.'%',
             'total_answered' => $total_answered,
             default => $score,
         };

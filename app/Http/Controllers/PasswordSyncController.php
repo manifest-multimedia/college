@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Services\AuthenticationService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -20,9 +20,6 @@ class PasswordSyncController extends Controller
     /**
      * Handle password synchronization webhook from AuthCentral.
      * This allows AuthCentral users to use the same password locally.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function syncPassword(Request $request): JsonResponse
     {
@@ -37,16 +34,16 @@ class PasswordSyncController extends Controller
 
             // Verify API key (should match config or environment)
             $expectedApiKey = config('authentication.password_sync.api_key') ?: env('PASSWORD_SYNC_API_KEY');
-            if (!$expectedApiKey || !hash_equals($expectedApiKey, $validated['api_key'])) {
+            if (! $expectedApiKey || ! hash_equals($expectedApiKey, $validated['api_key'])) {
                 Log::warning('Invalid API key for password sync', [
                     'email' => $validated['email'],
                     'ip' => $request->ip(),
                     'provided_key' => 'hidden_for_security',
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'Unauthorized',
                 ], 401);
             }
 
@@ -62,20 +59,20 @@ class PasswordSyncController extends Controller
                     'event' => $validated['event'] ?? 'unknown',
                     'ip' => $request->ip(),
                 ]);
-                
+
                 return response()->json([
                     'success' => true,
-                    'message' => 'Password synchronized successfully'
+                    'message' => 'Password synchronized successfully',
                 ]);
             } else {
                 Log::warning('Password sync failed - user not found', [
                     'email' => $validated['email'],
                     'ip' => $request->ip(),
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'User not found or sync failed'
+                    'message' => 'User not found or sync failed',
                 ], 404);
             }
 
@@ -84,11 +81,11 @@ class PasswordSyncController extends Controller
                 'errors' => $e->errors(),
                 'ip' => $request->ip(),
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             Log::error('Password sync API error', [
@@ -99,15 +96,13 @@ class PasswordSyncController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Internal server error'
+                'message' => 'Internal server error',
             ], 500);
         }
     }
 
     /**
      * Health check endpoint for password sync API.
-     *
-     * @return JsonResponse
      */
     public function healthCheck(): JsonResponse
     {

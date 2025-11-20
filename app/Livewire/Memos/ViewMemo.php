@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Memos;
 
+use App\Models\Department;
 use App\Models\Memo;
 use App\Models\User;
-use App\Models\Department;
 use App\Services\Memo\MemoService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -12,15 +12,23 @@ use Livewire\Component;
 class ViewMemo extends Component
 {
     public $memo;
+
     public $memoId;
+
     public $comment = '';
+
     public $forwardToUserId = null;
+
     public $forwardToDepartmentId = null;
+
     public $forwardType = 'user';
+
     public $users = [];
+
     public $departments = [];
+
     public $currentTab = 'details';
-    
+
     protected $memoService;
 
     protected $rules = [
@@ -46,18 +54,19 @@ class ViewMemo extends Component
     {
         try {
             $this->memo = Memo::with([
-                'user', 
-                'department', 
-                'recipient', 
+                'user',
+                'department',
+                'recipient',
                 'recipientDepartment',
                 'attachments',
                 'actions' => function ($query) {
                     $query->with(['user', 'forwardedToUser', 'forwardedToDepartment'])
-                          ->orderBy('created_at', 'desc');
-                }
+                        ->orderBy('created_at', 'desc');
+                },
             ])->findOrFail($this->memoId);
         } catch (\Exception $e) {
             session()->flash('error', 'Memo not found.');
+
             return redirect()->route('memos');
         }
     }
@@ -65,13 +74,13 @@ class ViewMemo extends Component
     public function loadUsers()
     {
         // Load staff users only (exclude Student and Parent roles)
-        $this->users = User::whereHas('roles', function($query) {
-                $query->whereNotIn('name', ['Student', 'Parent']);
-            })
-            ->orWhere(function($query) {
+        $this->users = User::whereHas('roles', function ($query) {
+            $query->whereNotIn('name', ['Student', 'Parent']);
+        })
+            ->orWhere(function ($query) {
                 // Also include users with legacy 'role' column (for backward compatibility)
                 $query->whereNotIn('role', ['Student', 'Parent'])
-                      ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
+                    ->whereDoesntHave('roles'); // Only if they don't have Spatie roles assigned
             })
             ->where('id', '!=', Auth::id())
             ->orderBy('name')

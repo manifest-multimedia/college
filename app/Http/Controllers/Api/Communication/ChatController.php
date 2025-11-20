@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Communication;
 
+use App\Events\Communication\UserTypingEvent;
 use App\Http\Controllers\Controller;
 use App\Models\ChatSession;
 use App\Services\Communication\Chat\ChatServiceInterface;
@@ -9,7 +10,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use App\Events\Communication\UserTypingEvent;
 
 class ChatController extends Controller
 {
@@ -61,7 +61,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create chat session: ' . $e->getMessage(),
+                'message' => 'Failed to create chat session: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -74,7 +74,7 @@ class ChatController extends Controller
         try {
             $result = $this->chatService->getSession($sessionId);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return response()->json($result, 404);
             }
 
@@ -87,7 +87,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get chat session: ' . $e->getMessage(),
+                'message' => 'Failed to get chat session: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -129,7 +129,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send message: ' . $e->getMessage(),
+                'message' => 'Failed to send message: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -145,7 +145,7 @@ class ChatController extends Controller
 
             $result = $this->chatService->getMessageHistory($sessionId, $limit, $offset);
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 return response()->json($result, 404);
             }
 
@@ -158,7 +158,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get message history: ' . $e->getMessage(),
+                'message' => 'Failed to get message history: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -199,7 +199,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update session status: ' . $e->getMessage(),
+                'message' => 'Failed to update session status: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -232,7 +232,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get user sessions: ' . $e->getMessage(),
+                'message' => 'Failed to get user sessions: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -263,10 +263,10 @@ class ChatController extends Controller
                 $request->input('typing'),
                 auth()->id()
             ))->toOthers();
-            
+
             return response()->json([
                 'success' => true,
-                'message' => 'Typing status updated'
+                'message' => 'Typing status updated',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to update typing status', [
@@ -276,7 +276,7 @@ class ChatController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update typing status: ' . $e->getMessage(),
+                'message' => 'Failed to update typing status: '.$e->getMessage(),
             ], 500);
         }
     }

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Remove semester_id and instructor_id columns from college_classes table
      * as programs are now semester-independent and not tied to specific instructors
      */
@@ -20,7 +20,7 @@ return new class extends Migration
                 $table->dropForeign(['semester_id']);
                 $table->dropColumn('semester_id');
             }
-            
+
             if (Schema::hasColumn('college_classes', 'instructor_id')) {
                 $table->dropForeign(['instructor_id']);
                 $table->dropColumn('instructor_id');
@@ -30,7 +30,7 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     * 
+     *
      * Restore semester_id and instructor_id columns if needed
      */
     public function down(): void
@@ -39,7 +39,7 @@ return new class extends Migration
             // Add back the columns
             $table->unsignedInteger('semester_id')->nullable();
             $table->unsignedBigInteger('instructor_id')->nullable();
-            
+
             // Add back foreign key constraints
             $table->foreign('semester_id')->references('id')->on('semesters')->onDelete('set null');
             $table->foreign('instructor_id')->references('id')->on('users')->onDelete('set null');

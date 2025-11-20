@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Question extends Model
 {
     protected $fillable = [
-        'exam_id', 
-        'question_set_id', 
-        'question_text', 
-        'exam_section', 
-        'correct_option', 
-        'mark', 
+        'exam_id',
+        'question_set_id',
+        'question_text',
+        'exam_section',
+        'correct_option',
+        'mark',
         'explanation',
         'type',
-        'difficulty_level'
+        'difficulty_level',
     ];
 
     protected $casts = [
@@ -65,11 +65,11 @@ class Question extends Model
         if ($this->questionSet) {
             return $this->questionSet->course;
         }
-        
+
         if ($this->exam) {
             return $this->exam->course;
         }
-        
+
         return null;
     }
 
@@ -126,7 +126,7 @@ class Question extends Model
      */
     public function belongsToQuestionSet()
     {
-        return !is_null($this->question_set_id);
+        return ! is_null($this->question_set_id);
     }
 
     /**
@@ -134,6 +134,6 @@ class Question extends Model
      */
     public function belongsToExam()
     {
-        return !is_null($this->exam_id) && is_null($this->question_set_id);
+        return ! is_null($this->exam_id) && is_null($this->question_set_id);
     }
 }

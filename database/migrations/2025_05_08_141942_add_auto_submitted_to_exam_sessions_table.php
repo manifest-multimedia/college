@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('exam_sessions', function (Blueprint $table) {
             $table->boolean('auto_submitted')->default(false)->after('score')
-                  ->comment('Indicates if the exam was automatically submitted when time expired');
+                ->comment('Indicates if the exam was automatically submitted when time expired');
         });
     }
 

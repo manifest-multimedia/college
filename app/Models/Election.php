@@ -49,6 +49,7 @@ class Election extends Model
     public function isOpen(): bool
     {
         $now = now();
+
         return $this->is_active && $now->between($this->start_time, $this->end_time);
     }
 
@@ -82,11 +83,11 @@ class Election extends Model
     public function getAllCandidates()
     {
         $candidates = collect();
-        
+
         foreach ($this->positions as $position) {
             $candidates = $candidates->merge($position->candidates);
         }
-        
+
         return $candidates;
     }
 
@@ -107,10 +108,10 @@ class Election extends Model
         if ($totalEligibleVoters === 0) {
             return 0;
         }
-        
+
         // Count unique students who have voted
         $uniqueVoters = $this->votes()->select('student_id')->distinct()->count('student_id');
-        
+
         return round(($uniqueVoters / $totalEligibleVoters) * 100, 2);
     }
 }

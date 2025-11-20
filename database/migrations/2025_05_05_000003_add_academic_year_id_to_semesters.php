@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::table('semesters', function (Blueprint $table) {
             // Add academic_year_id if it doesn't exist
-            if (!Schema::hasColumn('semesters', 'academic_year_id')) {
+            if (! Schema::hasColumn('semesters', 'academic_year_id')) {
                 $table->unsignedInteger('academic_year_id')->nullable();
                 $table->foreign('academic_year_id')->references('id')->on('academic_years')->onDelete('set null');
             }
-            
+
             // If year_id exists but not academic_year_id, copy data from year_id
             if (Schema::hasColumn('semesters', 'year_id') && Schema::hasColumn('semesters', 'academic_year_id')) {
                 // This will be handled by the MigrateYearData command

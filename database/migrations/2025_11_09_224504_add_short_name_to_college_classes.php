@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Add short_name column to college_classes table for Student ID generation
      */
     public function up(): void
@@ -21,7 +21,7 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     * 
+     *
      * Remove short_name column from college_classes table
      */
     public function down(): void

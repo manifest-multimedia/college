@@ -15,7 +15,7 @@ return new class extends Migration
             // Add date fields
             $table->date('start_date')->nullable()->after('academic_year');
             $table->date('end_date')->nullable()->after('start_date');
-            
+
             // Make academic_year nullable (to maintain compatibility with existing records)
             $table->string('academic_year')->nullable()->change();
         });

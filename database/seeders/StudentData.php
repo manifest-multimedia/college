@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Student;
 use App\Models\CollegeClass;
+use App\Models\Student;
+use Illuminate\Database\Seeder;
 
 class StudentData extends Seeder
 {
@@ -26,17 +25,16 @@ class StudentData extends Seeder
         $data = [];
 
         // Iterate over the remaining rows
-        while (($row = fgetcsv($handle)) !== FALSE) {
+        while (($row = fgetcsv($handle)) !== false) {
             // Combine the column names with the row data to create an associative array
             $rowData = array_combine($columnNames, $row);
 
             // Now you can access the data using the column names
-            echo $rowData['first_name'] . "\n";
+            echo $rowData['first_name']."\n";
 
             // You can also use the data to create a new student
             // $studentId = generateStudentID(null, $rowData['class']);
             // $existingStudent = Student::where('student_id', $studentId)->first();
-
 
             $student = Student::firstOrCreate([
                 'student_id' => $rowData['index_number'] ? $rowData['index_number'] : null,

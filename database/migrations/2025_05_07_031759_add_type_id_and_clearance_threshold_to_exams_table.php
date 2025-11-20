@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::table('exams', function (Blueprint $table) {
             $table->foreignId('type_id')->nullable()->after('type')
-                  ->comment('Foreign key to exam_types table')
-                  ->constrained('exam_types')->nullOnDelete();
-            
+                ->comment('Foreign key to exam_types table')
+                ->constrained('exam_types')->nullOnDelete();
+
             $table->integer('clearance_threshold')->default(60)->after('passing_percentage')
-                  ->comment('Percentage of fees required for clearance');
+                ->comment('Percentage of fees required for clearance');
         });
     }
 

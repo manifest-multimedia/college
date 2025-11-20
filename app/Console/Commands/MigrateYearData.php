@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class MigrateYearData extends Command
@@ -30,42 +30,44 @@ class MigrateYearData extends Command
     public function handle()
     {
         $this->info('Starting migration of year data to academic_years table...');
-        
+
         // Check if years table exists
-        if (!Schema::hasTable('years')) {
+        if (! Schema::hasTable('years')) {
             $this->error('Years table does not exist. No migration needed.');
+
             return 1;
         }
-        
+
         // Get all data from years table
         $years = DB::table('years')->get();
-        
+
         if ($years->isEmpty()) {
             $this->info('No data found in years table. Nothing to migrate.');
+
             return 0;
         }
-        
-        $this->info('Found ' . $years->count() . ' records to migrate.');
-        
+
+        $this->info('Found '.$years->count().' records to migrate.');
+
         // Begin transaction
         DB::beginTransaction();
-        
+
         try {
             $bar = $this->output->createProgressBar($years->count());
             $bar->start();
-            
+
             foreach ($years as $year) {
                 // Extract year value if possible from name
                 $yearValue = null;
                 if (preg_match('/(\d{4})/', $year->name, $matches)) {
-                    $yearValue = (int)$matches[1];
+                    $yearValue = (int) $matches[1];
                 }
-                
+
                 // Check if academic year already exists with same name
                 $existingYear = DB::table('academic_years')
                     ->where('name', $year->name)
                     ->first();
-                
+
                 if ($existingYear) {
                     // Update foreign keys in related tables
                     $this->updateForeignKeys($year->id, $existingYear->id);
@@ -83,34 +85,35 @@ class MigrateYearData extends Command
                         'created_at' => $year->created_at ?? now(),
                         'updated_at' => $year->updated_at ?? now(),
                     ]);
-                    
+
                     // Update foreign keys in related tables
                     $this->updateForeignKeys($year->id, $academicYearId);
                 }
-                
+
                 $bar->advance();
             }
-            
+
             $bar->finish();
             $this->newLine(2);
-            
+
             DB::commit();
             $this->info('Migration completed successfully!');
-            
+
             return 0;
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->error('Error during migration: ' . $e->getMessage());
-            Log::error('Error during year data migration: ' . $e->getMessage());
+            $this->error('Error during migration: '.$e->getMessage());
+            Log::error('Error during year data migration: '.$e->getMessage());
+
             return 1;
         }
     }
-    
+
     /**
      * Update foreign keys in related tables
-     * 
-     * @param int $oldYearId
-     * @param int $newAcademicYearId
+     *
+     * @param  int  $oldYearId
+     * @param  int  $newAcademicYearId
      */
     protected function updateForeignKeys($oldYearId, $newAcademicYearId)
     {
@@ -120,14 +123,14 @@ class MigrateYearData extends Command
                 ->where('year_id', $oldYearId)
                 ->update(['academic_year_id' => $newAcademicYearId]);
         }
-        
+
         // Update subjects table if it has year_id
         if (Schema::hasColumn('subjects', 'year_id')) {
             DB::table('subjects')
                 ->where('year_id', $oldYearId)
                 ->update(['academic_year_id' => $newAcademicYearId]);
         }
-        
+
         // You can add more tables with year_id relationships here
     }
 }

@@ -494,15 +494,28 @@ class StudentIdGenerationService
             if (config('branding.student_id.enable_alphabetical_ordering', true)) {
                 // Find the correct position for this student alphabetically
                 $position = 1;
-                $fullName = "{$lastName}, {$firstName}";
 
                 foreach ($existingStudents as $student) {
-                    $existingName = "{$student->last_name}, {$student->first_name}";
+                    // Compare Last Names first (to match SQL sort order)
+                    $lastNameCmp = strcasecmp($lastName, $student->last_name);
 
-                    // If current student comes alphabetically before existing student
-                    if (strcasecmp($fullName, $existingName) < 0) {
+                    if ($lastNameCmp < 0) {
+                        // New student's last name comes before existing -> Insert here
+                        break;
+                    } elseif ($lastNameCmp > 0) {
+                        // New student's last name comes after -> Continue
+                        $position++;
+
+                        continue;
+                    }
+
+                    // Last names are equal, compare First Names
+                    $firstNameCmp = strcasecmp($firstName, $student->first_name);
+                    if ($firstNameCmp < 0) {
+                        // New student's first name comes before -> Insert here
                         break;
                     }
+
                     $position++;
                 }
             } else {
@@ -677,13 +690,28 @@ class StudentIdGenerationService
             if (config('branding.student_id.enable_alphabetical_ordering', true)) {
                 // Find correct alphabetical position
                 $position = 1;
-                $fullName = "{$lastName}, {$firstName}";
 
                 foreach ($existingStudents as $student) {
-                    $existingName = "{$student->last_name}, {$student->first_name}";
-                    if (strcasecmp($fullName, $existingName) < 0) {
+                    // Compare Last Names first (to match SQL sort order)
+                    $lastNameCmp = strcasecmp($lastName, $student->last_name);
+
+                    if ($lastNameCmp < 0) {
+                        // New student's last name comes before existing -> Insert here
+                        break;
+                    } elseif ($lastNameCmp > 0) {
+                        // New student's last name comes after -> Continue
+                        $position++;
+
+                        continue;
+                    }
+
+                    // Last names are equal, compare First Names
+                    $firstNameCmp = strcasecmp($firstName, $student->first_name);
+                    if ($firstNameCmp < 0) {
+                        // New student's first name comes before -> Insert here
                         break;
                     }
+
                     $position++;
                 }
 

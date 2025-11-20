@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,11 +16,11 @@ return new class extends Migration
             // Add new polymorphic columns
             $table->string('ticketable_type')->nullable()->after('exam_type_id');
             $table->unsignedBigInteger('ticketable_id')->nullable()->after('ticketable_type');
-            
+
             // Add index for polymorphic relationship
             $table->index(['ticketable_type', 'ticketable_id']);
         });
-        
+
         // Add default values for existing records - assuming exam_type_id is related to exams
         DB::statement("UPDATE exam_entry_tickets SET ticketable_type = 'App\\\\Models\\\\Exam', ticketable_id = exam_type_id WHERE ticketable_type IS NULL");
     }

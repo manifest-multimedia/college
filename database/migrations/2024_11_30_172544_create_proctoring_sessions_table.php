@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('proctoring_sessions')) {
+        if (! Schema::hasTable('proctoring_sessions')) {
             Schema::create('proctoring_sessions', function (Blueprint $table) {
                 $table->increments('id');
                 $table->unsignedBigInteger('user_id');

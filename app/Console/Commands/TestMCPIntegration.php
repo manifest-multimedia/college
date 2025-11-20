@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Services\Communication\Chat\MCPIntegrationService;
-use App\Services\Communication\Chat\MCP\ExamManagementMCPService;
 use App\Models\Subject;
+use App\Services\Communication\Chat\MCPIntegrationService;
 use Illuminate\Console\Command;
 
 class TestMCPIntegration extends Command
@@ -44,13 +43,13 @@ class TestMCPIntegration extends Command
         $this->info('-----------------------------------');
         try {
             $tools = $this->mcpIntegrationService->getMCPToolsConfig();
-            $this->info('✅ Found ' . count($tools) . ' MCP tools:');
+            $this->info('✅ Found '.count($tools).' MCP tools:');
             foreach ($tools as $tool) {
-                $this->info('  • ' . $tool['function']['name'] . ': ' . $tool['function']['description']);
+                $this->info('  • '.$tool['function']['name'].': '.$tool['function']['description']);
             }
             $this->newLine();
         } catch (\Exception $e) {
-            $this->error('❌ Failed to get tools config: ' . $e->getMessage());
+            $this->error('❌ Failed to get tools config: '.$e->getMessage());
             $this->newLine();
         }
 
@@ -63,12 +62,12 @@ class TestMCPIntegration extends Command
             $this->info('Testing list_courses...');
             $result = $this->mcpIntegrationService->processFunctionCall('list_courses', []);
             if ($result['success']) {
-                $this->info('✅ list_courses: Found ' . count($result['data']) . ' courses');
+                $this->info('✅ list_courses: Found '.count($result['data']).' courses');
             } else {
-                $this->error('❌ list_courses failed: ' . $result['error']);
+                $this->error('❌ list_courses failed: '.$result['error']);
             }
         } catch (\Exception $e) {
-            $this->error('❌ list_courses exception: ' . $e->getMessage());
+            $this->error('❌ list_courses exception: '.$e->getMessage());
         }
 
         // Test list_question_sets function
@@ -76,12 +75,12 @@ class TestMCPIntegration extends Command
             $this->info('Testing list_question_sets...');
             $result = $this->mcpIntegrationService->processFunctionCall('list_question_sets', []);
             if ($result['success']) {
-                $this->info('✅ list_question_sets: Found ' . count($result['data']) . ' question sets');
+                $this->info('✅ list_question_sets: Found '.count($result['data']).' question sets');
             } else {
-                $this->error('❌ list_question_sets failed: ' . $result['error']);
+                $this->error('❌ list_question_sets failed: '.$result['error']);
             }
         } catch (\Exception $e) {
-            $this->error('❌ list_question_sets exception: ' . $e->getMessage());
+            $this->error('❌ list_question_sets exception: '.$e->getMessage());
         }
 
         // Test create_question_set function (only if we have subjects)
@@ -91,14 +90,14 @@ class TestMCPIntegration extends Command
             if ($subjects->count() > 0) {
                 $result = $this->mcpIntegrationService->processFunctionCall('create_question_set', [
                     'subject_id' => $subjects->first()->id,
-                    'title' => 'MCP Integration Test Set - ' . date('Y-m-d H:i:s'),
-                    'description' => 'Test question set created by MCP integration testing'
+                    'title' => 'MCP Integration Test Set - '.date('Y-m-d H:i:s'),
+                    'description' => 'Test question set created by MCP integration testing',
                 ]);
-                
+
                 if ($result['success']) {
-                    $this->info('✅ create_question_set: Created question set ID ' . $result['data']['id']);
+                    $this->info('✅ create_question_set: Created question set ID '.$result['data']['id']);
                     $testQuestionSetId = $result['data']['id'];
-                    
+
                     // Test adding a question to the set
                     $this->info('Testing add_question_to_set...');
                     $questionResult = $this->mcpIntegrationService->processFunctionCall('add_question_to_set', [
@@ -107,23 +106,23 @@ class TestMCPIntegration extends Command
                         'question_type' => 'multiple_choice',
                         'options' => ['A) 3', 'B) 4', 'C) 5', 'D) 6'],
                         'correct_answer' => 'B) 4',
-                        'marks' => 5
+                        'marks' => 5,
                     ]);
-                    
+
                     if ($questionResult['success']) {
-                        $this->info('✅ add_question_to_set: Added question ID ' . $questionResult['data']['id']);
+                        $this->info('✅ add_question_to_set: Added question ID '.$questionResult['data']['id']);
                     } else {
-                        $this->error('❌ add_question_to_set failed: ' . $questionResult['error']);
+                        $this->error('❌ add_question_to_set failed: '.$questionResult['error']);
                     }
-                    
+
                 } else {
-                    $this->error('❌ create_question_set failed: ' . $result['error']);
+                    $this->error('❌ create_question_set failed: '.$result['error']);
                 }
             } else {
                 $this->warn('⏭️ Skipping create_question_set: No subjects found');
             }
         } catch (\Exception $e) {
-            $this->error('❌ create_question_set exception: ' . $e->getMessage());
+            $this->error('❌ create_question_set exception: '.$e->getMessage());
         }
 
         $this->newLine();
@@ -135,7 +134,7 @@ class TestMCPIntegration extends Command
         // Test invalid function call
         try {
             $result = $this->mcpIntegrationService->processFunctionCall('invalid_function', []);
-            if (!$result['success']) {
+            if (! $result['success']) {
                 $this->info('✅ Error handling: Invalid function properly rejected');
             } else {
                 $this->error('❌ Error handling: Invalid function was accepted');
@@ -147,9 +146,9 @@ class TestMCPIntegration extends Command
         // Test invalid parameters
         try {
             $result = $this->mcpIntegrationService->processFunctionCall('create_question_set', [
-                'invalid_param' => 'value'
+                'invalid_param' => 'value',
             ]);
-            if (!$result['success']) {
+            if (! $result['success']) {
                 $this->info('✅ Error handling: Invalid parameters properly rejected');
             } else {
                 $this->error('❌ Error handling: Invalid parameters were accepted');

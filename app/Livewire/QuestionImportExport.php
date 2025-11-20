@@ -2,22 +2,25 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\WithFileUploads;
-use App\Models\Question;
 use App\Models\Option;
+use App\Models\Question;
 use App\Models\QuestionSet;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class QuestionImportExport extends Component
 {
     use WithFileUploads;
 
     public $question_set_id;
+
     public $file;
+
     public $export_format = 'csv';
+
     public $import_results = [];
+
     public $show_import_results = false;
 
     protected $rules = [
@@ -35,16 +38,17 @@ class QuestionImportExport extends Component
         $this->validate();
 
         $questionSet = QuestionSet::find($this->question_set_id);
-        
+
         // Check permissions
         if (Auth::user()->role !== 'Super Admin' && $questionSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to import questions to this question set.');
+
             return;
         }
 
         $path = $this->file->getRealPath();
         $data = array_map('str_getcsv', file($path));
-        
+
         // Remove header row if exists
         if (count($data) > 0 && $this->isHeaderRow($data[0])) {
             array_shift($data);
@@ -53,7 +57,7 @@ class QuestionImportExport extends Component
         $importResults = [
             'success' => 0,
             'errors' => 0,
-            'details' => []
+            'details' => [],
         ];
 
         foreach ($data as $index => $row) {
@@ -61,7 +65,7 @@ class QuestionImportExport extends Component
                 $this->importQuestionRow($row, $index + 1, $importResults);
             } catch (\Exception $e) {
                 $importResults['errors']++;
-                $importResults['details'][] = "Row " . ($index + 1) . ": " . $e->getMessage();
+                $importResults['details'][] = 'Row '.($index + 1).': '.$e->getMessage();
             }
         }
 
@@ -69,7 +73,7 @@ class QuestionImportExport extends Component
         $this->show_import_results = true;
         $this->file = null;
 
-        session()->flash('message', 
+        session()->flash('message',
             "Import completed: {$importResults['success']} questions imported successfully, {$importResults['errors']} errors."
         );
     }
@@ -84,7 +88,7 @@ class QuestionImportExport extends Component
     {
         // Expected CSV format: question_text, option1, option2, option3, option4, correct_option_number, marks, difficulty, explanation
         if (count($row) < 6) {
-            throw new \Exception("Insufficient columns. Expected at least 6 columns.");
+            throw new \Exception('Insufficient columns. Expected at least 6 columns.');
         }
 
         $questionText = trim($row[0]);
@@ -92,18 +96,18 @@ class QuestionImportExport extends Component
         $option2 = trim($row[2] ?? '');
         $option3 = trim($row[3] ?? '');
         $option4 = trim($row[4] ?? '');
-        $correctOptionNumber = (int)($row[5] ?? 1);
-        $marks = (int)($row[6] ?? 1);
+        $correctOptionNumber = (int) ($row[5] ?? 1);
+        $marks = (int) ($row[6] ?? 1);
         $difficulty = strtolower(trim($row[7] ?? 'medium'));
         $explanation = trim($row[8] ?? '');
 
         // Validate required fields
         if (empty($questionText) || empty($option1) || empty($option2)) {
-            throw new \Exception("Question text and at least 2 options are required.");
+            throw new \Exception('Question text and at least 2 options are required.');
         }
 
         // Validate difficulty
-        if (!in_array($difficulty, ['easy', 'medium', 'hard'])) {
+        if (! in_array($difficulty, ['easy', 'medium', 'hard'])) {
             $difficulty = 'medium';
         }
 
@@ -120,7 +124,7 @@ class QuestionImportExport extends Component
         // Create options
         $options = array_filter([$option1, $option2, $option3, $option4]);
         foreach ($options as $index => $optionText) {
-            if (!empty($optionText)) {
+            if (! empty($optionText)) {
                 Option::create([
                     'question_id' => $question->id,
                     'option_text' => $optionText,
@@ -136,15 +140,17 @@ class QuestionImportExport extends Component
     public function exportQuestions()
     {
         $questionSet = QuestionSet::find($this->question_set_id);
-        
-        if (!$questionSet) {
+
+        if (! $questionSet) {
             session()->flash('error', 'Question set not found.');
+
             return;
         }
 
         // Check permissions
         if (Auth::user()->role !== 'Super Admin' && $questionSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to export questions from this question set.');
+
             return;
         }
 
@@ -152,31 +158,32 @@ class QuestionImportExport extends Component
 
         if ($questions->isEmpty()) {
             session()->flash('error', 'No questions found to export.');
+
             return;
         }
 
-        $filename = 'questions_' . str_replace(' ', '_', $questionSet->name) . '_' . date('Y-m-d') . '.csv';
-        
+        $filename = 'questions_'.str_replace(' ', '_', $questionSet->name).'_'.date('Y-m-d').'.csv';
+
         return response()->streamDownload(function () use ($questions) {
             $handle = fopen('php://output', 'w');
-            
+
             // Add CSV headers
             fputcsv($handle, [
                 'Question Text',
                 'Option 1',
-                'Option 2', 
+                'Option 2',
                 'Option 3',
                 'Option 4',
                 'Correct Option Number',
                 'Marks',
                 'Difficulty',
-                'Explanation'
+                'Explanation',
             ]);
 
             foreach ($questions as $question) {
                 $options = $question->options->pluck('option_text')->toArray();
                 $correctOptionNumber = 0;
-                
+
                 // Find correct option number
                 foreach ($question->options as $index => $option) {
                     if ($option->is_correct) {
@@ -199,23 +206,23 @@ class QuestionImportExport extends Component
                     $correctOptionNumber,
                     $question->mark,
                     $question->difficulty_level,
-                    $question->explanation ?? ''
+                    $question->explanation ?? '',
                 ]);
             }
 
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
     public function render()
     {
         $questionSet = QuestionSet::find($this->question_set_id);
-        
+
         return view('livewire.question-import-export', [
-            'questionSet' => $questionSet
+            'questionSet' => $questionSet,
         ]);
     }
 }

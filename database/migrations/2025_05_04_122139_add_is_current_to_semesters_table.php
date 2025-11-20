@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::table('semesters', function (Blueprint $table) {
             $table->boolean('is_current')->default(false)->after('description');
         });
-        
+
         // Set the most recently created semester as current if any exist
         if (DB::table('semesters')->count() > 0) {
             DB::table('semesters')

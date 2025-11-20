@@ -25,7 +25,7 @@ return new class extends Migration
             $table->decimal('payment_percentage_at_registration', 5, 2);
             $table->boolean('is_approved')->default(true);
             $table->timestamps();
-            
+
             // Unique constraint to prevent duplicate registrations
             $table->unique(['student_id', 'subject_id', 'academic_year_id', 'semester_id'], 'unique_course_registration');
         });

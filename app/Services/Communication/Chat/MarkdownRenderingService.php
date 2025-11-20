@@ -2,7 +2,6 @@
 
 namespace App\Services\Communication\Chat;
 
-use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
@@ -30,13 +29,13 @@ class MarkdownRenderingService
         ]);
 
         // Add core extension
-        $environment->addExtension(new CommonMarkCoreExtension());
-        
+        $environment->addExtension(new CommonMarkCoreExtension);
+
         // Add GitHub Flavored Markdown for better formatting
-        $environment->addExtension(new GithubFlavoredMarkdownExtension());
-        
+        $environment->addExtension(new GithubFlavoredMarkdownExtension);
+
         // Add table extension
-        $environment->addExtension(new TableExtension());
+        $environment->addExtension(new TableExtension);
 
         $this->converter = new MarkdownConverter($environment);
     }
@@ -58,7 +57,7 @@ class MarkdownRenderingService
         $markdownPatterns = [
             '/^#{1,6}\s/m',                   // Headers
             '/\*\*.*?\*\*/',                  // Bold
-            '/\*.*?\*/',                      // Italic  
+            '/\*.*?\*/',                      // Italic
             '/`.*?`/',                        // Inline code
             '/```[\s\S]*?```/',               // Code blocks
             '/^\s*[-*+]\s/m',                 // Unordered lists
@@ -85,7 +84,7 @@ class MarkdownRenderingService
     public function safeRender(string $text): string
     {
         // If no markdown detected, return escaped text with line breaks
-        if (!$this->containsMarkdown($text)) {
+        if (! $this->containsMarkdown($text)) {
             return nl2br(e($text));
         }
 
@@ -105,23 +104,23 @@ class MarkdownRenderingService
     {
         // Add table classes
         $html = preg_replace('/<table>/', '<table class="table table-sm table-bordered">', $html);
-        
+
         // Add code block classes
         $html = preg_replace('/<pre><code(?:\s+class="language-([^"]*)")?[^>]*>/', '<pre class="bg-light p-3 rounded"><code class="language-$1">', $html);
-        
+
         // Add inline code classes
         $html = preg_replace('/<code>/', '<code class="bg-light px-1 rounded">', $html);
-        
+
         // Add blockquote classes
         $html = preg_replace('/<blockquote>/', '<blockquote class="blockquote border-start border-4 border-primary ps-3 my-3">', $html);
-        
+
         // Add list classes (preserve default bullets/numbers)
         $html = preg_replace('/<ul>/', '<ul>', $html);
         $html = preg_replace('/<ol>/', '<ol>', $html);
-        
+
         // Add heading classes
         $html = preg_replace('/<h([1-6])>/', '<h$1 class="mt-3 mb-2">', $html);
-        
+
         // Add paragraph spacing
         $html = preg_replace('/<p>/', '<p class="mb-2">', $html);
 
@@ -135,6 +134,7 @@ class MarkdownRenderingService
     {
         // Convert to HTML first then strip tags
         $html = $this->renderToHtml($markdown);
+
         return strip_tags($html);
     }
 }

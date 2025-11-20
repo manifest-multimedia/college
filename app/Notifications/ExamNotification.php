@@ -7,7 +7,7 @@ class ExamNotification extends BaseNotification
     /**
      * Create a new notification instance.
      */
-    public function __construct(string $title, string $message, string $examId = null, string $type = 'info')
+    public function __construct(string $title, string $message, ?string $examId = null, string $type = 'info')
     {
         $this->data = [
             'title' => $title,
@@ -15,7 +15,7 @@ class ExamNotification extends BaseNotification
             'action_url' => $examId ? route('student.exams.show', $examId) : null,
             'exam_id' => $examId,
         ];
-        
+
         $this->type = $type;
     }
 }

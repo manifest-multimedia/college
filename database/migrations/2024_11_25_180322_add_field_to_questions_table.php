@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('questions', function (Blueprint $table) {
-            // Change existing question_text field from string to text 
+            // Change existing question_text field from string to text
             $table->text('question_text')->change();
         });
     }

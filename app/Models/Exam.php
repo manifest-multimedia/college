@@ -89,11 +89,11 @@ class Exam extends Model
     {
         // Get direct questions
         $directQuestions = $this->questions();
-        
+
         // Get questions from question sets
         $questionSetIds = $this->questionSets()->pluck('question_sets.id');
         $setQuestions = Question::whereIn('question_set_id', $questionSetIds);
-        
+
         // Union both queries
         return $directQuestions->union($setQuestions);
     }
@@ -105,14 +105,14 @@ class Exam extends Model
     public function getTotalQuestionsCountAttribute()
     {
         $totalQuestions = 0;
-        
+
         // Add direct questions count (backward compatibility)
         $totalQuestions += $this->questions()->count();
-        
+
         // Add questions from question sets
         foreach ($this->questionSets as $questionSet) {
             $questionsToPick = $questionSet->pivot->questions_to_pick;
-            
+
             if ($questionsToPick && $questionsToPick > 0) {
                 // Use the configured number of questions to pick
                 $totalQuestions += $questionsToPick;
@@ -121,7 +121,7 @@ class Exam extends Model
                 $totalQuestions += $questionSet->questions()->count();
             }
         }
-        
+
         return $totalQuestions;
     }
 
@@ -139,38 +139,38 @@ class Exam extends Model
     public function generateSessionQuestions($shuffle = true)
     {
         $sessionQuestions = collect();
-        
+
         // First, get questions directly assigned to the exam (backward compatibility)
         $directQuestions = $this->questions()->with('options')->get();
         if ($directQuestions->isNotEmpty()) {
             $sessionQuestions = $sessionQuestions->merge($directQuestions);
         }
-        
+
         // Then, get questions from question sets
         foreach ($this->questionSets as $questionSet) {
             $setQuestions = $questionSet->questions()->with('options')->get();
-            
+
             // Check if we need to pick a specific number of questions
             $questionsToPick = $questionSet->pivot->questions_to_pick;
-            
+
             if ($questionsToPick && $questionsToPick < $setQuestions->count()) {
                 // Pick random questions from this set
                 $setQuestions = $setQuestions->random($questionsToPick);
             }
-            
+
             // Shuffle if configured
             if ($questionSet->pivot->shuffle_questions) {
                 $setQuestions = $setQuestions->shuffle();
             }
-            
+
             $sessionQuestions = $sessionQuestions->merge($setQuestions);
         }
-        
+
         // Final shuffle if requested
         if ($shuffle) {
             $sessionQuestions = $sessionQuestions->shuffle();
         }
-        
+
         return $sessionQuestions->values(); // Reset array keys
     }
 
@@ -186,6 +186,7 @@ class Exam extends Model
     {
         return $this->hasMany(ProctoringSession::class);
     }
+
     // Exam User
     public function user()
     {

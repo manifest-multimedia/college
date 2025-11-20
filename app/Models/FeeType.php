@@ -13,7 +13,7 @@ class FeeType extends Model
         'name',
         'code',
         'description',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [

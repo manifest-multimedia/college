@@ -2,14 +2,14 @@
 
 namespace App\Livewire\Academics;
 
-use App\Models\Subject;
-use App\Models\Semester;
-use App\Models\Year;
 use App\Models\CollegeClass;
-use Livewire\Component;
-use Livewire\WithPagination;
+use App\Models\Semester;
+use App\Models\Subject;
+use App\Models\Year;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class SubjectsManager extends Component
 {
@@ -18,15 +18,25 @@ class SubjectsManager extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $search = '';
+
     public $subjectId;
+
     public $name;
+
     public $course_code;
+
     public $description;
+
     public $semester_id;
+
     public $year_id;
+
     public $college_class_id;
+
     public $isOpen = false;
+
     public $isDeleteModalOpen = false;
+
     public $editMode = false;
 
     protected $rules = [
@@ -45,8 +55,8 @@ class SubjectsManager extends Component
     public function render()
     {
         return view('livewire.academics.subjects-manager', [
-            'subjects' => Subject::where('name', 'like', '%' . $this->search . '%')
-                ->orWhere('course_code', 'like', '%' . $this->search . '%')
+            'subjects' => Subject::where('name', 'like', '%'.$this->search.'%')
+                ->orWhere('course_code', 'like', '%'.$this->search.'%')
                 ->orderBy('created_at', 'desc')
                 ->paginate(10),
             'semesters' => Semester::all(),
@@ -112,8 +122,8 @@ class SubjectsManager extends Component
             $this->resetInputFields();
             session()->flash('message', $this->subjectId ? 'Subject updated successfully.' : 'Subject created successfully.');
         } catch (\Exception $e) {
-            Log::error('Error saving subject: ' . $e->getMessage());
-            session()->flash('error', 'An error occurred: ' . $e->getMessage());
+            Log::error('Error saving subject: '.$e->getMessage());
+            session()->flash('error', 'An error occurred: '.$e->getMessage());
         }
     }
 
@@ -139,8 +149,8 @@ class SubjectsManager extends Component
                 Subject::find($this->subjectId)->delete();
                 session()->flash('message', 'Subject deleted successfully.');
             } catch (\Exception $e) {
-                Log::error('Error deleting subject: ' . $e->getMessage());
-                session()->flash('error', 'An error occurred while deleting the subject: ' . $e->getMessage());
+                Log::error('Error deleting subject: '.$e->getMessage());
+                session()->flash('error', 'An error occurred while deleting the subject: '.$e->getMessage());
             }
         }
         $this->closeDeleteModal();

@@ -15,14 +15,14 @@ class DeviceAccessLog extends Model
         'session_token',
         'ip_address',
         'is_conflict',
-        'access_time'
+        'access_time',
     ];
-    
+
     protected $casts = [
         'is_conflict' => 'boolean',
-        'access_time' => 'datetime'
+        'access_time' => 'datetime',
     ];
-    
+
     /**
      * Get the exam session associated with this log
      */
@@ -30,7 +30,7 @@ class DeviceAccessLog extends Model
     {
         return $this->belongsTo(ExamSession::class);
     }
-    
+
     /**
      * Get the student associated with this log
      */
@@ -38,7 +38,7 @@ class DeviceAccessLog extends Model
     {
         return $this->belongsTo(Student::class, 'student_id');
     }
-    
+
     /**
      * Get the exam associated with this log
      */
@@ -46,7 +46,7 @@ class DeviceAccessLog extends Model
     {
         return $this->belongsTo(Exam::class);
     }
-    
+
     /**
      * Scope for suspicious activity patterns
      */
@@ -54,7 +54,7 @@ class DeviceAccessLog extends Model
     {
         return $query->where('is_conflict', true);
     }
-    
+
     /**
      * Scope for getting logs within a specific time window
      */

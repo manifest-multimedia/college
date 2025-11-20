@@ -14,7 +14,7 @@ class QuestionSet extends Model
         'description',
         'course_id',
         'difficulty_level',
-        'created_by'
+        'created_by',
     ];
 
     protected $casts = [

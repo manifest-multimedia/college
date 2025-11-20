@@ -19,21 +19,21 @@ class AISenseiServiceProvider extends ServiceProvider
     {
         // Register the OpenAI Assistants Service
         $this->app->singleton(OpenAIAssistantsService::class, function ($app) {
-            return new OpenAIAssistantsService();
+            return new OpenAIAssistantsService;
         });
-        
+
         // Register the OpenAI Files Service
         $this->app->singleton(OpenAIFilesService::class, function ($app) {
-            return new OpenAIFilesService();
+            return new OpenAIFilesService;
         });
-        
+
         // Register the AISensei Document Service
         $this->app->singleton(DocumentUploadInterface::class, function ($app) {
             return new AISenseiDocumentService(
                 $app->make(OpenAIAssistantsService::class)
             );
         });
-        
+
         // Register the AI Assistants Chat Service
         $this->app->singleton(ChatServiceInterface::class, function ($app) {
             return new AssistantsChatService(

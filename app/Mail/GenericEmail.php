@@ -5,10 +5,10 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Attachment;
 
 class GenericEmail extends Mailable implements ShouldQueue
 {
@@ -61,27 +61,27 @@ class GenericEmail extends Mailable implements ShouldQueue
     public function attachments(): array
     {
         $attachments = [];
-        
-        if (!empty($this->emailData['attachments'])) {
+
+        if (! empty($this->emailData['attachments'])) {
             foreach ($this->emailData['attachments'] as $attachment) {
                 if (is_array($attachment) && isset($attachment['path'])) {
                     $attachmentObj = Attachment::fromPath($attachment['path']);
-                    
+
                     if (isset($attachment['name'])) {
                         $attachmentObj->as($attachment['name']);
                     }
-                    
+
                     if (isset($attachment['mime'])) {
                         $attachmentObj->withMime($attachment['mime']);
                     }
-                    
+
                     $attachments[] = $attachmentObj;
-                } else if (is_string($attachment)) {
+                } elseif (is_string($attachment)) {
                     $attachments[] = Attachment::fromPath($attachment);
                 }
             }
         }
-        
+
         return $attachments;
     }
 }

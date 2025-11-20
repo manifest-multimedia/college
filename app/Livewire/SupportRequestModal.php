@@ -2,37 +2,39 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-
+use Livewire\Attributes\On;
+use Livewire\Component;
 
 class SupportRequestModal extends Component
 {
-    public $support_message; 
+    public $support_message;
 
     #[On('closeSupportModal')]
-    public function hideModal(){
+    public function hideModal()
+    {
         $this->reset(['support_message']);
     }
 
     #[On('showRequestSupportModal')]
-    public function showModal(){
+    public function showModal()
+    {
         $this->reset(['support_message']);
     }
-
 
     public function render()
     {
         return view('livewire.support-request-modal');
     }
 
-    public function cancelRequest(){
+    public function cancelRequest()
+    {
         $this->dispatch('closeSupportModal');
     }
 
-    public function submitRequest(){
+    public function submitRequest()
+    {
         // Validate Request
         $validatedData = $this->validate([
             'support_message' => 'required|string',
@@ -48,7 +50,7 @@ class SupportRequestModal extends Component
         // Send an Email to johnson@pnmtc.edu.gh with request details
         Mail::send('emails.support_request', $validatedData, function ($message) use ($validatedData) {
             $message->to('johnson@pnmtc.edu.gh')
-                    ->subject('New Support Request: ' . $validatedData['user_name']);
+                ->subject('New Support Request: '.$validatedData['user_name']);
         });
 
         session()->flash('success', 'Congratulations! Your support request has been sent successfully.');
@@ -59,5 +61,4 @@ class SupportRequestModal extends Component
         // Dispatch an event to close the modal
         $this->dispatch('closeFeatureRequestModal');
     }
-
 }
