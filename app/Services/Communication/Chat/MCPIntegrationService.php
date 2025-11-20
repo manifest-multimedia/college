@@ -380,6 +380,79 @@ class MCPIntegrationService
                     ],
                 ],
             ],
+            // Cohort Management Tools
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'list_cohorts',
+                    'description' => 'List all cohorts in the system with optional filtering',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'active_only' => [
+                                'type' => 'boolean',
+                                'description' => 'Filter to show only active cohorts (default: false)',
+                            ],
+                        ],
+                        'required' => [],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'generate_student_ids_for_cohort',
+                    'description' => 'Generate student IDs for all students in a specific cohort who do not have student IDs',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'cohort_name' => [
+                                'type' => 'string',
+                                'description' => 'Name of the cohort to generate IDs for',
+                            ],
+                        ],
+                        'required' => ['cohort_name'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'delete_cohort_students',
+                    'description' => 'Delete all students for a specific cohort. This is a destructive action that requires confirmation.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'cohort_name' => [
+                                'type' => 'string',
+                                'description' => 'Name of the cohort to delete students from',
+                            ],
+                            'confirm_deletion' => [
+                                'type' => 'boolean',
+                                'description' => 'Must be true to confirm the deletion. This action is permanent.',
+                            ],
+                        ],
+                        'required' => ['cohort_name', 'confirm_deletion'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'get_cohort_student_count',
+                    'description' => 'Get the number of students in a specific cohort with detailed breakdown',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'cohort_name' => [
+                                'type' => 'string',
+                                'description' => 'Name of the cohort',
+                            ],
+                        ],
+                        'required' => ['cohort_name'],
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -566,6 +639,59 @@ class MCPIntegrationService
                     $this->permissionService->logPermissionCheck($functionName, true);
 
                     return $this->studentMcpService->getStudentIdConfiguration($arguments);
+
+                    // Cohort Management Functions
+                case 'list_cohorts':
+                    if (! $this->permissionService->canListCohorts()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+
+                        return [
+                            'success' => false,
+                            'error' => 'You do not have permission to list cohorts. Please contact your administrator.',
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+
+                    return $this->mcpService->handleToolCall('list_cohorts', $arguments);
+
+                case 'generate_student_ids_for_cohort':
+                    if (! $this->permissionService->canManageStudents()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+
+                        return [
+                            'success' => false,
+                            'error' => 'You do not have permission to generate student IDs. This requires administrator or registrar access.',
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+
+                    return $this->mcpService->handleToolCall('generate_student_ids_for_cohort', $arguments);
+
+                case 'delete_cohort_students':
+                    if (! $this->permissionService->canManageStudents()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+
+                        return [
+                            'success' => false,
+                            'error' => 'You do not have permission to delete cohort students. This requires administrator access and is a destructive action.',
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+
+                    return $this->mcpService->handleToolCall('delete_cohort_students', $arguments);
+
+                case 'get_cohort_student_count':
+                    if (! $this->permissionService->canListCohorts()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+
+                        return [
+                            'success' => false,
+                            'error' => 'You do not have permission to view cohort information.',
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+
+                    return $this->mcpService->handleToolCall('get_cohort_student_count', $arguments);
 
                 default:
                     Log::warning('Unknown MCP function called', ['function' => $functionName]);

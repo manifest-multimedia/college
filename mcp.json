@@ -6,6 +6,17 @@
                 "artisan",
                 "boost:mcp"
             ]
+        },
+        "exam-management": {
+            "command": "php",
+            "args": [
+                "/home/johnsonsebire/www/college.local/cis/artisan",
+                "mcp:serve"
+            ],
+            "env": {
+                "APP_ENV": "local"
+            },
+            "description": "Exam and Question Set Management Server - Create question sets, add questions, manage exams, and handle cohort student management"
         }
     }
 }

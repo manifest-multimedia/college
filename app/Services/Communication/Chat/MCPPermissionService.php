@@ -147,6 +147,21 @@ class MCPPermissionService
     }
 
     /**
+     * Check if user can list cohorts
+     */
+    public function canListCohorts(): bool
+    {
+        $user = Auth::user();
+        if (! $user) {
+            return false;
+        }
+
+        // Allow Academic Officer, Administrator, Registrar, and System roles to view cohorts
+        return $user->hasAnyRole(['System', 'Super Admin', 'Academic Officer', 'Administrator', 'Registrar'])
+            || $user->hasAnyPermission(['view students', 'manage students', 'view exams']);
+    }
+
+    /**
      * Get user context for AI assistant
      */
     public function getUserContext(): array
@@ -189,6 +204,12 @@ class MCPPermissionService
             $capabilities[] = 'manage student IDs';
             $capabilities[] = 'reassign student IDs';
             $capabilities[] = 'revert student ID changes';
+            $capabilities[] = 'generate student IDs for cohorts';
+            $capabilities[] = 'delete cohort students';
+        }
+        if ($this->canListCohorts()) {
+            $capabilities[] = 'view cohorts';
+            $capabilities[] = 'view cohort statistics';
         }
 
         return [
@@ -234,6 +255,10 @@ class MCPPermissionService
             'list_courses' => "Sorry, your role ({$userRole}) does not have permission to view courses.",
             'list_question_sets' => "Sorry, your role ({$userRole}) does not have permission to view question sets. This action requires Academic Officer, Administrator, Lecturer, or System role.",
             'get_question_set_details' => "Sorry, your role ({$userRole}) does not have permission to view question set details. This action requires Academic Officer, Administrator, Lecturer, or System role.",
+            'list_cohorts' => "Sorry, your role ({$userRole}) does not have permission to view cohorts. This action requires Academic Officer, Administrator, Registrar, or System role.",
+            'generate_student_ids_for_cohort' => "Sorry, your role ({$userRole}) does not have permission to generate student IDs. This action requires Administrator, Registrar, or System role, or student management permissions.",
+            'delete_cohort_students' => "Sorry, your role ({$userRole}) does not have permission to delete cohort students. This action requires Administrator, Registrar, or System role, or student management permissions.",
+            'get_cohort_student_count' => "Sorry, your role ({$userRole}) does not have permission to view cohort details. This action requires Academic Officer, Administrator, Registrar, or System role.",
         ];
 
         return $messages[$action] ?? "Sorry, you don't have permission to perform this action.";
