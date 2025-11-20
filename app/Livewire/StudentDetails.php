@@ -101,11 +101,7 @@ class StudentDetails extends Component
         $exam = $session->exam;
         if (!$exam) return 'Unknown Exam';
 
-        // Fallback to Course Code - Type
-        $courseCode = $exam->course->course_code ?? '';
-        $type = ucfirst($exam->type ?? 'Exam');
-        
-        return $courseCode ? "$courseCode - $type" : $type;
+        return $exam->course ? $exam->course->name : 'No Course Name';
     }
 
 
