@@ -117,8 +117,8 @@ class StudentImport extends Component
             $this->isProcessing = true;
 
             // Increase execution time for large imports
-            set_time_limit(300); // 5 minutes
-            ini_set('max_execution_time', 300);
+            set_time_limit(3000); // 50 minutes
+            ini_set('max_execution_time', 3000);
 
             // Import students from the Excel file
             $importer = new StudentImporter(
