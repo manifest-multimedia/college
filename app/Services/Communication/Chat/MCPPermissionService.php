@@ -77,7 +77,7 @@ class MCPPermissionService
         }
 
         return $user->hasAnyRole(['System', 'Super Admin', 'Academic Officer', 'Administrator'])
-            || $user->hasPermission('create exams');
+            || $user->hasAnyPermission(['create exams']);
     }
 
     /**
