@@ -175,7 +175,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             
             <!-- Communication Module Navigation -->
-            @hasrole(['System', 'Super Admin'])
+            @hasrole(['System', 'Super Admin', 'Lecturer'])
             <!--begin:Menu item-->
             @php
                 $communicationRoutes = [
@@ -205,6 +205,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu link-->
                 <!--begin:Menu sub-->
                 <div class="menu-sub menu-sub-accordion {{ $isCommunicationActive ? 'show' : '' }}">
+                    @hasrole(['System', 'Super Admin'])
                     {{-- @can('send sms') --}}
                     <!--begin:Menu item-->
                     <div class="menu-item">
@@ -250,6 +251,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    @endhasrole
                     
                     {{-- @can('send email') --}}
                     <!--begin:Menu item-->

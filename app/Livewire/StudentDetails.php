@@ -24,20 +24,20 @@ class StudentDetails extends Component
     {
         try {
             $this->student = Student::with([
-                'CollegeClass', 
-                'Cohort', 
-                'User.roles', 
+                'CollegeClass',
+                'Cohort',
+                'User.roles',
                 'examSessions' => function ($query) {
                     $query->with([
                         'exam' => function ($q) {
                             $q->with('course', 'questionSets')
-                              ->withCount('questions');
+                                ->withCount('questions');
                         },
-                        'responses.question.options'
+                        'responses.question.options',
                     ])->orderBy('created_at', 'desc');
-                }
+                },
             ])
-            ->find($this->studentId);
+                ->find($this->studentId);
 
             if (! $this->student) {
                 session()->flash('error', 'Student not found.');
@@ -92,18 +92,19 @@ class StudentDetails extends Component
         return [
             'obtained' => $obtainedMarks,
             'total' => $totalMarks,
-            'percentage' => $percentage
+            'percentage' => $percentage,
         ];
     }
 
     public function getExamName($session)
     {
         $exam = $session->exam;
-        if (!$exam) return 'Unknown Exam';
+        if (! $exam) {
+            return 'Unknown Exam';
+        }
 
         return $exam->course ? $exam->course->name : 'No Course Name';
     }
-
 
     public function deleteExamSession($sessionId)
     {
@@ -121,12 +122,12 @@ class StudentDetails extends Component
                 $session->responses()->delete();
                 $session->sessionQuestions()->delete();
                 $session->scoredQuestions()->delete();
-                
+
                 // Delete device access logs
                 \App\Models\DeviceAccessLog::where('exam_session_id', $session->id)->delete();
-                
+
                 $session->delete();
-                
+
                 session()->flash('success', 'Exam session deleted successfully.');
                 $this->loadStudent(); // Reload to update the list
             } else {
@@ -134,7 +135,7 @@ class StudentDetails extends Component
             }
         } catch (\Exception $e) {
             Log::error('Error deleting exam session: '.$e->getMessage());
-            session()->flash('error', 'Failed to delete exam session: ' . $e->getMessage());
+            session()->flash('error', 'Failed to delete exam session: '.$e->getMessage());
         }
     }
 

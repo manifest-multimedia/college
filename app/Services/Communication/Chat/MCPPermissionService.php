@@ -23,6 +23,11 @@ class MCPPermissionService
             return true;
         }
 
+        // Lecturers can access MCP for limited features (AI Sensei, Email)
+        if ($user->hasRole('Lecturer')) {
+            return true;
+        }
+
         // Users with exam management permissions can access MCP
         return $user->hasAnyPermission([
             'create exams',
