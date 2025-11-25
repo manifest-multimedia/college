@@ -11,6 +11,7 @@ use App\Models\QuestionSet;
 use App\Models\Student;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -171,6 +172,80 @@ class ExamManagementMCPService
                 ],
             ],
             [
+                'name' => 'analyze_document_questions',
+                'description' => 'Analyze an uploaded document to count and preview questions before creating a question set. Use this FIRST before creating question sets from documents to inform the user about what will be created.',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'course_code' => [
+                            'type' => 'string',
+                            'description' => 'Course code for the question set (e.g., CS101, MATH201)',
+                        ],
+                        'question_set_name' => [
+                            'type' => 'string',
+                            'description' => 'Proposed name for the question set',
+                        ],
+                    ],
+                    'required' => ['course_code', 'question_set_name'],
+                ],
+            ],
+            [
+                'name' => 'bulk_add_questions_to_set',
+                'description' => 'Add multiple questions to a question set at once. Use this after analyzing the document and receiving user confirmation.',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'question_set_id' => [
+                            'type' => 'integer',
+                            'description' => 'ID of the question set to add questions to',
+                        ],
+                        'questions' => [
+                            'type' => 'array',
+                            'description' => 'Array of questions to add',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'question_text' => [
+                                        'type' => 'string',
+                                        'description' => 'The question text/prompt',
+                                    ],
+                                    'question_type' => [
+                                        'type' => 'string',
+                                        'enum' => ['multiple_choice', 'true_false', 'short_answer', 'essay'],
+                                        'description' => 'Type of question',
+                                    ],
+                                    'options' => [
+                                        'type' => 'array',
+                                        'description' => 'Array of answer options (for multiple choice)',
+                                        'items' => ['type' => 'string'],
+                                    ],
+                                    'correct_answer' => [
+                                        'type' => 'string',
+                                        'description' => 'The correct answer',
+                                    ],
+                                    'explanation' => [
+                                        'type' => 'string',
+                                        'description' => 'Explanation for the correct answer (optional)',
+                                    ],
+                                    'marks' => [
+                                        'type' => 'integer',
+                                        'description' => 'Marks/points for this question (default: 1)',
+                                        'default' => 1,
+                                    ],
+                                    'difficulty_level' => [
+                                        'type' => 'string',
+                                        'enum' => ['easy', 'medium', 'hard'],
+                                        'description' => 'Difficulty level of this specific question',
+                                    ],
+                                ],
+                                'required' => ['question_text', 'question_type', 'correct_answer'],
+                            ],
+                        ],
+                    ],
+                    'required' => ['question_set_id', 'questions'],
+                ],
+            ],
+            [
                 'name' => 'get_question_set_details',
                 'description' => 'Get detailed information about a specific question set including its questions',
                 'input_schema' => [
@@ -295,6 +370,10 @@ class ExamManagementMCPService
                     return $this->listQuestionSets($arguments);
                 case 'list_courses':
                     return $this->listCourses();
+                case 'analyze_document_questions':
+                    return $this->analyzeDocumentQuestions($arguments);
+                case 'bulk_add_questions_to_set':
+                    return $this->bulkAddQuestionsToSet($arguments);
                 case 'get_question_set_details':
                     return $this->getQuestionSetDetails($arguments);
                 case 'list_exams':
@@ -924,6 +1003,165 @@ class ExamManagementMCPService
             return [
                 'success' => false,
                 'error' => 'Error getting student count: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Analyze document to count and preview questions
+     * This helps AI inform user before creating the question set
+     */
+    private function analyzeDocumentQuestions(array $arguments): array
+    {
+        try {
+            $courseCode = $arguments['course_code'];
+            $questionSetName = $arguments['question_set_name'];
+
+            // Verify course exists
+            $subject = Subject::where('course_code', $courseCode)->first();
+            if (! $subject) {
+                return [
+                    'success' => false,
+                    'error' => "Course with code '{$courseCode}' not found",
+                ];
+            }
+
+            // Return analysis metadata that AI should use to inform the user
+            return [
+                'success' => true,
+                'data' => [
+                    'course_code' => $courseCode,
+                    'course_name' => $subject->name,
+                    'proposed_question_set_name' => $questionSetName,
+                    'instructions_for_ai' => 'You have access to the uploaded document through file_search. Please analyze the document to count the total number of questions and inform the user. Ask: "I found [X] questions in the document. Would you like me to create a question set named \''.$questionSetName.'\' with all [X] questions for '.$subject->course_code.' - '.$subject->name.'?" Wait for user confirmation before proceeding to create_question_set.',
+                    'next_steps' => [
+                        '1. Count questions in the document using your file_search capability',
+                        '2. Report the count to the user',
+                        '3. Ask for confirmation',
+                        '4. If confirmed, use create_question_set followed by bulk_add_questions_to_set',
+                    ],
+                ],
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error analyzing document questions', [
+                'error' => $e->getMessage(),
+                'arguments' => $arguments,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Error analyzing document: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Bulk add multiple questions to a question set
+     */
+    private function bulkAddQuestionsToSet(array $arguments): array
+    {
+        try {
+            $questionSetId = $arguments['question_set_id'];
+            $questions = $arguments['questions'];
+
+            $questionSet = QuestionSet::find($questionSetId);
+            if (! $questionSet) {
+                return [
+                    'success' => false,
+                    'error' => "Question set with ID {$questionSetId} not found",
+                ];
+            }
+
+            // Check permissions
+            $user = Auth::user();
+            if (! $user->hasRole(['Super Admin', 'Administrator', 'admin', 'Lecturer']) && $questionSet->created_by !== $user->id) {
+                return [
+                    'success' => false,
+                    'error' => 'You do not have permission to add questions to this question set',
+                ];
+            }
+
+            $successCount = 0;
+            $failedCount = 0;
+            $errors = [];
+
+            // Type mapping
+            $typeMapping = [
+                'multiple_choice' => 'MCQ',
+                'true_false' => 'TF',
+                'short_answer' => 'ESSAY',
+                'essay' => 'ESSAY',
+            ];
+
+            DB::beginTransaction();
+
+            try {
+                foreach ($questions as $index => $questionData) {
+                    try {
+                        $dbType = $typeMapping[$questionData['question_type']] ?? 'MCQ';
+
+                        // Create the question
+                        $question = Question::create([
+                            'question_set_id' => $questionSet->id,
+                            'question_text' => $questionData['question_text'],
+                            'explanation' => $questionData['explanation'] ?? null,
+                            'mark' => $questionData['marks'] ?? 1,
+                            'type' => $dbType,
+                            'difficulty_level' => $questionData['difficulty_level'] ?? $questionSet->difficulty_level ?? 'medium',
+                        ]);
+
+                        // Handle options for multiple choice questions
+                        if ($questionData['question_type'] === 'multiple_choice' && ! empty($questionData['options'])) {
+                            foreach ($questionData['options'] as $optionIndex => $optionText) {
+                                $isCorrect = ($optionText === $questionData['correct_answer']);
+
+                                Option::create([
+                                    'question_id' => $question->id,
+                                    'option_text' => $optionText,
+                                    'is_correct' => $isCorrect,
+                                    'option_letter' => chr(65 + $optionIndex), // A, B, C, D...
+                                ]);
+                            }
+                        }
+
+                        $successCount++;
+                    } catch (\Exception $e) {
+                        $failedCount++;
+                        $errors[] = 'Question #'.($index + 1).': '.$e->getMessage();
+                        Log::error('Error adding question in bulk', [
+                            'question_index' => $index,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                DB::commit();
+
+                return [
+                    'success' => true,
+                    'data' => [
+                        'question_set_id' => $questionSet->id,
+                        'question_set_name' => $questionSet->name,
+                        'total_attempted' => count($questions),
+                        'successfully_added' => $successCount,
+                        'failed' => $failedCount,
+                        'errors' => $errors,
+                    ],
+                    'message' => "Successfully added {$successCount} questions to '{$questionSet->name}'".($failedCount > 0 ? ". {$failedCount} questions failed." : ''),
+                ];
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in bulk add questions', [
+                'error' => $e->getMessage(),
+                'arguments' => $arguments,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Error adding questions in bulk: '.$e->getMessage(),
             ];
         }
     }

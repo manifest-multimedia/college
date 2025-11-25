@@ -216,6 +216,70 @@ class MCPIntegrationService
             [
                 'type' => 'function',
                 'function' => [
+                    'name' => 'analyze_document_questions',
+                    'description' => 'IMPORTANT: Use this FIRST before creating question sets from documents. Analyzes an uploaded document to count and preview questions, then asks user for confirmation before proceeding.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'course_code' => [
+                                'type' => 'string',
+                                'description' => 'Course code for the question set (e.g., CS101, MATH201)',
+                            ],
+                            'question_set_name' => [
+                                'type' => 'string',
+                                'description' => 'Proposed name for the question set',
+                            ],
+                        ],
+                        'required' => ['course_code', 'question_set_name'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'bulk_add_questions_to_set',
+                    'description' => 'Add multiple questions to a question set at once. Use this after analyzing document and receiving user confirmation.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'question_set_id' => [
+                                'type' => 'integer',
+                                'description' => 'ID of the question set to add questions to',
+                            ],
+                            'questions' => [
+                                'type' => 'array',
+                                'description' => 'Array of questions to add',
+                                'items' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'question_text' => ['type' => 'string'],
+                                        'question_type' => [
+                                            'type' => 'string',
+                                            'enum' => ['multiple_choice', 'true_false', 'short_answer', 'essay'],
+                                        ],
+                                        'options' => [
+                                            'type' => 'array',
+                                            'items' => ['type' => 'string'],
+                                        ],
+                                        'correct_answer' => ['type' => 'string'],
+                                        'explanation' => ['type' => 'string'],
+                                        'marks' => ['type' => 'integer'],
+                                        'difficulty_level' => [
+                                            'type' => 'string',
+                                            'enum' => ['easy', 'medium', 'hard'],
+                                        ],
+                                    ],
+                                    'required' => ['question_text', 'question_type', 'correct_answer'],
+                                ],
+                            ],
+                        ],
+                        'required' => ['question_set_id', 'questions'],
+                    ],
+                ],
+            ],
+            [
+                'type' => 'function',
+                'function' => [
                     'name' => 'list_exams',
                     'description' => 'Get a list of exams, optionally filtered by course',
                     'parameters' => [
@@ -509,6 +573,32 @@ class MCPIntegrationService
                     $this->permissionService->logPermissionCheck($functionName, true);
 
                     return $this->mcpService->addQuestionToSet($arguments);
+
+                case 'analyze_document_questions':
+                    if (! $this->permissionService->canAddQuestions()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName),
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+
+                    return $this->mcpService->handleToolCall($functionName, $arguments);
+
+                case 'bulk_add_questions_to_set':
+                    if (! $this->permissionService->canAddQuestions()) {
+                        $this->permissionService->logPermissionCheck($functionName, false);
+
+                        return [
+                            'success' => false,
+                            'error' => $this->permissionService->getPermissionDenialMessage($functionName),
+                        ];
+                    }
+                    $this->permissionService->logPermissionCheck($functionName, true);
+
+                    return $this->mcpService->handleToolCall($functionName, $arguments);
 
                 case 'create_exam':
                     if (! $this->permissionService->canCreateExams()) {
