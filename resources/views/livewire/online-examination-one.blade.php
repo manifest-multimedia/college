@@ -62,7 +62,7 @@
         <div class="row h-100">
             <!-- Main Exam Content -->
             <div class="col-md-9 d-flex flex-column">
-                <div class="p-4 shadow-lg card question-card position-relative" style="min-height: 550px; width: 100%;">
+                <div class="p-4 shadow-lg card question-card position-relative exam-protected" style="min-height: 550px; width: 100%;">
                     <div class="watermark">{{ $student_name }}</div>
 
                     @if ($examExpired && !$canStillSubmit)
@@ -186,6 +186,7 @@
 
     @include('components.partials.styles.exam-styles')
     @include('components.partials.styles.scrollbar-styles')
+    @include('components.partials.exam-security')
 
     <!-- Timer scripts and styles -->
     <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">

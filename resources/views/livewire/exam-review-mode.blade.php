@@ -42,7 +42,7 @@
             <!-- Main Questions Column -->
             <div class="col-lg-9 mb-4">
                 @foreach ($questions as $index => $question)
-                    <div class="card shadow-sm mb-4 question-card" id="question-{{ $index + 1 }}">
+                    <div class="card shadow-sm mb-4 question-card exam-protected" id="question-{{ $index + 1 }}">
                         <div class="card-header bg-white py-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">Question {{ $index + 1 }} of {{ count($questions) }}</h5>
@@ -144,6 +144,8 @@
             </div>
         </div>
     </div>
+    
+    @include('components.partials.exam-security')
     
     <style>
         

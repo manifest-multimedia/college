@@ -62,7 +62,7 @@
         <div class="row h-100">
             <!-- Main Exam Content -->
             <div class="col-md-9 d-flex flex-column">
-                <div class="p-4 shadow-lg card question-card position-relative">
+                <div class="p-4 shadow-lg card question-card position-relative exam-protected">
                     <!-- Watermark -->
                     <div class="watermark">
                         {{ $student_name }}
@@ -166,6 +166,7 @@
 
     @include('components.partials.styles.exam-styles')
     @include('components.partials.styles.scrollbar-styles')
+    @include('components.partials.exam-security')
 
     @if ($examExpired && !$canStillSubmit)
         <style>
