@@ -233,22 +233,45 @@ class ExamSession extends Model
      */
     public function recordDeviceAccessAttempt($token, $deviceInfo, $isConflict = false)
     {
-        // Get the student record to retrieve the user_id
-        $student = Student::find($this->student_id);
-        $studentUserId = $student ? $student->user_id : null;
+        try {
+            // Get the student record to retrieve the user_id
+            $student = Student::find($this->student_id);
+            
+            // Only create log if student exists (to avoid foreign key constraint violation)
+            if (!$student) {
+                \Log::warning('Attempted to record device access for non-existent student', [
+                    'exam_session_id' => $this->id,
+                    'student_id' => $this->student_id,
+                    'exam_id' => $this->exam_id,
+                ]);
+                return;
+            }
 
-        // Create access log entry
-        DeviceAccessLog::create([
-            'exam_session_id' => $this->id,
-            'student_id' => $this->student_id,
-            'student_user_id' => $studentUserId,
-            'exam_id' => $this->exam_id,
-            'device_info' => $deviceInfo,
-            'session_token' => $token,
-            'is_conflict' => $isConflict,
-            'ip_address' => request()->ip(),
-            'access_time' => now(),
-        ]);
+            $studentUserId = $student->user_id;
+
+            // Create access log entry
+            DeviceAccessLog::create([
+                'exam_session_id' => $this->id,
+                'student_id' => $this->student_id,
+                'student_user_id' => $studentUserId,
+                'exam_id' => $this->exam_id,
+                'device_info' => $deviceInfo,
+                'session_token' => $token,
+                'is_conflict' => $isConflict,
+                'ip_address' => request()->ip(),
+                'access_time' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log the error but don't break the application
+            \Log::error('Failed to record device access attempt', [
+                'exam_session_id' => $this->id,
+                'student_id' => $this->student_id,
+                'exam_id' => $this->exam_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            // Silently fail - device logging is not critical to exam functionality
+        }
     }
 
     /**

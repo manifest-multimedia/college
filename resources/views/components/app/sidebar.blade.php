@@ -1261,13 +1261,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
         <div class="d-flex align-items-center">
             <!--begin::Avatar-->
             <div class="symbol symbol-circle symbol-40px">
-                <img src="{{ Auth::user()->profile_photo_url }}" alt="photo" />
+                <img src="{{ Auth::user()?->profile_photo_url ?? asset('images/default-avatar.png') }}" alt="photo" />
             </div>
             <!--end::Avatar-->
             <!--begin::User info-->
             <div class="ms-2">
                 <!--begin::Name-->
-                <a href="#" class="text-gray-800 text-hover-primary fs-6 fw-bold lh-1">{{Auth::user()->name}}</a>
+                <a href="#" class="text-gray-800 text-hover-primary fs-6 fw-bold lh-1">{{ Auth::user()?->name ?? 'Guest' }}</a>
                 <!--end::Name-->
                 <!--begin::Roles-->
                 <span class="text-muted fw-semibold d-block fs-7 lh-1">
@@ -1300,17 +1300,17 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <div class="px-3 menu-content d-flex align-items-center">
                         <!--begin::Avatar-->
                         <div class="symbol symbol-50px me-5">
-                            <img alt="Avatar" src="{{ Auth::user()->profile_photo_url }}" />
+                            <img alt="Avatar" src="{{ Auth::user()?->profile_photo_url ?? asset('images/default-avatar.png') }}" />
                         </div>
                         <!--end::Avatar-->
                         <!--begin::Username-->
                         <div class="d-flex flex-column">
-                            <div class="fw-bold d-flex align-items-center fs-5">{{ Auth::user()->name }}
+                            <div class="fw-bold d-flex align-items-center fs-5">{{ Auth::user()?->name ?? 'Guest' }}
                                 <span class="px-2 py-1 badge badge-light-success fw-bold fs-8 ms-2">
-                                    @if(Auth::user()->roles->count() > 0)
+                                    @if(Auth::user()?->roles?->count() > 0)
                                         {{ Auth::user()->roles->pluck('name')->first() }}
                                     @else
-                                        {{ Auth::user()->role }}
+                                        {{ Auth::user()?->role ?? 'User' }}
                                     @endif
                                 </span>
                             </div>
