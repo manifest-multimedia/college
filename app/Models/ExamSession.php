@@ -158,8 +158,8 @@ class ExamSession extends Model
      */
     public function getRemainingTimeAttribute()
     {
-        // If the session is completed, return 0
-        if (! $this->completed_at || Carbon::now()->gt($this->adjustedCompletionTime)) {
+        // If the session is completed or time has expired, return 0
+        if ($this->completed_at || Carbon::now()->gt($this->adjustedCompletionTime)) {
             return 0;
         }
 
