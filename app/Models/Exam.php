@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Exam extends Model
 {
@@ -169,6 +170,21 @@ class Exam extends Model
         // Final shuffle if requested
         if ($shuffle) {
             $sessionQuestions = $sessionQuestions->shuffle();
+        }
+
+        // CRITICAL FIX: Respect questions_per_session limit to prevent excessive questions
+        // This ensures students don't see more questions than configured
+        if ($this->questions_per_session && $this->questions_per_session > 0) {
+            if ($sessionQuestions->count() > $this->questions_per_session) {
+                $sessionQuestions = $sessionQuestions->take($this->questions_per_session);
+
+                Log::info('Limited session questions to configured limit', [
+                    'exam_id' => $this->id,
+                    'total_available' => $sessionQuestions->count() + ($sessionQuestions->count() - $this->questions_per_session),
+                    'questions_per_session' => $this->questions_per_session,
+                    'returned_count' => $sessionQuestions->count(),
+                ]);
+            }
         }
 
         return $sessionQuestions->values(); // Reset array keys
