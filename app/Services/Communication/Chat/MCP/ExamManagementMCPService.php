@@ -1033,12 +1033,13 @@ class ExamManagementMCPService
                     'course_code' => $courseCode,
                     'course_name' => $subject->name,
                     'proposed_question_set_name' => $questionSetName,
-                    'instructions_for_ai' => 'You have access to the uploaded document through file_search. Please analyze the document to count the total number of questions and inform the user. Ask: "I found [X] questions in the document. Would you like me to create a question set named \''.$questionSetName.'\' with all [X] questions for '.$subject->course_code.' - '.$subject->name.'?" Wait for user confirmation before proceeding to create_question_set.',
+                    'instructions_for_ai' => 'CRITICAL: Use file_search to read the ENTIRE document across ALL pages and sections. Do not stop after the first 20 questions. Count EVERY question in the complete document. Report: "I found [X] questions in the document. Would you like me to create a question set named \''.$questionSetName.'\' with all [X] questions for '.$subject->course_code.' - '.$subject->name.'?" Wait for user confirmation before proceeding to create_question_set.',
                     'next_steps' => [
-                        '1. Count questions in the document using your file_search capability',
-                        '2. Report the count to the user',
-                        '3. Ask for confirmation',
-                        '4. If confirmed, use create_question_set followed by bulk_add_questions_to_set',
+                        '1. Use file_search to read COMPLETE document (ALL pages/sections)',
+                        '2. Count EVERY question - do not stop at 20',
+                        '3. Report the total count to the user',
+                        '4. Ask for confirmation',
+                        '5. If confirmed, use create_question_set followed by bulk_add_questions_to_set with ALL questions',
                     ],
                 ],
             ];
