@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExamSession extends Model
@@ -236,14 +237,15 @@ class ExamSession extends Model
         try {
             // Get the student record to retrieve the user_id
             $student = Student::find($this->student_id);
-            
+
             // Only create log if student exists (to avoid foreign key constraint violation)
-            if (!$student) {
-                \Log::warning('Attempted to record device access for non-existent student', [
+            if (! $student) {
+                Log::warning('Attempted to record device access for non-existent student', [
                     'exam_session_id' => $this->id,
                     'student_id' => $this->student_id,
                     'exam_id' => $this->exam_id,
                 ]);
+
                 return;
             }
 
@@ -263,7 +265,7 @@ class ExamSession extends Model
             ]);
         } catch (\Exception $e) {
             // Log the error but don't break the application
-            \Log::error('Failed to record device access attempt', [
+            Log::error('Failed to record device access attempt', [
                 'exam_session_id' => $this->id,
                 'student_id' => $this->student_id,
                 'exam_id' => $this->exam_id,
@@ -306,5 +308,129 @@ class ExamSession extends Model
         $secs = $seconds % 60;
 
         return sprintf('%02d:%02d:%02d', $hours, $minutes, $secs);
+    }
+
+    /**
+     * Check if this session has incomplete question assignments
+     * compared to the exam's configured questions_per_session
+     *
+     * @return bool
+     */
+    public function hasIncompleteQuestionAssignment()
+    {
+        // If questions_per_session is not set, there's no limit to enforce
+        $questionsPerSession = $this->exam->questions_per_session;
+        if (! $questionsPerSession || $questionsPerSession <= 0) {
+            return false;
+        }
+
+        // Count existing session questions
+        $currentCount = $this->sessionQuestions()->count();
+
+        // Session is incomplete if it has fewer questions than configured
+        return $currentCount < $questionsPerSession;
+    }
+
+    /**
+     * Regenerate questions for this session when incomplete
+     * Preserves questions that have been answered
+     *
+     * @return int Number of questions added/regenerated
+     */
+    public function regenerateIncompleteQuestions()
+    {
+        return DB::transaction(function () {
+            try {
+                // Get questions_per_session from exam
+                $questionsPerSession = $this->exam->questions_per_session;
+                if (! $questionsPerSession || $questionsPerSession <= 0) {
+                    Log::warning('Cannot regenerate questions: questions_per_session not configured', [
+                        'session_id' => $this->id,
+                        'exam_id' => $this->exam_id,
+                    ]);
+
+                    return 0;
+                }
+
+                // Get answered question IDs to preserve them
+                $answeredQuestionIds = $this->responses()->pluck('question_id')->toArray();
+
+                // Get currently assigned questions
+                $currentQuestions = ExamSessionQuestion::where('exam_session_id', $this->id)
+                    ->pluck('question_id')
+                    ->toArray();
+
+                $currentCount = count($currentQuestions);
+                $deficit = $questionsPerSession - $currentCount;
+
+                if ($deficit <= 0) {
+                    Log::info('No deficit to regenerate', [
+                        'session_id' => $this->id,
+                        'current_count' => $currentCount,
+                        'questions_per_session' => $questionsPerSession,
+                    ]);
+
+                    return 0;
+                }
+
+                Log::info('Regenerating incomplete session questions', [
+                    'session_id' => $this->id,
+                    'student_id' => $this->student_id,
+                    'exam_id' => $this->exam_id,
+                    'current_count' => $currentCount,
+                    'deficit' => $deficit,
+                    'answered_count' => count($answeredQuestionIds),
+                ]);
+
+                // Generate new pool excluding already assigned questions
+                $allAvailableQuestions = $this->exam->generateSessionQuestions(true);
+                $newQuestions = $allAvailableQuestions->whereNotIn('id', $currentQuestions)->take($deficit);
+
+                if ($newQuestions->isEmpty()) {
+                    Log::warning('No additional questions available for regeneration', [
+                        'session_id' => $this->id,
+                        'total_available' => $allAvailableQuestions->count(),
+                        'already_assigned' => count($currentQuestions),
+                    ]);
+
+                    return 0;
+                }
+
+                // Get next display_order
+                $maxOrder = ExamSessionQuestion::where('exam_session_id', $this->id)
+                    ->max('display_order') ?? 0;
+
+                // Insert new questions
+                $addedCount = 0;
+                foreach ($newQuestions as $question) {
+                    ExamSessionQuestion::create([
+                        'exam_session_id' => $this->id,
+                        'question_id' => $question->id,
+                        'display_order' => ++$maxOrder,
+                    ]);
+                    $addedCount++;
+                }
+
+                $newTotal = $currentCount + $addedCount;
+
+                Log::info('Successfully regenerated session questions', [
+                    'session_id' => $this->id,
+                    'questions_added' => $addedCount,
+                    'new_total' => $newTotal,
+                    'expected_total' => $questionsPerSession,
+                ]);
+
+                return $addedCount;
+            } catch (\Exception $e) {
+                Log::error('Failed to regenerate incomplete session questions', [
+                    'session_id' => $this->id,
+                    'exam_id' => $this->exam_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                throw $e;
+            }
+        });
     }
 }

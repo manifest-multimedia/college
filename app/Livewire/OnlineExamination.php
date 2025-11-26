@@ -9,6 +9,7 @@ use App\Models\Response;
 use App\Models\Student;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -402,6 +403,45 @@ class OnlineExamination extends Component
                 ->get();
 
             if ($existingSessionQuestions->isNotEmpty()) {
+                // Check if session has incomplete question assignment and fix it
+                $isCompleted = $this->examSession->completed_at &&
+                               ! $this->examSession->completed_at->isFuture();
+
+                if (! $isCompleted && $this->examSession->hasIncompleteQuestionAssignment()) {
+                    // Use cache to prevent multiple regenerations within 5 minutes
+                    $cacheKey = "session_regen_{$this->examSession->id}";
+                    $lastRegen = Cache::get($cacheKey);
+
+                    if (! $lastRegen) {
+                        Log::warning('Detected incomplete question assignment for exam session', [
+                            'session_id' => $this->examSession->id,
+                            'student_id' => $this->student->student_id,
+                            'current_count' => $existingSessionQuestions->count(),
+                            'expected_count' => $this->exam->questions_per_session,
+                            'has_responses' => $this->examSession->responses()->exists(),
+                            'response_count' => $this->examSession->responses()->count(),
+                        ]);
+
+                        // Regenerate to fix the deficit
+                        $addedCount = $this->examSession->regenerateIncompleteQuestions();
+
+                        Log::info('Regenerated incomplete questions for exam session', [
+                            'session_id' => $this->examSession->id,
+                            'student_id' => $this->student->student_id,
+                            'questions_added' => $addedCount,
+                        ]);
+
+                        // Cache the regeneration to prevent repeated attempts
+                        Cache::put($cacheKey, now(), 300); // 5 minutes
+
+                        // Reload the session questions after regeneration
+                        $existingSessionQuestions = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
+                            ->orderBy('display_order')
+                            ->with('question.options')
+                            ->get();
+                    }
+                }
+
                 // Use the existing session questions for consistency
                 Log::info('Loading existing session questions', [
                     'session_id' => $this->examSession->id,
