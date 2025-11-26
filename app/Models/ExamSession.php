@@ -111,31 +111,44 @@ class ExamSession extends Model
             return null;
         }
 
-        // For restored sessions, the completed_at field is set to a future date
-        // and represents when the restored session expires
-        if ($this->completed_at && $this->completed_at->isFuture() && ! $this->auto_submitted) {
-            return $this->completed_at;
-        }
-
-        // For normal completed sessions (not restored), return the actual completion time
-        // This prevents extra time from being applied to completed exams
-        if ($this->completed_at && ! $this->completed_at->isFuture()) {
-            return $this->completed_at;
-        }
-
-        // First, get the original completion time based on the exam duration
-        $originalEndTime = null;
-
-        // Get the exam duration in minutes
+        // Calculate the proper end time based on exam duration and extra time
+        // This is the source of truth for when the exam should end
         $durationMinutes = $this->exam->duration ?? 0;
-        $originalEndTime = $this->started_at->copy()->addMinutes($durationMinutes);
+        $extraTimeMinutes = $this->extra_time_minutes ?? 0;
+        $totalDuration = $durationMinutes + $extraTimeMinutes;
 
-        // Add any extra time minutes to the end time
-        if ($this->extra_time_minutes > 0) {
-            return $originalEndTime->copy()->addMinutes($this->extra_time_minutes);
+        $calculatedEndTime = $this->started_at->copy()->addMinutes($totalDuration);
+
+        // For completed sessions that are in the past, return the actual completion time
+        // This preserves historical data for completed exams
+        if ($this->completed_at && $this->completed_at->isPast() && $this->auto_submitted) {
+            return $this->completed_at;
         }
 
-        return $originalEndTime;
+        // For restored sessions where completed_at is set to a future time,
+        // validate that it's reasonable (within 3 hours of calculated end time)
+        // This prevents showing incorrect times due to data corruption or bugs
+        if ($this->completed_at && $this->completed_at->isFuture() && ! $this->auto_submitted) {
+            // Calculate the difference between the stored completed_at and calculated end time
+            $diffInMinutes = abs($calculatedEndTime->diffInMinutes($this->completed_at));
+
+            // If the difference is reasonable (less than 3 hours), use completed_at
+            // This allows for legitimate restoration scenarios
+            if ($diffInMinutes <= 180) {
+                return $this->completed_at;
+            }
+
+            // Otherwise, the completed_at is likely corrupted - use calculated time
+            Log::warning('ExamSession has invalid completed_at date, using calculated time', [
+                'session_id' => $this->id,
+                'stored_completed_at' => $this->completed_at->toDateTimeString(),
+                'calculated_end_time' => $calculatedEndTime->toDateTimeString(),
+                'diff_in_minutes' => $diffInMinutes,
+            ]);
+        }
+
+        // Return the calculated end time based on duration and extra time
+        return $calculatedEndTime;
     }
 
     /**
