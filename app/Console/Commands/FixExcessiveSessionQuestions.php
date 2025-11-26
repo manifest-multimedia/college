@@ -109,7 +109,8 @@ class FixExcessiveSessionQuestions extends Command
                 continue;
             }
 
-            $this->warn("   ⚠️  Found {count($affectedSessions)} session(s) with excessive questions:");
+            $affectedCount = count($affectedSessions);
+            $this->warn("   ⚠️  Found {$affectedCount} session(s) with excessive questions:");
             $this->newLine();
 
             // Display table of affected sessions
@@ -137,7 +138,8 @@ class FixExcessiveSessionQuestions extends Command
             }
 
             // Ask for confirmation
-            if (! $this->confirm("Fix these {count($affectedSessions)} session(s)?", true)) {
+            $affectedCount = count($affectedSessions);
+            if (! $this->confirm("Fix these {$affectedCount} session(s)?", true)) {
                 $this->comment('   Skipped.');
                 $this->newLine();
 
