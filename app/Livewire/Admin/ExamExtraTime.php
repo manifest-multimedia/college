@@ -80,8 +80,10 @@ class ExamExtraTime extends Component
 
     public function mount()
     {
-        // Ensure only system users can access this component
-        if (! Auth::user() || ! Auth::user()->hasRole('System')) {
+        // Ensure only authorized users can access this component
+        $allowedRoles = ['System', 'Administrator', 'Super Admin', 'Lecturer'];
+
+        if (! Auth::user() || ! Auth::user()->hasAnyRole($allowedRoles)) {
             Log::warning('Unauthorized access attempt to ExamExtraTime component', [
                 'user_id' => Auth::id(),
                 'ip' => request()->ip(),

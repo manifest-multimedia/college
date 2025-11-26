@@ -224,7 +224,10 @@
                                     @if(!$applyToAll)
                                     <td>
                                         <div class="form-check form-check-sm form-check-custom">
-                                            <input class="form-check-input" type="checkbox" wire:model="selectedSessions" value="{{ $session->id }}">
+                                            <input class="form-check-input" type="checkbox" 
+                                                wire:click="toggleSessionSelection({{ $session->id }})" 
+                                                @if(in_array($session->id, $selectedSessions)) checked @endif 
+                                                value="{{ $session->id }}">
                                         </div>
                                     </td>
                                     @endif

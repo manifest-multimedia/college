@@ -87,7 +87,7 @@ class AllowExamReattempt extends Command
             ['Field', 'Value'],
             [
                 ['Session ID', $session->id],
-                ['Exam', $session->exam->name ?? "Exam #{$examId}"],
+                ['Exam', $session->exam->name ?? "Exam #{$exam->id}"],
                 ['Started At', $session->started_at->format('Y-m-d H:i:s')],
                 ['Completed At', $session->completed_at ? $session->completed_at->format('Y-m-d H:i:s') : 'Not completed'],
                 ['Score', $session->score ?? 'Not scored'],
