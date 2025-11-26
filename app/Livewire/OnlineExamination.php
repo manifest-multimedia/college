@@ -599,14 +599,18 @@ class OnlineExamination extends Component
             }
             */
 
-            // Log the response being saved
+            // Enhanced logging to track response pattern for debugging auto-submission issue
+            $currentAnsweredCount = count(array_filter($this->responses));
             Log::info('Saving exam response', [
                 'session_id' => $this->examSession->id,
                 'question_id' => $questionId,
                 'answer' => $answer,
                 'student_id' => $this->user->id,
+                'current_answered_count' => $currentAnsweredCount + 1, // +1 for the one being saved
+                'total_questions' => count($this->questions),
                 'exam_expired' => $this->isExamExpired(),
                 'has_extra_time' => $this->examSession && $this->examSession->extra_time_minutes > 0,
+                'timestamp' => now()->toDateTimeString(),
             ]);
 
             // Create or update the response in the database
@@ -641,6 +645,25 @@ class OnlineExamination extends Component
     public function submitExam()
     {
         try {
+            // Enhanced logging to track submission details
+            $answeredCount = count(array_filter($this->responses));
+            $totalQuestions = count($this->questions);
+
+            Log::info('Exam submission initiated', [
+                'session_id' => $this->examSession->id,
+                'student_id' => $this->student->student_id,
+                'exam_id' => $this->exam->id,
+                'total_questions' => $totalQuestions,
+                'answered_count' => $answeredCount,
+                'unanswered_count' => $totalQuestions - $answeredCount,
+                'exam_expired' => $this->examExpired,
+                'read_only_mode' => $this->readOnlyMode,
+                'remaining_time_seconds' => $this->calculateRemainingTime(),
+                'submission_time' => now()->toDateTimeString(),
+                'user_agent' => request()->userAgent(),
+                'ip_address' => request()->ip(),
+            ]);
+
             $score = $this->calculateScore();
 
             // Update the exam session with completion information
@@ -650,13 +673,14 @@ class OnlineExamination extends Component
                 'auto_submitted' => false, // Explicitly mark as manually submitted
             ]);
 
-            // Log successful exam submission
-            Log::info('Exam manually submitted by student', [
+            // Log successful exam submission with detailed info
+            Log::info('Exam manually submitted successfully', [
                 'session_id' => $this->examSession->id,
                 'student_id' => $this->student->student_id,
                 'score' => $score,
-                'question_count' => count($this->questions),
-                'answered_count' => count(array_filter($this->responses)),
+                'question_count' => $totalQuestions,
+                'answered_count' => $answeredCount,
+                'completion_rate' => round(($answeredCount / $totalQuestions) * 100, 2).'%',
             ]);
 
             session()->flash('message', 'Exam submitted successfully.');

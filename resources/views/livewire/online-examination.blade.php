@@ -152,7 +152,7 @@
                             <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
                         </a>
                     @else
-                        <button class="btn btn-primary w-100" wire:click="submitExam" id="submitBtn">Submit
+                        <button class="btn btn-primary w-100" onclick="return confirmSubmission(event)" wire:click="submitExam" id="submitBtn">Submit
                             Exam</button>
                     @endif
                 </div>
@@ -192,6 +192,40 @@
     @endif
 
     <script>
+        // Confirmation prompt for manual exam submission
+        function confirmSubmission(event) {
+            // Don't show confirmation if auto-submitting from timer
+            if (event.isTrusted === false) {
+                return true;
+            }
+            
+            const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
+            const totalQuestions = {{ count($questions) }};
+            const unanswered = totalQuestions - answeredCount;
+            
+            let message = '⚠️ CONFIRM EXAM SUBMISSION\n\n';
+            message += 'Are you sure you want to submit your exam?\n\n';
+            
+            if (unanswered > 0) {
+                message += '⚠️ WARNING: You have ' + unanswered + ' unanswered question(s).\n\n';
+            }
+            
+            message += '📊 Summary:\n';
+            message += '   • Answered: ' + answeredCount + ' questions\n';
+            message += '   • Unanswered: ' + unanswered + ' questions\n';
+            message += '   • Total: ' + totalQuestions + ' questions\n\n';
+            message += '⚠️ Once submitted, you CANNOT make any changes!\n\n';
+            message += 'Click OK to submit or Cancel to continue working.';
+            
+            if (!confirm(message)) {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            
+            return true;
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize question navigation
             initializeQuestionNavigation();
