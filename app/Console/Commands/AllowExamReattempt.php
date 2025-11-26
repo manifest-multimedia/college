@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Response;
 use App\Models\Student;
@@ -18,7 +19,7 @@ class AllowExamReattempt extends Command
      */
     protected $signature = 'exam:allow-reattempt 
                             {student_id : The student ID to allow reattempt}
-                            {exam_id : The exam ID to allow reattempt for}
+                            {exam_identifier : The exam ID or slug to allow reattempt for}
                             {--keep-responses : Keep existing responses instead of deleting them}
                             {--force : Skip confirmation prompt}';
 
@@ -27,7 +28,7 @@ class AllowExamReattempt extends Command
      *
      * @var string
      */
-    protected $description = 'Allow a student to reattempt an exam by resetting their exam session';
+    protected $description = 'Allow a student to reattempt an exam by resetting their exam session (accepts exam ID or slug)';
 
     /**
      * Execute the console command.
@@ -35,7 +36,7 @@ class AllowExamReattempt extends Command
     public function handle()
     {
         $studentId = $this->argument('student_id');
-        $examId = $this->argument('exam_id');
+        $examIdentifier = $this->argument('exam_identifier');
         $keepResponses = $this->option('keep-responses');
         $force = $this->option('force');
 
@@ -50,15 +51,29 @@ class AllowExamReattempt extends Command
 
         $this->info("Found student: {$student->name} ({$student->student_id})");
 
+        // Find the exam by ID or slug
+        $exam = is_numeric($examIdentifier)
+            ? Exam::find($examIdentifier)
+            : Exam::where('slug', $examIdentifier)->first();
+
+        if (! $exam) {
+            $this->error("❌ Exam with identifier '{$examIdentifier}' not found.");
+            $this->info('Please provide a valid exam ID or slug.');
+
+            return 1;
+        }
+
+        $this->info("Found exam: {$exam->name} (ID: {$exam->id}, Slug: {$exam->slug})");
+
         // Find the exam session
         $session = ExamSession::with('exam')
             ->where('student_id', $student->user_id)
-            ->where('exam_id', $examId)
+            ->where('exam_id', $exam->id)
             ->first();
 
         if (! $session) {
             $this->error('❌ No exam session found for this student and exam.');
-            $this->info("Student: {$student->student_id}, Exam ID: {$examId}");
+            $this->info("Student: {$student->student_id}, Exam: {$exam->name}");
 
             return 1;
         }
@@ -120,7 +135,8 @@ class AllowExamReattempt extends Command
             Log::info('Exam reattempt allowed', [
                 'session_id' => $session->id,
                 'student_id' => $student->student_id,
-                'exam_id' => $examId,
+                'exam_id' => $exam->id,
+                'exam_slug' => $exam->slug,
                 'responses_deleted' => ! $keepResponses,
                 'response_count' => $responseCount,
                 'allowed_by' => 'artisan_command',
@@ -144,7 +160,8 @@ class AllowExamReattempt extends Command
             Log::error('Failed to allow exam reattempt', [
                 'session_id' => $session->id,
                 'student_id' => $student->student_id,
-                'exam_id' => $examId,
+                'exam_id' => $exam->id,
+                'exam_slug' => $exam->slug,
                 'error' => $e->getMessage(),
             ]);
 

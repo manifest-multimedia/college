@@ -615,7 +615,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     @endhasrole
                     
-                    @hasrole('System')
+                    @hasanyrole(['System', 'Lecturer', 'Super Admin'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('admin.exam-extra-time') ? 'active' : '' }}" href="{{ route('admin.exam-extra-time') }}">
@@ -627,7 +627,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
-                    @endhasrole
+                    @endhasanyrole
                     
                     @can('view exams')
                     <!--begin:Menu item-->
