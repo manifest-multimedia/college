@@ -188,12 +188,12 @@ task('deploy:fix_env_permissions', function () {
 task('deploy:ensure_app_key', function () {
     writeln('Checking Laravel application key...');
 
-    // Check if APP_KEY is set in .env
-    $result = run('cd {{deploy_path}}/current && grep -E "^APP_KEY=" .env | grep -v "APP_KEY=$" || echo "MISSING"');
+    // Check if APP_KEY is set in .env (use release_path instead of current)
+    $result = run('cd {{release_path}} && grep -E "^APP_KEY=" .env | grep -v "APP_KEY=$" || echo "MISSING"');
 
     if (trim($result) === 'MISSING') {
         writeln('APP_KEY not found or empty, generating new key...');
-        run('cd {{deploy_path}}/current && php artisan key:generate --force');
+        run('cd {{release_path}} && php artisan key:generate --force');
         writeln('✅ Application key generated successfully');
     } else {
         writeln('✅ Application key is already set');

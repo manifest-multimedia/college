@@ -450,6 +450,17 @@ class OnlineExamination extends Component
                 ]);
 
                 $examQuestions = $existingSessionQuestions->pluck('question');
+
+                // Runtime validation: enforce limit even for existing sessions (data corruption defense)
+                $questionsPerSession = $this->exam->questions_per_session ?? $examQuestions->count();
+                if ($examQuestions->count() > $questionsPerSession) {
+                    Log::warning('Existing session has excess questions - enforcing limit at runtime', [
+                        'session_id' => $this->examSession->id,
+                        'existing_count' => $examQuestions->count(),
+                        'configured_limit' => $questionsPerSession,
+                    ]);
+                    $examQuestions = $examQuestions->take($questionsPerSession);
+                }
             } else {
                 // Generate new session questions using question sets
                 Log::info('Generating new session questions from question sets', [
@@ -462,15 +473,23 @@ class OnlineExamination extends Component
                 // Use the exam model's generateSessionQuestions method which handles question sets properly
                 $examQuestions = $this->exam->generateSessionQuestions(true); // true for shuffling
 
-                // Limit to questions_per_session if configured
+                // Strict enforcement: ensure we never exceed questions_per_session
                 $questionsPerSession = $this->exam->questions_per_session ?? $examQuestions->count();
                 if ($examQuestions->count() > $questionsPerSession) {
+                    Log::warning('Limited session questions during creation', [
+                        'session_id' => $this->examSession->id,
+                        'generated_count' => $examQuestions->count(),
+                        'configured_limit' => $questionsPerSession,
+                    ]);
                     $examQuestions = $examQuestions->take($questionsPerSession);
                 }
 
+                // Double-check before storing - defense in depth
+                $questionsToStore = $examQuestions->take($questionsPerSession);
+
                 // Store these questions in exam_session_questions for consistency across page loads
                 $displayOrder = 1;
-                foreach ($examQuestions as $question) {
+                foreach ($questionsToStore as $question) {
                     \App\Models\ExamSessionQuestion::create([
                         'exam_session_id' => $this->examSession->id,
                         'question_id' => $question->id,
@@ -480,7 +499,7 @@ class OnlineExamination extends Component
 
                 Log::info('Session questions generated and stored', [
                     'session_id' => $this->examSession->id,
-                    'total_questions' => $examQuestions->count(),
+                    'total_questions' => $questionsToStore->count(),
                     'questions_per_session' => $questionsPerSession,
                 ]);
             }

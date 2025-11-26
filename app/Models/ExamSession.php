@@ -413,9 +413,19 @@ class ExamSession extends Model
                 $maxOrder = ExamSessionQuestion::where('exam_session_id', $this->id)
                     ->max('display_order') ?? 0;
 
-                // Insert new questions
+                // Insert new questions with strict limit enforcement
                 $addedCount = 0;
                 foreach ($newQuestions as $question) {
+                    // Double-check we haven't exceeded the limit (defense in depth)
+                    if ($currentCount + $addedCount >= $questionsPerSession) {
+                        Log::warning('Stopping regeneration - would exceed target count', [
+                            'session_id' => $this->id,
+                            'current_plus_added' => $currentCount + $addedCount,
+                            'target_count' => $questionsPerSession,
+                        ]);
+                        break;
+                    }
+
                     ExamSessionQuestion::create([
                         'exam_session_id' => $this->id,
                         'question_id' => $question->id,
