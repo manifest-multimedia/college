@@ -33,7 +33,10 @@
                                 You're being proctored by AI Sensei. <br />Any suspecious activity will result in immediate
                                 disqualification. You're required to answer {{ count($questions) }} questions in total.
                                 <br>
-                                You have <span class="text-danger">{{ $exam->duration }} minutes</span> to complete this exam.
+                                @php
+                                    $remainingMinutes = ceil($examSession->remaining_time / 60);
+                                @endphp
+                                You have <span class="text-danger">{{ $remainingMinutes }} minutes</span> remaining to complete this exam.
                             </p>
 
                             <div class="d-flex justify-content-center w-100">

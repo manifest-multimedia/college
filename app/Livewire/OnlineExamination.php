@@ -61,6 +61,8 @@ class OnlineExamination extends Component
     public $examExpired = false;
 
     public $timeExpiredAt = null;
+    
+    public $serverTime; // For ExamClock sync
 
     // Themeing support and one-by-one navigation
     public string $theme = 'default';
@@ -295,6 +297,9 @@ class OnlineExamination extends Component
 
             $this->examStartTime = Carbon::parse($this->examSession->started_at);
             $this->remainingTime = $this->calculateRemainingTime();
+            
+            // Pass current server time for ExamClock synchronization
+            $this->serverTime = now();
 
             // If extra time has been added, log it for monitoring
             if ($extraTime > 0) {

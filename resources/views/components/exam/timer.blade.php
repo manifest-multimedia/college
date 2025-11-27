@@ -38,7 +38,26 @@
         
         <div id="exam-countdown-timer" class="exam-countdown text-center">
             <!-- Timer will be displayed here -->
-            <span class="placeholder-wave">Loading timer...</span>
+            <span class="placeholder-wave">
+                @php
+                    // Fallback calculation in PHP
+                    $end = \Carbon\Carbon::parse($completedAt);
+                    $now = now();
+                    $diff = $end->diffInSeconds($now, false); // false = allow negative
+                    
+                    if ($diff < 0) {
+                        // Time remaining
+                        $diff = abs($diff);
+                        $hours = floor($diff / 3600);
+                        $minutes = floor(($diff % 3600) / 60);
+                        $seconds = $diff % 60;
+                        $formatted = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                        echo '<span class="time-left font-monospace fs-4 badge bg-danger text-white p-2 px-3 rounded shadow-sm">' . $formatted . '</span>';
+                    } else {
+                        echo '<span class="text-danger fw-bold">Time\'s up!</span>';
+                    }
+                @endphp
+            </span>
         </div>
         
         <div class="exam-timer-info d-flex justify-content-center">
@@ -49,6 +68,12 @@
             <div class="timer-info-item">
                 <span class="timer-info-label">Ends</span>
                 <span class="timer-info-value">{{ Carbon\Carbon::parse($completedAt)->format('h:i A') }}</span>
+            </div>
+            <div class="timer-info-item ms-3 border-start ps-3">
+                <span class="timer-info-label">Current Time</span>
+                <span id="exam-clock-display" class="timer-info-value fw-bold text-primary">
+                    {{ now()->format('h:i:s A') }}
+                </span>
             </div>
         </div>
         
@@ -66,6 +91,7 @@
     </div>
 </div>
 
+<script src="{{ asset('js/services/ExamClock.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we have the ExamTimerService available
@@ -95,7 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const timer = new ExamTimerService({
         examSessionId: '{{ $examSessionId }}',
         timerElementId: 'exam-countdown-timer',
-        startTimeIso: '{{ $startedAt }}',
+        // Pass server time for ExamClock sync
+        serverTimeIso: '{{ now()->toIso8601String() }}',
         endTimeIso: '{{ $completedAt }}',
         hasExtraTime: {{ $hasExtraTime ? 'true' : 'false' }},
         extraTimeMinutes: {{ $extraTimeMinutes }},

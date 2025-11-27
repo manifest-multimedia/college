@@ -33,7 +33,10 @@
                                 disqualification. Answer one question at a time using the navigation below.
                                 Total questions: {{ count($questions) }}.
                                 <br>
-                                You have <span class="text-danger">{{ $exam->duration }} minutes</span> to complete this exam.
+                                @php
+                                    $remainingMinutes = ceil($examSession->remaining_time / 60);
+                                @endphp
+                                You have <span class="text-danger">{{ $remainingMinutes }} minutes</span> remaining to complete this exam.
                             </p>
 
                             <div class="d-flex justify-content-center w-100">
