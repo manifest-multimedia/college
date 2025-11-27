@@ -6,6 +6,14 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+
+    // Use Should Run to skip if already exists
+
+    public function shouldRun(): bool
+    {
+        return ! Schema::hasTable('settings');
+    }
+
     /**
      * Run the migrations.
      */
