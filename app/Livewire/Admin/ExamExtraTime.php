@@ -31,6 +31,24 @@ class ExamExtraTime extends Component
 
     public $includeCompletedSessions = false; // Control whether to include completed sessions
 
+    public $sessionStateFilter = 'all'; // 'active', 'completed', 'expired', 'all'
+
+    // Resume session properties
+    public $showBulkResumeModal = false;
+    
+    public $bulkResumeMinutes = 30;
+    
+    public $bulkResumeReason = '';
+    
+    // Individual resume modal properties
+    public $showIndividualResumeModal = false;
+    
+    public $resumingSessionId = null;
+    
+    public $individualResumeMinutes = 30;
+    
+    public $individualResumeReason = '';
+
     // Store multiple found students
     public $foundStudents = [];
 
@@ -70,12 +88,26 @@ class ExamExtraTime extends Component
         'extraTimeMinutes' => 'required|integer|min:1|max:60',
         'selectedSessions' => 'required_if:applyToAll,false',
         'exam_id' => 'required',
+        'bulkResumeMinutes' => 'required|integer|min:5|max:120',
+        'bulkResumeReason' => 'required|string|min:5',
+        'individualResumeMinutes' => 'required|integer|min:5|max:120',
+        'individualResumeReason' => 'required|string|min:5',
     ];
 
     protected $messages = [
         'selectedSessions.required_if' => 'Please select at least one exam session',
         'extraTimeMinutes.min' => 'Extra time must be at least 1 minute',
         'extraTimeMinutes.max' => 'Extra time cannot exceed 60 minutes',
+        'bulkResumeMinutes.required' => 'Please specify resume time in minutes',
+        'bulkResumeMinutes.min' => 'Resume time must be at least 5 minutes',
+        'bulkResumeMinutes.max' => 'Resume time cannot exceed 120 minutes',
+        'bulkResumeReason.required' => 'Please provide a reason for resuming sessions',
+        'bulkResumeReason.min' => 'Reason must be at least 5 characters',
+        'individualResumeMinutes.required' => 'Please specify resume time in minutes',
+        'individualResumeMinutes.min' => 'Resume time must be at least 5 minutes',
+        'individualResumeMinutes.max' => 'Resume time cannot exceed 120 minutes',
+        'individualResumeReason.required' => 'Please provide a reason for resuming this session',
+        'individualResumeReason.min' => 'Reason must be at least 5 characters',
     ];
 
     public function mount()
@@ -109,6 +141,12 @@ class ExamExtraTime extends Component
         if ($field === 'applyToAll') {
             // Reset selected sessions when apply to all changes
             $this->selectedSessions = [];
+        }
+        
+        if ($field === 'sessionStateFilter') {
+            // Reset selected sessions when filter changes
+            $this->selectedSessions = [];
+            $this->resetPage();
         }
     }
 
@@ -161,6 +199,33 @@ class ExamExtraTime extends Component
         }
 
         $query = ExamSession::where('exam_id', $this->exam_id);
+
+        // Apply session state filtering
+        switch ($this->sessionStateFilter) {
+            case 'active':
+                $query->whereNull('completed_at')
+                      ->whereRaw('NOW() <= (started_at + INTERVAL (SELECT duration FROM exams WHERE id = exam_id) + COALESCE(extra_time_minutes, 0) MINUTE)');
+                break;
+            case 'completed':
+                $query->whereNotNull('completed_at')
+                      ->where('completed_at', '<=', now())
+                      ->whereNotNull('score');
+                break;
+            case 'expired':
+                $query->whereRaw('NOW() > (started_at + INTERVAL (SELECT duration FROM exams WHERE id = exam_id) + COALESCE(extra_time_minutes, 0) MINUTE)')
+                      ->where(function($q) {
+                          $q->whereNull('completed_at')
+                            ->orWhere(function($sq) {
+                                $sq->whereNotNull('completed_at')
+                                   ->whereNull('score');
+                            });
+                      });
+                break;
+            case 'all':
+            default:
+                // No additional filtering for 'all'
+                break;
+        }
 
         // Apply search filter if we have found user IDs
         if (! empty($this->foundUserIds)) {
@@ -738,6 +803,256 @@ class ExamExtraTime extends Component
                 'user_id' => Auth::id(),
             ]);
         }
+    }
+
+    /**
+     * Get session status (active, completed, expired)
+     */
+    public function getSessionStatus($session)
+    {
+        $now = now();
+        
+        // Check if session has a score (truly completed)
+        if ($session->completed_at && $session->score !== null) {
+            return 'completed';
+        }
+        
+        // Check if time has expired
+        if ($now->gt($session->adjustedCompletionTime)) {
+            return 'expired';
+        }
+        
+        return 'active';
+    }
+    
+    /**
+     * Show individual resume modal
+     */
+    public function showIndividualResumeModal($sessionId)
+    {
+        $session = ExamSession::find($sessionId);
+        
+        if (!$session) {
+            $this->errorMessage = 'Session not found.';
+            return;
+        }
+        
+        $status = $this->getSessionStatus($session);
+        if ($status === 'active') {
+            $this->errorMessage = 'Session is already active and does not need to be resumed.';
+            return;
+        }
+        
+        $this->resumingSessionId = $sessionId;
+        $this->individualResumeMinutes = 30;
+        $this->individualResumeReason = '';
+        $this->showIndividualResumeModal = true;
+    }
+    
+    /**
+     * Resume individual session with validation
+     */
+    public function confirmIndividualResume()
+    {
+        $this->validate([
+            'individualResumeMinutes' => 'required|integer|min:5|max:120',
+            'individualResumeReason' => 'required|string|min:5',
+        ]);
+        
+        try {
+            $session = ExamSession::find($this->resumingSessionId);
+            
+            if (!$session) {
+                $this->errorMessage = 'Session not found.';
+                return;
+            }
+            
+            $status = $this->getSessionStatus($session);
+            if ($status === 'active') {
+                $this->errorMessage = 'Session is already active and does not need to be resumed.';
+                return;
+            }
+            
+            $now = now();
+            $newEndTime = $now->copy()->addMinutes($this->individualResumeMinutes);
+            
+            // Critical: For a session to be resumable, we need to:
+            // 1. Set completed_at to future time OR null it completely
+            // 2. Reset auto_submitted flag 
+            // 3. Reset score to null to allow resubmission
+            // 4. Add the extra time properly
+            
+            $updates = [
+                'completed_at' => $newEndTime, // Set to future time to make it "active"
+                'extra_time_minutes' => $session->extra_time_minutes + $this->individualResumeMinutes,
+                'extra_time_added_by' => Auth::id(),
+                'extra_time_added_at' => $now,
+                'auto_submitted' => false, // Critical: Reset auto-submission flag
+                'score' => null, // Critical: Reset score to allow re-submission
+            ];
+            
+            // If the session was completed (has score), we need to "uncomplete" it
+            if ($session->score !== null) {
+                // For completed sessions, we're essentially reverting the completion
+                $updates['score'] = null;
+            }
+            
+            $session->update($updates);
+            
+            // Refresh the session to get updated values
+            $session = $session->fresh();
+            
+            // Log the resumption with detailed info
+            Log::info('Exam session resumed via modal', [
+                'session_id' => $this->resumingSessionId,
+                'student_id' => $session->student_id,
+                'additional_minutes' => $this->individualResumeMinutes,
+                'reason' => $this->individualResumeReason,
+                'resumed_by' => Auth::id(),
+                'new_end_time' => $newEndTime->toDateTimeString(),
+                'previous_status' => $status,
+                'updated_completed_at' => $session->completed_at ? $session->completed_at->toDateTimeString() : null,
+                'updated_score' => $session->score,
+                'updated_auto_submitted' => $session->auto_submitted,
+                'updated_extra_time_minutes' => $session->extra_time_minutes,
+                'adjusted_completion_time' => $session->adjustedCompletionTime ? $session->adjustedCompletionTime->toDateTimeString() : null,
+                'is_future_completed_at' => $session->completed_at ? $session->completed_at->isFuture() : false,
+            ]);
+            
+            $this->successMessage = "Session resumed successfully! Student {$session->student->name} can continue for {$this->individualResumeMinutes} minutes. New end time: {$newEndTime->format('M d, Y g:i A')}. The student should refresh their exam page if they are currently logged in.";
+            $this->showIndividualResumeModal = false;
+            $this->resumingSessionId = null;
+            
+        } catch (\Exception $e) {
+            $this->errorMessage = 'An error occurred while resuming the session: ' . $e->getMessage();
+            Log::error('Error resuming individual session', [
+                'error' => $e->getMessage(),
+                'session_id' => $this->resumingSessionId,
+                'user_id' => Auth::id(),
+            ]);
+        }
+    }
+    
+    /**
+     * Cancel individual resume modal
+     */
+    public function cancelIndividualResume()
+    {
+        $this->showIndividualResumeModal = false;
+        $this->resumingSessionId = null;
+        $this->individualResumeMinutes = 30;
+        $this->individualResumeReason = '';
+    }
+    
+    /**
+     * Show bulk resume modal
+     */
+    public function showBulkResumeModal()
+    {
+        if (empty($this->selectedSessions)) {
+            $this->errorMessage = 'Please select at least one session to resume.';
+            return;
+        }
+        
+        $this->showBulkResumeModal = true;
+        $this->bulkResumeMinutes = 30;
+        $this->bulkResumeReason = '';
+    }
+    
+    /**
+     * Resume multiple selected sessions
+     */
+    public function bulkResumeSelected()
+    {
+        $this->validate([
+            'bulkResumeMinutes' => 'required|integer|min:5|max:120',
+            'bulkResumeReason' => 'required|string|min:5',
+        ]);
+        
+        if (empty($this->selectedSessions)) {
+            $this->errorMessage = 'Please select at least one session to resume.';
+            return;
+        }
+        
+        try {
+            $resumedCount = 0;
+            $skippedCount = 0;
+            $errorCount = 0;
+            
+            foreach ($this->selectedSessions as $sessionId) {
+                $session = ExamSession::find($sessionId);
+                
+                if (!$session) {
+                    $errorCount++;
+                    continue;
+                }
+                
+                $status = $this->getSessionStatus($session);
+                if ($status === 'active') {
+                    $skippedCount++;
+                    continue;
+                }
+                
+                $now = now();
+                $newEndTime = $now->copy()->addMinutes($this->bulkResumeMinutes);
+                
+                // Same logic as individual resume - properly reactivate session
+                $updates = [
+                    'completed_at' => $newEndTime, // Set to future time to make it "active"
+                    'extra_time_minutes' => $session->extra_time_minutes + $this->bulkResumeMinutes,
+                    'extra_time_added_by' => Auth::id(),
+                    'extra_time_added_at' => $now,
+                    'auto_submitted' => false, // Critical: Reset auto-submission flag
+                    'score' => null, // Critical: Reset score to allow re-submission
+                ];
+                
+                $session->update($updates);
+                
+                $resumedCount++;
+                
+                // Log each resumption
+                Log::info('Bulk exam session resumed', [
+                    'session_id' => $sessionId,
+                    'student_id' => $session->student_id,
+                    'additional_minutes' => $this->bulkResumeMinutes,
+                    'reason' => $this->bulkResumeReason,
+                    'resumed_by' => Auth::id(),
+                    'new_end_time' => $newEndTime,
+                    'previous_status' => $status,
+                ]);
+            }
+            
+            // Prepare success message
+            $message = "Bulk resume completed: {$resumedCount} session(s) resumed";
+            if ($skippedCount > 0) {
+                $message .= ", {$skippedCount} already active session(s) skipped";
+            }
+            if ($errorCount > 0) {
+                $message .= ", {$errorCount} session(s) had errors";
+            }
+            
+            $this->successMessage = $message;
+            $this->selectedSessions = [];
+            $this->showBulkResumeModal = false;
+            
+        } catch (\Exception $e) {
+            $this->errorMessage = 'An error occurred during bulk resume: ' . $e->getMessage();
+            Log::error('Error in bulk resume', [
+                'error' => $e->getMessage(),
+                'selected_sessions' => $this->selectedSessions,
+                'user_id' => Auth::id(),
+            ]);
+        }
+    }
+    
+    /**
+     * Cancel bulk resume modal
+     */
+    public function cancelBulkResume()
+    {
+        $this->showBulkResumeModal = false;
+        $this->bulkResumeMinutes = 30;
+        $this->bulkResumeReason = '';
     }
 
     public function render()

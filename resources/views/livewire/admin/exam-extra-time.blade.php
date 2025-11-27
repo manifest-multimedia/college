@@ -55,6 +55,19 @@
                     </div>
                     
                     <div class="col-md-6 mb-3">
+                        <label for="sessionStateFilter" class="form-label fw-semibold">Session State Filter</label>
+                        <select id="sessionStateFilter" wire:model.live="sessionStateFilter" class="form-select">
+                            <option value="all">All Sessions</option>
+                            <option value="active">Active Only</option>
+                            <option value="completed">Completed Only</option>
+                            <option value="expired">Expired Only</option>
+                        </select>
+                        <div class="form-text">Filter sessions by their current state</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
                         <label for="search" class="form-label fw-semibold">Search Students</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -193,7 +206,10 @@
                 <div class="card-title">
                     <h3 class="card-title">
                         <i class="bi bi-people me-2"></i>
-                        Active Exam Sessions
+                        Exam Sessions 
+                        @if($sessionStateFilter !== 'all')
+                            ({{ ucfirst($sessionStateFilter) }})
+                        @endif
                     </h3>
                 </div>
             </div>
@@ -212,6 +228,7 @@
                                 @endif
                                 <th>Student</th>
                                 <th>Started At</th>
+                                <th>Status</th>
                                 <th>Original End Time</th>
                                 <th>Current Extra Time</th>
                                 <th>Adjusted End Time</th>
@@ -245,6 +262,18 @@
                                         </div>
                                     </td>
                                     <td>{{ $session->started_at->format('M d, Y g:i A') }}</td>
+                                    <td>
+                                        @php
+                                            $status = $this->getSessionStatus($session);
+                                        @endphp
+                                        @if($status === 'active')
+                                            <span class="badge bg-success">Active</span>
+                                        @elseif($status === 'completed')
+                                            <span class="badge bg-primary">Completed</span>
+                                        @elseif($status === 'expired')
+                                            <span class="badge bg-danger">Expired</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $session->completed_at ? $session->completed_at->format('M d, Y g:i A') : 'Not set' }}</td>
                                     <td>
                                         @if($session->extra_time_minutes > 0)
@@ -255,9 +284,18 @@
                                     </td>
                                     <td>{{ $session->adjustedCompletionTime ? $session->adjustedCompletionTime->format('M d, Y g:i A') : 'Not set' }}</td>
                                     <td>
-                                        <button type="button" wire:click="viewSession({{ $session->id }})" class="btn btn-sm btn-icon btn-light btn-active-light-primary" title="View Session Details">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
+                                        <div class="d-flex gap-1">
+                                            <button type="button" wire:click="viewSession({{ $session->id }})" class="btn btn-sm btn-icon btn-light btn-active-light-primary" title="View Session Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            @if($status === 'completed' || $status === 'expired')
+                                                <button type="button" wire:click="showIndividualResumeModal({{ $session->id }})" 
+                                                        class="btn btn-sm btn-icon btn-warning btn-active-light-warning" 
+                                                        title="Resume Session">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -270,10 +308,14 @@
                 </div>
                 
                 @if(!$applyToAll)
-                    <div class="d-flex justify-content-end mt-4">
+                    <div class="d-flex justify-content-end gap-2 mt-4">
                         <button type="button" wire:click="addExtraTime" class="btn btn-primary" @if(empty($selectedSessions)) disabled @endif>
                             <i class="bi bi-plus-circle me-2"></i>
                             Add Extra Time to Selected Sessions ({{ count($selectedSessions) }})
+                        </button>
+                        <button type="button" wire:click="showBulkResumeModal" class="btn btn-warning" @if(empty($selectedSessions)) disabled @endif>
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Resume Selected Sessions ({{ count($selectedSessions) }})
                         </button>
                     </div>
                 @endif
@@ -283,7 +325,7 @@
         <div class="card shadow-sm">
             <div class="card-body py-15 text-center">
                 <div class="text-gray-600 fw-semibold fs-6 mb-5">
-                    No active exam sessions found for this exam.
+                    No exam sessions found for the selected criteria.
                 </div>
             </div>
         </div>
@@ -621,6 +663,135 @@
                                 <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    @endif
+
+    <!-- Individual Resume Modal -->
+    @if($showIndividualResumeModal)
+        <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Resume Exam Session
+                        </h5>
+                        <button type="button" class="btn-close" wire:click="cancelIndividualResume"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if($resumingSessionId)
+                            @php
+                                $resumingSession = \App\Models\ExamSession::with(['student', 'exam.course'])->find($resumingSessionId);
+                            @endphp
+                            
+                            @if($resumingSession)
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    You are about to resume the exam session for:
+                                    <br><strong>{{ $resumingSession->student->name ?? 'Unknown Student' }}</strong>
+                                    <br>Course: <strong>{{ $resumingSession->exam->course->name ?? 'Unknown Course' }}</strong>
+                                    <br>Started: {{ $resumingSession->started_at->format('M d, Y g:i A') }}
+                                </div>
+                            @endif
+                        @endif
+                        
+                        <div class="mb-3">
+                            <label for="individualResumeMinutes" class="form-label fw-semibold required">Additional Time (minutes)</label>
+                            <input type="number" id="individualResumeMinutes" wire:model="individualResumeMinutes" 
+                                   class="form-control @error('individualResumeMinutes') is-invalid @enderror" 
+                                   min="5" max="120" placeholder="30">
+                            @error('individualResumeMinutes') 
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">Minimum: 5 minutes, Maximum: 120 minutes</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="individualResumeReason" class="form-label fw-semibold required">Reason for Resumption</label>
+                            <textarea id="individualResumeReason" wire:model="individualResumeReason" 
+                                      class="form-control @error('individualResumeReason') is-invalid @enderror" 
+                                      rows="3" placeholder="Enter reason for resuming this session (e.g., connectivity issues, technical problems)..."></textarea>
+                            @error('individualResumeReason') 
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">This will be logged for audit purposes</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>What happens when you resume:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Session will be reactivated for the specified time</li>
+                                <li>Student can log back in and continue the exam</li>
+                                <li>Previous answers will be preserved</li>
+                                <li>Timer will show the new remaining time</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelIndividualResume">Cancel</button>
+                        <button type="button" wire:click="confirmIndividualResume" class="btn btn-warning">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Resume Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show"></div>
+    @endif
+
+    <!-- Bulk Resume Modal -->
+    @if($showBulkResumeModal)
+        <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Resume Selected Sessions
+                        </h5>
+                        <button type="button" class="btn-close" wire:click="cancelBulkResume"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            You are about to resume <strong>{{ count($selectedSessions) }} session(s)</strong>. 
+                            This will reactivate completed or expired sessions, allowing students to continue their exams.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bulkResumeMinutes" class="form-label fw-semibold required">Additional Time (minutes)</label>
+                            <input type="number" id="bulkResumeMinutes" wire:model="bulkResumeMinutes" 
+                                   class="form-control @error('bulkResumeMinutes') is-invalid @enderror" 
+                                   min="5" max="120" placeholder="30">
+                            @error('bulkResumeMinutes') 
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">Minimum: 5 minutes, Maximum: 120 minutes</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bulkResumeReason" class="form-label fw-semibold required">Reason for Resumption</label>
+                            <textarea id="bulkResumeReason" wire:model="bulkResumeReason" 
+                                      class="form-control @error('bulkResumeReason') is-invalid @enderror" 
+                                      rows="3" placeholder="Enter reason for resuming these sessions..."></textarea>
+                            @error('bulkResumeReason') 
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">This will be logged for audit purposes</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelBulkResume">Cancel</button>
+                        <button type="button" wire:click="bulkResumeSelected" class="btn btn-warning">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Resume {{ count($selectedSessions) }} Session(s)
+                        </button>
                     </div>
                 </div>
             </div>
