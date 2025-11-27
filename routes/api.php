@@ -144,3 +144,34 @@ Route::prefix('auth-sync')->group(function () {
     Route::post('/password', [\App\Http\Controllers\PasswordSyncController::class, 'syncPassword']);
     Route::get('/health', [\App\Http\Controllers\PasswordSyncController::class, 'healthCheck']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Offline Exam Delivery API Routes
+|--------------------------------------------------------------------------
+| These endpoints support the standalone offline exam delivery application
+| for local network exam administration with Safe Exam Browser
+*/
+
+use App\Http\Controllers\Api\OfflineExamAuthController;
+use App\Http\Controllers\Api\OfflineExamPackageController;
+use App\Http\Controllers\Api\OfflineExamSyncController;
+
+Route::prefix('offline-exam-delivery')->group(function () {
+    // Authentication endpoints (no auth required - validates credentials)
+    Route::post('/auth/verify', [OfflineExamAuthController::class, 'verify']);
+    Route::get('/auth/permissions', [OfflineExamAuthController::class, 'permissions']);
+
+    // Exam package endpoints (requires authentication)
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/exams/available', [OfflineExamPackageController::class, 'available']);
+        Route::get('/exams/package/{id}', [OfflineExamPackageController::class, 'package']);
+    });
+
+    // Sync endpoints (requires authentication)
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/sync/exam-sessions', [OfflineExamSyncController::class, 'syncExamSessions']);
+        Route::post('/sync/responses', [OfflineExamSyncController::class, 'syncResponses']);
+        Route::post('/sync/device-logs', [OfflineExamSyncController::class, 'syncDeviceLogs']);
+    });
+});

@@ -1072,7 +1072,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 $settingsRoutes = [
                     'settings.general', 'settings.users', 'settings.roles', 
                     'settings.permissions', 'settings.backup', 'settings.departments',
-                    'settings.user-departments', 'admin.branding.index'
+                    'settings.user-departments', 'admin.branding.index', 'settings.api'
                 ];
                 $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
             @endphp
@@ -1178,6 +1178,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    
+                    @hasanyrole('System|Super Admin')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('settings.api') ? 'active' : '' }}" href="{{ route('settings.api') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">API Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasanyrole
                 </div>
                 <!--end:Menu sub-->
             </div>

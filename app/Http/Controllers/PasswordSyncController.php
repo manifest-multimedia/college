@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\AuthenticationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -15,6 +16,47 @@ class PasswordSyncController extends Controller
     public function __construct(AuthenticationService $authService)
     {
         $this->authService = $authService;
+    }
+
+    /**
+     * Get API key from database with fallback to config/env.
+     * Priority: Database → Config → Environment
+     */
+    private function getApiKey(): ?string
+    {
+        // First, try to get from database
+        $setting = DB::table('settings')
+            ->where('key', 'password_sync_api_key')
+            ->first();
+
+        if ($setting && ! empty($setting->value)) {
+            return $setting->value;
+        }
+
+        // Fallback to config, then environment
+        return config('authentication.password_sync.api_key') ?: env('PASSWORD_SYNC_API_KEY');
+    }
+
+    /**
+     * Update the last used timestamp for API key.
+     */
+    private function updateApiKeyLastUsed(): void
+    {
+        try {
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'password_sync_api_key_last_used_at'],
+                [
+                    'value' => now()->toDateTimeString(),
+                    'description' => 'Last time the password sync API key was used',
+                    'updated_at' => now(),
+                ]
+            );
+        } catch (\Exception $e) {
+            // Don't fail the request if we can't update last used
+            Log::debug('Failed to update API key last used timestamp', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -32,8 +74,8 @@ class PasswordSyncController extends Controller
                 'api_key' => 'required|string', // For security
             ]);
 
-            // Verify API key (should match config or environment)
-            $expectedApiKey = config('authentication.password_sync.api_key') ?: env('PASSWORD_SYNC_API_KEY');
+            // Verify API key (priority: Database → Config → Environment)
+            $expectedApiKey = $this->getApiKey();
             if (! $expectedApiKey || ! hash_equals($expectedApiKey, $validated['api_key'])) {
                 Log::warning('Invalid API key for password sync', [
                     'email' => $validated['email'],
@@ -46,6 +88,9 @@ class PasswordSyncController extends Controller
                     'message' => 'Unauthorized',
                 ], 401);
             }
+
+            // Update last used timestamp
+            $this->updateApiKeyLastUsed();
 
             // Sync the password using AuthenticationService
             $success = $this->authService->syncAuthCentralUserPassword(

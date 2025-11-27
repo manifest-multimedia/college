@@ -526,6 +526,11 @@ Route::middleware([
         Route::get('/user-departments', function () {
             return view('settings.user-departments');
         })->name('settings.user-departments');
+
+        // API Settings Route
+        Route::get('/api-settings', function () {
+            return view('settings.api-settings');
+        })->name('settings.api');
     });
 
     /*
