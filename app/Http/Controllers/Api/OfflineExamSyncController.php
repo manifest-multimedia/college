@@ -377,4 +377,157 @@ class OfflineExamSyncController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get session data for diagnostic purposes
+     *
+     * @param  int  $sessionId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSession($sessionId)
+    {
+        try {
+            $examSession = ExamSession::with(['exam', 'student.user', 'responses.question'])
+                ->find($sessionId);
+
+            if (! $examSession) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'session' => [
+                    'id' => $examSession->id,
+                    'exam_id' => $examSession->exam_id,
+                    'exam_title' => $examSession->exam->title ?? 'Unknown',
+                    'student_id' => $examSession->student->student_id ?? 'Unknown',
+                    'student_name' => $examSession->student->user->name ?? 'Unknown',
+                    'started_at' => $examSession->started_at,
+                    'completed_at' => $examSession->completed_at,
+                    'score' => $examSession->score,
+                    'auto_submitted' => $examSession->auto_submitted,
+                    'extra_time_minutes' => $examSession->extra_time_minutes,
+                ],
+                'responses' => $examSession->responses->map(function ($response) {
+                    return [
+                        'id' => $response->id,
+                        'question_id' => $response->question_id,
+                        'question_text' => $response->question->question ?? 'Question not found',
+                        'selected_option' => $response->selected_option,
+                        'option_id' => $response->option_id,
+                        'is_correct' => $response->is_correct,
+                    ];
+                }),
+                'student' => [
+                    'id' => $examSession->student->user_id,
+                    'student_id' => $examSession->student->student_id,
+                    'name' => $examSession->student->user->name,
+                    'email' => $examSession->student->user->email,
+                ],
+                'exam' => [
+                    'id' => $examSession->exam->id,
+                    'title' => $examSession->exam->title,
+                    'duration_minutes' => $examSession->exam->duration_minutes,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error retrieving session data', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving session data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get session data with specific student validation
+     *
+     * @param  int  $sessionId
+     * @param  string  $studentId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSessionWithStudent($sessionId, $studentId)
+    {
+        try {
+            // First, find the Student record to get the user_id
+            $student = Student::where('student_id', $studentId)->first();
+            
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student not found',
+                ], 404);
+            }
+            
+            // Now find the ExamSession using the user_id from the student record
+            $examSession = ExamSession::with(['exam', 'student', 'responses.question'])
+                ->where('id', $sessionId)
+                ->where('student_id', $student->user_id) // ExamSession.student_id is actually user_id
+                ->first();
+
+            if (! $examSession) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found for this student',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'session' => [
+                    'id' => $examSession->id,
+                    'exam_id' => $examSession->exam_id,
+                    'exam_title' => $examSession->exam->title ?? 'Unknown',
+                    'student_id' => $student->student_id,
+                    'student_name' => $student->full_name,
+                    'started_at' => $examSession->started_at,
+                    'completed_at' => $examSession->completed_at,
+                    'score' => $examSession->score,
+                    'auto_submitted' => $examSession->auto_submitted,
+                    'extra_time_minutes' => $examSession->extra_time_minutes,
+                ],
+                'responses' => $examSession->responses->map(function ($response) {
+                    return [
+                        'id' => $response->id,
+                        'question_id' => $response->question_id,
+                        'question_text' => $response->question->question ?? 'Question not found',
+                        'selected_option' => $response->selected_option,
+                        'option_id' => $response->option_id,
+                        'is_correct' => $response->is_correct,
+                    ];
+                }),
+                'student' => [
+                    'id' => $student->user_id,
+                    'student_id' => $student->student_id,
+                    'name' => $student->full_name,
+                    'email' => $student->email,
+                ],
+                'exam' => [
+                    'id' => $examSession->exam->id,
+                    'title' => $examSession->exam->title,
+                    'duration_minutes' => $examSession->exam->duration_minutes,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error retrieving session data with student validation', [
+                'session_id' => $sessionId,
+                'student_id' => $studentId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving session data',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

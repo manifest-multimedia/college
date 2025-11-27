@@ -162,16 +162,20 @@ Route::prefix('offline-exam-delivery')->group(function () {
     Route::post('/auth/verify', [OfflineExamAuthController::class, 'verify']);
     Route::get('/auth/permissions', [OfflineExamAuthController::class, 'permissions']);
 
-    // Exam package endpoints (requires authentication)
-    Route::middleware(['auth:sanctum'])->group(function () {
+    // Exam package endpoints (requires Bearer token)
+    Route::middleware('auth.offline.api')->group(function () {
         Route::get('/exams/available', [OfflineExamPackageController::class, 'available']);
         Route::get('/exams/package/{id}', [OfflineExamPackageController::class, 'package']);
     });
 
-    // Sync endpoints (requires authentication)
-    Route::middleware(['auth:sanctum'])->group(function () {
+    // Sync endpoints (requires offline API authentication)
+    Route::middleware(['auth.offline.api'])->group(function () {
         Route::post('/sync/exam-sessions', [OfflineExamSyncController::class, 'syncExamSessions']);
         Route::post('/sync/responses', [OfflineExamSyncController::class, 'syncResponses']);
         Route::post('/sync/device-logs', [OfflineExamSyncController::class, 'syncDeviceLogs']);
+        
+        // Diagnostic endpoints for retrieving session data
+        Route::get('/session/{sessionId}', [OfflineExamSyncController::class, 'getSession']);
+        Route::get('/session/{sessionId}/student/{studentId}', [OfflineExamSyncController::class, 'getSessionWithStudent']);
     });
 });

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\OfflineApiAuth;
 use App\Http\Middleware\SyncUserRoles;
 use App\Providers\CommunicationServiceProvider;
 use Illuminate\Foundation\Application;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'auth.offline.api' => OfflineApiAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

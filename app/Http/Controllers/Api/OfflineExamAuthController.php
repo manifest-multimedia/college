@@ -32,8 +32,8 @@ class OfflineExamAuthController extends Controller
                 ], 401);
             }
 
-            // Check if user has admin permissions
-            $hasPermission = $user->hasRole(['Super Admin', 'Admin', 'Staff']);
+            // Check if user has admin permissions (only Super Admin and System)
+            $hasPermission = $user->hasRole(['Super Admin', 'System']);
 
             if (! $hasPermission) {
                 return response()->json([

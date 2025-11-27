@@ -64,4 +64,8 @@ return [
         'assistant_id' => env('OPENAI_ASSISTANT_ID', 'asst_NazjcT8qxaTUYexZuvcjiDss'),
     ],
 
+    'offline_exam_app' => [
+        'api_token' => env('OFFLINE_EXAM_APP_API_TOKEN', 'bDp3UbbV4N0wY5mvOsIF52P1BMvXTUDk0K6A3SboNTwoLtyHtUxhWuDZv6gZxwhp'),
+    ],
+
 ];

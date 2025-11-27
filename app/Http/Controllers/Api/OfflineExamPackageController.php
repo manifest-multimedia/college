@@ -38,7 +38,7 @@ class OfflineExamPackageController extends Controller
                     return [
                         'id' => $exam->id,
                         'title' => $exam->course->name ?? 'Unknown Course',
-                        'course_code' => $exam->course->code ?? 'N/A',
+                        'course_code' => $exam->course->course_code ?? $exam->course->slug ?? strtoupper(substr($exam->course->name ?? 'UNK', 0, 6)),
                         'course_name' => $exam->course->name ?? 'Unknown',
                         'duration' => $exam->duration,
                         'questions_per_session' => $exam->questions_per_session,
@@ -99,7 +99,7 @@ class OfflineExamPackageController extends Controller
                 'exam' => [
                     'id' => $exam->id,
                     'title' => $exam->course->name ?? 'Unknown Course',
-                    'course_code' => $exam->course->code ?? 'N/A',
+                    'course_code' => $exam->course->course_code ?? $exam->course->slug ?? strtoupper(substr($exam->course->name ?? 'UNK', 0, 6)),
                     'course_name' => $exam->course->name ?? 'Unknown',
                     'duration' => $exam->duration,
                     'questions_per_session' => $exam->questions_per_session,
