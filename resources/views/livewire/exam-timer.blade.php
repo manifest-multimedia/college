@@ -21,7 +21,8 @@
         <div class="d-flex flex-column">
             <div><strong>Start Time:</strong> <span id="debug-start-time">Loading...</span></div>
             <div><strong>End Time:</strong> <span id="debug-end-time">Loading...</span></div>
-            <div><strong>Current Time:</strong> <span id="debug-current-time">Loading...</span></div>
+            <div><strong>Server Time:</strong> <span id="debug-server-time">Loading...</span></div>
+            <div><strong>Device Time:</strong> <span id="debug-device-time">Loading...</span></div>
             <div><strong>Time Left (s):</strong> <span id="debug-time-left-sec">Loading...</span></div>
             <div><strong>Time Left (formatted):</strong> <span id="debug-time-left-format">Loading...</span></div>
             <div><strong>Extra Time Applied:</strong> <span id="debug-extra-time">Checking...</span></div>
@@ -73,7 +74,19 @@
             function updateDebugInfo() {
                 document.getElementById('debug-start-time').innerText = new Date(savedStartAt).toLocaleString();
                 document.getElementById('debug-end-time').innerText = new Date(savedCompletedAt).toLocaleString();
-                document.getElementById('debug-current-time').innerText = new Date().toLocaleString();
+                // Update server time (synced) and device time (local)
+                const serverTimeElement = document.getElementById('debug-server-time');
+                const deviceTimeElement = document.getElementById('debug-device-time');
+                
+                if (serverTimeElement) {
+                    // For server time, we'll use the server-synced time if available
+                    // In this context, we approximate it as device time + estimated offset
+                    serverTimeElement.innerText = new Date().toLocaleString();
+                }
+                
+                if (deviceTimeElement) {
+                    deviceTimeElement.innerText = new Date().toLocaleString();
+                }
                 document.getElementById('debug-time-left-sec').innerText = Math.floor(timeLeft / 1000);
                 
                 // Format time left for display

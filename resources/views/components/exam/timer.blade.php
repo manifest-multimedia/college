@@ -70,9 +70,15 @@
                 <span class="timer-info-value">{{ Carbon\Carbon::parse($completedAt)->format('h:i A') }}</span>
             </div>
             <div class="timer-info-item ms-3 border-start ps-3">
-                <span class="timer-info-label">Current Time</span>
-                <span id="exam-clock-display" class="timer-info-value fw-bold text-primary">
+                <span class="timer-info-label">Server Time</span>
+                <span id="exam-server-clock-display" class="timer-info-value fw-bold text-primary">
                     {{ now()->format('h:i:s A') }}
+                </span>
+            </div>
+            <div class="timer-info-item ms-3 border-start ps-3">
+                <span class="timer-info-label">Device Time</span>
+                <span id="exam-device-clock-display" class="timer-info-value fw-bold text-success">
+                    --:--:-- --
                 </span>
             </div>
         </div>
@@ -156,5 +162,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Make timer available globally for debugging
     window.examTimer = timer;
+    
+    // Update server time and device time clocks
+    function updateClocks() {
+        // Update server time (synced with ExamClock if available)
+        let serverTime;
+        if (window.examTimer && window.examTimer.clock) {
+            serverTime = new Date(window.examTimer.clock.now());
+        } else {
+            // Fallback to device time
+            serverTime = new Date();
+        }
+        
+        // Update device time (always from device)
+        const deviceTime = new Date();
+        
+        // Format times for display
+        const serverTimeFormatted = serverTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        
+        const deviceTimeFormatted = deviceTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        
+        // Update display elements
+        const serverClockElement = document.getElementById('exam-server-clock-display');
+        const deviceClockElement = document.getElementById('exam-device-clock-display');
+        
+        if (serverClockElement) {
+            serverClockElement.textContent = serverTimeFormatted;
+        }
+        
+        if (deviceClockElement) {
+            deviceClockElement.textContent = deviceTimeFormatted;
+        }
+    }
+    
+    // Update clocks immediately and then every second
+    updateClocks();
+    setInterval(updateClocks, 1000);
 });
 </script>

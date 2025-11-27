@@ -350,7 +350,7 @@ Route::middleware([
     // Exam Response Tracker - System Role Access Only
     Route::get('/exam-response-tracker', function () {
         return view('exams.response-tracker');
-    })->middleware('role:Super Admin')->name('exam.response.tracker');
+    })->middleware('role:Super Admin|System')->name('exam.response.tracker');
 
     /*
     |--------------------------------------------------------------------------
