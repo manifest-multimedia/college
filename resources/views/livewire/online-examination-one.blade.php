@@ -37,21 +37,14 @@
                             </p>
 
                             <div class="d-flex justify-content-center w-100">
-                                @if(isset($isPreview) && $isPreview)
-                                    {{-- Timer disabled in preview mode --}}
-                                    <div class="alert alert-info mt-3 text-dark">
-                                        <i class="bi bi-clock me-2"></i> <strong>Timer disabled in preview mode</strong>
-                                    </div>
-                                @else
-                                    <!-- Timer Component -->
-                                    <x-exam.timer :examSessionId="$examSession->id"
-                                                  :startedAt="$examSession->started_at->toIso8601String()"
-                                                  :completedAt="$examSession->adjustedCompletionTime->toIso8601String()"
-                                                  :hasExtraTime="$hasExtraTime"
-                                                  :extraTimeMinutes="$extraTimeMinutes"
-                                                  :debug="false"
-                                                  class="mt-3" />
-                                @endif
+                                <!-- Timer Component (now enabled in preview mode for testing) -->
+                                <x-exam.timer :examSessionId="$examSession->id"
+                                              :startedAt="$examSession->started_at->toIso8601String()"
+                                              :completedAt="$examSession->adjustedCompletionTime->toIso8601String()"
+                                              :hasExtraTime="$hasExtraTime"
+                                              :extraTimeMinutes="$extraTimeMinutes"
+                                              :debug="false"
+                                              class="mt-3" />
                             </div>
                         </div>
                     </div>

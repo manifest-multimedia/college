@@ -62,7 +62,7 @@
                             <tbody>
                                 @foreach ($responses as $response)
                                     <tr>
-                                        <td>{{ $response->question->question }}</td>
+                                        <td>{{ $response->question->question_text }}</td>
                                         <td>{{ $response->answer }}</td>
                                     </tr>
                                 @endforeach

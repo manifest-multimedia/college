@@ -173,6 +173,7 @@ Route::prefix('offline-exam-delivery')->group(function () {
         Route::post('/sync/exam-sessions', [OfflineExamSyncController::class, 'syncExamSessions']);
         Route::post('/sync/responses', [OfflineExamSyncController::class, 'syncResponses']);
         Route::post('/sync/device-logs', [OfflineExamSyncController::class, 'syncDeviceLogs']);
+        Route::post("/sync/session-questions", [\App\Http\Controllers\Api\SessionQuestionsSync::class, "syncSessionQuestions"]);
         
         // Diagnostic endpoints for retrieving session data
         Route::get('/session/{sessionId}', [OfflineExamSyncController::class, 'getSession']);

@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the timer service
     const timer = new ExamTimerService({
-        examSessionId: {{ $examSessionId }},
+        examSessionId: '{{ $examSessionId }}',
         timerElementId: 'exam-countdown-timer',
         startTimeIso: '{{ $startedAt }}',
         endTimeIso: '{{ $completedAt }}',

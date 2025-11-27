@@ -415,7 +415,7 @@ class OfflineExamSyncController extends Controller
                     return [
                         'id' => $response->id,
                         'question_id' => $response->question_id,
-                        'question_text' => $response->question->question ?? 'Question not found',
+                        'question_text' => $response->question->question_text ?? 'Question not found',
                         'selected_option' => $response->selected_option,
                         'option_id' => $response->option_id,
                         'is_correct' => $response->is_correct,
@@ -498,7 +498,7 @@ class OfflineExamSyncController extends Controller
                     return [
                         'id' => $response->id,
                         'question_id' => $response->question_id,
-                        'question_text' => $response->question->question ?? 'Question not found',
+                        'question_text' => $response->question->question_text ?? 'Question not found',
                         'selected_option' => $response->selected_option,
                         'option_id' => $response->option_id,
                         'is_correct' => $response->is_correct,
