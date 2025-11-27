@@ -16,6 +16,8 @@ class ExamSession extends Model
         'completed_at',
         'score',
         'auto_submitted',
+        'is_restored',
+        'restored_at',
         'extra_time_minutes',
         'extra_time_added_by',
         'extra_time_added_at',
@@ -28,10 +30,12 @@ class ExamSession extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'extra_time_added_at' => 'datetime',
+        'restored_at' => 'datetime',
         'last_activity' => 'datetime',
         'score' => 'integer',
         'extra_time_minutes' => 'integer',
         'auto_submitted' => 'boolean',
+        'is_restored' => 'boolean',
     ];
 
     /**

@@ -4,6 +4,7 @@
     'completedAt',
     'hasExtraTime' => false,
     'extraTimeMinutes' => 0,
+    'isRestored' => false,
     'debug' => false
 ])
 
@@ -18,7 +19,12 @@
                   </svg>
                 <span>Exam Timer</span>
                 </div>
-                @if($hasExtraTime)
+                @if($isRestored)
+                <div class="extra-time-badge ms-2 d-flex align-items-center">
+                    <i class="bi bi-arrow-clockwise me-1 text-warning"></i>
+                    <span class="text-warning fw-semibold">Restored Session</span>
+                </div>
+                @elseif($hasExtraTime)
                 <div class="extra-time-badge ms-2 d-flex align-items-center">
                     <i class="bi bi-plus-circle me-1"></i>
                     <span>+{{ $extraTimeMinutes }} min extra time</span>

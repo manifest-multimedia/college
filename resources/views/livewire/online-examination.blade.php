@@ -46,6 +46,7 @@
                                     :completedAt="$examSession->adjustedCompletionTime->toIso8601String()" 
                                     :hasExtraTime="$hasExtraTime"
                                     :extraTimeMinutes="$extraTimeMinutes" 
+                                    :isRestored="$examSession->is_restored ?? false"
                                     :debug="false" 
                                     class="mt-3" />
                             </div>

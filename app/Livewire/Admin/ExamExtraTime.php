@@ -874,21 +874,39 @@ class ExamExtraTime extends Component
             }
             
             $now = now();
-            $newEndTime = $now->copy()->addMinutes($this->individualResumeMinutes);
+            
+            // Calculate how much extra time is needed to make the session active
+            // adjustedCompletionTime = started_at + exam_duration + extra_time_minutes
+            $currentAdjustedEndTime = $session->adjustedCompletionTime;
+            
+            // Calculate minutes needed to bring the session to current time + desired additional minutes
+            $minutesNeeded = 0;
+            if ($currentAdjustedEndTime && $currentAdjustedEndTime->lt($now)) {
+                // Session is in the past, calculate how many minutes to bring it to now
+                $minutesNeeded = (int) abs($currentAdjustedEndTime->diffInMinutes($now));
+            }
+            
+            // Total extra time = minutes needed to reach now + additional minutes requested
+            $totalExtraMinutes = (int) ($minutesNeeded + $this->individualResumeMinutes);
+            
+            // Calculate what the new end time will be
+            $newEndTime = $now->copy()->addMinutes((int) $this->individualResumeMinutes);
             
             // Critical: For a session to be resumable, we need to:
-            // 1. Set completed_at to future time OR null it completely
+            // 1. Set completed_at to null (session is now active, not completed)
             // 2. Reset auto_submitted flag 
             // 3. Reset score to null to allow resubmission
-            // 4. Add the extra time properly
+            // 4. Add the proper extra time to make adjustedCompletionTime in the future
             
             $updates = [
-                'completed_at' => $newEndTime, // Set to future time to make it "active"
-                'extra_time_minutes' => $session->extra_time_minutes + $this->individualResumeMinutes,
+                'completed_at' => null, // Critical: Set to null to make session "active"
+                'extra_time_minutes' => $session->extra_time_minutes + $totalExtraMinutes,
                 'extra_time_added_by' => Auth::id(),
                 'extra_time_added_at' => $now,
                 'auto_submitted' => false, // Critical: Reset auto-submission flag
                 'score' => null, // Critical: Reset score to allow re-submission
+                'is_restored' => true, // Mark as restored session
+                'restored_at' => $now, // Track when it was restored
             ];
             
             // If the session was completed (has score), we need to "uncomplete" it
@@ -906,20 +924,22 @@ class ExamExtraTime extends Component
             Log::info('Exam session resumed via modal', [
                 'session_id' => $this->resumingSessionId,
                 'student_id' => $session->student_id,
-                'additional_minutes' => $this->individualResumeMinutes,
+                'requested_additional_minutes' => $this->individualResumeMinutes,
+                'minutes_needed_to_reach_now' => $minutesNeeded,
+                'total_extra_minutes_added' => $totalExtraMinutes,
                 'reason' => $this->individualResumeReason,
                 'resumed_by' => Auth::id(),
                 'new_end_time' => $newEndTime->toDateTimeString(),
                 'previous_status' => $status,
-                'updated_completed_at' => $session->completed_at ? $session->completed_at->toDateTimeString() : null,
+                'updated_completed_at' => $session->completed_at,
                 'updated_score' => $session->score,
                 'updated_auto_submitted' => $session->auto_submitted,
                 'updated_extra_time_minutes' => $session->extra_time_minutes,
                 'adjusted_completion_time' => $session->adjustedCompletionTime ? $session->adjustedCompletionTime->toDateTimeString() : null,
-                'is_future_completed_at' => $session->completed_at ? $session->completed_at->isFuture() : false,
             ]);
             
-            $this->successMessage = "Session resumed successfully! Student {$session->student->name} can continue for {$this->individualResumeMinutes} minutes. New end time: {$newEndTime->format('M d, Y g:i A')}. The student should refresh their exam page if they are currently logged in.";
+            $actualExtraMessage = $totalExtraMinutes > $this->individualResumeMinutes ? " (including {$minutesNeeded} minutes to bring session to current time)" : "";
+            $this->successMessage = "Session resumed successfully! Student {$session->student->name} can continue for {$this->individualResumeMinutes} minutes{$actualExtraMessage}. New end time: {$session->adjustedCompletionTime->format('M d, Y g:i A')}. The student should refresh their exam page if they are currently logged in.";
             $this->showIndividualResumeModal = false;
             $this->resumingSessionId = null;
             
@@ -1004,6 +1024,8 @@ class ExamExtraTime extends Component
                     'extra_time_added_at' => $now,
                     'auto_submitted' => false, // Critical: Reset auto-submission flag
                     'score' => null, // Critical: Reset score to allow re-submission
+                    'is_restored' => true, // Mark as restored session
+                    'restored_at' => $now, // Track when it was restored
                 ];
                 
                 $session->update($updates);
@@ -1053,6 +1075,14 @@ class ExamExtraTime extends Component
         $this->showBulkResumeModal = false;
         $this->bulkResumeMinutes = 30;
         $this->bulkResumeReason = '';
+    }
+
+    /**
+     * Wrapper method to avoid Alpine.js conflicts
+     */
+    public function openResumeModal($sessionId)
+    {
+        return $this->showIndividualResumeModal($sessionId);
     }
 
     public function render()

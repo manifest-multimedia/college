@@ -180,20 +180,38 @@
                                         <span class="badge badge-light-primary fs-7 fw-bold">{{ $scoreData['obtained'] }} / {{ $scoreData['total'] }} ({{ $scoreData['percentage'] }}%)</span>
                                     </td>
                                     <td>
-                                        @if($session->completed_at)
+                                        @php
+                                            $status = $this->getSessionStatus($session);
+                                        @endphp
+                                        @if($status === 'completed')
                                             <span class="badge badge-light-success">Completed</span>
-                                        @elseif($session->started_at)
-                                            <span class="badge badge-light-warning">In Progress</span>
+                                            @if($session->is_restored)
+                                                <br><small class="text-warning mt-1"><i class="bi bi-arrow-clockwise me-1"></i>Restored</small>
+                                            @endif
+                                        @elseif($status === 'expired')
+                                            <span class="badge badge-light-danger">Expired</span>
+                                        @elseif($status === 'active')
+                                            <span class="badge badge-light-warning">Active</span>
                                         @else
                                             <span class="badge badge-light-secondary">Not Started</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
-                                        <button wire:click="deleteExamSession({{ $session->id }})" 
-                                                wire:confirm="Are you sure you want to delete this exam session? This action cannot be undone."
-                                                class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
-                                            <i class="fas fa-trash fs-4"></i>
-                                        </button>
+                                        <div class="d-flex justify-content-end gap-1">
+                                            @if($this->canRestoreSession($session))
+                                                <button wire:click="openRestoreModal({{ $session->id }})" 
+                                                        class="btn btn-icon btn-bg-light btn-active-color-warning btn-sm" 
+                                                        title="Restore Session">
+                                                    <i class="bi bi-arrow-clockwise fs-4 text-warning"></i>
+                                                </button>
+                                            @endif
+                                            <button wire:click="deleteExamSession({{ $session->id }})" 
+                                                    wire:confirm="Are you sure you want to delete this exam session? This action cannot be undone."
+                                                    class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                                    title="Delete Session">
+                                                <i class="fas fa-trash fs-4"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -306,5 +324,66 @@
             </div>
         </div>
     </div>
+    @endif
+
+    <!-- Restore Session Modal -->
+    @if($showRestoreModal)
+        <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-arrow-clockwise me-2 text-warning"></i>
+                            Restore Exam Session
+                        </h5>
+                        <button type="button" class="btn-close" wire:click="cancelRestore"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if($restoringSessionId)
+                            @php
+                                $restoringSession = \App\Models\ExamSession::with(['exam.course'])->find($restoringSessionId);
+                            @endphp
+                            
+                            @if($restoringSession)
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    You are about to restore the exam session:
+                                    <br><strong>{{ $student->first_name }} {{ $student->last_name }}</strong>
+                                    <br>Course: <strong>{{ $restoringSession->exam->course->name ?? 'Unknown Course' }}</strong>
+                                    <br>Started: {{ $restoringSession->started_at->format('M d, Y g:i A') }}
+                                </div>
+                                
+                                @if($errorMessage)
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                        {{ $errorMessage }}
+                                    </div>
+                                @endif
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Minutes to Grant*</label>
+                                    <input type="number" wire:model="restoreMinutes" class="form-control" min="5" max="120" placeholder="30">
+                                    <div class="form-text">How many additional minutes should the student have to complete the exam?</div>
+                                    @error('restoreMinutes') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Reason for Restoration*</label>
+                                    <textarea wire:model="restoreReason" class="form-control" rows="3" placeholder="Provide a reason for restoring this exam session"></textarea>
+                                    @error('restoreReason') <div class="text-danger">{{ $message }}</div> @enderror
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelRestore">Cancel</button>
+                        <button type="button" class="btn btn-warning" wire:click="confirmRestore">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Restore Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 </div>

@@ -289,7 +289,7 @@
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             @if($status === 'completed' || $status === 'expired')
-                                                <button type="button" wire:click="showIndividualResumeModal({{ $session->id }})" 
+                                                <button type="button" wire:click="openResumeModal({{ $session->id }})" 
                                                         class="btn btn-sm btn-icon btn-warning btn-active-light-warning" 
                                                         title="Resume Session">
                                                     <i class="bi bi-arrow-clockwise"></i>
