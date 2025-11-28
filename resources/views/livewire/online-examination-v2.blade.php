@@ -25,15 +25,22 @@
                             </p>
 
                             <div class="d-flex justify-content-center w-100">
-                                <!-- Timer Component -->
-                                <x-exam.timer :examSessionId="$examSession->id" 
-                                    :startedAt="$examSession->started_at->toIso8601String()" 
-                                    :completedAt="$adjustedCompletionTime->toIso8601String()" 
-                                    :hasExtraTime="$examSession->extra_time_minutes > 0"
-                                    :extraTimeMinutes="$examSession->extra_time_minutes ?? 0" 
-                                    :isRestored="$examSession->is_restored ?? false"
-                                    :debug="false" 
-                                    class="mt-3" />
+                                @if (!$readOnlyMode)
+                                    <!-- Timer Component -->
+                                    <x-exam.timer :examSessionId="$examSession->id" 
+                                        :startedAt="$examSession->started_at->toIso8601String()" 
+                                        :completedAt="$adjustedCompletionTime->toIso8601String()" 
+                                        :hasExtraTime="$examSession->extra_time_minutes > 0"
+                                        :extraTimeMinutes="$examSession->extra_time_minutes ?? 0" 
+                                        :isRestored="$examSession->is_restored ?? false"
+                                        :debug="false" 
+                                        class="mt-3" />
+                                @else
+                                    <div class="alert alert-info mt-3 mb-0">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Exam Completed</strong>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -68,20 +75,24 @@
                                         @if (!$readOnlyMode)
                                             <div class="d-flex gap-2 ms-3 flex-shrink-0">
                                                 <button type="button" 
-                                                    class="btn btn-sm btn-outline-warning flag-button"
+                                                    class="btn btn-outline-warning flag-button"
+                                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
                                                     :class="{ 'active': flaggedQuestions.includes({{ $question['id'] }}) }"
                                                     @click="toggleFlag({{ $question['id'] }})"
                                                     title="Flag for review">
-                                                    <i class="bi" :class="flaggedQuestions.includes({{ $question['id'] }}) ? 'bi-bookmark-fill' : 'bi-bookmark'"></i>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-flag" viewBox="0 0 16 16">
+                                                        <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12 12 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A20 20 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a20 20 0 0 0 1.349-.476l.019-.007.004-.002h.001M14 1.221c-.22.078-.48.167-.766.255-.81.252-1.872.523-2.734.523-.886 0-1.592-.286-2.203-.534l-.008-.003C7.662 1.21 7.139 1 6.5 1c-.669 0-1.606.229-2.415.478A21 21 0 0 0 3 1.845v6.433c.22-.078.48-.167.766-.255C4.576 7.77 5.638 7.5 6.5 7.5c.847 0 1.548.28 2.158.525l.028.01C9.32 8.29 9.86 8.5 10.5 8.5c.668 0 1.606-.229 2.415-.478A21 21 0 0 0 14 7.655V1.222z"/>
+                                                    </svg>
                                                     <span class="ms-1">Flag</span>
                                                 </button>
                                                 <button type="button" 
-                                                    class="btn btn-sm btn-outline-danger clear-button"
+                                                    class="btn btn-outline-danger clear-button"
+                                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
                                                     @click="confirmClearResponse({{ $question['id'] }})"
                                                     title="Clear response"
                                                     :disabled="!responses[{{ $question['id'] }}]">
-                                                    <i class="bi bi-x-circle"></i>
-                                                    <span class="ms-1">Clear Response</span>
+                                                    <i class="bi bi-x-circle" style="font-size: 14px;"></i>
+                                                    <span class="ms-1">Clear</span>
                                                 </button>
                                             </div>
                                         @endif
@@ -109,23 +120,57 @@
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="shadow-lg col-md-3 sidebar d-flex flex-column card question-card" style="height:550px">
-                <div class="p-4 text-center">
-                    <h5>Questions Overview</h5>
-                    <p class="mb-0">
-                        Questions Answered: <strong id="answeredCount" x-text="answeredCount"></strong> / {{ count($questions) }}
-                    </p>
-
-                    @if ($readOnlyMode)
-                        <div class="alert alert-info mt-3 mb-0 py-2 small">
-                            <i class="bi bi-info-circle me-1"></i> Exam has been submitted
-                        </div>
-                    @endif
+            <!-- Sidebar - Question Navigator (Offline UI Style) -->
+            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" style="min-height: 550px; max-height: calc(100vh - 100px); padding: 0; border-radius: 0.5rem; overflow: hidden;">
+                <!-- Header Section -->
+                <div class="p-3 text-white" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                    <h5 class="mb-0 fw-bold">Questions Overview</h5>
                 </div>
 
-                <div id="questionsOverview" class="overflow-y-auto p-3 mb-2 flex-grow-1">
-                    <div class="flex-wrap gap-3 tracker-container d-flex justify-content-center">
+                <!-- Exam Progress Section -->
+                <div class="p-3 border-bottom" style="background-color: #f8f9fa;">
+                    <h6 class="mb-2 fw-bold" style="color: #1d4ed8;">Exam Progress</h6>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4 text-center">
+                            <div class="p-2 rounded" style="background-color: #22c55e; color: white;">
+                                <div class="fw-bold fs-5" x-text="answeredCount">0</div>
+                                <div class="small">Answered</div>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="p-2 rounded" style="background-color: #ef4444; color: white;">
+                                <div class="fw-bold fs-5" x-text="{{ count($questions) }} - answeredCount">{{ count($questions) }}</div>
+                                <div class="small">Left</div>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="p-2 rounded" style="background-color: #f59e0b; color: white;">
+                                <div class="fw-bold fs-5" x-text="flaggedQuestions.length">0</div>
+                                <div class="small">Flagged</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted">Progress</span>
+                            <span class="small fw-bold" x-text="Math.round((answeredCount / {{ count($questions) }}) * 100) + '%'">0%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" 
+                                 :style="`width: ${(answeredCount / {{ count($questions) }}) * 100}%`"
+                                 style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small fw-bold">Total: {{ count($questions) }}</span>
+                        <span class="small text-muted">Flagged: <span x-text="flaggedQuestions.length">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Question Grid -->
+                <div id="questionsOverview" class="p-3 mb-2 flex-grow-1">
+                    <div class="row g-2">
                         @foreach ($questions as $index => $question)
                             @php
                                 $isFlagged = $question['is_flagged'] ?? false;
@@ -141,28 +186,54 @@
                                     $trackerClass = 'unanswered';
                                 }
                             @endphp
-                            <div class="tracker-item rounded-circle text-center {{ $trackerClass }}"
-                                style="width: 50px; height: 50px; line-height: 50px; cursor: pointer;"
-                                data-question-id="{{ $index + 1 }}"
-                                data-actual-question-id="{{ $question['id'] }}"
-                                data-is-flagged="{{ $isFlagged ? 'true' : 'false' }}"
-                                onclick="scrollToQuestion({{ $index + 1 }})">
-                                {{ $index + 1 }}
+                            <div class="col-2-4">
+                                <div class="tracker-item rounded-circle text-center {{ $trackerClass }}"
+                                    style="width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px;"
+                                    data-question-id="{{ $index + 1 }}"
+                                    data-actual-question-id="{{ $question['id'] }}"
+                                    data-is-flagged="{{ $isFlagged ? 'true' : 'false' }}"
+                                    onclick="scrollToQuestion({{ $index + 1 }})">
+                                    {{ $index + 1 }}
+                                </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
 
-                <div class="bg-white card-footer d-flex justify-content-center align-items-center">
+                <!-- Legend Section -->
+                <div class="p-3 border-top" style="background-color: #ffffff;">
+                    <div class="row g-2 small">
+                        <div class="col-6 d-flex align-items-center">
+                            <div class="me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #22c55e; border: 2px solid #16a34a;"></div>
+                            <span>Answered</span>
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <div class="me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #fbbf24; border: 2px solid #f59e0b;"></div>
+                            <span>Flagged</span>
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <div class="me-2 rounded-circle" style="width: 20px; height: 20px; background-color: #f8f9fa; border: 2px solid #dee2e6;"></div>
+                            <span>Not Answered</span>
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <div class="me-2 rounded-circle" style="width: 20px; height: 20px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: 2px solid #2563eb;"></div>
+                            <span>Current</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button Footer -->
+                <div class="card-footer d-flex justify-content-center align-items-center p-3" style="background-color: #ffffff;">
                     @if ($readOnlyMode)
                         <a href="{{ route('take-exam') }}" class="btn btn-secondary w-100">
                             <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
                         </a>
                     @else
-                        <button class="btn btn-primary w-100" 
-                            onclick="showV2SubmitConfirmation()" 
-                            id="submitBtn">
-                            Submit Exam
+                        <button class="btn w-100 text-white fw-bold" 
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);"
+                                onclick="showV2SubmitConfirmation()" 
+                                id="submitBtn">
+                            <i class="bi bi-check-circle me-2"></i> Submit Exam
                         </button>
                     @endif
                 </div>
@@ -268,44 +339,60 @@
             width: 100% !important;
         }
 
+        /* 5-column grid for question tracker */
+        .col-2-4 {
+            flex: 0 0 20%;
+            max-width: 20%;
+            padding: 0.25rem;
+        }
+
         .tracker-item {
             transition: all 0.3s ease;
             font-weight: 600;
+            border: 2px solid;
         }
 
         .tracker-item:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        /* Answered - Green */
+        /* Answered - Green (Offline style) */
         .tracker-item.answered {
-            background-color: #28a745;
+            background-color: #22c55e;
             color: white;
-            border: 2px solid #1e7e34;
+            border-color: #16a34a;
         }
 
-        /* Unanswered - Light Gray */
+        /* Unanswered - Light Gray (Offline style) */
         .tracker-item.unanswered {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            border: 2px solid #dee2e6;
+            background-color: #ffffff;
+            color: #6b7280;
+            border-color: #d1d5db;
         }
 
-        /* Flagged + Answered - Yellow/Gold Gradient */
+        /* Flagged + Answered - Amber/Gold (Offline style) */
         .tracker-item.flagged-answered {
             background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
             color: #78350f;
-            border: 2px solid #d97706;
+            border-color: #d97706;
             font-weight: 700;
         }
 
-        /* Flagged + Unanswered - Light Yellow */
+        /* Flagged + Unanswered - Light Amber (Offline style) */
         .tracker-item.flagged-unanswered {
             background-color: #fef3c7;
             color: #92400e;
-            border: 2px solid #fbbf24;
+            border-color: #fbbf24;
             font-weight: 700;
+        }
+
+        /* Current Question Indicator */
+        .tracker-item.current {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
         /* Flag Button Styles */
@@ -373,6 +460,11 @@
             pointer-events: none;
             z-index: 10;
             white-space: nowrap;
+        }
+
+        /* Progress bar animation */
+        .progress-bar {
+            transition: width 0.6s ease;
         }
     </style>
 
@@ -591,11 +683,8 @@
                     
                     console.log('Flag toggled:', { questionId, isFlagged: !isFlagged, pendingFlagsCount: this.pendingFlagsCount });
                     
-                    // Check if we should sync flags based on threshold
-                    if (this.pendingFlagsCount >= this.FLAG_SYNC_THRESHOLD) {
-                        console.log('Flag threshold reached, syncing flags now');
-                        await this.syncFlags();
-                    }
+                    // CRITICAL FIX: Always sync flags immediately to prevent state loss on refresh
+                    await this.syncFlags();
                 },
 
                 async syncFlags() {
@@ -611,26 +700,46 @@
                         const result = await @this.syncFlagsBatch(flagsToSync);
                         
                         if (result.success) {
-                            console.log('Flags synced successfully');
+                            console.log('Flags synced successfully', result);
                             
                             // Clear synced flags from pending
                             Object.keys(flagsToSync).forEach(questionId => {
                                 delete this.pendingFlags[questionId];
                             });
                             
-                            // Update flagged questions from server response
-                            this.flaggedQuestions = result.flagged_questions || [];
+                            // CRITICAL FIX: Update flagged questions from server response (source of truth)
+                            // Convert to integers to ensure proper comparison
+                            this.flaggedQuestions = (result.flagged_questions || []).map(id => parseInt(id));
                             this.pendingFlagsCount = Object.keys(this.pendingFlags).length;
                             
-                            // Update all tracker items
-                            this.flaggedQuestions.forEach(qId => this.updateTrackerUI(parseInt(qId)));
+                            console.log('Updated flaggedQuestions from server:', this.flaggedQuestions);
+                            
+                            // Update all tracker items to reflect server state
+                            document.querySelectorAll('.tracker-item').forEach(trackerItem => {
+                                const qId = parseInt(trackerItem.getAttribute('data-actual-question-id'));
+                                if (qId) {
+                                    this.updateTrackerUI(qId);
+                                }
+                            });
                         } else {
                             console.error('Flag sync failed:', result.error);
                             // Rollback optimistic updates on error
-                            // TODO: Implement rollback logic if needed
+                            await this.reloadFlagsFromServer();
                         }
                     } catch (error) {
                         console.error('Flag sync error:', error);
+                        // Rollback optimistic updates on error
+                        await this.reloadFlagsFromServer();
+                    }
+                },
+
+                async reloadFlagsFromServer() {
+                    console.log('Reloading flags from server due to sync error');
+                    try {
+                        // Re-fetch flagged questions from Livewire component
+                        await @this.$refresh();
+                    } catch (error) {
+                        console.error('Error reloading flags:', error);
                     }
                 },
 

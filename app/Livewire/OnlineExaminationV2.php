@@ -174,10 +174,16 @@ class OnlineExaminationV2 extends Component
             ]);
         }
 
-        // Load flagged questions for this session
+        // Load flagged questions for this session - CRITICAL: Always fresh from DB
         $this->flaggedQuestions = \App\Models\ExamSessionFlag::where('exam_session_id', $this->examSession->id)
             ->pluck('question_id')
+            ->map(fn($id) => (int) $id) // Ensure integers for JS comparison
             ->toArray();
+
+        Log::info('V2: Loaded flagged questions', [
+            'session_id' => $this->examSession->id,
+            'flagged_questions' => $this->flaggedQuestions,
+        ]);
 
         // Build questions array with responses
         foreach ($examQuestions as $question) {
