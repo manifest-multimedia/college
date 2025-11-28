@@ -252,9 +252,10 @@ class ExamResponseTracker extends Component
                     $limitedResponses = $processedResponses->take($questionsPerSession);
 
                     // Calculate metrics from the limited responses
+                    // BUT: totalMarks should be sum of ALL questions (the theoretical max), not just limited ones
                     $this->totalAttempted = $limitedResponses->where('is_attempted', true)->count();
                     $this->totalCorrect = $limitedResponses->where('is_correct', true)->count();
-                    $this->totalMarks = $limitedResponses->sum('mark_value');
+                    $this->totalMarks = $processedResponses->sum('mark_value');  // Use all responses for total marks
                     $this->obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
 
                     // Map the limited responses for display
