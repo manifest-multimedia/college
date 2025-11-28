@@ -345,8 +345,21 @@ class ExamResultsComponent extends Component
                 $totalQuestions = $limitedResponses->count(); // This should match questionsPerSession
                 $totalAttempted = $limitedResponses->where('is_attempted', true)->count();
                 $totalCorrect = $limitedResponses->where('is_correct', true)->count();
-                $totalMarks = $limitedResponses->sum('mark_value');
                 $obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
+                
+                // Total marks should be based on ALL questions (questions_per_session), not just what was answered
+                // This ensures proper percentage calculation: obtained/expected, not obtained/answered
+                $totalMarks = $questionsPerSession; // Assuming 1 mark per question (standard)
+                
+                // If questions have different mark values, calculate properly
+                if ($processedResponses->isNotEmpty()) {
+                    $avgMarkValue = $processedResponses->avg('mark_value');
+                    // If average is not 1, it means questions have custom marks
+                    if ($avgMarkValue != 1) {
+                        // Use the sum of ALL questions to get the true total possible marks
+                        $totalMarks = $processedResponses->sum('mark_value');
+                    }
+                }
 
                 // Calculate percentage (prevent division by zero)
                 $scorePercentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;

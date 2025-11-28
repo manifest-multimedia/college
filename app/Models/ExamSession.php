@@ -105,6 +105,14 @@ class ExamSession extends Model
     }
 
     /**
+     * Device access logs for this exam session.
+     */
+    public function deviceAccessLogs()
+    {
+        return $this->hasMany(DeviceAccessLog::class);
+    }
+
+    /**
      * Get the adjusted completion time that includes any extra time granted.
      *
      * @return \Carbon\Carbon

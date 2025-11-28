@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Models\DeviceAccessLog;
 use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Response;
@@ -56,6 +57,9 @@ class ExamResponseTracker extends Component
 
     // Track if responses are found
     public $responsesFound = false;
+
+    // For storing device access logs
+    public $deviceAccessLogs = [];
 
     // For direct linking with all needed parameters
     protected $queryString = ['student_id', 'exam_id', 'session_id'];
@@ -252,11 +256,23 @@ class ExamResponseTracker extends Component
                     $limitedResponses = $processedResponses->take($questionsPerSession);
 
                     // Calculate metrics from the limited responses
-                    // BUT: totalMarks should be sum of ALL questions (the theoretical max), not just limited ones
                     $this->totalAttempted = $limitedResponses->where('is_attempted', true)->count();
                     $this->totalCorrect = $limitedResponses->where('is_correct', true)->count();
-                    $this->totalMarks = $processedResponses->sum('mark_value');  // Use all responses for total marks
                     $this->obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
+                    
+                    // Total marks should be based on questions_per_session (expected), not answered
+                    // This ensures percentage = (obtained / expected) * 100, not (obtained / answered) * 100
+                    $this->totalMarks = $questionsPerSession; // Assuming 1 mark per question (standard)
+                    
+                    // If questions have different mark values, calculate properly
+                    if ($processedResponses->isNotEmpty()) {
+                        $avgMarkValue = $processedResponses->avg('mark_value');
+                        // If average is not 1, it means questions have custom marks
+                        if ($avgMarkValue != 1) {
+                            // Use the sum of ALL questions to get the true total possible marks
+                            $this->totalMarks = $processedResponses->sum('mark_value');
+                        }
+                    }
 
                     // Map the limited responses for display
                     $this->sessionResponses = $limitedResponses->map(function ($item) {
@@ -296,6 +312,9 @@ class ExamResponseTracker extends Component
                     if ($this->totalMarks > 0) {
                         $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
                     }
+
+                    // Load device access logs for this session
+                    $this->loadDeviceAccessLogs($session->id);
                 }
 
                 $this->responsesFound = count($this->sessionResponses) > 0;
@@ -306,6 +325,60 @@ class ExamResponseTracker extends Component
                 'trace' => $e->getTraceAsString(),
                 'session_id' => $this->session_id,
             ]);
+        }
+    }
+
+    public function loadDeviceAccessLogs($sessionId)
+    {
+        try {
+            // Get all device access logs for this exam session
+            $logs = ExamSession::find($sessionId)
+                ->deviceAccessLogs()
+                ->orderBy('access_time', 'asc')
+                ->get();
+
+            // Transform the logs to extract useful browser and device information
+            $this->deviceAccessLogs = $logs->map(function ($log) {
+                $deviceInfo = [];
+                
+                // Parse device_info if it's JSON
+                if (is_string($log->device_info)) {
+                    try {
+                        $parsedInfo = json_decode($log->device_info, true);
+                        if (is_array($parsedInfo)) {
+                            $deviceInfo = $parsedInfo;
+                        } else {
+                            $deviceInfo = ['raw' => $log->device_info];
+                        }
+                    } catch (\Exception $e) {
+                        $deviceInfo = ['raw' => $log->device_info];
+                    }
+                } else {
+                    $deviceInfo = ['raw' => (string) $log->device_info];
+                }
+
+                return [
+                    'id' => $log->id,
+                    'access_time' => $log->access_time,
+                    'ip_address' => $log->ip_address,
+                    'is_conflict' => $log->is_conflict,
+                    'browser' => $deviceInfo['browser'] ?? 'Unknown',
+                    'platform' => $deviceInfo['platform'] ?? 'Unknown',
+                    'device_type' => $deviceInfo['device_type'] ?? 'Unknown',
+                    'user_agent' => $deviceInfo['user_agent'] ?? '',
+                    'screen_resolution' => $deviceInfo['screen_resolution'] ?? 'Unknown',
+                    'timezone' => $deviceInfo['timezone'] ?? 'Unknown',
+                    'device_identifier' => $deviceInfo['device_identifier'] ?? 'Unknown',
+                    'all_info' => $deviceInfo,
+                ];
+            })->toArray();
+        } catch (\Exception $e) {
+            Log::error('Error loading device access logs', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'session_id' => $sessionId,
+            ]);
+            $this->deviceAccessLogs = [];
         }
     }
 

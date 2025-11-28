@@ -94,7 +94,20 @@ class StudentDetails extends Component
         $limitedResponses = $processedResponses->take($questionsPerSession);
 
         $obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
-        $totalMarks = $limitedResponses->sum('mark_value');
+        
+        // Total marks should be based on questions_per_session, not limited responses
+        // This ensures students are graded against the full exam even if they don't attempt all questions
+        $totalMarks = $questionsPerSession; // Assuming 1 mark per question (standard)
+        
+        // If questions have different mark values, calculate properly
+        if ($processedResponses->isNotEmpty()) {
+            $avgMarkValue = $processedResponses->avg('mark_value');
+            // If average is not 1, it means questions have custom marks
+            if ($avgMarkValue != 1) {
+                // Use the sum of ALL available questions (not limited) to get true total
+                $totalMarks = $processedResponses->sum('mark_value');
+            }
+        }
 
         $percentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
 

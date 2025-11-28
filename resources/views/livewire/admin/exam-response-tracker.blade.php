@@ -286,6 +286,191 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Devices Section -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <h3>
+                                        <i class="ki-duotone ki-devices fs-2 me-2">
+                                            <span class="path1"></span>
+                                            <span class="path2"></span>
+                                        </i>
+                                        Devices Used
+                                        @if(count($deviceAccessLogs) > 1)
+                                            <span class="badge bg-warning ms-2">{{ count($deviceAccessLogs) }} devices</span>
+                                        @elseif(count($deviceAccessLogs) == 1)
+                                            <span class="badge bg-success ms-2">Single device</span>
+                                        @else
+                                            <span class="badge bg-secondary ms-2">No device logs</span>
+                                        @endif
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                @if(count($deviceAccessLogs) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Access Time</th>
+                                                    <th>IP Address</th>
+                                                    <th>Browser</th>
+                                                    <th>Platform</th>
+                                                    <th>Device Type</th>
+                                                    <th>Screen Resolution</th>
+                                                    <th>Timezone</th>
+                                                    <th>Status</th>
+                                                    <th>Details</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($deviceAccessLogs as $index => $log)
+                                                    <tr class="{{ $log['is_conflict'] ? 'table-warning' : '' }}">
+                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>
+                                                            <small>
+                                                                {{ $log['access_time']->format('d M, Y H:i:s') }}
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <code>{{ $log['ip_address'] ?? 'N/A' }}</code>
+                                                        </td>
+                                                        <td>{{ $log['browser'] }}</td>
+                                                        <td>{{ $log['platform'] }}</td>
+                                                        <td>{{ $log['device_type'] }}</td>
+                                                        <td><small>{{ $log['screen_resolution'] }}</small></td>
+                                                        <td><small>{{ $log['timezone'] }}</small></td>
+                                                        <td>
+                                                            @if($log['is_conflict'])
+                                                                <span class="badge bg-danger">Conflict Detected</span>
+                                                            @else
+                                                                <span class="badge bg-success">Normal</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-info" 
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#deviceModal{{ $log['id'] }}">
+                                                                View Full Details
+                                                            </button>
+                                                            
+                                                            <!-- Modal for Device Details -->
+                                                            <div class="modal fade" id="deviceModal{{ $log['id'] }}" tabindex="-1" 
+                                                                 aria-labelledby="deviceModalLabel{{ $log['id'] }}" aria-hidden="true">
+                                                                <div class="modal-dialog modal-lg">
+                                                                    <div class="modal-content">
+                                                                        <div class="modal-header">
+                                                                            <h5 class="modal-title" id="deviceModalLabel{{ $log['id'] }}">
+                                                                                Device Details - Access #{{ $index + 1 }}
+                                                                            </h5>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            <div class="row mb-3">
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Access Time:</strong></p>
+                                                                                    <p class="text-muted">{{ $log['access_time']->format('d M, Y H:i:s') }}</p>
+                                                                                </div>
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Conflict Status:</strong></p>
+                                                                                    <p>
+                                                                                        @if($log['is_conflict'])
+                                                                                            <span class="badge bg-danger fs-6">Conflict Detected</span>
+                                                                                        @else
+                                                                                            <span class="badge bg-success fs-6">Normal</span>
+                                                                                        @endif
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <hr>
+                                                                            
+                                                                            <div class="row mb-3">
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>IP Address:</strong></p>
+                                                                                    <p class="text-muted"><code>{{ $log['ip_address'] ?? 'N/A' }}</code></p>
+                                                                                </div>
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Device Identifier:</strong></p>
+                                                                                    <p class="text-muted"><code>{{ $log['device_identifier'] ?? 'Unknown' }}</code></p>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="row mb-3">
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Browser:</strong></p>
+                                                                                    <p class="text-muted">{{ $log['browser'] }}</p>
+                                                                                </div>
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Platform:</strong></p>
+                                                                                    <p class="text-muted">{{ $log['platform'] }}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="row mb-3">
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Device Type:</strong></p>
+                                                                                    <p class="text-muted">{{ $log['device_type'] }}</p>
+                                                                                </div>
+                                                                                <div class="col-md-6">
+                                                                                    <p><strong>Screen Resolution:</strong></p>
+                                                                                    <p class="text-muted">{{ $log['screen_resolution'] }}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="row mb-3">
+                                                                                <div class="col-md-12">
+                                                                                    <p><strong>Timezone:</strong></p>
+                                                                                    <p class="text-muted">{{ $log['timezone'] }}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            @if($log['user_agent'])
+                                                                                <hr>
+                                                                                <p><strong>User Agent:</strong></p>
+                                                                                <p class="text-muted small"><code>{{ $log['user_agent'] }}</code></p>
+                                                                            @endif
+                                                                            
+                                                                            @if(auth()->user()->hasRole('System') && !empty($log['all_info']))
+                                                                                <hr>
+                                                                                <p><strong>Raw Device Info:</strong></p>
+                                                                                <pre class="bg-light p-3 rounded"><small>{{ json_encode($log['all_info'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</small></pre>
+                                                                            @endif
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    @if(count($deviceAccessLogs) > 1)
+                                        <div class="alert alert-warning mt-4">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Multiple Devices Detected:</strong> This student accessed the exam from {{ count($deviceAccessLogs) }} different devices. 
+                                            @if(collect($deviceAccessLogs)->where('is_conflict', true)->count() > 0)
+                                                Some accesses were flagged as conflicts. Review the device details and timestamps carefully.
+                                            @else
+                                                Verify if all device changes are legitimate (e.g., session timeout and re-login on same device).
+                                            @endif
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        No device access logs found for this exam session. This may indicate that device tracking was not enabled during the exam.
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     @elseif($session_id && !$responsesFound)
                         <div class="alert alert-info mt-4">
                             <h4 class="alert-heading">No Responses Found</h4>
