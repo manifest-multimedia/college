@@ -40,7 +40,7 @@
                                         <i class="bi bi-info-circle me-2"></i>
                                         <strong>Exam Completed</strong>
                                     </div>
-                                @elseif ($readOnlyMode && $readOnlyReason === 'device_mismatch')
+                                @elseif ($readOnlyMode && $readOnlyReason === 'device_mismatch' && !$examSession->device_mismatch_bypassed)
                                     <div class="alert alert-danger mt-3 mb-0">
                                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
                                         <strong>Device Mismatch Detected</strong>
@@ -63,12 +63,12 @@
                     </div>
 
                     @if ($readOnlyMode)
-                        @if ($readOnlyReason === 'device_mismatch')
+                        @if ($readOnlyReason === 'device_mismatch' && !$examSession->device_mismatch_bypassed)
                             <div class="alert alert-danger mb-4">
                                 <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i> Device Mismatch Detected</h4>
                                 <p class="mb-0">{{ $validationMessage }}</p>
                             </div>
-                        @else
+                        @elseif ($readOnlyReason === 'completed')
                             <div class="alert alert-info mb-4">
                                 <h4 class="alert-heading"><i class="bi bi-info-circle me-2"></i> Exam Completed</h4>
                                 <p class="mb-0">{{ $validationMessage }}</p>

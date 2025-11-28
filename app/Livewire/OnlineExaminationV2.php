@@ -130,6 +130,15 @@ class OnlineExaminationV2 extends Component
 
         // Validate device consistency
         if ($this->examSession->isBeingAccessedFromDifferentDevice($sessionToken, $currentDeviceInfo)) {
+            // Check if device mismatch was bypassed
+            if ($this->examSession->device_mismatch_bypassed) {
+                // Device mismatch was bypassed, allow to continue
+                $this->deviceValidation = 'approved';
+                $this->validationMessage = 'Device validated successfully';
+                $this->examSession->updateDeviceAccess($sessionToken, $currentDeviceInfo);
+                return;
+            }
+
             $this->deviceValidation = 'flagged';
             $this->readOnlyReason = 'device_mismatch';
             $this->validationMessage = 'Device mismatch detected. Contact administrator.';
