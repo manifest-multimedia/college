@@ -225,8 +225,15 @@ class ExamSession extends Model
      */
     public function updateDeviceAccess($token, $deviceInfo)
     {
+        // Store the previous device info before updating
+        $previousDeviceInfo = $this->device_info;
+        
         // Check if device info has changed - if so, record it as a new access attempt
-        $deviceChanged = $this->device_info !== $deviceInfo;
+        $deviceChanged = $previousDeviceInfo !== $deviceInfo;
+        
+        // Determine if this is a conflict (device change AFTER initial setup)
+        // First device access (when previous is null) should NOT be marked as conflict
+        $isConflict = $deviceChanged && !is_null($previousDeviceInfo);
 
         // Update the current device information
         $this->session_token = $token;
@@ -236,16 +243,18 @@ class ExamSession extends Model
 
         // Log the device change as an access attempt
         if ($deviceChanged) {
-            $this->recordDeviceAccessAttempt($token, $deviceInfo, true);
+            $this->recordDeviceAccessAttempt($token, $deviceInfo, $isConflict);
 
-            // Log the device change for monitoring
-            Log::info('Device change detected for exam session', [
-                'exam_session_id' => $this->id,
-                'student_id' => $this->student_id,
-                'previous_device' => $this->getOriginal('device_info'),
-                'new_device' => $deviceInfo,
-                'is_completed' => (bool) $this->completed_at,
-            ]);
+            // Log the device change for monitoring (only if it's a real conflict)
+            if ($isConflict) {
+                Log::info('Device change detected for exam session', [
+                    'exam_session_id' => $this->id,
+                    'student_id' => $this->student_id,
+                    'previous_device' => $previousDeviceInfo,
+                    'new_device' => $deviceInfo,
+                    'is_completed' => (bool) $this->completed_at,
+                ]);
+            }
         }
     }
 
