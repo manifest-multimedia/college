@@ -4,7 +4,7 @@
         <div class="mb-4 text-center">
             <h2>Course Title: {{ $exam->course->name }}</h2>
             Date of Exam: {{ $examSession->started_at }}
-            <p>Student Name: {{ $student->full_name ?? $user->name }} | Student ID : {{ $user->student_id }} </p>
+            <p>Student Name: {{ $student->full_name ?? $user->name }} | Student ID : {{ $student->student_id }} </p>
             <p>Proctor: AI Sensei </p>
 
             <div class="p-3 rounded border shadow-lg row bg-light">

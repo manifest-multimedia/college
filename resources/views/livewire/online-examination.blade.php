@@ -34,7 +34,7 @@
                                 disqualification. You're required to answer {{ count($questions) }} questions in total.
                                 <br>
                                 @php
-                                    $remainingMinutes = ceil($examSession->remaining_time / 60);
+                                    $remainingMinutes = ceil($remainingTime / 60);
                                 @endphp
                                 You have <span class="text-danger">{{ $remainingMinutes }} minutes</span> remaining to complete this exam.
                             </p>

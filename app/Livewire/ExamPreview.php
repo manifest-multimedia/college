@@ -119,6 +119,19 @@ class ExamPreview extends Component
         $this->dispatch('responseUpdated');
     }
 
+    public function toggleFlag(int $questionId): void
+    {
+        // No-op for preview mode - flags are not persisted in preview
+        Log::info('ExamPreview: toggleFlag called (no-op in preview)', ['question_id' => $questionId]);
+    }
+
+    public function clearResponse(int $questionId): void
+    {
+        // Clear the response for this question
+        unset($this->responses[$questionId]);
+        $this->dispatch('responseUpdated');
+    }
+
     public function nextQuestion(): void
     {
         if ($this->currentIndex < max(0, count($this->questions) - 1)) {
@@ -185,6 +198,7 @@ class ExamPreview extends Component
             'canStillSubmit' => $this->canStillSubmit,
             'extraTimeMinutes' => $this->extraTimeMinutes,
             'remainingTime' => $this->remainingTime,
+            'flaggedQuestions' => [], // Empty array for preview mode (no flagged questions in preview)
             'isPreview' => $isPreview,
         ])->layout('components.dashboard.default');
     }

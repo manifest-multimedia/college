@@ -1085,6 +1085,7 @@ class OnlineExamination extends Component
             'hasExtraTime' => $this->examSession && $this->examSession->extra_time_minutes > 0,
             'canStillSubmit' => $this->examSession && $this->examSession->extra_time_minutes > 0 && Carbon::now()->lt($this->examSession->adjustedCompletionTime),
             'extraTimeMinutes' => $this->examSession ? $this->examSession->extra_time_minutes : 0,
+            'flaggedQuestions' => $this->flaggedQuestions,
         ]);
     }
 }
