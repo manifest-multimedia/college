@@ -26,6 +26,8 @@ class OnlineExamination extends Component
 
     public $responses = [];
 
+    public $flaggedQuestions = []; // Array of flagged question IDs
+
     public $remainingTime;
 
     public $examStartTime;
@@ -401,6 +403,11 @@ class OnlineExamination extends Component
     public function loadQuestions()
     {
         try {
+            // Load flagged questions for this session
+            $this->flaggedQuestions = \App\Models\ExamSessionFlag::where('exam_session_id', $this->examSession->id)
+                ->pluck('question_id')
+                ->toArray();
+
             // Check if this session already has defined questions from question sets
             $existingSessionQuestions = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
                 ->orderBy('display_order')
@@ -663,6 +670,129 @@ class OnlineExamination extends Component
                 'student_id' => $this->user->id ?? null,
             ]);
             report($th);
+        }
+    }
+
+    /**
+     * Toggle flag for a specific question
+     */
+    public function toggleFlag($questionId)
+    {
+        try {
+            if ($this->readOnlyMode) {
+                return ['success' => false, 'message' => 'Exam is in read-only mode'];
+            }
+
+            // Validate question belongs to this exam session
+            $validQuestionIds = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
+                ->pluck('question_id')
+                ->toArray();
+
+            if (!in_array($questionId, $validQuestionIds)) {
+                return ['success' => false, 'message' => 'Invalid question'];
+            }
+
+            // Check if already flagged
+            $existingFlag = \App\Models\ExamSessionFlag::where('exam_session_id', $this->examSession->id)
+                ->where('question_id', $questionId)
+                ->first();
+
+            if ($existingFlag) {
+                // Unflag
+                $existingFlag->delete();
+                $this->flaggedQuestions = array_values(array_diff($this->flaggedQuestions, [$questionId]));
+                
+                Log::info('V1: Question unflagged', [
+                    'session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                ]);
+
+                return ['success' => true, 'flagged' => false, 'message' => 'Question unflagged'];
+            } else {
+                // Flag
+                \App\Models\ExamSessionFlag::create([
+                    'exam_session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                ]);
+                $this->flaggedQuestions[] = $questionId;
+                
+                Log::info('V1: Question flagged', [
+                    'session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                ]);
+
+                return ['success' => true, 'flagged' => true, 'message' => 'Question flagged for review'];
+            }
+        } catch (\Throwable $th) {
+            Log::error('V1 Toggle Flag Error', [
+                'exam_session_id' => $this->examSession->id,
+                'question_id' => $questionId,
+                'error' => $th->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $th->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Clear response for a specific question
+     */
+    public function clearResponse($questionId)
+    {
+        try {
+            if ($this->readOnlyMode) {
+                return ['success' => false, 'message' => 'Exam is in read-only mode'];
+            }
+
+            // Validate question belongs to this exam session
+            $validQuestionIds = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
+                ->pluck('question_id')
+                ->toArray();
+
+            if (!in_array($questionId, $validQuestionIds)) {
+                return ['success' => false, 'message' => 'Invalid question'];
+            }
+
+            // Delete the response
+            $deleted = Response::where('exam_session_id', $this->examSession->id)
+                ->where('question_id', $questionId)
+                ->where('student_id', $this->user->id)
+                ->delete();
+
+            if ($deleted) {
+                // Update local responses array
+                unset($this->responses[$questionId]);
+
+                // Update session
+                session()->put('responses', $this->responses);
+
+                Log::info('V1: Response cleared', [
+                    'session_id' => $this->examSession->id,
+                    'question_id' => $questionId,
+                ]);
+
+                // Dispatch event to update UI
+                $this->dispatch('responseCleared', questionId: $questionId);
+
+                return ['success' => true, 'message' => 'Response cleared successfully'];
+            }
+
+            return ['success' => false, 'message' => 'No response to clear'];
+
+        } catch (\Throwable $th) {
+            Log::error('V1 Clear Response Error', [
+                'exam_session_id' => $this->examSession->id,
+                'question_id' => $questionId,
+                'error' => $th->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $th->getMessage()
+            ];
         }
     }
 

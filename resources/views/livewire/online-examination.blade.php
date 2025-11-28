@@ -85,8 +85,28 @@
                             <div class="questions-container">
                                 @foreach ($questions as $index => $question)
                                     <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
-                                        <div class="mb-3" style="font-size: 18px; font-weight: 600;">
-                                            <strong>Q{{ $index + 1 }}:</strong> {!! $question['question'] !!}
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div style="font-size: 18px; font-weight: 600;">
+                                                <strong>Q{{ $index + 1 }}:</strong> {!! $question['question'] !!}
+                                            </div>
+                                            @if (!($examExpired && !$canStillSubmit))
+                                                <div class="d-flex gap-2 ms-3 flex-shrink-0">
+                                                    <button type="button" 
+                                                        class="btn btn-sm btn-outline-warning flag-button {{ in_array($question['id'], $flaggedQuestions) ? 'active' : '' }}"
+                                                        onclick="toggleFlagV1({{ $question['id'] }})"
+                                                        data-question-id="{{ $question['id'] }}"
+                                                        title="Flag for review">
+                                                        <i class="bi {{ in_array($question['id'], $flaggedQuestions) ? 'bi-flag-fill' : 'bi-flag' }}"></i>
+                                                    </button>
+                                                    <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger clear-button"
+                                                        onclick="confirmClearResponseV1({{ $question['id'] }})"
+                                                        title="Clear response"
+                                                        {{ !isset($responses[$question['id']]) ? 'disabled' : '' }}>
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                </div>
+                                            @endif
                                         </div>
                                         <ul class="list-unstyled">
                                             @foreach ($question['options'] as $option)
@@ -132,10 +152,25 @@
                 <div id="questionsOverview" class="overflow-y-auto p-3 mb-2 flex-grow-1">
                     <div class="flex-wrap gap-3 tracker-container d-flex justify-content-center">
                         @foreach ($questions as $index => $question)
-                            <div class="tracker-item rounded-circle text-center 
-                                   @if (isset($responses[$question['id']])) answered @else unanswered @endif"
+                            @php
+                                $isFlagged = in_array($question['id'], $flaggedQuestions);
+                                $isAnswered = isset($responses[$question['id']]);
+                                $trackerClass = '';
+                                if ($isFlagged && $isAnswered) {
+                                    $trackerClass = 'flagged-answered';
+                                } elseif ($isFlagged) {
+                                    $trackerClass = 'flagged-unanswered';
+                                } elseif ($isAnswered) {
+                                    $trackerClass = 'answered';
+                                } else {
+                                    $trackerClass = 'unanswered';
+                                }
+                            @endphp
+                            <div class="tracker-item rounded-circle text-center {{ $trackerClass }}"
                                 style="width: 50px; height: 50px; line-height: 50px; cursor: pointer;"
                                 data-question-id="{{ $index + 1 }}"
+                                data-actual-question-id="{{ $question['id'] }}"
+                                data-is-flagged="{{ $isFlagged ? 'true' : 'false' }}"
                                 onclick="scrollToQuestion({{ $index + 1 }})">
                                 {{ $index + 1 }}
                             </div>
@@ -149,9 +184,91 @@
                             <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
                         </a>
                     @else
-                        <button class="btn btn-primary w-100" onclick="return confirmSubmission(event)" wire:click="submitExam" id="submitBtn">Submit
-                            Exam</button>
+                        <button class="btn btn-primary w-100" onclick="showV1SubmitConfirmation()" id="submitBtn">Submit Exam</button>
                     @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear Response Confirmation Modal -->
+    <div class="modal fade" id="clearResponseModalV1" tabindex="-1" aria-labelledby="clearResponseLabelV1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-warning bg-opacity-10">
+                    <h5 class="modal-title" id="clearResponseLabelV1">
+                        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                        Clear Response
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to clear your response for this question?</p>
+                    <p class="text-muted small mt-2 mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger btn-sm" id="confirmClearBtnV1">
+                        <i class="bi bi-trash me-1"></i> Clear Response
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Submission Confirmation Modal (Improved Design) -->
+    <div class="modal fade" id="submitConfirmModalV1" tabindex="-1" aria-labelledby="submitConfirmLabelV1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-gradient-to-r from-blue-50 to-indigo-50 border-0">
+                    <h5 class="modal-title fw-bold" id="submitConfirmLabelV1">
+                        <svg class="me-2" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="#f59e0b" fill="#fef3c7"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" stroke="#f59e0b"/>
+                        </svg>
+                        Confirm Exam Submission
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <div class="card text-center border-0 bg-light">
+                                <div class="card-body py-3">
+                                    <div class="text-muted small">Total Questions</div>
+                                    <div class="fs-4 fw-bold" id="modalTotalQuestions">{{ count($questions) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center border-0 bg-success bg-opacity-10">
+                                <div class="card-body py-3">
+                                    <div class="text-success small">Answered</div>
+                                    <div class="fs-4 fw-bold text-success" id="modalAnsweredCount"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center border-0 bg-danger bg-opacity-10">
+                                <div class="card-body py-3">
+                                    <div class="text-danger small">Unanswered</div>
+                                    <div class="fs-4 fw-bold text-danger" id="modalUnansweredCount"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning d-flex align-items-center mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span><strong>Warning:</strong> This action cannot be undone. Once submitted, you cannot modify your answers.</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmSubmitBtnV1">
+                        <i class="bi bi-check2-circle me-2"></i>Submit Exam
+                    </button>
                 </div>
             </div>
         </div>
@@ -164,6 +281,87 @@
     @include('components.partials.styles.exam-styles')
     @include('components.partials.styles.scrollbar-styles')
     @include('components.partials.exam-security')
+
+    <style>
+        /* Tracker States */
+        .tracker-item {
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tracker-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Answered - Green */
+        .tracker-item.answered {
+            background-color: #28a745;
+            color: white;
+            border: 2px solid #1e7e34;
+        }
+
+        /* Unanswered - Light Gray */
+        .tracker-item.unanswered {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #dee2e6;
+        }
+
+        /* Flagged + Answered - Yellow/Gold Gradient */
+        .tracker-item.flagged-answered {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+            border: 2px solid #d97706;
+            font-weight: 700;
+        }
+
+        /* Flagged + Unanswered - Light Yellow */
+        .tracker-item.flagged-unanswered {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 2px solid #fbbf24;
+            font-weight: 700;
+        }
+
+        /* Flag Button Styles */
+        .flag-button {
+            transition: all 0.2s ease;
+        }
+
+        .flag-button.active {
+            background-color: #fbbf24;
+            border-color: #f59e0b;
+            color: #78350f;
+        }
+
+        .flag-button:hover:not(.active) {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+        }
+
+        .flag-button.active:hover {
+            background-color: #f59e0b;
+            border-color: #d97706;
+        }
+
+        /* Clear Button Styles */
+        .clear-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .clear-button:not(:disabled):hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
+        /* Modal Styles */
+        .bg-gradient-to-r {
+            background: linear-gradient(to right, #eff6ff, #eef2ff);
+        }
+    </style>
 
     @if ($examExpired && !$canStillSubmit)
         <style>
@@ -189,38 +387,136 @@
     @endif
 
     <script>
-        // Confirmation prompt for manual exam submission
-        function confirmSubmission(event) {
-            // Don't show confirmation if auto-submitting from timer
-            if (event.isTrusted === false) {
-                return true;
-            }
-            
+        let questionToClearV1 = null;
+        
+        // Show modern submission confirmation modal
+        function showV1SubmitConfirmation() {
             const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
             const totalQuestions = {{ count($questions) }};
             const unanswered = totalQuestions - answeredCount;
             
-            let message = '⚠️ CONFIRM EXAM SUBMISSION\n\n';
-            message += 'Are you sure you want to submit your exam?\n\n';
+            document.getElementById('modalAnsweredCount').textContent = answeredCount;
+            document.getElementById('modalUnansweredCount').textContent = unanswered;
             
-            if (unanswered > 0) {
-                message += '⚠️ WARNING: You have ' + unanswered + ' unanswered question(s).\n\n';
+            const modal = new bootstrap.Modal(document.getElementById('submitConfirmModalV1'));
+            modal.show();
+        }
+        
+        // Toggle flag for a question
+        async function toggleFlagV1(questionId) {
+            const button = document.querySelector(`.flag-button[data-question-id="${questionId}"]`);
+            const icon = button.querySelector('i');
+            const isFlagged = button.classList.contains('active');
+            
+            // Optimistic UI update
+            if (isFlagged) {
+                button.classList.remove('active');
+                icon.classList.remove('bi-flag-fill');
+                icon.classList.add('bi-flag');
+            } else {
+                button.classList.add('active');
+                icon.classList.remove('bi-flag');
+                icon.classList.add('bi-flag-fill');
             }
             
-            message += '📊 Summary:\n';
-            message += '   • Answered: ' + answeredCount + ' questions\n';
-            message += '   • Unanswered: ' + unanswered + ' questions\n';
-            message += '   • Total: ' + totalQuestions + ' questions\n\n';
-            message += '⚠️ Once submitted, you CANNOT make any changes!\n\n';
-            message += 'Click OK to submit or Cancel to continue working.';
+            // Update tracker
+            updateTrackerFlagStateV1(questionId, !isFlagged);
             
-            if (!confirm(message)) {
-                event.preventDefault();
-                event.stopPropagation();
-                return false;
+            try {
+                // Call Livewire method
+                await @this.toggleFlag(questionId);
+                console.log('Flag toggled successfully for question:', questionId);
+            } catch (error) {
+                console.error('Error toggling flag:', error);
+                // Rollback UI on error
+                if (isFlagged) {
+                    button.classList.add('active');
+                    icon.classList.add('bi-flag-fill');
+                    icon.classList.remove('bi-flag');
+                } else {
+                    button.classList.remove('active');
+                    icon.classList.add('bi-flag');
+                    icon.classList.remove('bi-flag-fill');
+                }
+                updateTrackerFlagStateV1(questionId, isFlagged);
+            }
+        }
+        
+        // Update tracker item flag state
+        function updateTrackerFlagStateV1(questionId, isFlagged) {
+            const trackerItem = document.querySelector(`.tracker-item[data-actual-question-id="${questionId}"]`);
+            if (!trackerItem) return;
+            
+            const isAnswered = trackerItem.classList.contains('answered') || 
+                             trackerItem.classList.contains('flagged-answered');
+            
+            // Remove all state classes
+            trackerItem.classList.remove('answered', 'unanswered', 'flagged-answered', 'flagged-unanswered');
+            
+            // Apply new class based on state
+            if (isFlagged && isAnswered) {
+                trackerItem.classList.add('flagged-answered');
+            } else if (isFlagged) {
+                trackerItem.classList.add('flagged-unanswered');
+            } else if (isAnswered) {
+                trackerItem.classList.add('answered');
+            } else {
+                trackerItem.classList.add('unanswered');
             }
             
-            return true;
+            trackerItem.setAttribute('data-is-flagged', isFlagged ? 'true' : 'false');
+        }
+        
+        // Show clear response confirmation modal
+        function confirmClearResponseV1(questionId) {
+            questionToClearV1 = questionId;
+            const modal = new bootstrap.Modal(document.getElementById('clearResponseModalV1'));
+            modal.show();
+            
+            // Setup confirm button click handler
+            document.getElementById('confirmClearBtnV1').onclick = () => {
+                clearResponseV1(questionId);
+                modal.hide();
+            };
+        }
+        
+        // Clear response for a question
+        async function clearResponseV1(questionId) {
+            try {
+                const result = await @this.clearResponse(questionId);
+                
+                if (result.success) {
+                    // Uncheck radio button
+                    const radioInput = document.querySelector(`input[name="responses[${questionId}]"]:checked`);
+                    if (radioInput) {
+                        radioInput.checked = false;
+                    }
+                    
+                    // Disable clear button
+                    const clearButton = document.querySelector(`.clear-button[onclick*="${questionId}"]`);
+                    if (clearButton) {
+                        clearButton.disabled = true;
+                    }
+                    
+                    // Update tracker
+                    const trackerItem = document.querySelector(`.tracker-item[data-actual-question-id="${questionId}"]`);
+                    if (trackerItem) {
+                        const isFlagged = trackerItem.getAttribute('data-is-flagged') === 'true';
+                        trackerItem.classList.remove('answered', 'flagged-answered');
+                        trackerItem.classList.add(isFlagged ? 'flagged-unanswered' : 'unanswered');
+                    }
+                    
+                    // Update answer count
+                    updateQuestionOverview();
+                    
+                    console.log('Response cleared successfully for question:', questionId);
+                } else {
+                    alert('Failed to clear response: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error clearing response:', error);
+                alert('An error occurred while clearing the response');
+            }
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -231,6 +527,27 @@
             Livewire.on('responseUpdated', () => {
                 console.log('Response updated event received');
                 updateQuestionOverview();
+            });
+            
+            Livewire.on('responseCleared', (data) => {
+                console.log('Response cleared event received', data);
+                updateQuestionOverview();
+            });
+            
+            // Setup submission modal confirm button
+            document.getElementById('confirmSubmitBtnV1').addEventListener('click', function() {
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModalV1'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Disable button to prevent double submission
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+                
+                // Call Livewire submit method
+                @this.submitExam();
             });
         });
 
@@ -268,19 +585,32 @@
             const totalQuestions = trackerItems.length;
 
             // Update the counter display
-            document.getElementById('answeredCount').textContent = answeredCount + ' / ' + totalQuestions;
+            document.getElementById('answeredCount').textContent = answeredCount;
 
-            // Update each tracker item based on whether its question has an answer
-            document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
-                const questionId = radio.name.match(/\[(\d+)\]/)[1];
-                document.querySelectorAll('.tracker-item').forEach(item => {
-                    const index = parseInt(item.textContent.trim()) - 1;
-                    if (questionId === document.querySelectorAll('.question')[index].id.replace('question-',
-                            '')) {
-                        item.classList.add('answered');
-                        item.classList.remove('unanswered');
-                    }
-                });
+            // Update each tracker item and clear button based on whether its question has an answer
+            document.querySelectorAll('.tracker-item').forEach(item => {
+                const actualQuestionId = item.getAttribute('data-actual-question-id');
+                const isFlagged = item.getAttribute('data-is-flagged') === 'true';
+                const radioInput = document.querySelector(`input[name="responses[${actualQuestionId}]"]:checked`);
+                const isAnswered = !!radioInput;
+                
+                // Update tracker classes
+                item.classList.remove('answered', 'unanswered', 'flagged-answered', 'flagged-unanswered');
+                if (isFlagged && isAnswered) {
+                    item.classList.add('flagged-answered');
+                } else if (isFlagged) {
+                    item.classList.add('flagged-unanswered');
+                } else if (isAnswered) {
+                    item.classList.add('answered');
+                } else {
+                    item.classList.add('unanswered');
+                }
+                
+                // Enable/disable clear button based on answered state
+                const clearButton = document.querySelector(`.clear-button[onclick*="${actualQuestionId}"]`);
+                if (clearButton) {
+                    clearButton.disabled = !isAnswered;
+                }
             });
 
             console.log('Question overview updated. Answered:', answeredCount);

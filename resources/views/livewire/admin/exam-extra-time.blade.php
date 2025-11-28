@@ -191,9 +191,15 @@
                 </div>
                 
                 <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary" @if(!$exam_id || (empty($foundUserIds) && !$applyToAll)) disabled @endif>
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Add Extra Time
+                    <button type="button" wire:click="addExtraTime" class="btn btn-primary" @if(!$exam_id || (empty($foundUserIds) && !$applyToAll)) disabled @endif wire:loading.attr="disabled" wire:target="addExtraTime">
+                        <span wire:loading.remove wire:target="addExtraTime">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Add Extra Time
+                        </span>
+                        <span wire:loading wire:target="addExtraTime">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Adding...
+                        </span>
                     </button>
                 </div>
             </form>
@@ -309,9 +315,15 @@
                 
                 @if(!$applyToAll)
                     <div class="d-flex justify-content-end gap-2 mt-4">
-                        <button type="button" wire:click="addExtraTime" class="btn btn-primary" @if(empty($selectedSessions)) disabled @endif>
-                            <i class="bi bi-plus-circle me-2"></i>
-                            Add Extra Time to Selected Sessions ({{ count($selectedSessions) }})
+                        <button type="button" wire:click="addExtraTime" class="btn btn-primary" @if(empty($selectedSessions)) disabled @endif wire:loading.attr="disabled" wire:target="addExtraTime">
+                            <span wire:loading.remove wire:target="addExtraTime">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Add Extra Time to Selected Sessions ({{ count($selectedSessions) }})
+                            </span>
+                            <span wire:loading wire:target="addExtraTime">
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                Processing...
+                            </span>
                         </button>
                         <button type="button" wire:click="showBulkResumeModal" class="btn btn-warning" @if(empty($selectedSessions)) disabled @endif>
                             <i class="bi bi-arrow-clockwise me-2"></i>
@@ -397,7 +409,13 @@
                                         </div>
                                         <div class="mb-3">
                                             <label class="text-muted fs-7 d-block">Original End Time:</label>
-                                            <span class="fs-6 fw-semibold">{{ $viewingSession->completed_at->format('M d, Y g:i A') }}</span>
+                                            <span class="fs-6 fw-semibold">
+                                                @if($viewingSession->completed_at)
+                                                    {{ $viewingSession->completed_at->format('M d, Y g:i A') }}
+                                                @else
+                                                    <span class="badge bg-warning">In Progress</span>
+                                                @endif
+                                            </span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

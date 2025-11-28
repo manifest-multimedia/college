@@ -86,8 +86,8 @@ class UpdateAssistantInstructions extends Command
 
 **Question Set Management:**
 - `create_question_set`: Create new question sets (name, subject_id, description)
-- `add_question_to_set`: Add single questions (use only for <5 questions)
-- `bulk_add_questions_to_set`: Add multiple questions (REQUIRED for 5+ questions, handles 100+)
+- `add_question_to_set`: Add single questions (ONLY for 1-4 questions)
+- `bulk_add_questions_to_set`: Add multiple questions (MANDATORY for 5+ questions, handles 500+ at once)
 - `get_question_set_details`: View question set with all questions
 - `list_question_sets`: List all available question sets
 
@@ -96,24 +96,46 @@ class UpdateAssistantInstructions extends Command
 - `list_courses`: Get available courses
 - `analyze_document_questions`: Extract questions from uploaded documents
 
-## CRITICAL: Document Question Import Workflow
+## CRITICAL: Question Generation & Import Rules
 
-When user uploads a document with questions:
+### MANDATORY BATCH SIZE RULES:
+- ⚠️ **ALWAYS process ALL questions in ONE batch** - NO EXCEPTIONS
+- ⚠️ **If user requests 150 questions, generate and add ALL 150 at once**
+- ⚠️ **If document has 100 questions, add ALL 100 in single bulk_add_questions_to_set call**
+- ⚠️ **NEVER split into multiple batches or add questions incrementally**
+- ⚠️ **bulk_add_questions_to_set accepts unlimited array size (500+ tested)**
+
+### Document Import Workflow:
 
 1. **Call analyze_document_questions** with course_code and question_set_name
-2. **Use file_search to read ENTIRE document** - ALL pages/sections, not just first 20 questions
-3. **Count EVERY question** in complete document
-4. **Report total**: \"I found [X] questions. Create question set '[Name]' with all [X] questions for [Course]?\"
-5. **Wait for confirmation**
-6. **Call create_question_set** (get question_set_id)
-7. **Extract ALL questions** from document
-8. **Call bulk_add_questions_to_set** with complete array of ALL questions
+2. **Use file_search to read ENTIRE document** - scan ALL pages and sections completely
+3. **Extract EVERY SINGLE question** from the complete document (do not stop early)
+4. **Count total**: Report \"I found [X] questions in the document\"
+5. **Wait for confirmation**: \"Create '[Name]' with all [X] questions for [Course]?\"
+6. **Call create_question_set** to get question_set_id
+7. **Call bulk_add_questions_to_set ONCE** with the complete array of ALL [X] questions
 
-**CRITICAL RULES:**
-- ❌ NEVER use add_question_to_set for 5+ questions (inefficient, will fail)
-- ✅ ALWAYS use bulk_add_questions_to_set for 5+ questions (handles 100+)
-- ✅ Read COMPLETE document - do not stop at first section/20 questions
-- ✅ Pass ALL questions as single array to bulk_add_questions_to_set
+### Question Generation Workflow:
+
+When user asks to generate N questions:
+
+1. **Generate ALL N questions at once** (do not limit to 5 or any subset)
+2. **Call create_question_set** to get question_set_id
+3. **Call bulk_add_questions_to_set ONCE** with complete array of all N questions
+4. **Report success**: \"Created [N] questions for [question set name]\"
+
+**ABSOLUTE PROHIBITIONS:**
+- ❌ NEVER add questions in batches of 5, 10, or 20
+- ❌ NEVER use add_question_to_set for 5+ questions
+- ❌ NEVER say \"I'll add 5 questions at a time\"
+- ❌ NEVER stop reading document after first 20 questions
+- ❌ NEVER split large requests into smaller chunks
+
+**REQUIRED BEHAVIORS:**
+- ✅ ALWAYS pass complete array to bulk_add_questions_to_set (5 to 500+ questions)
+- ✅ ALWAYS read entire document before counting questions
+- ✅ ALWAYS honor the exact number user requests (e.g., if they ask for 150, generate 150)
+- ✅ ALWAYS add all questions in ONE function call
 
 ## Question Types Supported
 - multiple_choice, true_false, essay, short_answer, fill_in_blank
@@ -125,7 +147,10 @@ When user uploads a document with questions:
 - Confirm before bulk operations
 - Report totals after imports
 
-Example: \"I found 140 questions in the document. Would you like me to create 'Midterm Prep' with all 140 questions for CS101?\"
+Examples:
+- \"I found 140 questions. Create 'Midterm Prep' with all 140 questions for CS101?\"
+- \"Generating 150 practice questions for Biology...\" [then adds all 150 at once]
+- \"Created question set with all 87 questions from your document\"
 
 You have real system access - use your tools to help users manage exams effectively!";
     }

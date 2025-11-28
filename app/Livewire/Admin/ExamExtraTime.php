@@ -7,6 +7,7 @@ use App\Models\ExamSession;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;  // Add DB facade import
@@ -198,34 +199,13 @@ class ExamExtraTime extends Component
             return collect();
         }
 
-        $query = ExamSession::where('exam_id', $this->exam_id);
-
-        // Apply session state filtering
-        switch ($this->sessionStateFilter) {
-            case 'active':
-                $query->whereNull('completed_at')
-                      ->whereRaw('NOW() <= (started_at + INTERVAL (SELECT duration FROM exams WHERE id = exam_id) + COALESCE(extra_time_minutes, 0) MINUTE)');
-                break;
-            case 'completed':
-                $query->whereNotNull('completed_at')
-                      ->where('completed_at', '<=', now())
-                      ->whereNotNull('score');
-                break;
-            case 'expired':
-                $query->whereRaw('NOW() > (started_at + INTERVAL (SELECT duration FROM exams WHERE id = exam_id) + COALESCE(extra_time_minutes, 0) MINUTE)')
-                      ->where(function($q) {
-                          $q->whereNull('completed_at')
-                            ->orWhere(function($sq) {
-                                $sq->whereNotNull('completed_at')
-                                   ->whereNull('score');
-                            });
-                      });
-                break;
-            case 'all':
-            default:
-                // No additional filtering for 'all'
-                break;
+        // Get the exam to access its duration
+        $exam = Exam::find($this->exam_id);
+        if (!$exam) {
+            return collect();
         }
+
+        $query = ExamSession::where('exam_id', $this->exam_id);
 
         // Apply search filter if we have found user IDs
         if (! empty($this->foundUserIds)) {
@@ -239,14 +219,68 @@ class ExamExtraTime extends Component
         }
 
         // Get sessions with student and exam info
-        return $query->with(['student', 'exam.course'])
+        $sessions = $query->with(['student', 'exam.course'])
             ->orderBy('started_at', 'desc')
-            ->paginate($this->perPage);
+            ->get();
+
+        // Apply session state filtering after fetching
+        // This is more reliable than complex raw SQL queries
+        $now = now();
+        $filteredSessions = $sessions->filter(function($session) use ($now, $exam) {
+            $status = $this->getSessionStatus($session);
+            
+            switch ($this->sessionStateFilter) {
+                case 'active':
+                    return $status === 'active';
+                case 'completed':
+                    return $status === 'completed';
+                case 'expired':
+                    return $status === 'expired';
+                case 'all':
+                default:
+                    return true;
+            }
+        });
+
+        // Manually paginate the filtered collection
+        $page = request()->get('page', 1);
+        $perPage = $this->perPage;
+        $offset = ($page - 1) * $perPage;
+        
+        $paginatedItems = $filteredSessions->slice($offset, $perPage)->values();
+        
+        return new LengthAwarePaginator(
+            $paginatedItems,
+            $filteredSessions->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
     }
 
     public function addExtraTime()
     {
-        $this->validate();
+        // Clear previous messages
+        $this->successMessage = '';
+        $this->errorMessage = '';
+
+        // Validate exam_id is selected
+        if (!$this->exam_id) {
+            $this->errorMessage = 'Please select an exam first.';
+            return;
+        }
+
+        // Validate extra time minutes
+        if ($this->extraTimeMinutes < 1 || $this->extraTimeMinutes > 60) {
+            $this->errorMessage = 'Extra time must be between 1 and 60 minutes.';
+            return;
+        }
+
+        // If not applying to all, validate that sessions are selected
+        if (!$this->applyToAll && empty($this->selectedSessions)) {
+            $this->errorMessage = 'Please select at least one exam session or enable "Apply to all active sessions".';
+            return;
+        }
 
         try {
             $sessionsUpdated = 0;
@@ -402,7 +436,8 @@ class ExamExtraTime extends Component
             $isReactivation = false;
 
             // For completed or expired sessions, update the completion time to allow continuation
-            if ($isCompleted || now()->gt($this->viewingSession->adjustedCompletionTime)) {
+            $adjustedTime = $this->viewingSession->adjustedCompletionTime;
+            if ($isCompleted || ($adjustedTime && now()->gt($adjustedTime))) {
                 // Set the new end time based on current time plus extra time
                 $newEndTime = $now->copy()->addMinutes($extraTimeMinutes);
                 $updates['completed_at'] = $newEndTime;
@@ -683,9 +718,10 @@ class ExamExtraTime extends Component
             ];
 
             // For expired or completed sessions that are getting more time, reactivate them
+            $adjustedTime = $this->viewingSession->adjustedCompletionTime;
             $isExpired = $this->viewingSession->completed_at &&
                         (Carbon::parse($this->viewingSession->completed_at)->isPast() ||
-                        Carbon::now()->gt($this->viewingSession->adjustedCompletionTime));
+                        ($adjustedTime && Carbon::now()->gt($adjustedTime)));
 
             $isBeingIncreased = $timeDiff > 0;
 
@@ -812,16 +848,27 @@ class ExamExtraTime extends Component
     {
         $now = now();
         
-        // Check if session has a score (truly completed)
-        if ($session->completed_at && $session->score !== null) {
+        // Check if session is completed (student has submitted)
+        // A session is completed when completed_at is set and is in the past
+        // Score may not be available yet if grading is pending
+        if ($session->completed_at && $session->completed_at->isPast()) {
             return 'completed';
         }
         
-        // Check if time has expired
-        if ($now->gt($session->adjustedCompletionTime)) {
+        // Get the adjusted completion time (includes extra time)
+        $adjustedTime = $session->adjustedCompletionTime;
+        
+        // If no adjusted time, session might be corrupted, treat as active
+        if (!$adjustedTime) {
+            return 'active';
+        }
+        
+        // Check if time has expired (but not yet submitted)
+        if ($now->gt($adjustedTime)) {
             return 'expired';
         }
         
+        // Session is still within time limit
         return 'active';
     }
     
@@ -939,7 +986,8 @@ class ExamExtraTime extends Component
             ]);
             
             $actualExtraMessage = $totalExtraMinutes > $this->individualResumeMinutes ? " (including {$minutesNeeded} minutes to bring session to current time)" : "";
-            $this->successMessage = "Session resumed successfully! Student {$session->student->name} can continue for {$this->individualResumeMinutes} minutes{$actualExtraMessage}. New end time: {$session->adjustedCompletionTime->format('M d, Y g:i A')}. The student should refresh their exam page if they are currently logged in.";
+            $endTimeFormatted = $session->adjustedCompletionTime ? $session->adjustedCompletionTime->format('M d, Y g:i A') : 'Not available';
+            $this->successMessage = "Session resumed successfully! Student {$session->student->name} can continue for {$this->individualResumeMinutes} minutes{$actualExtraMessage}. New end time: {$endTimeFormatted}. The student should refresh their exam page if they are currently logged in.";
             $this->showIndividualResumeModal = false;
             $this->resumingSessionId = null;
             
