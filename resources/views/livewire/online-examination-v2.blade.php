@@ -48,23 +48,30 @@
             </div>
         </div>
 
-        <div class="row h-100">
+        <div class="row" style="min-height: calc(100vh - 400px);">
             <!-- Main Exam Content -->
-            <div class="col-md-9 d-flex flex-column">
-                <div class="p-4 shadow-lg card question-card position-relative exam-protected">
+            <div class="col-md-9 d-flex flex-column" style="display: flex; flex-direction: column;">
+                <div class="p-4 shadow-lg card question-card position-relative exam-protected d-flex flex-column" style="flex: 1; display: flex; flex-direction: column;">
                     <!-- Watermark -->
                     <div class="watermark">
                         {{ $student->full_name ?? $user->name }}
                     </div>
 
                     @if ($readOnlyMode)
-                        <div class="alert alert-warning mb-4">
-                            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i> Exam Completed or Device Mismatch</h4>
-                            <p>{{ $validationMessage }}</p>
-                        </div>
+                        @if ($readOnlyReason === 'device_mismatch')
+                            <div class="alert alert-danger mb-4">
+                                <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i> Device Mismatch Detected</h4>
+                                <p class="mb-0">{{ $validationMessage }}</p>
+                            </div>
+                        @else
+                            <div class="alert alert-info mb-4">
+                                <h4 class="alert-heading"><i class="bi bi-info-circle me-2"></i> Exam Completed</h4>
+                                <p class="mb-0">{{ $validationMessage }}</p>
+                            </div>
+                        @endif
                     @endif
 
-                    <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer">
+                    <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
                         <div class="questions-container">
                             @foreach ($questions as $index => $question)
                                 <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
@@ -137,7 +144,7 @@
             </div>
 
             <!-- Sidebar - Question Navigator (Offline UI Style) -->
-            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" style="padding: 0; border-radius: 0.5rem; overflow: hidden; height: fit-content; max-height: calc(100vh - 100px);">
+            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" style="padding: 0; border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; height: auto;">
                 <!-- Header Section -->
                 <div class="p-3 text-white" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
                     <h5 class="mb-0 fw-bold">Questions Overview</h5>
@@ -185,7 +192,7 @@
                 </div>
 
                 <!-- Question Grid with Scrollbar -->
-                <div id="questionsOverview" class="p-3 mb-0 flex-grow-1 overflow-y-auto" style="max-height: calc(100vh - 600px); min-height: 200px;">
+                <div id="questionsOverview" class="p-3 mb-0 flex-grow-1 overflow-y-auto" style="flex: 1; min-height: 200px; overflow-y: auto;">
                     <div class="row g-2">
                         @foreach ($questions as $index => $question)
                             @php

@@ -27,6 +27,7 @@ class OnlineExaminationV2 extends Component
     public $student;
     public $isLoading = true;
     public $readOnlyMode = false;
+    public $readOnlyReason = null; // 'completed' or 'device_mismatch'
     public $showModal = false;
     public $modalMessage = '';
     public $device;
@@ -121,6 +122,7 @@ class OnlineExaminationV2 extends Component
         // Check if exam is completed (read-only mode)
         if ($this->examSession->completed_at && !$this->examSession->completed_at->isFuture()) {
             $this->readOnlyMode = true;
+            $this->readOnlyReason = 'completed';
             $this->deviceValidation = 'approved';
             $this->validationMessage = 'Exam completed';
             return;
@@ -129,6 +131,7 @@ class OnlineExaminationV2 extends Component
         // Validate device consistency
         if ($this->examSession->isBeingAccessedFromDifferentDevice($sessionToken, $currentDeviceInfo)) {
             $this->deviceValidation = 'flagged';
+            $this->readOnlyReason = 'device_mismatch';
             $this->validationMessage = 'Device mismatch detected. Contact administrator.';
             $this->readOnlyMode = true;
             return;
