@@ -897,9 +897,9 @@ class ExamExtraTime extends Component
     }
     
     /**
-     * Resume individual session with validation
+     * Restore individual session with validation
      */
-    public function confirmIndividualResume()
+    public function confirmIndividualRestore()
     {
         $this->validate([
             'individualResumeMinutes' => 'required|integer|min:5|max:120',
@@ -916,7 +916,7 @@ class ExamExtraTime extends Component
             
             $status = $this->getSessionStatus($session);
             if ($status === 'active') {
-                $this->errorMessage = 'Session is already active and does not need to be resumed.';
+                $this->errorMessage = 'Session is already active and does not need to be restored.';
                 return;
             }
             
@@ -1013,12 +1013,12 @@ class ExamExtraTime extends Component
     }
     
     /**
-     * Show bulk resume modal
+     * Show bulk restore modal
      */
-    public function showBulkResumeModal()
+    public function showBulkRestoreModal()
     {
         if (empty($this->selectedSessions)) {
-            $this->errorMessage = 'Please select at least one session to resume.';
+            $this->errorMessage = 'Please select at least one session to restore.';
             return;
         }
         
@@ -1028,9 +1028,9 @@ class ExamExtraTime extends Component
     }
     
     /**
-     * Resume multiple selected sessions
+     * Restore multiple selected sessions
      */
-    public function bulkResumeSelected()
+    public function bulkRestoreSelected()
     {
         $this->validate([
             'bulkResumeMinutes' => 'required|integer|min:5|max:120',
@@ -1062,12 +1062,26 @@ class ExamExtraTime extends Component
                 }
                 
                 $now = now();
-                $newEndTime = $now->copy()->addMinutes($this->bulkResumeMinutes);
+                
+                // Calculate how much extra time is needed to make the session active
+                $currentAdjustedEndTime = $session->adjustedCompletionTime;
+                $minutesNeeded = 0;
+                if ($currentAdjustedEndTime && $currentAdjustedEndTime->lt($now)) {
+                    $minutesNeeded = (int) abs($currentAdjustedEndTime->diffInMinutes($now));
+                }
+                
+                $totalExtraMinutes = (int) ($minutesNeeded + $this->bulkResumeMinutes);
+                
+                // Critical: For a session to be resumable, we need to:
+                // 1. Set completed_at to null (session is now active, not completed)
+                // 2. Reset auto_submitted flag 
+                // 3. Reset score to null to allow resubmission
+                // 4. Add the proper extra time to make adjustedCompletionTime in the future
                 
                 // Same logic as individual resume - properly reactivate session
                 $updates = [
-                    'completed_at' => $newEndTime, // Set to future time to make it "active"
-                    'extra_time_minutes' => $session->extra_time_minutes + $this->bulkResumeMinutes,
+                    'completed_at' => null, // Critical: Set to null to make session "active"
+                    'extra_time_minutes' => $session->extra_time_minutes + $totalExtraMinutes,
                     'extra_time_added_by' => Auth::id(),
                     'extra_time_added_at' => $now,
                     'auto_submitted' => false, // Critical: Reset auto-submission flag

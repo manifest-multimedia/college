@@ -325,9 +325,9 @@
                                 Processing...
                             </span>
                         </button>
-                        <button type="button" wire:click="showBulkResumeModal" class="btn btn-warning" @if(empty($selectedSessions)) disabled @endif>
+                        <button type="button" wire:click="showBulkRestoreModal" class="btn btn-warning" @if(empty($selectedSessions)) disabled @endif>
                             <i class="bi bi-arrow-clockwise me-2"></i>
-                            Resume Selected Sessions ({{ count($selectedSessions) }})
+                            Restore Selected Sessions ({{ count($selectedSessions) }})
                         </button>
                     </div>
                 @endif
@@ -752,9 +752,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="cancelIndividualResume">Cancel</button>
-                        <button type="button" wire:click="confirmIndividualResume" class="btn btn-warning">
+                        <button type="button" wire:click="confirmIndividualRestore" class="btn btn-warning">
                             <i class="bi bi-arrow-clockwise me-2"></i>
-                            Resume Session
+                            Restore Session
                         </button>
                     </div>
                 </div>
@@ -806,9 +806,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="cancelBulkResume">Cancel</button>
-                        <button type="button" wire:click="bulkResumeSelected" class="btn btn-warning">
+                        <button type="button" wire:click="bulkRestoreSelected" class="btn btn-warning">
                             <i class="bi bi-arrow-clockwise me-2"></i>
-                            Resume {{ count($selectedSessions) }} Session(s)
+                            Restore {{ count($selectedSessions) }} Session(s)
                         </button>
                     </div>
                 </div>

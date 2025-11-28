@@ -3,11 +3,16 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="alert alert-info shadow-sm">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-info-circle-fill me-3 fs-4"></i>
-                        <div>
-                            <strong>Exam Review Mode</strong> - You are viewing this exam in read-only mode. The exam was completed on {{ $examSession->completed_at->format('F j, Y \a\t g:i A') }}.
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                            <div>
+                                <strong>Exam Review Mode</strong> - You are viewing this exam in read-only mode. The exam was completed on {{ $examSession->completed_at->format('F j, Y \a\t g:i A') }}.
+                            </div>
                         </div>
+                        <a href="{{ route('take-exam') }}" class="btn btn-sm btn-outline-info ms-3 flex-shrink-0">
+                            <i class="bi bi-box-arrow-left me-2"></i>Exit Review
+                        </a>
                     </div>
                 </div>
             </div>
