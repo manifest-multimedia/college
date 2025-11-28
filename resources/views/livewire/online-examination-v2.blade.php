@@ -118,10 +118,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Submit Button -->
+                <div class="mt-4 d-flex justify-content-center">
+                    @if ($readOnlyMode)
+                        <a href="{{ route('take-exam') }}" class="btn btn-secondary w-100">
+                            <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
+                        </a>
+                    @else
+                        <button class="btn w-100 text-white fw-bold" 
+                                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 0.75rem 1.5rem; font-size: 1rem;"
+                                onclick="showV2SubmitConfirmation()" 
+                                id="submitBtn">
+                            <i class="bi bi-check-circle me-2"></i> Submit Exam
+                        </button>
+                    @endif
+                </div>
             </div>
 
             <!-- Sidebar - Question Navigator (Offline UI Style) -->
-            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" style="min-height: 550px; max-height: calc(100vh - 100px); padding: 0; border-radius: 0.5rem; overflow: hidden;">
+            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" style="padding: 0; border-radius: 0.5rem; overflow: hidden; height: fit-content; max-height: calc(100vh - 100px);">
                 <!-- Header Section -->
                 <div class="p-3 text-white" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
                     <h5 class="mb-0 fw-bold">Questions Overview</h5>
@@ -168,8 +184,8 @@
                     </div>
                 </div>
 
-                <!-- Question Grid -->
-                <div id="questionsOverview" class="p-3 mb-2 flex-grow-1">
+                <!-- Question Grid with Scrollbar -->
+                <div id="questionsOverview" class="p-3 mb-0 flex-grow-1 overflow-y-auto" style="max-height: calc(100vh - 600px); min-height: 200px;">
                     <div class="row g-2">
                         @foreach ($questions as $index => $question)
                             @php
@@ -222,21 +238,7 @@
                     </div>
                 </div>
 
-                <!-- Submit Button Footer -->
-                <div class="card-footer d-flex justify-content-center align-items-center p-3" style="background-color: #ffffff;">
-                    @if ($readOnlyMode)
-                        <a href="{{ route('take-exam') }}" class="btn btn-secondary w-100">
-                            <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
-                        </a>
-                    @else
-                        <button class="btn w-100 text-white fw-bold" 
-                                style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);"
-                                onclick="showV2SubmitConfirmation()" 
-                                id="submitBtn">
-                            <i class="bi bi-check-circle me-2"></i> Submit Exam
-                        </button>
-                    @endif
-                </div>
+
             </div>
         </div>
     </div>
