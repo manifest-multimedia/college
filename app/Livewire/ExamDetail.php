@@ -18,6 +18,8 @@ class ExamDetail extends Component
 
     public $showQuestions = true;
 
+    public $expectedParticipants = 0; // Expected number of students for this exam
+
     // Edit form properties
     public $examTitle;
 
@@ -94,7 +96,27 @@ class ExamDetail extends Component
             abort(403, 'Unauthorized access.');
         }
 
+        // Calculate expected participants based on course enrollment
+        $this->calculateExpectedParticipants();
+
         $this->initializeEditForm();
+    }
+
+    /**
+     * Calculate the expected number of participants for this exam.
+     * This is used to detect when more students are taking the exam than expected.
+     */
+    protected function calculateExpectedParticipants()
+    {
+        // Try to get enrolled students count from the course
+        if ($this->exam->course && method_exists($this->exam->course, 'students')) {
+            $this->expectedParticipants = $this->exam->course->students()->count();
+        } elseif ($this->exam->course && method_exists($this->exam->course, 'enrollments')) {
+            $this->expectedParticipants = $this->exam->course->enrollments()->count();
+        } else {
+            // Fallback: use total sessions count (both completed and active)
+            $this->expectedParticipants = $this->exam->sessions()->distinct('student_id')->count();
+        }
     }
 
     public function initializeEditForm()

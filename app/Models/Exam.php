@@ -198,6 +198,58 @@ class Exam extends Model
         return $this->hasMany(ExamSession::class);
     }
 
+    /**
+     * Check if the exam has any active sessions (students currently taking the exam).
+     * An active session must:
+     * 1. Have started (started_at is not null)
+     * 2. Not be completed (completed_at is null)
+     * 3. Not have expired (current time < adjusted_completion_time)
+     *
+     * @return bool
+     */
+    public function hasActiveSession(): bool
+    {
+        $sessions = $this->sessions()
+            ->whereNotNull('started_at')
+            ->whereNull('completed_at')
+            ->get();
+
+        // Check if any session is truly active (time hasn't expired)
+        foreach ($sessions as $session) {
+            $adjustedEndTime = $session->adjusted_completion_time;
+            if ($adjustedEndTime && now()->lessThan($adjustedEndTime)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the count of active sessions for this exam.
+     * Only counts sessions that haven't expired.
+     *
+     * @return int
+     */
+    public function getActiveSessionsCountAttribute(): int
+    {
+        $sessions = $this->sessions()
+            ->whereNotNull('started_at')
+            ->whereNull('completed_at')
+            ->get();
+
+        // Count only sessions where time hasn't expired
+        $activeCount = 0;
+        foreach ($sessions as $session) {
+            $adjustedEndTime = $session->adjusted_completion_time;
+            if ($adjustedEndTime && now()->lessThan($adjustedEndTime)) {
+                $activeCount++;
+            }
+        }
+
+        return $activeCount;
+    }
+
     public function proctoringSessions()
     {
         return $this->hasMany(ProctoringSession::class);

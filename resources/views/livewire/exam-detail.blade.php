@@ -199,6 +199,13 @@
         </div>
     </div>
 
+    <!-- Active Participants Section (Only visible when exam is active) -->
+    @if($exam->status === 'active')
+        <div class="mb-5 mb-xl-10">
+            @livewire('active-exam-sessions', ['exam' => $exam, 'expectedParticipants' => $expectedParticipants ?? 0], key('active-sessions-'.$exam->id))
+        </div>
+    @endif
+
     <!-- Question Sets Section -->
     @if($exam->questionSets && $exam->questionSets->count() > 0)
         <div class="card mb-5 mb-xl-10">
