@@ -34,9 +34,24 @@
                                 Total questions: {{ count($questions) }}.
                                 <br>
                                 @php
-                                    $remainingMinutes = ceil($examSession->remaining_time / 60);
+                                    $baseDuration = $examSession->exam->duration ?? 0;
+                                    $extraTime = $examSession->extra_time_minutes ?? 0;
+                                    $totalAllocated = $baseDuration + $extraTime;
+                                    
+                                // For restored sessions, calculate actual restoration time (excluding catch-up time)
+                                $actualRestorationTime = $extraTime;
+                                if (($examSession->is_restored ?? false) && $examSession->restored_at && $examSession->started_at) {
+                                    $minutesFromStartToRestore = $examSession->started_at->diffInMinutes($examSession->restored_at);
+                                    $catchUpTime = max(0, $minutesFromStartToRestore - $baseDuration);
+                                    $actualRestorationTime = ceil(max(0, $extraTime - $catchUpTime));
+                                }
                                 @endphp
-                                You have <span class="text-danger">{{ $remainingMinutes }} minutes</span> remaining to complete this exam.
+                                @if($examSession->is_restored ?? false)
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-rotate-right"></i> Restored Session</span>
+                                    This session was restored with <span class="text-danger">{{ $actualRestorationTime }} minutes</span> allocated.@if($actualRestorationTime > 0) <span class="badge bg-info text-white ms-1"><i class="fas fa-clock-rotate-left"></i> {{ $actualRestorationTime }} min restoration time</span>@endif
+                                @else
+                                    This exam is <span class="text-danger">{{ $totalAllocated }} minutes</span> long.@if($extraTime > 0) <span class="badge bg-warning text-dark ms-1"><i class="fas fa-plus"></i> {{ $extraTime }} min extra time</span>@endif
+                                @endif
                             </p>
 
                             <div class="d-flex justify-content-center w-100">

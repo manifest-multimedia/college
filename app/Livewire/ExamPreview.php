@@ -69,6 +69,10 @@ class ExamPreview extends Component
             'completed_at' => null,
             'extra_time_minutes' => 0,
             'adjustedCompletionTime' => Carbon::now()->addMinutes((int) $this->exam->duration),
+            'is_restored' => false,
+            'restored_at' => null,
+            'exam' => $this->exam,
+            'device_mismatch_bypassed' => false,
         ];
     }
 

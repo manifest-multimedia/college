@@ -1,3 +1,5 @@
+<div> <!-- Root Element --> 
+
 <div class="card shadow-sm" wire:poll.30s="refresh">
     <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
@@ -87,8 +89,9 @@
                             @endif
 
                             <div class="card-body text-center p-3">
-                                <!-- Device Icon -->
-                                <div class="mb-2">
+                                <!-- Video Feed & Device Icon Row -->
+                                <div class="mb-2 d-flex align-items-center justify-content-center gap-2">
+                                    <!-- Device Icon -->
                                     @php
                                         $deviceType = $session['device_info']['device_type'] ?? 'desktop';
                                         $iconMap = [
@@ -99,7 +102,23 @@
                                         ];
                                         $icon = $iconMap[$deviceType] ?? 'fa-desktop';
                                     @endphp
-                                    <i class="fas {{ $icon }} fa-2x {{ $session['has_device_conflict'] ? 'text-danger' : 'text-primary' }}"></i>
+                                    <div>
+                                        <i class="fas {{ $icon }} fa-2x {{ $session['has_device_conflict'] ? 'text-danger' : 'text-primary' }}"></i>
+                                    </div>
+                                    
+                                    <!-- Video Feed Circle -->
+                                    @if($session['has_video_feed'])
+                                        <div class="video-feed-circle" 
+                                             data-bs-toggle="modal" 
+                                             data-bs-target="#videoFeedModal{{ $session['id'] }}"
+                                             data-bs-toggle="tooltip"
+                                             title="Click to view live feed">
+                                            <div class="video-placeholder">
+                                                <i class="fas fa-video text-white"></i>
+                                                <div class="recording-indicator"></div>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Student Name -->
@@ -195,6 +214,53 @@
             Last updated: {{ now()->format('h:i:s A') }}
         </span>
     </div>
+</div>
+
+<!-- Video Feed Modals -->
+@foreach($activeSessions as $session)
+    @if($session['has_video_feed'])
+        <div class="modal fade" id="videoFeedModal{{ $session['id'] }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-video me-2"></i>
+                            Live Feed - {{ $session['student_name'] }} ({{ $session['student_id'] }})
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0 bg-dark">
+                        <div class="video-feed-container">
+                            @if($session['video_feed_path'])
+                                <video class="video-feed-player" controls>
+                                    <source src="{{ Storage::disk('exams')->url($session['video_feed_path']) }}" type="video/webm">
+                                    Your browser does not support the video tag.
+                                </video>
+                            @else
+                                <div class="text-center text-white p-5">
+                                    <i class="fas fa-video-slash fa-3x mb-3"></i>
+                                    <p>Video feed is being prepared...</p>
+                                    <small>Live streaming will appear here once available</small>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-dark text-white">
+                        <div class="d-flex justify-content-between w-100 align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="fas fa-circle text-danger pulse-dot me-1" style="font-size: 0.5rem;"></i>
+                                    Recording in progress
+                                </small>
+                            </div>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+@endforeach
 
 <style>
     .session-card {
@@ -243,9 +309,90 @@
         font-size: 1.5rem;
         display: block;
     }
+
+    /* Video Feed Styles */
+    .video-feed-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        margin-left: 0.75rem;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .video-feed-circle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    }
+
+    .video-placeholder {
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .recording-indicator {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background: #dc3545;
+        border-radius: 50%;
+        border: 2px solid white;
+        animation: pulse-record 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-record {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 0.7;
+        }
+    }
+
+    .video-feed-container {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        background: #000;
+    }
+
+    .video-feed-player {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .modal-lg {
+        max-width: 900px;
+    }
+
+    .video-feed-circle.disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .video-feed-circle.disabled:hover {
+        transform: none;
+        box-shadow: none;
+    }
 </style>
 
-</div>
+
 
 @push('scripts')
 <script>
@@ -277,3 +424,4 @@
     }
 </script>
 @endpush
+</div> <!-- End Root Element -->

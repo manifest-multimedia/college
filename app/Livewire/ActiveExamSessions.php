@@ -46,6 +46,14 @@ class ActiveExamSessions extends Component
             ])
             ->orderBy('started_at', 'desc')
             ->get();
+        
+        // Get proctoring sessions for active participants
+        $activeUserIds = $sessions->pluck('student_id')->toArray();
+        $proctoringSessions = \App\Models\ProctoringSession::whereIn('user_id', $activeUserIds)
+            ->where('exam_id', $this->exam->id)
+            ->whereNull('ended_at')
+            ->get()
+            ->keyBy('user_id');
 
         // Filter to only truly active sessions (time hasn't expired)
         $this->activeSessions = $sessions
@@ -57,7 +65,7 @@ class ActiveExamSessions extends Component
                 // Session is only active if the end time hasn't been reached
                 return $adjustedEndTime && now()->lessThan($adjustedEndTime);
             })
-            ->map(function ($session) {
+            ->map(function ($session) use ($proctoringSessions) {
                 // Get student info from User model
                 $user = $session->student;
                 $studentRecord = $user?->student;
@@ -99,6 +107,17 @@ class ActiveExamSessions extends Component
                     $displayExtraTime = max(0, $totalExtraTime - $catchUpTime);
                 }
                 
+                // Get proctoring video feed if available
+                $proctoringSession = $proctoringSessions->get($user->id);
+                $hasVideoFeed = $proctoringSession !== null;
+                $videoFeedPath = null;
+                if ($hasVideoFeed && $proctoringSession->report) {
+                    // Extract path from report field (format: "Recording saved at: path/to/video")
+                    if (preg_match('/Recording saved at: (.+)/', $proctoringSession->report, $matches)) {
+                        $videoFeedPath = $matches[1];
+                    }
+                }
+                
                 return [
                     'id' => $session->id,
                     'student_name' => $studentRecord?->name ?? $user?->name ?? 'Unknown',
@@ -117,6 +136,9 @@ class ActiveExamSessions extends Component
                     'has_device_conflict' => $session->hasSuspiciousDeviceActivity(),
                     'device_changes_count' => $session->deviceAccessLogs->where('is_conflict', true)->count(),
                     'session_duration_minutes' => $elapsedMinutes,
+                    'has_video_feed' => $hasVideoFeed,
+                    'video_feed_path' => $videoFeedPath,
+                    'proctoring_session_id' => $proctoringSession?->id,
                 ];
             })
             ->values()
