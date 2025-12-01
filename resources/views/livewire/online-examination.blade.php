@@ -71,31 +71,31 @@
             </div> <!-- row -->
         </div>
 
-        <div class="row h-100">
+        <div class="row exam-content-row">
             <!-- Main Exam Content -->
-            <div class="col-md-9 d-flex flex-column">
-                <div class="p-4 shadow-lg card question-card position-relative exam-protected">
+            <div class="col-md-9 d-flex flex-column exam-content-height">
+                <div class="p-4 shadow-lg card question-card position-relative exam-protected h-100 d-flex flex-column">
                     <!-- Watermark -->
                     <div class="watermark">
                         {{ $student_name }}
                     </div>
 
                     @if ($examExpired && !$canStillSubmit)
-                        <div class="alert alert-warning mb-4">
+                        <div class="alert alert-warning mb-4 flex-shrink-0">
                             <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i> Exam Completed
                             </h4>
                             <p>Your exam time has expired, and your answers have been submitted automatically. You can
                                 no longer modify your responses.</p>
                         </div>
                     @elseif ($examExpired && $canStillSubmit)
-                        <div class="alert alert-info mb-4">
+                        <div class="alert alert-info mb-4 flex-shrink-0">
                             <h4 class="alert-heading"><i class="bi bi-clock-history me-2"></i> Extra Time Active</h4>
                             <p>Regular exam time has expired, but you are allowed to continue answering questions using
                                 your extra time allocation.</p>
                         </div>
                     @endif
 
-                    <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer">
+                    <div class="scrollable-questions flex-grow-1 scrollbar-container overflow-auto" id="questionsContainer">
                         <form wire:submit.prevent="{{ $examExpired && !$canStillSubmit ? 'logout' : 'submitExam' }}">
                             <div class="questions-container">
                                 @foreach ($questions as $index => $question)
@@ -145,8 +145,8 @@
                 </div>
             </div>
 
-            <div class="shadow-lg col-md-3 sidebar d-flex flex-column card question-card" style="height:550px">
-                <div class="p-4 text-center">
+            <div class="shadow-lg col-md-3 sidebar d-flex flex-column card question-card exam-content-height">
+                <div class="p-4 text-center flex-shrink-0">
                     <h5>Questions Overview</h5>
                     <p class="mb-0">
                         Questions Answered: <strong id="answeredCount">{{ count(array_filter($responses)) }}</strong> /
@@ -164,7 +164,7 @@
                     @endif
                 </div>
 
-                <div id="questionsOverview" class="overflow-y-auto p-3 mb-2 flex-grow-1">
+                <div id="questionsOverview" class="overflow-y-auto p-3 mb-2 flex-grow-1"
                     <div class="flex-wrap gap-3 tracker-container d-flex justify-content-center">
                         @foreach ($questions as $index => $question)
                             @php
@@ -193,7 +193,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white card-footer d-flex justify-content-center align-items-center">
+                <div class="bg-white card-footer d-flex justify-content-center align-items-center flex-shrink-0">
                     @if ($examExpired && !$canStillSubmit)
                         <a href="{{ route('take-exam') }}" class="btn btn-secondary w-100">
                             <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
@@ -712,6 +712,43 @@
 
         .tracker-item.unanswered {
             background-color: #f8f9fa;
+        }
+
+        /* Responsive Height Management */
+        .exam-content-row {
+            min-height: 550px;
+            height: calc(100vh - 450px); /* Adjust based on header/instructions height */
+        }
+
+        .exam-content-height {
+            height: 100%;
+        }
+
+        /* Responsive adjustments for different screen sizes */
+        @media (min-height: 900px) {
+            .exam-content-row {
+                height: calc(100vh - 400px);
+            }
+        }
+
+        @media (min-height: 1080px) {
+            .exam-content-row {
+                height: calc(100vh - 350px);
+            }
+        }
+
+        @media (max-height: 768px) {
+            .exam-content-row {
+                height: calc(100vh - 500px);
+                min-height: 450px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            .exam-content-row {
+                height: calc(100vh - 400px);
+                min-height: 400px;
+            }
         }
     </style>
 </div> <!-- Root Container -->
