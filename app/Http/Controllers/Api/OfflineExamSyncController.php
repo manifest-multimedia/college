@@ -193,12 +193,17 @@ class OfflineExamSyncController extends Controller
                             ->where('student_id', $student->user_id)
                             ->first();
 
+                        // Get option text for historical integrity (used for both update and create)
+                        $option = \App\Models\Option::find($responseData['option_id']);
+                        $optionText = $option ? $option->option_text : null;
+
                         if ($existingResponse) {
                             // Update existing response
                             $existingResponse->update([
                                 'selected_option' => $responseData['selected_option'],
                                 'option_id' => $responseData['option_id'],
                                 'is_correct' => $responseData['is_correct'],
+                                'selected_option_text' => $optionText, // Update text for historical integrity
                             ]);
 
                             $synced[] = [
@@ -208,6 +213,7 @@ class OfflineExamSyncController extends Controller
                                 'action' => 'updated',
                             ];
                         } else {
+
                             // Create new response
                             $response = Response::create([
                                 'exam_session_id' => $responseData['cis_session_id'],
@@ -216,6 +222,7 @@ class OfflineExamSyncController extends Controller
                                 'selected_option' => $responseData['selected_option'],
                                 'option_id' => $responseData['option_id'],
                                 'is_correct' => $responseData['is_correct'],
+                                'selected_option_text' => $optionText, // Store text for historical integrity
                             ]);
 
                             $synced[] = [
@@ -459,14 +466,14 @@ class OfflineExamSyncController extends Controller
         try {
             // First, find the Student record to get the user_id
             $student = Student::where('student_id', $studentId)->first();
-            
-            if (!$student) {
+
+            if (! $student) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Student not found',
                 ], 404);
             }
-            
+
             // Now find the ExamSession using the user_id from the student record
             $examSession = ExamSession::with(['exam', 'student', 'responses.question'])
                 ->where('id', $sessionId)

@@ -161,6 +161,7 @@ class ResultImport implements ToCollection, WithHeadingRow
                 'option_id' => $option->id,
                 'is_correct' => $option->is_correct,
                 'selected_option' => $option->id,
+                'selected_option_text' => $option->option_text, // Store text for historical integrity
             ]);
         }
 

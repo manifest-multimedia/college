@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Response extends Model
 {
-    protected $fillable = ['exam_session_id', 'question_id', 'selected_option', 'is_correct', 'student_id', 'option_id'];
+    protected $fillable = ['exam_session_id', 'question_id', 'selected_option', 'is_correct', 'student_id', 'option_id', 'selected_option_text'];
 
     /**
      * The exam session this response is part of.

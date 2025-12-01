@@ -63,7 +63,7 @@ class OnlineExamination extends Component
     public $examExpired = false;
 
     public $timeExpiredAt = null;
-    
+
     public $serverTime; // For ExamClock sync
 
     // Themeing support and one-by-one navigation
@@ -299,7 +299,7 @@ class OnlineExamination extends Component
 
             $this->examStartTime = Carbon::parse($this->examSession->started_at);
             $this->remainingTime = $this->calculateRemainingTime();
-            
+
             // Pass current server time for ExamClock synchronization
             $this->serverTime = now();
 
@@ -644,6 +644,10 @@ class OnlineExamination extends Component
                 'timestamp' => now()->toDateTimeString(),
             ]);
 
+            // Get the option details to store the text for data integrity
+            $option = \App\Models\Option::find($answer);
+            $optionText = $option ? $option->option_text : null;
+
             // Create or update the response in the database
             $response = Response::updateOrCreate(
                 [
@@ -651,7 +655,11 @@ class OnlineExamination extends Component
                     'question_id' => $questionId,
                     'student_id' => $this->user->id,
                 ],
-                ['selected_option' => $answer]
+                [
+                    'selected_option' => $answer,
+                    'option_id' => $answer, // Store as integer for relationship
+                    'selected_option_text' => $optionText, // Store text for historical integrity
+                ]
             );
 
             // Update the responses array in memory
@@ -688,7 +696,7 @@ class OnlineExamination extends Component
                 ->pluck('question_id')
                 ->toArray();
 
-            if (!in_array($questionId, $validQuestionIds)) {
+            if (! in_array($questionId, $validQuestionIds)) {
                 return ['success' => false, 'message' => 'Invalid question'];
             }
 
@@ -701,7 +709,7 @@ class OnlineExamination extends Component
                 // Unflag
                 $existingFlag->delete();
                 $this->flaggedQuestions = array_values(array_diff($this->flaggedQuestions, [$questionId]));
-                
+
                 Log::info('V1: Question unflagged', [
                     'session_id' => $this->examSession->id,
                     'question_id' => $questionId,
@@ -715,7 +723,7 @@ class OnlineExamination extends Component
                     'question_id' => $questionId,
                 ]);
                 $this->flaggedQuestions[] = $questionId;
-                
+
                 Log::info('V1: Question flagged', [
                     'session_id' => $this->examSession->id,
                     'question_id' => $questionId,
@@ -727,12 +735,12 @@ class OnlineExamination extends Component
             Log::error('V1 Toggle Flag Error', [
                 'exam_session_id' => $this->examSession->id,
                 'question_id' => $questionId,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ];
         }
     }
@@ -752,7 +760,7 @@ class OnlineExamination extends Component
                 ->pluck('question_id')
                 ->toArray();
 
-            if (!in_array($questionId, $validQuestionIds)) {
+            if (! in_array($questionId, $validQuestionIds)) {
                 return ['success' => false, 'message' => 'Invalid question'];
             }
 
@@ -786,12 +794,12 @@ class OnlineExamination extends Component
             Log::error('V1 Clear Response Error', [
                 'exam_session_id' => $this->examSession->id,
                 'question_id' => $questionId,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ];
         }
     }
