@@ -1082,6 +1082,26 @@ class ExamManagementMCPService
                 ];
             }
 
+            // 🚨 SMART BATCH DETECTION: Reject suspiciously small batches
+            // This prevents the AI from adding questions incrementally (5 at a time)
+            $questionCount = count($questions);
+            if ($questionCount <= 10 && $questionCount > 0) {
+                Log::warning('Suspiciously small batch detected in bulk add', [
+                    'question_set_id' => $questionSetId,
+                    'question_count' => $questionCount,
+                    'user_id' => $user->id,
+                    'expected_behavior' => 'bulk_add should receive ALL questions at once, not incremental batches',
+                ]);
+
+                // Return a helpful error that forces the AI to retry with ALL questions
+                return [
+                    'success' => false,
+                    'error' => "⚠️ BATCH SIZE ERROR: You attempted to add only {$questionCount} questions. If this is from a document or large generation request, you MUST extract and add ALL questions in ONE call to bulk_add_questions_to_set. Do NOT add questions incrementally (5 or 10 at a time). Please retry with the COMPLETE array of ALL questions. If you genuinely only have {$questionCount} questions total, confirm this with the user first.",
+                    'retry_required' => true,
+                    'suggested_action' => 'Extract ALL questions from the source and call bulk_add_questions_to_set once with the complete array',
+                ];
+            }
+
             $successCount = 0;
             $failedCount = 0;
             $errors = [];

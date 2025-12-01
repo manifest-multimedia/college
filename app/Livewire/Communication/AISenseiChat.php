@@ -499,12 +499,13 @@ class AISenseiChat extends Component
                         $waitTime = ceil(floatval($matches[1]));
                     }
 
-                    $userMessage = "⏳ Your request completed successfully, but AI Sensei's response was delayed due to API rate limits. ";
+                    $userMessage = '⏳ API rate limit reached. ';
                     if ($waitTime) {
-                        $userMessage .= "Please wait {$waitTime} seconds and try sending your message again.";
+                        $userMessage .= "Please wait {$waitTime} seconds before sending your next message. ";
                     } else {
-                        $userMessage .= 'Please wait a moment and try again.';
+                        $userMessage .= 'Please wait a moment before trying again. ';
                     }
+                    $userMessage .= '💡 Tip: For large question imports (100+ questions), consider upgrading your OpenAI API tier for higher rate limits.';
 
                     $this->error = $userMessage;
 
@@ -512,10 +513,11 @@ class AISenseiChat extends Component
                         'run_id' => $runId,
                         'wait_time' => $waitTime,
                         'rate_limit_message' => $errorMessage,
+                        'tip' => 'User should upgrade OpenAI tier for production use',
                     ]);
                 } else {
                     // Generic failure for non-rate-limit errors
-                    $this->error = 'AI processing failed. Please try again.';
+                    $this->error = 'AI processing failed: '.($lastError['message'] ?? 'Unknown error').'. Please try again.';
                 }
 
                 $this->broadcastTypingStatus(false);

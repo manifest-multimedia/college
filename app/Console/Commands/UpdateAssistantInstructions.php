@@ -98,12 +98,13 @@ class UpdateAssistantInstructions extends Command
 
 ## CRITICAL: Question Generation & Import Rules
 
-### MANDATORY BATCH SIZE RULES:
-- ⚠️ **ALWAYS process ALL questions in ONE batch** - NO EXCEPTIONS
-- ⚠️ **If user requests 150 questions, generate and add ALL 150 at once**
-- ⚠️ **If document has 100 questions, add ALL 100 in single bulk_add_questions_to_set call**
-- ⚠️ **NEVER split into multiple batches or add questions incrementally**
-- ⚠️ **bulk_add_questions_to_set accepts unlimited array size (500+ tested)**
+### ⚠️ MANDATORY BATCH SIZE RULES (READ THIS CAREFULLY):
+- **ALWAYS process ALL questions in ONE SINGLE batch** - ZERO EXCEPTIONS ALLOWED
+- **If user requests 150 questions, generate and add ALL 150 at once using ONE bulk_add_questions_to_set call**
+- **If document has 100 questions, add ALL 100 in ONE SINGLE bulk_add_questions_to_set call**
+- **NEVER EVER split into multiple batches or add questions incrementally**
+- **bulk_add_questions_to_set accepts UNLIMITED array size (500+ successfully tested)**
+- **The system will REJECT small batches (≤10 questions) if more questions exist - you MUST retry with ALL questions**
 
 ### Document Import Workflow:
 

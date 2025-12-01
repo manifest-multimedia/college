@@ -52,4 +52,35 @@ return [
         'nalo' => 'Manifest Digital',
         'manifest-digital' => 'Manifest Digital',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Assistant (OpenAI) Rate Limiting & Batch Processing
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for OpenAI API rate limiting prevention and bulk operations
+    | to optimize AI Sensei question import performance.
+    |
+    */
+    'openai' => [
+        // Delay between sequential API calls (milliseconds) to prevent rate limiting
+        'api_call_delay_ms' => env('OPENAI_API_CALL_DELAY_MS', 500),
+
+        // Maximum retries for rate-limited requests
+        'rate_limit_max_retries' => env('OPENAI_RATE_LIMIT_MAX_RETRIES', 3),
+
+        // Exponential backoff base delay (seconds)
+        'rate_limit_backoff_base' => env('OPENAI_RATE_LIMIT_BACKOFF_BASE', 2),
+
+        // Maximum batch size for very large imports (questions per transaction)
+        // Set to 0 for unlimited (single transaction for all questions)
+        'max_questions_per_batch' => env('OPENAI_MAX_QUESTIONS_PER_BATCH', 0),
+
+        // Minimum batch size warning threshold
+        // Batches smaller than this (when more questions exist) will trigger warnings
+        'min_batch_warning_threshold' => env('OPENAI_MIN_BATCH_WARNING_THRESHOLD', 10),
+
+        // Enable smart batch detection to reject incremental imports
+        'enable_batch_detection' => env('OPENAI_ENABLE_BATCH_DETECTION', true),
+    ],
 ];
