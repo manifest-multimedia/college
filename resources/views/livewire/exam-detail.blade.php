@@ -199,13 +199,8 @@
         </div>
     </div>
 
-    <!-- Active Participants Section (Only visible when exam is active) -->
-    @if($exam->status === 'active')
-        <div class="mb-5 mb-xl-10">
-            @livewire('active-exam-sessions', ['exam' => $exam, 'expectedParticipants' => $expectedParticipants ?? 0], key('active-sessions-'.$exam->id))
-        </div>
-    @endif
-
+ 
+    
     <!-- Question Sets Section -->
     @if($exam->questionSets && $exam->questionSets->count() > 0)
         <div class="card mb-5 mb-xl-10">
@@ -274,7 +269,11 @@
             </div>
         </div>
     @endif
-
+   <!-- Active Participants Section-->
+    
+        <div class="mb-5 mb-xl-10">
+            @livewire('active-exam-sessions', ['exam' => $exam, 'expectedParticipants' => $expectedParticipants ?? 0], key('active-sessions-'.$exam->id))
+        </div>
     <!-- Edit Modal -->
     <div class="modal fade" id="editExamModal" tabindex="-1" wire:ignore.self>
         <div class="modal-dialog modal-dialog-centered modal-lg">
