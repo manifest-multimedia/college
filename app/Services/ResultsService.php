@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Option;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Unified Results Service
