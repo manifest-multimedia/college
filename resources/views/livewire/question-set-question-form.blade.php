@@ -46,12 +46,26 @@
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-{{ $isEditing ? 'pencil' : 'plus-circle' }} me-2"></i>
-                        {{ $isEditing ? 'Edit Question' : 'Create New Question' }}
+                    <h5 class="card-title mb-0 d-flex align-items-center justify-content-between">
+                        <span>
+                            <i class="bi bi-{{ $isEditing ? 'pencil' : 'plus-circle' }} me-2"></i>
+                            {{ $isEditing ? 'Edit Question' : 'Create New Question' }}
+                        </span>
+                        @if($isEditing && $hasResponses)
+                            <span class="badge bg-danger">
+                                <i class="bi bi-lock me-1"></i>Has Responses - Cannot Edit
+                            </span>
+                        @endif
                     </h5>
                 </div>
                 <div class="card-body">
+                    @if($isEditing && $hasResponses)
+                        <div class="alert alert-warning mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> This question has been answered by students and cannot be edited. 
+                            Any changes would invalidate existing student responses. Please create a new question instead.
+                        </div>
+                    @endif
                     <form wire:submit="save">
                         <!-- Question Text -->
                         <div class="mb-4">
@@ -240,7 +254,8 @@
                                     </button>
                                 @endif
                                 <button type="submit" class="btn btn-primary" 
-                                        wire:loading.attr="disabled" wire:target="save,createAllQuestions">
+                                        wire:loading.attr="disabled" wire:target="save,createAllQuestions"
+                                        @if($isEditing && $hasResponses) disabled title="Cannot edit questions that have been answered" @endif>
                                     <span wire:loading.remove wire:target="save,createAllQuestions">
                                         <i class="bi bi-{{ $isEditing ? 'check-lg' : 'plus-lg' }} me-1"></i>
                                         {{ $isEditing ? 'Update Question' : 'Save All Questions' }}

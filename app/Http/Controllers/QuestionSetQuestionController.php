@@ -273,6 +273,13 @@ class QuestionSetQuestionController extends Controller
             return response()->json(['error' => 'Question not found.'], 404);
         }
 
+        // Prevent editing questions that have been answered
+        if ($question->responses()->exists()) {
+            return response()->json([
+                'error' => 'This question cannot be edited because it has already been answered by students. Create a new question instead.',
+            ], 422);
+        }
+
         // Validate correct options
         $correctOptions = $request->input('correct_options');
         $options = $request->input('options');

@@ -92,7 +92,7 @@
                     @endif
 
                     <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
-                        <div class="questions-container">
+                        <div class="questions-container" style="min-height: 100%; height: auto;">
                             @foreach ($questions as $index => $question)
                                 <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
                                     <div class="d-flex justify-content-between align-items-start mb-3">

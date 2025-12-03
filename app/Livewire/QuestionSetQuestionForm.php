@@ -48,6 +48,8 @@ class QuestionSetQuestionForm extends Component
 
     public $questions = [];          // Array to store multiple questions
 
+    public $hasResponses = false;    // Flag to check if question has been answered
+
     protected $rules = [
         'questionText' => 'required|string|min:5',
         'questionType' => 'required|in:multiple_choice,true_false,short_answer',
@@ -102,6 +104,9 @@ class QuestionSetQuestionForm extends Component
         $this->question = Question::with('options')
             ->where('question_set_id', $this->questionSetId)
             ->findOrFail($this->questionId);
+
+        // Check if this question has any responses
+        $this->hasResponses = $this->question->responses()->exists();
 
         $this->questionText = $this->question->question_text;
         $this->questionType = $this->question->type ?? 'multiple_choice';
@@ -192,6 +197,13 @@ class QuestionSetQuestionForm extends Component
 
     public function save()
     {
+        // Prevent editing questions that have been answered
+        if ($this->isEditing && $this->hasResponses) {
+            session()->flash('error', 'This question cannot be edited because it has already been answered by students. Create a new question instead.');
+
+            return;
+        }
+
         // Filter out empty options before validation
         $this->options = array_filter($this->options, fn ($option) => ! empty(trim($option)));
         $this->options = array_values($this->options); // Re-index

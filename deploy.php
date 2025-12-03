@@ -256,7 +256,7 @@ task('deploy', [
     'artisan:storage:link',
     'artisan:view:cache',
     'artisan:config:cache',
-    // 'artisan:migrate',
+    'artisan:migrate',
     'deploy:publish',
     'deploy:fix_permissions',
 ]);
