@@ -344,26 +344,9 @@ class ExamResultsComponent extends Component
                 // Use ResultsService for consistent score calculation across all locations
                 $resultsService = app(\App\Services\ResultsService::class);
 
-                // Get responses collection from limitedResponses for service
-                // Filter out null responses (unanswered questions) to ensure accurate score calculation
-                $responsesForService = $limitedResponses->pluck('response')->filter()->values();
-
-                // Debug logging for score discrepancy investigation
-                Log::info('ExamResultsComponent score calculation', [
-                    'session_id' => $session->id,
-                    'student_name' => $session->student->name ?? 'Unknown',
-                    'questions_per_session' => $questionsPerSession,
-                    'limited_responses_count' => $limitedResponses->count(),
-                    'responses_for_service_count' => $responsesForService->count(),
-                    'has_session_questions' => $hasSessionQuestions,
-                ]);
-
-                // Calculate scores using the service
-                $scoreData = $resultsService->calculateOnlineExamScore(
-                    $session,
-                    $questionsPerSession,
-                    $responsesForService
-                );
+                // Let ResultsService fetch and calculate responses itself to ensure consistency
+                // Don't pass responses manually as that can cause discrepancies in correctness calculation
+                $scoreData = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
 
                 // Extract calculated values
                 $totalQuestions = $limitedResponses->count();
@@ -372,15 +355,6 @@ class ExamResultsComponent extends Component
                 $obtainedMarks = $scoreData['obtained_marks'];
                 $totalMarks = $scoreData['total_marks'];
                 $scorePercentage = $scoreData['percentage'];
-
-                // Log the final calculated values
-                Log::info('ExamResultsComponent calculated values', [
-                    'session_id' => $session->id,
-                    'total_correct' => $totalCorrect,
-                    'obtained_marks' => $obtainedMarks,
-                    'total_marks' => $totalMarks,
-                    'score_percentage' => $scorePercentage,
-                ]);
 
                 // Track stats
                 $totalScorePercentage += $scorePercentage;
