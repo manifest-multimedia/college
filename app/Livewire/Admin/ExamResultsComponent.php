@@ -341,28 +341,46 @@ class ExamResultsComponent extends Component
                 // For legacy questions, limit to questionsPerSession
                 $limitedResponses = $hasSessionQuestions ? $processedResponses : $processedResponses->take($questionsPerSession);
 
-                // Now calculate the metrics from the limited responses
-                $totalQuestions = $limitedResponses->count(); // This should match questionsPerSession
-                $totalAttempted = $limitedResponses->where('is_attempted', true)->count();
-                $totalCorrect = $limitedResponses->where('is_correct', true)->count();
-                $obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
-                
-                // Total marks should be based on ALL questions (questions_per_session), not just what was answered
-                // This ensures proper percentage calculation: obtained/expected, not obtained/answered
-                $totalMarks = $questionsPerSession; // Assuming 1 mark per question (standard)
-                
-                // If questions have different mark values, calculate properly
-                if ($processedResponses->isNotEmpty()) {
-                    $avgMarkValue = $processedResponses->avg('mark_value');
-                    // If average is not 1, it means questions have custom marks
-                    if ($avgMarkValue != 1) {
-                        // Use the sum of ALL questions to get the true total possible marks
-                        $totalMarks = $processedResponses->sum('mark_value');
-                    }
-                }
+                // Use ResultsService for consistent score calculation across all locations
+                $resultsService = app(\App\Services\ResultsService::class);
 
-                // Calculate percentage (prevent division by zero)
-                $scorePercentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
+                // Get responses collection from limitedResponses for service
+                // Filter out null responses (unanswered questions) to ensure accurate score calculation
+                $responsesForService = $limitedResponses->pluck('response')->filter()->values();
+
+                // Debug logging for score discrepancy investigation
+                Log::info('ExamResultsComponent score calculation', [
+                    'session_id' => $session->id,
+                    'student_name' => $session->student->name ?? 'Unknown',
+                    'questions_per_session' => $questionsPerSession,
+                    'limited_responses_count' => $limitedResponses->count(),
+                    'responses_for_service_count' => $responsesForService->count(),
+                    'has_session_questions' => $hasSessionQuestions,
+                ]);
+
+                // Calculate scores using the service
+                $scoreData = $resultsService->calculateOnlineExamScore(
+                    $session,
+                    $questionsPerSession,
+                    $responsesForService
+                );
+
+                // Extract calculated values
+                $totalQuestions = $limitedResponses->count();
+                $totalAttempted = $limitedResponses->where('is_attempted', true)->count();
+                $totalCorrect = $scoreData['correct_answers'];
+                $obtainedMarks = $scoreData['obtained_marks'];
+                $totalMarks = $scoreData['total_marks'];
+                $scorePercentage = $scoreData['percentage'];
+
+                // Log the final calculated values
+                Log::info('ExamResultsComponent calculated values', [
+                    'session_id' => $session->id,
+                    'total_correct' => $totalCorrect,
+                    'obtained_marks' => $obtainedMarks,
+                    'total_marks' => $totalMarks,
+                    'score_percentage' => $scorePercentage,
+                ]);
 
                 // Track stats
                 $totalScorePercentage += $scorePercentage;

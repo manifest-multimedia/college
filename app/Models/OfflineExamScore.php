@@ -76,7 +76,8 @@ class OfflineExamScore extends Model
 
         static::saving(function ($model) {
             if ($model->total_marks > 0) {
-                $model->percentage = round(($model->score / $model->total_marks) * 100, 2);
+                $resultsService = app(\App\Services\ResultsService::class);
+                $model->percentage = $resultsService->calculatePercentage($model->score, $model->total_marks);
             }
         });
     }
@@ -88,25 +89,9 @@ class OfflineExamScore extends Model
      */
     public function getGradeLetterAttribute()
     {
-        $percentage = $this->percentage;
+        $resultsService = app(\App\Services\ResultsService::class);
 
-        if ($percentage >= 90) {
-            return 'A';
-        }
-        if ($percentage >= 80) {
-            return 'B';
-        }
-        if ($percentage >= 70) {
-            return 'C';
-        }
-        if ($percentage >= 60) {
-            return 'D';
-        }
-        if ($percentage >= 50) {
-            return 'E';
-        }
-
-        return 'F';
+        return $resultsService->getLetterGrade($this->percentage);
     }
 
     /**
@@ -117,7 +102,9 @@ class OfflineExamScore extends Model
     public function isPassed()
     {
         $passingPercentage = $this->offlineExam->passing_percentage ?? 50;
+        $resultsService = app(\App\Services\ResultsService::class);
+        $status = $resultsService->getPassStatus($this->percentage, $passingPercentage);
 
-        return $this->percentage >= $passingPercentage;
+        return $status === 'PASS';
     }
 }

@@ -98,36 +98,33 @@ class ExamResultsModule extends Component
 
     protected function processExamSessions($examSessions, $questions_per_session, $exam)
     {
-        return $examSessions->map(function ($session) use ($questions_per_session) {
+        $resultsService = app(\App\Services\ResultsService::class);
+
+        return $examSessions->map(function ($session) use ($questions_per_session, $resultsService) {
             try {
                 // Ensure scored questions are stored for this session
                 $this->ensureScoredQuestionsExist($session, $questions_per_session);
 
-                // Get number of correct answers from stored scored questions
-                $correct_answers = $session->scoredQuestions
-                    ->filter(function ($scoredQuestion) {
-                        $correct_option = $scoredQuestion->question->options
-                            ->where('is_correct', true)
-                            ->first();
+                // Get scored responses
+                $scoredResponses = $session->scoredQuestions->map(function ($scoredQuestion) {
+                    return $scoredQuestion->response;
+                });
 
-                        return $correct_option &&
-                            $scoredQuestion->response->selected_option == $correct_option->id;
-                    })
-                    ->count();
-
-                // Calculate total questions answered
-                $total_answered = $session->scoredQuestions->count();
+                // Use ResultsService for consistent calculation
+                $result = $resultsService->calculateOnlineExamScore(
+                    $session,
+                    $questions_per_session,
+                    $scoredResponses
+                );
 
                 return [
                     'date' => $session->created_at->format('Y-m-d'),
                     'student_id' => $session->student->student_id ?? 'N/A',
                     'student_name' => $session->student->user->name ?? 'N/A',
                     'course' => $session->exam->course->name ?? 'N/A',
-                    'score' => $correct_answers.'/'.$questions_per_session,
-                    'answered' => $total_answered.'/'.$questions_per_session,
-                    'percentage' => $questions_per_session > 0
-                        ? round(($correct_answers / $questions_per_session) * 100, 2)
-                        : 0,
+                    'score' => $result['score'],
+                    'answered' => $result['total_answered'].'/'.$questions_per_session,
+                    'percentage' => $result['percentage'],
                     'session_id' => $session->id,
                 ];
             } catch (\Exception $e) {

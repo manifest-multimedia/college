@@ -863,6 +863,14 @@ class OnlineExamination extends Component
 
     public function calculateScore()
     {
+        $resultsService = app(\App\Services\ResultsService::class);
+        $result = $resultsService->calculateOnlineExamScore($this->examSession);
+
+        return $result['correct_answers'];
+    }
+
+    public function calculateScoreLegacy()
+    {
         $score = 0;
 
         foreach ($this->responses as $questionId => $answer) {

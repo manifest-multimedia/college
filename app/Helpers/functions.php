@@ -1,8 +1,6 @@
 <?php
 
-use App\Models\Exam;
 use App\Models\ExamSession;
-use App\Models\Option;
 use App\Models\Student;
 use Illuminate\Support\Str;
 
@@ -171,48 +169,16 @@ if (! function_exists('computeResults')) {
             };
         }
 
-        // Get Total Number of questions per session
-        $exam_id = $session->exam_id;
-        $questions_per_session = Exam::where('id', $exam_id)->value('questions_per_session') ?? 0;
+        // Use ResultsService for consistent calculation
+        $resultsService = app(\App\Services\ResultsService::class);
+        $result = $resultsService->calculateOnlineExamScore($session);
 
-        // Handle cases where there are no questions in the session
-        if ($questions_per_session <= 0) {
-            return match ($type) {
-                'percentage' => '0%',
-                'total_answered' => 0,
-                default => '0/0',
-            };
-        }
-
-        // Get all responses associated with this ExamSession, limited to the expected number of questions
-        $responses = $session->responses()->take($questions_per_session)->get();
-
-        // Count the total number of responses actually answered within the limit
-        $total_answered = min($responses->count(), $questions_per_session);
-
-        // Count the number of correct answers
-        $correct_answers = 0;
-        foreach ($responses as $response) {
-            if (
-                $response->selected_option &&
-                Option::where('id', $response->selected_option)
-                    ->where('is_correct', true)
-                    ->exists()
-            ) {
-                $correct_answers++;
-            }
-        }
-
-        // Calculate the score and percentage
-        $score = "$correct_answers/$questions_per_session";
-        $score_percent = round($correct_answers * 100 / $questions_per_session);
-
-        // Return the result based on the requested type
+        // Return the result based on the requested type (maintain backward compatibility)
         return match ($type) {
-            'score' => $score,
-            'percentage' => $score_percent.'%',
-            'total_answered' => $total_answered,
-            default => $score,
+            'score' => $result['score'],
+            'percentage' => round($result['percentage']).'%',
+            'total_answered' => $result['total_answered'],
+            default => $result['score'],
         };
     }
 }

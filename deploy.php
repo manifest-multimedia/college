@@ -15,11 +15,23 @@ set('ssh_multiplexing', true);
 set('git_tty', false); // Disable TTY for git commands
 
 // Hosts
-host('mhtia')
-    ->setHostname('83.147.39.47')
+host('kwapong')
+    ->setHostname('69.197.187.20')
     ->set('remote_user', 'administrator')
-    ->set('deploy_path', '/var/www/mhtia.siteshowcase.top')
+    ->set('deploy_path', '/var/www/kwapong.siteshowcase.top')
+    ->set('http_user', 'www-data')
+    ->set('writable_mode', 'chmod')
+    ->set('writable_chmod_mode', '0775')
     ->set('labels', ['stage' => 'staging']);
+
+host('mhtia')
+    ->setHostname('69.197.187.20')
+    ->set('remote_user', 'administrator')
+    ->set('deploy_path', '/var/www/portal.mhtia.edu.gh')
+    ->set('http_user', 'www-data')
+    ->set('writable_mode', 'chmod')
+    ->set('writable_chmod_mode', '0775')
+    ->set('labels', ['stage' => 'production']);
 
 host('mhtia-prod')
     ->setHostname('62.77.158.206')
@@ -244,7 +256,7 @@ task('deploy', [
     'artisan:storage:link',
     'artisan:view:cache',
     'artisan:config:cache',
-    'artisan:migrate',
+    // 'artisan:migrate',
     'deploy:publish',
     'deploy:fix_permissions',
 ]);

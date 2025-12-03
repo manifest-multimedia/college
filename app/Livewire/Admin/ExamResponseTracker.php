@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\DeviceAccessLog;
 use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\Response;
@@ -257,22 +256,24 @@ class ExamResponseTracker extends Component
 
                     // Calculate metrics from the limited responses
                     $this->totalAttempted = $limitedResponses->where('is_attempted', true)->count();
-                    $this->totalCorrect = $limitedResponses->where('is_correct', true)->count();
-                    $this->obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
-                    
-                    // Total marks should be based on questions_per_session (expected), not answered
-                    // This ensures percentage = (obtained / expected) * 100, not (obtained / answered) * 100
-                    $this->totalMarks = $questionsPerSession; // Assuming 1 mark per question (standard)
-                    
-                    // If questions have different mark values, calculate properly
-                    if ($processedResponses->isNotEmpty()) {
-                        $avgMarkValue = $processedResponses->avg('mark_value');
-                        // If average is not 1, it means questions have custom marks
-                        if ($avgMarkValue != 1) {
-                            // Use the sum of ALL questions to get the true total possible marks
-                            $this->totalMarks = $processedResponses->sum('mark_value');
-                        }
-                    }
+                    // Use ResultsService for consistent score calculation across all locations
+                    $resultsService = app(\App\Services\ResultsService::class);
+
+                    // Get responses collection from limitedResponses for service
+                    // Filter out null responses (unanswered questions) to ensure accurate score calculation
+                    $responsesForService = $limitedResponses->pluck('response')->filter();
+
+                    // Calculate scores using the service
+                    $scoreData = $resultsService->calculateOnlineExamScore(
+                        $session,
+                        $questionsPerSession,
+                        $responsesForService
+                    );
+
+                    // Extract calculated values
+                    $this->totalCorrect = $scoreData['correct_answers'];
+                    $this->obtainedMarks = $scoreData['obtained_marks'];
+                    $this->totalMarks = $scoreData['total_marks'];
 
                     // Map the limited responses for display
                     $this->sessionResponses = $limitedResponses->map(function ($item) {
@@ -308,10 +309,8 @@ class ExamResponseTracker extends Component
                         ]);
                     }
 
-                    // Calculate percentage
-                    if ($this->totalMarks > 0) {
-                        $this->scorePercentage = round(($this->obtainedMarks / $this->totalMarks) * 100, 2);
-                    }
+                    // Use percentage from ResultsService
+                    $this->scorePercentage = $scoreData['percentage'];
 
                     // Load device access logs for this session
                     $this->loadDeviceAccessLogs($session->id);
@@ -340,7 +339,7 @@ class ExamResponseTracker extends Component
             // Transform the logs to extract useful browser and device information
             $this->deviceAccessLogs = $logs->map(function ($log) {
                 $deviceInfo = [];
-                
+
                 // Parse device_info if it's JSON
                 if (is_string($log->device_info)) {
                     try {

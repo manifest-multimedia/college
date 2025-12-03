@@ -177,36 +177,15 @@ class TranscriptService
 
         // Calculate score
         $exam = $examSession->exam;
-        $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
+        // Use ResultsService for consistent score calculation
+        $resultsService = app(\App\Services\ResultsService::class);
+        $result = $resultsService->calculateOnlineExamScore($examSession);
 
-        $responses = $examSession->responses()
-            ->with('question.options')
-            ->orderBy('created_at')
-            ->take($questionsPerSession)
-            ->get();
-
-        $totalQuestions = $responses->count();
-        $correctAnswers = 0;
-        $totalMarks = 0;
-        $obtainedMarks = 0;
-
-        foreach ($responses as $response) {
-            $question = $response->question;
-            if (! $question) {
-                continue;
-            }
-
-            $questionMark = $question->mark ?? 1;
-            $totalMarks += $questionMark;
-
-            $correctOption = $question->options->where('is_correct', true)->first();
-            if ($correctOption && $response->selected_option == $correctOption->id) {
-                $correctAnswers++;
-                $obtainedMarks += $questionMark;
-            }
-        }
-
-        $percentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
+        $totalQuestions = $result['total_questions'];
+        $correctAnswers = $result['correct_answers'];
+        $totalMarks = $result['total_marks'];
+        $obtainedMarks = $result['obtained_marks'];
+        $percentage = $result['percentage'];
 
         return [
             'exam_id' => $exam->id,
@@ -254,21 +233,9 @@ class TranscriptService
      */
     protected function calculateFinalScore($onlineScore, $offlineScore)
     {
-        // If both scores exist, take the average
-        if ($onlineScore && $offlineScore) {
-            return round(($onlineScore['percentage'] + $offlineScore['percentage']) / 2, 2);
-        }
+        $resultsService = app(\App\Services\ResultsService::class);
 
-        // If only one score exists, use that
-        if ($onlineScore) {
-            return $onlineScore['percentage'];
-        }
-
-        if ($offlineScore) {
-            return $offlineScore['percentage'];
-        }
-
-        return 0;
+        return $resultsService->calculateFinalScore($onlineScore, $offlineScore);
     }
 
     /**
@@ -276,23 +243,9 @@ class TranscriptService
      */
     protected function getLetterGrade($percentage)
     {
-        if ($percentage >= 90) {
-            return 'A';
-        }
-        if ($percentage >= 80) {
-            return 'B';
-        }
-        if ($percentage >= 70) {
-            return 'C';
-        }
-        if ($percentage >= 60) {
-            return 'D';
-        }
-        if ($percentage >= 50) {
-            return 'E';
-        }
+        $resultsService = app(\App\Services\ResultsService::class);
 
-        return 'F';
+        return $resultsService->getLetterGrade($percentage);
     }
 
     /**
@@ -300,16 +253,9 @@ class TranscriptService
      */
     protected function getGradePoints($letterGrade)
     {
-        $gradeScale = [
-            'A' => 5.0,
-            'B' => 4.0,
-            'C' => 3.0,
-            'D' => 2.0,
-            'E' => 1.0,
-            'F' => 0.0,
-        ];
+        $resultsService = app(\App\Services\ResultsService::class);
 
-        return $gradeScale[$letterGrade] ?? 0.0;
+        return $resultsService->getGradePoints($letterGrade);
     }
 
     /**
@@ -317,7 +263,9 @@ class TranscriptService
      */
     protected function getPassStatus($percentage)
     {
-        return $percentage >= 50 ? 'PASS' : 'FAIL';
+        $resultsService = app(\App\Services\ResultsService::class);
+
+        return $resultsService->getPassStatus($percentage);
     }
 
     /**

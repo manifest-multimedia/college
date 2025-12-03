@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Student;
 use App\Models\ExamSession;
+use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -15,12 +15,16 @@ class StudentDetails extends Component
     public $student;
 
     public $loading = true;
-    
+
     // Restoration modal properties
     public $showRestoreModal = false;
+
     public $restoringSessionId = null;
+
     public $restoreMinutes = 30;
+
     public $restoreReason = '';
+
     public $errorMessage = '';
 
     public function mount($studentId)
@@ -67,54 +71,14 @@ class StudentDetails extends Component
             return ['obtained' => 0, 'total' => 0, 'percentage' => 0];
         }
 
-        // Logic from ExamResponseTracker
-        // Use questions_per_session if available, otherwise fall back to total questions count
-        $questionsPerSession = $exam->questions_per_session ?? $exam->questions_count;
-
-        $responses = $session->responses;
-        $processedResponses = collect();
-
-        foreach ($responses as $response) {
-            $question = $response->question;
-            if (! $question) {
-                continue;
-            }
-
-            $correctOption = $question->options->where('is_correct', true)->first();
-            $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
-            $questionMark = $question->mark ?? 1;
-
-            $processedResponses->push([
-                'is_correct' => $isCorrect,
-                'mark_value' => $questionMark,
-            ]);
-        }
-
-        // Only take the configured number of questions per session
-        $limitedResponses = $processedResponses->take($questionsPerSession);
-
-        $obtainedMarks = $limitedResponses->where('is_correct', true)->sum('mark_value');
-        
-        // Total marks should be based on questions_per_session, not limited responses
-        // This ensures students are graded against the full exam even if they don't attempt all questions
-        $totalMarks = $questionsPerSession; // Assuming 1 mark per question (standard)
-        
-        // If questions have different mark values, calculate properly
-        if ($processedResponses->isNotEmpty()) {
-            $avgMarkValue = $processedResponses->avg('mark_value');
-            // If average is not 1, it means questions have custom marks
-            if ($avgMarkValue != 1) {
-                // Use the sum of ALL available questions (not limited) to get true total
-                $totalMarks = $processedResponses->sum('mark_value');
-            }
-        }
-
-        $percentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
+        // Use ResultsService for consistent calculation
+        $resultsService = app(\App\Services\ResultsService::class);
+        $result = $resultsService->calculateOnlineExamScore($session);
 
         return [
-            'obtained' => $obtainedMarks,
-            'total' => $totalMarks,
-            'percentage' => $percentage,
+            'obtained' => $result['obtained_marks'],
+            'total' => $result['total_marks'],
+            'percentage' => $result['percentage'],
         ];
     }
 
@@ -166,18 +130,19 @@ class StudentDetails extends Component
      */
     public function showRestoreModal($sessionId)
     {
-        if (!auth()->user()->hasRole(['Super Admin', 'System User'])) {
+        if (! auth()->user()->hasRole(['Super Admin', 'System User'])) {
             session()->flash('error', 'You do not have permission to restore exam sessions.');
+
             return;
         }
-        
+
         $this->restoringSessionId = $sessionId;
         $this->restoreMinutes = 30;
         $this->restoreReason = '';
         $this->errorMessage = '';
         $this->showRestoreModal = true;
     }
-    
+
     /**
      * Cancel restore session modal
      */
@@ -189,7 +154,7 @@ class StudentDetails extends Component
         $this->restoreReason = '';
         $this->errorMessage = '';
     }
-    
+
     /**
      * Confirm and execute session restoration
      */
@@ -199,41 +164,43 @@ class StudentDetails extends Component
             'restoreMinutes' => 'required|integer|min:5|max:120',
             'restoreReason' => 'required|string|min:5',
         ]);
-        
+
         try {
             $session = ExamSession::find($this->restoringSessionId);
-            
-            if (!$session) {
+
+            if (! $session) {
                 $this->errorMessage = 'Session not found.';
+
                 return;
             }
-            
+
             // Check if session is already active
             $status = $this->getSessionStatus($session);
             if ($status === 'active') {
                 $this->errorMessage = 'Session is already active and does not need to be restored.';
+
                 return;
             }
-            
+
             $now = now();
-            
+
             // Calculate how much extra time is needed to make the session active
             // adjustedCompletionTime = started_at + exam_duration + extra_time_minutes
             $currentAdjustedEndTime = $session->adjustedCompletionTime;
-            
+
             // Calculate minutes needed to bring the session to current time + desired additional minutes
             $minutesNeeded = 0;
             if ($currentAdjustedEndTime && $currentAdjustedEndTime->lt($now)) {
                 // Session is in the past, calculate how many minutes to bring it to now
                 $minutesNeeded = (int) abs($currentAdjustedEndTime->diffInMinutes($now));
             }
-            
+
             // Total extra time = minutes needed to reach now + additional minutes requested
             $totalExtraMinutes = (int) ($minutesNeeded + $this->restoreMinutes);
-            
+
             // Calculate what the new end time will be
             $newEndTime = $now->copy()->addMinutes((int) $this->restoreMinutes);
-            
+
             // Restore the session with proper logic
             $updates = [
                 'completed_at' => null, // Critical: Set to null to make session "active"
@@ -245,9 +212,9 @@ class StudentDetails extends Component
                 'is_restored' => true, // Mark as restored session
                 'restored_at' => $now, // Track when it was restored
             ];
-            
+
             $session->update($updates);
-            
+
             // Log the restoration
             Log::info('Exam session restored from student details', [
                 'session_id' => $this->restoringSessionId,
@@ -260,24 +227,24 @@ class StudentDetails extends Component
                 'restored_at' => $now,
                 'new_adjusted_completion_time' => $session->fresh()->adjustedCompletionTime->toDateTimeString(),
             ]);
-            
-            $actualExtraMessage = $totalExtraMinutes > $this->restoreMinutes ? " (including {$minutesNeeded} minutes to bring session to current time)" : "";
+
+            $actualExtraMessage = $totalExtraMinutes > $this->restoreMinutes ? " (including {$minutesNeeded} minutes to bring session to current time)" : '';
             session()->flash('success', "Session restored successfully. Student can now log in and continue the exam with {$this->restoreMinutes} additional minutes{$actualExtraMessage}. New end time: {$session->fresh()->adjustedCompletionTime->format('M d, Y g:i A')}.");
-            
+
             // Close modal and reload student data
             $this->cancelRestore();
             $this->loadStudent();
-            
+
         } catch (\Exception $e) {
-            Log::error('Error restoring exam session from student details: ' . $e->getMessage(), [
+            Log::error('Error restoring exam session from student details: '.$e->getMessage(), [
                 'session_id' => $this->restoringSessionId,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            $this->errorMessage = 'Failed to restore session: ' . $e->getMessage();
+            $this->errorMessage = 'Failed to restore session: '.$e->getMessage();
         }
     }
-    
+
     /**
      * Get session status (from ExamExtraTime component)
      */
@@ -285,24 +252,25 @@ class StudentDetails extends Component
     {
         $now = now();
         $adjustedEndTime = $session->adjustedCompletionTime;
-        
+
         if ($session->completed_at && $session->completed_at <= $now) {
             return 'completed';
         }
-        
+
         if ($adjustedEndTime && $adjustedEndTime <= $now) {
             return 'expired';
         }
-        
+
         return 'active';
     }
-    
+
     /**
      * Check if session can be restored
      */
     public function canRestoreSession($session)
     {
         $status = $this->getSessionStatus($session);
+
         return in_array($status, ['completed', 'expired']);
     }
 

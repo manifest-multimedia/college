@@ -67,38 +67,16 @@ class ExamResultsExport implements FromCollection, WithHeadings
                 $totalMarks = 0;
                 $obtainedMarks = 0;
 
-                // Process each response to calculate metrics
-                foreach ($session->responses as $response) {
-                    $question = $response->question;
-                    if (! $question) {
-                        continue;
-                    }
+                // Use ResultsService for consistent calculation
+                $resultsService = app(\App\Services\ResultsService::class);
+                $result = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
 
-                    // Find the correct option
-                    $correctOption = $question->options->where('is_correct', true)->first();
+                $totalAttempted = $result['total_answered'];
+                $totalCorrect = $result['correct_answers'];
+                $obtainedMarks = $result['obtained_marks'];
+                $totalMarks = $result['total_marks'];
+                $scorePercentage = $result['percentage'];                // Return formatted row for export
 
-                    // Question mark value (default to 1 if not specified)
-                    $questionMark = $question->mark ?? 1;
-                    $totalMarks += $questionMark;
-
-                    // Check if the answer is correct
-                    $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
-                    $isAttempted = ! is_null($response->selected_option);
-
-                    if ($isAttempted) {
-                        $totalAttempted++;
-                    }
-
-                    if ($isCorrect) {
-                        $totalCorrect++;
-                        $obtainedMarks += $questionMark;
-                    }
-                }
-
-                // Calculate percentage (prevent division by zero)
-                $scorePercentage = $totalMarks > 0 ? round(($obtainedMarks / $totalMarks) * 100, 2) : 0;
-
-                // Return formatted row for export
                 return [
                     'date' => $session->completed_at->format('Y-m-d'),
                     'student_id' => $student ? $student->student_id : 'N/A',
