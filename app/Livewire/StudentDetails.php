@@ -75,6 +75,16 @@ class StudentDetails extends Component
         $resultsService = app(\App\Services\ResultsService::class);
         $result = $resultsService->calculateOnlineExamScore($session);
 
+        // Debug logging for score comparison
+        Log::info('StudentDetails score calculation', [
+            'session_id' => $session->id,
+            'student_name' => $session->student->name ?? 'Unknown',
+            'correct_answers' => $result['correct_answers'],
+            'obtained_marks' => $result['obtained_marks'],
+            'total_marks' => $result['total_marks'],
+            'percentage' => $result['percentage'],
+        ]);
+
         return [
             'obtained' => $result['obtained_marks'],
             'total' => $result['total_marks'],

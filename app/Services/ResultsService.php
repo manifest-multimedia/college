@@ -46,6 +46,7 @@ class ResultsService
         }
 
         // Get responses (use provided or load from session)
+        $responsesWereProvided = ($responses !== null);
         if ($responses === null) {
             $responses = $session->responses()
                 ->with('question.options')
@@ -54,8 +55,20 @@ class ResultsService
                 ->get();
         }
 
+        // Log before limiting
+        $responsesCountBefore = $responses->count();
+
         // Ensure we only process up to questionsPerSession, even if more responses provided
         $responses = $responses->take($questionsPerSession);
+
+        // Log what we're processing
+        Log::info('ResultsService processing responses', [
+            'session_id' => $session->id,
+            'responses_provided' => $responsesWereProvided,
+            'responses_before_limit' => $responsesCountBefore,
+            'responses_after_limit' => $responses->count(),
+            'questions_per_session' => $questionsPerSession,
+        ]);
 
         $totalQuestions = min($responses->count(), $questionsPerSession);
         $correctAnswers = 0;
@@ -81,6 +94,15 @@ class ResultsService
                 $obtainedMarks += $questionMark;
             }
         }
+
+        // Log final calculation
+        Log::info('ResultsService final calculation', [
+            'session_id' => $session->id,
+            'correct_answers' => $correctAnswers,
+            'obtained_marks' => $obtainedMarks,
+            'total_marks' => $totalMarks,
+            'percentage' => round(($obtainedMarks / max($totalMarks, 1)) * 100, 2),
+        ]);
 
         // Calculate percentage
         $percentage = $this->calculatePercentage($obtainedMarks, $totalMarks);
