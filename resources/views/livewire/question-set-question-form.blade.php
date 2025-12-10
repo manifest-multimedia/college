@@ -81,6 +81,96 @@
                             <small class="text-muted">Provide a clear and concise question</small>
                         </div>
 
+                        <!-- Question Images -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                Question Images <span class="text-muted">(Optional)</span>
+                            </label>
+                            <input type="file" wire:model="questionImages" multiple accept="image/*" 
+                                   class="form-control @error('questionImages.*') is-invalid @enderror">
+                            @error('questionImages.*')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Upload images for this question (JPG, PNG, WebP, max 2MB each)</small>
+
+                            {{-- Preview new images --}}
+                            @if(!empty($questionImages) && is_array($questionImages) && count($questionImages) > 0)
+                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                    @foreach($questionImages as $index => $image)
+                                        @if($image && is_object($image))
+                                            <div class="position-relative">
+                                                <img src="{{ $image->temporaryUrl() }}" 
+                                                     alt="Preview" 
+                                                     class="img-thumbnail" 
+                                                     style="max-height: 150px; object-fit: cover;">
+                                                <button type="button" 
+                                                        wire:click="removeNewImage({{ $index }})" 
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        style="padding: 0.15rem 0.4rem; line-height: 1;">
+                                                    ×
+                                                </button>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            {{-- Display existing images when editing --}}
+                            @if($isEditing && !empty($existingImages) && count($existingImages) > 0)
+                                <div class="mt-3">
+                                    <label class="form-label fw-semibold">Current Images:</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach($existingImages as $image)
+                                            <div class="position-relative">
+                                                <img src="{{ $image['url'] }}" 
+                                                     alt="{{ $image['filename'] }}" 
+                                                     class="img-thumbnail" 
+                                                     style="max-height: 150px; object-fit: cover;">
+                                                <button type="button" 
+                                                        wire:click="removeExistingImage({{ $image['id'] }})" 
+                                                        class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+                                                        style="padding: 0.15rem 0.4rem; line-height: 1;">
+                                                    ×
+                                                </button>
+                                                <small class="d-block text-muted text-center mt-1" style="font-size: 11px;">
+                                                    {{ $image['size'] }}
+                                                </small>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Table Data (Simple JSON input for now) -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                Table Data <span class="text-muted">(Optional)</span>
+                            </label>
+                            <textarea class="form-control @error('tableData') is-invalid @enderror" 
+                                      wire:model="tableData" 
+                                      rows="4" 
+                                      placeholder='{"headers":["Column 1","Column 2"],"rows":[["Data 1","Data 2"]]}'></textarea>
+                            @error('tableData')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Enter table data in JSON format with headers and rows</small>
+                            
+                            @if($tableData || $existingTableData)
+                                <div class="mt-2">
+                                    <button type="button" wire:click="clearTableData" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Clear Table
+                                    </button>
+                                </div>
+                            @endif
+
+                            @if($existingTableData && !$tableData)
+                                <div class="alert alert-info mt-2" role="alert">
+                                    <small><i class="bi bi-info-circle"></i> This question has an existing table. Edit the JSON above to modify it.</small>
+                                </div>
+                            @endif
+                        </div>
+
                         <div class="row">
                             <!-- Question Type -->
                             <div class="col-md-4">
@@ -387,17 +477,42 @@
                         <div class="question-preview">
                             <h6>{{ $questionText }}</h6>
                             
+                            {{-- Preview images --}}
+                            @if(!empty($questionImages) && is_array($questionImages) && count($questionImages) > 0)
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    @foreach($questionImages as $image)
+                                        @if($image && is_object($image))
+                                            <img src="{{ $image->temporaryUrl() }}" 
+                                                 alt="Question image" 
+                                                 class="img-fluid rounded" 
+                                                 style="max-height: 200px; object-fit: contain;">
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if(!empty($existingImages) && count($existingImages) > 0)
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    @foreach($existingImages as $image)
+                                        <img src="{{ $image['url'] }}" 
+                                             alt="Question image" 
+                                             class="img-fluid rounded" 
+                                             style="max-height: 200px; object-fit: contain;">
+                                    @endforeach
+                                </div>
+                            @endif
+                            
                             @if($questionType === 'multiple_choice' && count(array_filter($options)) > 0)
                                 <div class="options-preview mt-3">
                                     @foreach($options as $index => $option)
                                         @if(!empty(trim($option)))
-                                            <div class="form-check">
+                                            <div class="form-check mb-3">
                                                 <input class="form-check-input" type="radio" 
                                                        name="preview" disabled 
-                                                       @if($index == $correctOption) checked @endif>
+                                                       @if(in_array($index, $correctOptions)) checked @endif>
                                                 <label class="form-check-label">
                                                     <strong>{{ chr(65 + $index) }}.</strong> {{ $option }}
-                                                    @if($index == $correctOption)
+                                                    @if(in_array($index, $correctOptions))
                                                         <span class="badge bg-success ms-2">Correct</span>
                                                     @endif
                                                 </label>
@@ -420,7 +535,8 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div wire:loading wire:target="save" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
+    @if($isSaving)
+    <div class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
          style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
         <div class="bg-white p-4 rounded shadow">
             <div class="text-center">
@@ -428,10 +544,11 @@
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <div>
-                    <span wire:loading wire:target="save">{{ $isEditing ? 'Updating' : 'Creating' }} question...</span>
+                    <span>{{ $isEditing ? 'Updating' : 'Creating' }} question...</span>
                 </div>
             </div>
         </div>
     </div>
+    @endif
     @endif
 </div>

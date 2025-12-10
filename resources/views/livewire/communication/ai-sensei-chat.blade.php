@@ -462,17 +462,19 @@
                         <form @submit.prevent="sendChatMessage" class="mt-3">
                             <div class="input-group mb-2">
                                 <!-- File Upload Button -->
-                                <button class="btn btn-outline-secondary " type="button"
+                                <button class="btn btn-outline-secondary" type="button"
                                     onclick="document.getElementById('file-upload').click()" 
-
+                                    wire:loading.attr="disabled" 
+                                    wire:target="temporaryUploads"
                                     style="border: 1px solid #ced4da;">
-                                    
                                     <i class="bi bi-paperclip" style="font-size:25px"></i>
                                 </button>
 
                                 <textarea class="form-control" id="message-input" x-model="newMessage" rows="2"
                                     placeholder="Message AI Sensei..." @input="handleTyping" @keydown.enter.prevent="sendChatMessage"
-                                    :disabled="isSubmitting"></textarea>
+                                    :disabled="isSubmitting"
+                                    wire:loading.attr="disabled" 
+                                    wire:target="temporaryUploads"></textarea>
 
                                 <button class="btn btn-primary" type="submit" id="send-button"
                                     :disabled="isSubmitting || !newMessage.trim()">
@@ -485,6 +487,14 @@
                             <!-- Hidden file input -->
                             <input type="file" id="file-upload" class="d-none" wire:model="temporaryUploads"
                                 multiple />
+                            
+                            <!-- File processing indicator (shows while Livewire uploads file) -->
+                            <div wire:loading wire:target="temporaryUploads" class="mt-2 alert alert-info d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-2" role="status">
+                                    <span class="visually-hidden">Processing...</span>
+                                </div>
+                                <span>Processing file upload... Please wait.</span>
+                            </div>
 
                             <!-- File upload status -->
                             @if ($uploadingFile)

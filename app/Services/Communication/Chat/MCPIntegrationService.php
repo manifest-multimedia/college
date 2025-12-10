@@ -896,6 +896,37 @@ class MCPIntegrationService
 
         $contextString .= "\n**Important**: Only perform actions the user has permission for. If they request something they can't do, explain their role limitations politely and suggest who they should contact.";
 
+        // Add bulk operation guidance with natural language mapping
+        $contextString .= "\n\n## Natural Language to Bulk Operations Mapping\n";
+        $contextString .= "🎯 **User Intent Detection**: When users say:\n";
+        $contextString .= "- \"add all questions\" / \"add all\" → Use `bulk_add_questions_to_set` with ALL questions\n";
+        $contextString .= "- \"add remaining questions\" / \"add the rest\" → Use `bulk_add_questions_to_set` with ALL remaining\n";
+        $contextString .= "- \"add questions from file\" / \"import questions\" → Use `bulk_add_questions_to_set`\n";
+        $contextString .= "- \"add [number] questions\" (where number > 1) → Use `bulk_add_questions_to_set`\n";
+        $contextString .= "\n⚠️ **CRITICAL Rules**:\n";
+        $contextString .= "1. ALWAYS use `bulk_add_questions_to_set` for 2+ questions\n";
+        $contextString .= "2. Extract and pass ALL questions in ONE call (not batches)\n";
+        $contextString .= "3. NEVER use `add_question_to_set` repeatedly in a loop\n";
+        $contextString .= "4. Parse the file content programmatically - look for question patterns (Q:, Question:, numbered lists)\n";
+        $contextString .= "5. If file format is unclear, ask user for the pattern/structure once, then extract all\n";
+        
+        $contextString .= "\n📋 **Common Question File Formats**:\n";
+        $contextString .= "- Pattern 1: `Q: [question]\\nA) option\\nB) option\\nCorrect: A`\n";
+        $contextString .= "- Pattern 2: `1. [question]\\na. option\\nb. option\\nAnswer: a`\n";
+        $contextString .= "- Pattern 3: Lines starting with numbers followed by period or parenthesis\n";
+        $contextString .= "- Pattern 4: JSON arrays with question objects\n";
+        $contextString .= "💡 Use regex or string parsing to extract all at once, don't process line-by-line\n";
+        
+        $contextString .= "\n🤖 **Smart Question Extraction Algorithm**:\n";
+        $contextString .= "```\n";
+        $contextString .= "1. Read entire file content with file_search\n";
+        $contextString .= "2. Split by double newlines or question markers (Q:, 1., etc)\n";
+        $contextString .= "3. For each section, extract: question_text, options[], correct_answer\n";
+        $contextString .= "4. Build complete questions[] array in memory\n";
+        $contextString .= "5. Call bulk_add_questions_to_set ONCE with the full array\n";
+        $contextString .= "```\n";
+        $contextString .= "⚡ Never extract questions incrementally - parse ALL, then submit ALL\n";
+
         return $contextString;
     }
 

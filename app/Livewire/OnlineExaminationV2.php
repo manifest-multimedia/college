@@ -10,7 +10,6 @@ use App\Models\Response;
 use App\Models\Student;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
@@ -20,27 +19,46 @@ use Livewire\Component;
 class OnlineExaminationV2 extends Component
 {
     public $exam;
+
     public $examSession;
+
     public $questions = [];
+
     public $flaggedQuestions = []; // Array of flagged question IDs
+
     public $user;
+
     public $student;
+
     public $isLoading = true;
+
     public $readOnlyMode = false;
+
     public $readOnlyReason = null; // 'completed' or 'device_mismatch'
+
     public $showModal = false;
+
     public $modalMessage = '';
+
     public $device;
+
     public $browser;
+
     public $platform;
+
     public $isRobot;
+
     public $deviceValidation = null;
+
     public $validationMessage = '';
-    
+
     // V2 Optimization Properties
     public $lastSyncedAt;
+
     public $pendingSyncCount = 0;
+
     public $isOffline = false;
+
     public $syncStatus = 'synced'; // 'syncing', 'synced', 'offline', 'error'
 
     protected $listeners = ['submitExam'];
@@ -48,22 +66,22 @@ class OnlineExaminationV2 extends Component
     public function mount($examPassword, $student_id)
     {
         $this->exam = Exam::where('password', $examPassword)->with('questions.options')->firstOrFail();
-        
+
         // Get student using database ID (matches V1 behavior)
         $this->student = Student::find($student_id);
-        if (!$this->student) {
+        if (! $this->student) {
             abort(404, 'Student not found');
         }
-        
+
         $studentName = $this->student->first_name.' '.$this->student->last_name.' '.$this->student->other_name;
-        
+
         $this->user = User::firstOrCreate(
             ['email' => $this->student->email],
             ['name' => $studentName]
         );
 
         // Device detection
-        $deviceDetector = new DeviceDetector();
+        $deviceDetector = new DeviceDetector;
         $this->device = $deviceDetector->device();
         $this->browser = $deviceDetector->browser();
         $this->platform = $deviceDetector->platform();
@@ -74,7 +92,7 @@ class OnlineExaminationV2 extends Component
             ->where('student_id', $this->user->id)
             ->first();
 
-        if (!$this->examSession) {
+        if (! $this->examSession) {
             $this->createExamSession();
         } else {
             $this->validateDeviceAndSession();
@@ -90,7 +108,7 @@ class OnlineExaminationV2 extends Component
         $currentTime = now();
         $sessionToken = session('exam_session_token') ?? \Illuminate\Support\Str::random(40);
         session(['exam_session_token' => $sessionToken]);
-        $deviceInfo = json_encode((new DeviceDetector())->getDeviceInfo());
+        $deviceInfo = json_encode((new DeviceDetector)->getDeviceInfo());
 
         $this->examSession = ExamSession::create([
             'exam_id' => $this->exam->id,
@@ -111,20 +129,21 @@ class OnlineExaminationV2 extends Component
 
     protected function validateDeviceAndSession()
     {
-        $currentDeviceInfo = json_encode((new DeviceDetector())->getDeviceInfo());
+        $currentDeviceInfo = json_encode((new DeviceDetector)->getDeviceInfo());
         $sessionToken = session('exam_session_token');
 
-        if (!$sessionToken) {
+        if (! $sessionToken) {
             $sessionToken = \Illuminate\Support\Str::random(40);
             session(['exam_session_token' => $sessionToken]);
         }
 
         // Check if exam is completed (read-only mode)
-        if ($this->examSession->completed_at && !$this->examSession->completed_at->isFuture()) {
+        if ($this->examSession->completed_at && ! $this->examSession->completed_at->isFuture()) {
             $this->readOnlyMode = true;
             $this->readOnlyReason = 'completed';
             $this->deviceValidation = 'approved';
             $this->validationMessage = 'Exam completed';
+
             return;
         }
 
@@ -136,6 +155,7 @@ class OnlineExaminationV2 extends Component
                 $this->deviceValidation = 'approved';
                 $this->validationMessage = 'Device validated successfully';
                 $this->examSession->updateDeviceAccess($sessionToken, $currentDeviceInfo);
+
                 return;
             }
 
@@ -143,6 +163,7 @@ class OnlineExaminationV2 extends Component
             $this->readOnlyReason = 'device_mismatch';
             $this->validationMessage = 'Device mismatch detected. Contact administrator.';
             $this->readOnlyMode = true;
+
             return;
         }
 
@@ -156,20 +177,20 @@ class OnlineExaminationV2 extends Component
         // Check if this session already has defined questions from question sets
         $existingSessionQuestions = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
             ->orderBy('display_order')
-            ->with('question.options')
+            ->with(['question.options', 'question.attachments'])
             ->get();
 
         if ($existingSessionQuestions->isNotEmpty()) {
             $examQuestions = $existingSessionQuestions->pluck('question');
-            
+
             Log::info('V2: Loading existing session questions', [
                 'session_id' => $this->examSession->id,
-                'question_count' => $examQuestions->count()
+                'question_count' => $examQuestions->count(),
             ]);
         } else {
             // Generate new session questions using the exam model's method
             $examQuestions = $this->exam->generateSessionQuestions(true);
-            
+
             // Store these questions in exam_session_questions for consistency across page loads
             $displayOrder = 1;
             foreach ($examQuestions as $question) {
@@ -179,17 +200,17 @@ class OnlineExaminationV2 extends Component
                     'display_order' => $displayOrder++,
                 ]);
             }
-            
+
             Log::info('V2: Generated and stored new session questions', [
                 'session_id' => $this->examSession->id,
-                'question_count' => $examQuestions->count()
+                'question_count' => $examQuestions->count(),
             ]);
         }
 
         // Load flagged questions for this session - CRITICAL: Always fresh from DB
         $this->flaggedQuestions = \App\Models\ExamSessionFlag::where('exam_session_id', $this->examSession->id)
             ->pluck('question_id')
-            ->map(fn($id) => (int) $id) // Ensure integers for JS comparison
+            ->map(fn ($id) => (int) $id) // Ensure integers for JS comparison
             ->toArray();
 
         Log::info('V2: Loaded flagged questions', [
@@ -206,7 +227,25 @@ class OnlineExaminationV2 extends Component
 
             $selectedAnswer = $response ? (int) $response->selected_option : null;
             $isFlagged = in_array($question->id, $this->flaggedQuestions);
-            
+
+            // Extract images and table data from attachments
+            $images = [];
+            $tableData = null;
+
+            if ($question->attachments) {
+                foreach ($question->attachments as $attachment) {
+                    if ($attachment->attachment_type === 'image') {
+                        $images[] = [
+                            'file_path' => $attachment->file_path,
+                            'url' => $attachment->url,
+                            'filename' => $attachment->original_filename,
+                        ];
+                    } elseif ($attachment->attachment_type === 'table') {
+                        $tableData = $attachment->metadata;
+                    }
+                }
+            }
+
             $this->questions[] = [
                 'id' => $question->id,
                 'question_text' => $question->question_text,
@@ -214,25 +253,27 @@ class OnlineExaminationV2 extends Component
                 'options' => $question->options->toArray(),
                 'selected_answer' => $selectedAnswer,
                 'is_flagged' => $isFlagged,
+                'images' => $images,
+                'table_data' => $tableData,
             ];
-            
+
             // Debug log
             if ($selectedAnswer !== null) {
                 Log::info('V2: Question with answer loaded', [
                     'question_id' => $question->id,
                     'selected_answer' => $selectedAnswer,
-                    'response_id' => $response->id ?? null
+                    'response_id' => $response->id ?? null,
                 ]);
             }
         }
-        
+
         // Log summary
         $answeredCount = collect($this->questions)->whereNotNull('selected_answer')->count();
         Log::info('V2: Questions loaded summary', [
             'session_id' => $this->examSession->id,
             'total_questions' => count($this->questions),
             'answered_questions' => $answeredCount,
-            'question_ids' => collect($this->questions)->pluck('id')->toArray()
+            'question_ids' => collect($this->questions)->pluck('id')->toArray(),
         ]);
     }
 
@@ -254,17 +295,18 @@ class OnlineExaminationV2 extends Component
                 $validQuestionIds = \App\Models\ExamSessionQuestion::where('exam_session_id', $this->examSession->id)
                     ->pluck('question_id')
                     ->toArray();
-                
+
                 $dataToUpsert = [];
-                
+
                 foreach ($responses as $questionId => $answer) {
                     // Validate question belongs to this exam session
-                    if (!in_array($questionId, $validQuestionIds)) {
+                    if (! in_array($questionId, $validQuestionIds)) {
                         Log::warning('V2: Attempted to save response for invalid question', [
                             'session_id' => $this->examSession->id,
                             'question_id' => $questionId,
-                            'valid_questions' => $validQuestionIds
+                            'valid_questions' => $validQuestionIds,
                         ]);
+
                         continue;
                     }
 
@@ -278,7 +320,7 @@ class OnlineExaminationV2 extends Component
                     ];
                 }
 
-                if (!empty($dataToUpsert)) {
+                if (! empty($dataToUpsert)) {
                     Response::upsert(
                         $dataToUpsert,
                         ['exam_session_id', 'question_id', 'student_id'],
@@ -295,20 +337,20 @@ class OnlineExaminationV2 extends Component
             return [
                 'success' => true,
                 'synced_count' => $syncedCount,
-                'last_synced_at' => $this->lastSyncedAt->toIso8601String()
+                'last_synced_at' => $this->lastSyncedAt->toIso8601String(),
             ];
 
         } catch (\Throwable $th) {
             Log::error('V2 Batch Sync Error', [
                 'exam_session_id' => $this->examSession->id,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
 
             $this->syncStatus = 'error';
-            
+
             return [
                 'success' => false,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ];
         }
     }
@@ -334,11 +376,12 @@ class OnlineExaminationV2 extends Component
 
                 foreach ($flags as $questionId => $action) {
                     // Validate question belongs to this exam session
-                    if (!in_array($questionId, $validQuestionIds)) {
+                    if (! in_array($questionId, $validQuestionIds)) {
                         Log::warning('V2: Attempted to flag invalid question', [
                             'session_id' => $this->examSession->id,
                             'question_id' => $questionId,
                         ]);
+
                         continue;
                     }
 
@@ -373,12 +416,12 @@ class OnlineExaminationV2 extends Component
         } catch (\Throwable $th) {
             Log::error('V2 Batch Flag Sync Error', [
                 'exam_session_id' => $this->examSession->id,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ];
         }
     }
@@ -407,7 +450,7 @@ class OnlineExaminationV2 extends Component
                 ->pluck('question_id')
                 ->toArray();
 
-            if (!in_array($questionId, $validQuestionIds)) {
+            if (! in_array($questionId, $validQuestionIds)) {
                 return ['success' => false, 'message' => 'Invalid question'];
             }
 
@@ -433,7 +476,7 @@ class OnlineExaminationV2 extends Component
             ]);
 
             return [
-                'success' => true, 
+                'success' => true,
                 'message' => 'Response cleared successfully',
                 'was_synced' => $deleted > 0,
             ];
@@ -442,12 +485,12 @@ class OnlineExaminationV2 extends Component
             Log::error('V2 Clear Response Error', [
                 'exam_session_id' => $this->examSession->id,
                 'question_id' => $questionId,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
 
             return [
                 'success' => false,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ];
         }
     }
@@ -474,7 +517,7 @@ class OnlineExaminationV2 extends Component
 
     public function getRemainingTimeProperty()
     {
-        if (!$this->examSession) {
+        if (! $this->examSession) {
             return 0;
         }
 
@@ -496,7 +539,7 @@ class OnlineExaminationV2 extends Component
     #[On('auto-submit')]
     public function autoSubmit()
     {
-        if ($this->examSession && !$this->examSession->completed_at) {
+        if ($this->examSession && ! $this->examSession->completed_at) {
             $this->examSession->update([
                 'completed_at' => now(),
                 'auto_submitted' => true,
@@ -515,7 +558,7 @@ class OnlineExaminationV2 extends Component
     public function examTimeExpired()
     {
         try {
-            if ($this->examSession && !$this->examSession->completed_at) {
+            if ($this->examSession && ! $this->examSession->completed_at) {
                 $timeExpiredAt = now();
 
                 // Log the expiration
@@ -566,6 +609,7 @@ class OnlineExaminationV2 extends Component
     {
         if ($this->readOnlyMode) {
             session()->flash('error', 'Cannot submit exam in read-only mode.');
+
             return;
         }
 
@@ -586,17 +630,18 @@ class OnlineExaminationV2 extends Component
                     'student_id' => $this->user->id,
                     'answered_count' => $answeredCount,
                     'total_questions' => count($this->questions),
-                    'last_sync' => $this->lastSyncedAt
+                    'last_sync' => $this->lastSyncedAt,
                 ]);
             });
 
             session()->flash('message', 'Exam submitted successfully.');
+
             return redirect()->route('take-exam');
 
         } catch (\Throwable $th) {
             Log::error('V2 Exam Submission Error', [
                 'exam_session_id' => $this->examSession->id,
-                'error' => $th->getMessage()
+                'error' => $th->getMessage(),
             ]);
 
             session()->flash('error', 'Failed to submit exam. Please try again.');

@@ -11,6 +11,7 @@ use App\Models\QuestionSet;
 use App\Models\Student;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -52,7 +53,7 @@ class ExamManagementMCPService
             ],
             [
                 'name' => 'add_question_to_set',
-                'description' => 'Add a multiple choice question to a question set',
+                'description' => '⚠️ Add a SINGLE question to a question set. ONLY use this for adding ONE question at a time. For 2+ questions, you MUST use bulk_add_questions_to_set instead. DO NOT call this function repeatedly in a loop - use bulk operations!',
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -191,7 +192,7 @@ class ExamManagementMCPService
             ],
             [
                 'name' => 'bulk_add_questions_to_set',
-                'description' => 'Add multiple questions to a question set at once. Use this after analyzing the document and receiving user confirmation.',
+                'description' => '✅ PREFERRED METHOD: Add multiple questions to a question set in ONE operation. ALWAYS use this when adding 2 or more questions. You MUST pass ALL questions in a single call - do NOT split into batches. If adding questions from a file/document, extract ALL questions and pass them together. Maximum efficiency: processes all questions in one transaction.',
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -464,6 +465,38 @@ class ExamManagementMCPService
      */
     public function addQuestionToSet(array $args): array
     {
+        // 🚨 ANTI-LOOP PROTECTION: Detect if AI is adding questions in a loop
+        $cacheKey = "mcp_question_add_attempts_{$args['question_set_id']}_".Auth::id();
+        $attempts = Cache::get($cacheKey, []);
+        
+        // Add current attempt with timestamp
+        $attempts[] = now()->timestamp;
+        
+        // Keep only attempts from last 60 seconds
+        $attempts = array_filter($attempts, fn($time) => $time > now()->subSeconds(60)->timestamp);
+        
+        // If 2+ attempts in 60 seconds, force bulk operation
+        if (count($attempts) >= 2) {
+            Cache::forget($cacheKey); // Clear cache
+            
+            Log::warning('Detected loop in add_question_to_set - forcing bulk operation', [
+                'question_set_id' => $args['question_set_id'],
+                'attempts_in_60s' => count($attempts),
+                'user_id' => Auth::id(),
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => '🛑 LOOP DETECTED: You are calling add_question_to_set repeatedly (2+ times in 60 seconds). This is inefficient and causes rate limit errors. You MUST use bulk_add_questions_to_set instead. Extract ALL remaining questions from the file and call bulk_add_questions_to_set ONCE with the complete array. Do NOT continue adding questions one at a time.',
+                'loop_detected' => true,
+                'required_action' => 'Use bulk_add_questions_to_set with ALL questions',
+                'attempts_detected' => count($attempts),
+            ];
+        }
+        
+        // Update cache
+        Cache::put($cacheKey, $attempts, 60);
+        
         $questionSet = QuestionSet::find($args['question_set_id']);
         if (! $questionSet) {
             return [
@@ -1082,25 +1115,13 @@ class ExamManagementMCPService
                 ];
             }
 
-            // 🚨 SMART BATCH DETECTION: Reject suspiciously small batches
-            // This prevents the AI from adding questions incrementally (5 at a time)
+            // Log batch info for monitoring
             $questionCount = count($questions);
-            if ($questionCount <= 10 && $questionCount > 0) {
-                Log::warning('Suspiciously small batch detected in bulk add', [
-                    'question_set_id' => $questionSetId,
-                    'question_count' => $questionCount,
-                    'user_id' => $user->id,
-                    'expected_behavior' => 'bulk_add should receive ALL questions at once, not incremental batches',
-                ]);
-
-                // Return a helpful error that forces the AI to retry with ALL questions
-                return [
-                    'success' => false,
-                    'error' => "⚠️ BATCH SIZE ERROR: You attempted to add only {$questionCount} questions. If this is from a document or large generation request, you MUST extract and add ALL questions in ONE call to bulk_add_questions_to_set. Do NOT add questions incrementally (5 or 10 at a time). Please retry with the COMPLETE array of ALL questions. If you genuinely only have {$questionCount} questions total, confirm this with the user first.",
-                    'retry_required' => true,
-                    'suggested_action' => 'Extract ALL questions from the source and call bulk_add_questions_to_set once with the complete array',
-                ];
-            }
+            Log::info('Bulk adding questions', [
+                'question_set_id' => $questionSetId,
+                'question_count' => $questionCount,
+                'user_id' => $user->id,
+            ]);
 
             $successCount = 0;
             $failedCount = 0;

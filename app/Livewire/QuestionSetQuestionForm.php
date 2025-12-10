@@ -4,13 +4,19 @@ namespace App\Livewire;
 
 use App\Models\Option;
 use App\Models\Question;
+use App\Models\QuestionAttachment;
 use App\Models\QuestionSet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class QuestionSetQuestionForm extends Component
 {
+    use WithFileUploads;
+
     public $questionSetId;
 
     public $questionId = null;
@@ -39,6 +45,17 @@ class QuestionSetQuestionForm extends Component
 
     public $correctOptions = [];
 
+    // File uploads
+    public $questionImages = [];
+
+    public $existingImages = [];
+
+    public $imagesToDelete = [];
+
+    public $tableData = null;
+
+    public $existingTableData = null;
+
     // UI state
     public $isEditing = false;
 
@@ -59,7 +76,10 @@ class QuestionSetQuestionForm extends Component
         'examSection' => 'nullable|string|max:255',
         'options' => 'required|array|min:2',
         'options.*' => 'required|string|min:1',
-        'correctOption' => 'required|integer|min:0',
+        'correctOptions' => 'required|array|min:1',
+        'correctOptions.*' => 'required|integer|min:0',
+        'questionImages.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'tableData' => 'nullable|json',
     ];
 
     protected $messages = [
@@ -69,7 +89,8 @@ class QuestionSetQuestionForm extends Component
         'options.min' => 'At least 2 options are required',
         'options.*.required' => 'Option text is required',
         'options.*.min' => 'Option text cannot be empty',
-        'correctOption.required' => 'Please select the correct answer',
+        'correctOptions.required' => 'Please select at least one correct answer',
+        'correctOptions.min' => 'Please select at least one correct answer',
     ];
 
     public function mount($questionSetId, $questionId = null)
@@ -101,7 +122,7 @@ class QuestionSetQuestionForm extends Component
 
     private function loadQuestion()
     {
-        $this->question = Question::with('options')
+        $this->question = Question::with(['options', 'attachments'])
             ->where('question_set_id', $this->questionSetId)
             ->findOrFail($this->questionId);
 
@@ -129,6 +150,32 @@ class QuestionSetQuestionForm extends Component
         // Ensure we have at least 2 options for the form
         while (count($this->options) < 4) {
             $this->options[] = '';
+        }
+
+        // Load existing attachments
+        $this->loadExistingAttachments();
+    }
+
+    private function loadExistingAttachments()
+    {
+        if (! $this->question) {
+            return;
+        }
+
+        // Load existing images
+        $this->existingImages = $this->question->images()->get()->map(function ($attachment) {
+            return [
+                'id' => $attachment->id,
+                'url' => $attachment->url,
+                'filename' => $attachment->original_filename,
+                'size' => $attachment->formatted_size,
+            ];
+        })->toArray();
+
+        // Load existing table data
+        $tableAttachment = $this->question->tables()->first();
+        if ($tableAttachment) {
+            $this->existingTableData = $tableAttachment->metadata;
         }
     }
 
@@ -163,6 +210,31 @@ class QuestionSetQuestionForm extends Component
         }
     }
 
+    public function removeNewImage($index)
+    {
+        if (isset($this->questionImages[$index])) {
+            array_splice($this->questionImages, $index, 1);
+        }
+    }
+
+    public function removeExistingImage($imageId)
+    {
+        // Mark for deletion
+        $this->imagesToDelete[] = $imageId;
+
+        // Remove from existing images array
+        $this->existingImages = array_filter($this->existingImages, function ($img) use ($imageId) {
+            return $img['id'] !== $imageId;
+        });
+        $this->existingImages = array_values($this->existingImages);
+    }
+
+    public function clearTableData()
+    {
+        $this->tableData = null;
+        $this->existingTableData = null;
+    }
+
     public function updated($propertyName)
     {
         // Validate only the changed property
@@ -193,6 +265,16 @@ class QuestionSetQuestionForm extends Component
         $this->correctOptions = array_values(array_filter($this->correctOptions, function ($index) use ($optionCount) {
             return $index < $optionCount;
         }));
+    }
+
+    private function mapQuestionTypeToDatabase($type)
+    {
+        return match($type) {
+            'multiple_choice' => 'MCQ',
+            'true_false' => 'TF',
+            'short_answer' => 'ESSAY',
+            default => 'MCQ',
+        };
     }
 
     public function save()
@@ -253,7 +335,7 @@ class QuestionSetQuestionForm extends Component
         $question = Question::create([
             'question_set_id' => $this->questionSetId,
             'question_text' => $this->questionText,
-            'type' => $this->questionType,
+            'type' => $this->mapQuestionTypeToDatabase($this->questionType),
             'difficulty_level' => $this->difficultyLevel,
             'mark' => $this->marks,
             'explanation' => $this->explanation,
@@ -261,13 +343,14 @@ class QuestionSetQuestionForm extends Component
         ]);
 
         $this->createOptions($question);
+        $this->saveAttachments($question);
     }
 
     private function updateQuestion()
     {
         $this->question->update([
             'question_text' => $this->questionText,
-            'type' => $this->questionType,
+            'type' => $this->mapQuestionTypeToDatabase($this->questionType),
             'difficulty_level' => $this->difficultyLevel,
             'mark' => $this->marks,
             'explanation' => $this->explanation,
@@ -277,6 +360,9 @@ class QuestionSetQuestionForm extends Component
         // Delete existing options and create new ones
         $this->question->options()->delete();
         $this->createOptions($this->question);
+
+        // Handle attachment updates
+        $this->updateAttachments($this->question);
     }
 
     private function createOptions($question)
@@ -290,6 +376,127 @@ class QuestionSetQuestionForm extends Component
                 ]);
             }
         }
+    }
+
+    private function saveAttachments($question)
+    {
+        // Save image attachments
+        if (! empty($this->questionImages)) {
+            foreach ($this->questionImages as $index => $image) {
+                try {
+                    $filename = $this->generateSecureFilename($image, $question->id);
+                    $path = $image->storeAs('questions/images', $filename, 'exams');
+
+                    QuestionAttachment::create([
+                        'question_id' => $question->id,
+                        'attachment_type' => 'image',
+                        'file_path' => $path,
+                        'original_filename' => $image->getClientOriginalName(),
+                        'mime_type' => $image->getMimeType(),
+                        'file_size' => $image->getSize(),
+                        'display_order' => $index,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error saving image attachment', [
+                        'question_id' => $question->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        // Save table data as attachment
+        if (! empty($this->tableData)) {
+            try {
+                $tableMetadata = json_decode($this->tableData, true);
+
+                QuestionAttachment::create([
+                    'question_id' => $question->id,
+                    'attachment_type' => 'table',
+                    'metadata' => $tableMetadata,
+                    'display_order' => 0,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error saving table attachment', [
+                    'question_id' => $question->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    private function updateAttachments($question)
+    {
+        // Delete marked images
+        if (! empty($this->imagesToDelete)) {
+            foreach ($this->imagesToDelete as $imageId) {
+                $attachment = QuestionAttachment::find($imageId);
+                if ($attachment && $attachment->file_path) {
+                    Storage::disk('exams')->delete($attachment->file_path);
+                    $attachment->delete();
+                }
+            }
+        }
+
+        // Save new images
+        if (! empty($this->questionImages)) {
+            $existingImageCount = count($this->existingImages);
+            foreach ($this->questionImages as $index => $image) {
+                try {
+                    $filename = $this->generateSecureFilename($image, $question->id);
+                    $path = $image->storeAs('questions/images', $filename, 'exams');
+
+                    QuestionAttachment::create([
+                        'question_id' => $question->id,
+                        'attachment_type' => 'image',
+                        'file_path' => $path,
+                        'original_filename' => $image->getClientOriginalName(),
+                        'mime_type' => $image->getMimeType(),
+                        'file_size' => $image->getSize(),
+                        'display_order' => $existingImageCount + $index,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error updating image attachment', [
+                        'question_id' => $question->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        // Update table data
+        if ($this->tableData !== null || $this->existingTableData === null) {
+            // Delete existing table attachment
+            $question->tables()->delete();
+
+            // Create new table attachment if data exists
+            if (! empty($this->tableData)) {
+                try {
+                    $tableMetadata = json_decode($this->tableData, true);
+
+                    QuestionAttachment::create([
+                        'question_id' => $question->id,
+                        'attachment_type' => 'table',
+                        'metadata' => $tableMetadata,
+                        'display_order' => 0,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error updating table attachment', [
+                        'question_id' => $question->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    private function generateSecureFilename($file, $questionId)
+    {
+        $extension = $file->getClientOriginalExtension();
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeName = Str::slug($originalName);
+
+        return "question_{$questionId}_{$safeName}_".time().'.'.$extension;
     }
 
     public function addAnotherQuestion()

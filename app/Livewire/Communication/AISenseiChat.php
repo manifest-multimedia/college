@@ -255,12 +255,18 @@ class AISenseiChat extends Component
      */
     public function sendMessage($message = null)
     {
+        // Increase PHP execution time for AI operations (prevents 504 gateway timeout)
+        set_time_limit(300); // 5 minutes for AI processing
+        
         // Get message from parameter if provided, otherwise use the property
         $messageText = $message ?: $this->newMessage;
 
         if (empty($messageText)) {
             return;
         }
+
+        // 🎯 Natural Language Enhancement: Detect bulk operation intent
+        $messageText = $this->enhanceMessageForBulkOperations($messageText);
 
         // Check if assistant ID is set
         if (! $this->assistantId) {
@@ -381,13 +387,16 @@ class AISenseiChat extends Component
      */
     protected function processAiResponse($runId)
     {
+        // Ensure PHP doesn't timeout during long AI processing
+        set_time_limit(300); // 5 minutes
+        
         try {
             // Enhanced polling with better timeout handling
             $status = 'queued';
-            $maxRetries = 60; // Increased to 30 seconds (60 * 500ms)
+            $maxRetries = 360; // Up to 180 seconds (3 minutes) for file processing
             $retries = 0;
             $startTime = time();
-            $maxExecutionTime = 30; // 30 seconds maximum
+            $maxExecutionTime = 180; // 180 seconds maximum for large files
 
             Log::info('Starting AI response processing', [
                 'run_id' => $runId,
@@ -395,16 +404,20 @@ class AISenseiChat extends Component
                 'max_retries' => $maxRetries,
             ]);
 
-            while (in_array($status, ['queued', 'in_progress', 'requires_action']) && $retries < $maxRetries) {
+            while (in_array($status, ['queued', 'in_progress', 'requires_action', 'incomplete']) && $retries < $maxRetries) {
                 // Check for overall timeout
                 if (time() - $startTime > $maxExecutionTime) {
                     Log::error('AI response processing timed out', [
                         'run_id' => $runId,
                         'execution_time' => time() - $startTime,
                         'final_status' => $status,
+                        'hint' => 'Large file processing exceeded time limit',
                     ]);
-                    $this->error = 'Response processing timed out. Please try again.';
+                    $this->error = '⏱️ Processing took too long (3 minutes). For large files with 100+ questions, try: (1) Ask for a smaller batch (e.g., "Add questions 1-50"), or (2) Upload a smaller file, or (3) Use a simpler file format.';
                     $this->broadcastTypingStatus(false);
+                    
+                    // Try to cancel the stuck run
+                    $this->cancelStuckRun($runId);
 
                     return;
                 }
@@ -530,6 +543,20 @@ class AISenseiChat extends Component
                 ]);
 
                 $this->error = 'Response was cancelled. Please try again.';
+                $this->broadcastTypingStatus(false);
+                session()->forget('ai_sensei_current_run_id');
+
+            } elseif ($status === 'incomplete') {
+                Log::warning('AI run incomplete - may have exceeded token or time limits', [
+                    'run_id' => $runId,
+                    'thread_id' => $this->threadId,
+                    'execution_time' => time() - $startTime,
+                ]);
+
+                // Load any partial messages that may have been generated
+                $this->loadMessages();
+
+                $this->error = 'The file processing took too long. Try asking a specific question about the file instead of requesting full extraction. For example: "How many questions are in this file?" or "What types of questions does this contain?"';
                 $this->broadcastTypingStatus(false);
                 session()->forget('ai_sensei_current_run_id');
 
@@ -894,31 +921,31 @@ class AISenseiChat extends Component
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
         $iconMap = [
-            'pdf' => 'ki-duotone ki-file-sheet fs-3x text-danger',
-            'doc' => 'ki-duotone ki-file-text fs-3x text-primary',
-            'docx' => 'ki-duotone ki-file-text fs-3x text-primary',
-            'txt' => 'ki-duotone ki-file-added fs-3x text-info',
-            'csv' => 'ki-duotone ki-file-sheet fs-3x text-success',
-            'xlsx' => 'ki-duotone ki-file-sheet fs-3x text-success',
-            'xls' => 'ki-duotone ki-file-sheet fs-3x text-success',
-            'ppt' => 'ki-duotone ki-file-up fs-3x text-warning',
-            'pptx' => 'ki-duotone ki-file-up fs-3x text-warning',
-            'jpg' => 'ki-duotone ki-picture fs-3x text-info',
-            'jpeg' => 'ki-duotone ki-picture fs-3x text-info',
-            'png' => 'ki-duotone ki-picture fs-3x text-info',
-            'gif' => 'ki-duotone ki-picture fs-3x text-info',
-            'zip' => 'ki-duotone ki-file-zip fs-3x text-dark',
-            'rar' => 'ki-duotone ki-file-zip fs-3x text-dark',
-            'json' => 'ki-duotone ki-code fs-3x text-warning',
-            'xml' => 'ki-duotone ki-code fs-3x text-warning',
-            'html' => 'ki-duotone ki-code fs-3x text-warning',
-            'css' => 'ki-duotone ki-code fs-3x text-warning',
-            'js' => 'ki-duotone ki-code fs-3x text-warning',
-            'php' => 'ki-duotone ki-code fs-3x text-warning',
-            'py' => 'ki-duotone ki-code fs-3x text-warning',
+            'pdf' => '<i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>',
+            'doc' => '<i class="bi bi-file-earmark-word fs-1 text-primary"></i>',
+            'docx' => '<i class="bi bi-file-earmark-word fs-1 text-primary"></i>',
+            'txt' => '<i class="bi bi-file-earmark-text fs-1 text-info"></i>',
+            'csv' => '<i class="bi bi-file-earmark-spreadsheet fs-1 text-success"></i>',
+            'xlsx' => '<i class="bi bi-file-earmark-excel fs-1 text-success"></i>',
+            'xls' => '<i class="bi bi-file-earmark-excel fs-1 text-success"></i>',
+            'ppt' => '<i class="bi bi-file-earmark-slides fs-1 text-warning"></i>',
+            'pptx' => '<i class="bi bi-file-earmark-slides fs-1 text-warning"></i>',
+            'jpg' => '<i class="bi bi-file-earmark-image fs-1 text-info"></i>',
+            'jpeg' => '<i class="bi bi-file-earmark-image fs-1 text-info"></i>',
+            'png' => '<i class="bi bi-file-earmark-image fs-1 text-info"></i>',
+            'gif' => '<i class="bi bi-file-earmark-image fs-1 text-info"></i>',
+            'zip' => '<i class="bi bi-file-earmark-zip fs-1 text-dark"></i>',
+            'rar' => '<i class="bi bi-file-earmark-zip fs-1 text-dark"></i>',
+            'json' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
+            'xml' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
+            'html' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
+            'css' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
+            'js' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
+            'php' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
+            'py' => '<i class="bi bi-file-earmark-code fs-1 text-warning"></i>',
         ];
 
-        return $iconMap[$extension] ?? 'ki-duotone ki-file fs-3x text-gray-400';
+        return $iconMap[$extension] ?? '<i class="bi bi-file-earmark fs-1 text-secondary"></i>';
     }
 
     /**
@@ -1061,6 +1088,9 @@ class AISenseiChat extends Component
      */
     public function sendMessageWithFiles($customMessage = null)
     {
+        // Increase PHP execution time for file uploads and AI processing
+        set_time_limit(300); // 5 minutes
+        
         try {
             Log::info('sendMessageWithFiles called', [
                 'customMessage' => $customMessage,
@@ -1080,8 +1110,17 @@ class AISenseiChat extends Component
             $this->uploadingFile = true;
             $this->error = null;
 
-            // Prepare the message content
-            $messageText = trim($customMessage ?: $this->newMessage) ?: "I've shared some files with you.";
+            // Prepare the message content with explicit instruction to read files
+            if (!empty($this->pendingFiles) && empty(trim($customMessage ?: $this->newMessage))) {
+                // Generate file list for better context
+                $fileList = array_map(fn($f) => $f['filename'], $this->pendingFiles);
+                $fileNames = implode(', ', $fileList);
+                $messageText = "I've attached the file(s): {$fileNames}. Please confirm you can access the content and provide a brief summary of what you found.";
+            } else {
+                $messageText = trim($customMessage ?: $this->newMessage) ?: "I've shared some files with you.";
+                // Apply bulk operation enhancement if message contains intent keywords
+                $messageText = $this->enhanceMessageForBulkOperations($messageText);
+            }
 
             if (! empty($this->pendingFiles)) {
                 // Upload files and create message with attachments
@@ -1665,6 +1704,41 @@ class AISenseiChat extends Component
 
             return nl2br(e($content));
         }
+    }
+
+    /**
+     * Enhance user messages to map natural language to bulk operations
+     */
+    protected function enhanceMessageForBulkOperations(string $message): string
+    {
+        // Convert to lowercase for pattern matching
+        $lowerMessage = strtolower($message);
+        
+        // Patterns that indicate bulk operation intent
+        $bulkPatterns = [
+            '/\b(add\s+)?all\s+(the\s+)?(questions?|remaining|rest)\b/i',
+            '/\b(add|import)\s+(the\s+)?(remaining|rest\s+of\s+the)\s+questions?\b/i',
+            '/\badd\s+questions?\s+from\s+(the\s+)?(file|document)\b/i',
+            '/\b(add|import)\s+\d{2,}\s+questions?\b/i', // 10+ questions
+            '/\b(add|import)\s+questions?\s+\d+\s*-\s*\d+\b/i', // range like "1-100"
+        ];
+        
+        foreach ($bulkPatterns as $pattern) {
+            if (preg_match($pattern, $message)) {
+                // Add explicit bulk operation instruction
+                $enhancement = "\n\n[SYSTEM INSTRUCTION: Use bulk_add_questions_to_set to add ALL questions in ONE operation. Extract the complete list from the file and pass them together. Do NOT add questions one by one.]";
+                
+                Log::info('Enhanced message for bulk operation', [
+                    'original_message' => $message,
+                    'pattern_matched' => $pattern,
+                    'user_id' => Auth::id(),
+                ]);
+                
+                return $message . $enhancement;
+            }
+        }
+        
+        return $message;
     }
 
     public function render()

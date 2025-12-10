@@ -79,6 +79,21 @@ class QuestionBank extends Component
 
     public $importFile = null;
 
+    // Copy question set properties
+    public $isCopyModalOpen = false;
+    public $copyingSetId = null;
+    public $copySetName = '';
+    public $copyTargetCourseId = null;
+    public $copyFilterProgram = null;
+    public $copyFilterYear = null;
+    public $copyFilterSemester = null;
+    public $copyFilterAcademicYear = null;
+    public $availablePrograms = [];
+    public $availableYears = [];
+    public $availableSemesters = [];
+    public $availableAcademicYears = [];
+    public $filteredCourses = [];
+
     // Mode and routing properties
     public $mode = 'default'; // default, create_set, show_set, edit_set, manage_questions
 
@@ -89,6 +104,15 @@ class QuestionBank extends Component
     public $viewMode = 'sets'; // sets, questions, create_set
 
     public $uploadPath;
+
+    protected $queryString = [
+        'question_set_id' => ['except' => null],
+        'viewMode' => ['except' => 'sets'],
+        'subject_id' => ['except' => null],
+        'searchTerm' => ['except' => ''],
+        'filterDifficulty' => ['except' => ''],
+        'filterType' => ['except' => ''],
+    ];
 
     protected $rules = [
         'questions.*.question_text' => 'required|string',
@@ -112,6 +136,11 @@ class QuestionBank extends Component
         $this->mode = $mode;
         $this->questionSetId = $questionSetId;
 
+        // If question_set_id is in query string but not passed as parameter, use it
+        if (!$this->questionSetId && $this->question_set_id) {
+            $this->questionSetId = $this->question_set_id;
+        }
+
         // Initialize collections
         $this->filtered_question_sets = collect();
 
@@ -130,12 +159,14 @@ class QuestionBank extends Component
         ]);
 
         // If we have a questionSetId, load it
-        if ($this->questionSetId) {
-            $this->selectedQuestionSet = QuestionSet::find($this->questionSetId);
+        if ($this->questionSetId || $this->question_set_id) {
+            $setId = $this->questionSetId ?? $this->question_set_id;
+            $this->selectedQuestionSet = QuestionSet::find($setId);
             if ($this->selectedQuestionSet) {
                 $this->subject_id = $this->selectedQuestionSet->course_id;
                 $this->viewMode = 'questions';
-                $this->question_set_id = $this->questionSetId;
+                $this->question_set_id = $setId;
+                $this->viewingQuestionSet = true;  // Set this to true!
                 $this->loadQuestions();
             }
         }
@@ -153,9 +184,11 @@ class QuestionBank extends Component
                 $this->viewingQuestionSet = true;
                 break;
             default:
-                // For question sets view, ensure we show sets
-                $this->viewMode = 'sets';
-                $this->viewingQuestionSet = false;
+                // For question sets view, ensure we show sets if we're not viewing a specific set
+                if (!$this->question_set_id) {
+                    $this->viewMode = 'sets';
+                    $this->viewingQuestionSet = false;
+                }
                 break;
         }
     }
@@ -248,20 +281,30 @@ class QuestionBank extends Component
             if ($exam) {
                 $questionSetIds = $exam->questionSets()->pluck('question_sets.id');
                 $query = Question::whereIn('question_set_id', $questionSetIds)
-                    ->with('options');
-                $this->questions = $this->applyFiltersToQuery($query)
-                    ->get()
-                    ->toArray(); // Convert to array for Livewire compatibility
+                    ->with(['options', 'attachments']);
+                $questions = $this->applyFiltersToQuery($query)->get();
+                
+                // Manually map to array to ensure attachments are included
+                $this->questions = $questions->map(function ($question) {
+                    $questionArray = $question->toArray();
+                    $questionArray['attachments'] = $question->attachments->toArray();
+                    return $questionArray;
+                })->toArray();
             } else {
                 $this->questions = [];
             }
         } elseif ($this->question_set_id) {
             // Get questions for specific question set with filtering
             $query = Question::where('question_set_id', $this->question_set_id)
-                ->with('options');
-            $this->questions = $this->applyFiltersToQuery($query)
-                ->get()
-                ->toArray();
+                ->with(['options', 'attachments']);
+            $questions = $this->applyFiltersToQuery($query)->get();
+            
+            // Manually map to array to ensure attachments are included
+            $this->questions = $questions->map(function ($question) {
+                $questionArray = $question->toArray();
+                $questionArray['attachments'] = $question->attachments->toArray();
+                return $questionArray;
+            })->toArray();
         } else {
             $this->questions = [];
         }
@@ -712,6 +755,159 @@ class QuestionBank extends Component
         ];
 
         return $stats;
+    }
+
+    /**
+     * Show copy modal for a question set
+     */
+    public function showCopyModal($questionSetId)
+    {
+        Log::info('showCopyModal called', ['question_set_id' => $questionSetId]);
+        
+        $this->copyingSetId = $questionSetId;
+        $questionSet = QuestionSet::find($questionSetId);
+        
+        if ($questionSet) {
+            $this->copySetName = $questionSet->name . ' (Copy)';
+            $this->isCopyModalOpen = true;
+            
+            // Load filter options - convert to arrays for Livewire
+            $this->availablePrograms = \App\Models\CollegeClass::all()->toArray();
+            $this->availableYears = \App\Models\Year::all()->toArray();
+            $this->availableSemesters = \App\Models\Semester::all()->toArray();
+            $this->availableAcademicYears = \App\Models\AcademicYear::orderBy('name', 'desc')->get()->toArray();
+            
+            Log::info('Copy modal opened', [
+                'question_set_id' => $questionSetId,
+                'copy_set_name' => $this->copySetName,
+                'programs_count' => count($this->availablePrograms),
+            ]);
+        } else {
+            Log::error('Question set not found', ['question_set_id' => $questionSetId]);
+        }
+    }
+
+    /**
+     * Update filtered courses based on selected filters
+     */
+    public function updatedCopyFilterProgram()
+    {
+        $this->loadFilteredCourses();
+    }
+
+    public function updatedCopyFilterYear()
+    {
+        $this->loadFilteredCourses();
+    }
+
+    public function updatedCopyFilterSemester()
+    {
+        $this->loadFilteredCourses();
+    }
+
+    public function updatedCopyFilterAcademicYear()
+    {
+        $this->loadFilteredCourses();
+    }
+
+    /**
+     * Load courses based on filters
+     */
+    public function loadFilteredCourses()
+    {
+        $query = Subject::query();
+
+        if ($this->copyFilterProgram) {
+            $query->where('college_class_id', $this->copyFilterProgram);
+        }
+        if ($this->copyFilterYear) {
+            $query->where('year_id', $this->copyFilterYear);
+        }
+        if ($this->copyFilterSemester) {
+            $query->where('semester_id', $this->copyFilterSemester);
+        }
+
+        $this->filteredCourses = $query->orderBy('name', 'asc')->get(['id', 'name', 'course_code'])->toArray();
+    }
+
+    /**
+     * Copy question set to target course
+     */
+    public function copyQuestionSet()
+    {
+        $this->validate([
+            'copySetName' => 'required|string|max:255',
+            'copyTargetCourseId' => 'required|exists:subjects,id',
+        ], [
+            'copySetName.required' => 'Please enter a name for the copied question set.',
+            'copyTargetCourseId.required' => 'Please select a target course.',
+        ]);
+
+        try {
+            $originalSet = QuestionSet::with('questions.options')->findOrFail($this->copyingSetId);
+
+            // Create new question set
+            $newSet = QuestionSet::create([
+                'name' => $this->copySetName,
+                'description' => $originalSet->description,
+                'course_id' => $this->copyTargetCourseId,
+                'difficulty_level' => $originalSet->difficulty_level,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Copy all questions with their options
+            foreach ($originalSet->questions as $question) {
+                $newQuestion = Question::create([
+                    'question_set_id' => $newSet->id,
+                    'question_text' => $question->question_text,
+                    'explanation' => $question->explanation,
+                    'mark' => $question->mark,
+                    'type' => $question->type,
+                    'difficulty_level' => $question->difficulty_level,
+                ]);
+
+                // Copy options if they exist
+                foreach ($question->options as $option) {
+                    Option::create([
+                        'question_id' => $newQuestion->id,
+                        'option_text' => $option->option_text,
+                        'is_correct' => $option->is_correct,
+                        'option_letter' => $option->option_letter,
+                    ]);
+                }
+            }
+
+            session()->flash('success', "Question set '{$this->copySetName}' copied successfully with {$originalSet->questions->count()} questions!");
+            
+            // Reset modal
+            $this->closeCopyModal();
+            
+            // Reload question sets
+            $this->loadQuestionSets();
+
+        } catch (\Exception $e) {
+            Log::error('Error copying question set', [
+                'error' => $e->getMessage(),
+                'question_set_id' => $this->copyingSetId,
+            ]);
+            session()->flash('error', 'Failed to copy question set: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Close copy modal
+     */
+    public function closeCopyModal()
+    {
+        $this->isCopyModalOpen = false;
+        $this->copyingSetId = null;
+        $this->copySetName = '';
+        $this->copyTargetCourseId = null;
+        $this->copyFilterProgram = null;
+        $this->copyFilterYear = null;
+        $this->copyFilterSemester = null;
+        $this->copyFilterAcademicYear = null;
+        $this->filteredCourses = [];
     }
 
     public function render()

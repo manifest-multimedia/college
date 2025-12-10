@@ -86,9 +86,9 @@
                     @if(!$exam_id)
                         <!-- Subject Filter (only show if not in exam context) -->
                         <div class="mb-4">
-                            <label for="subjectFilter" class="form-label fw-bold">Filter by Subject:</label>
+                            <label for="subjectFilter" class="form-label fw-bold">Filter by Course:</label>
                             <select id="subjectFilter" class="form-select" wire:model="subject_id">
-                                <option value="">All Subjects</option>
+                                <option value="">All Courses</option>
                                 @foreach($subjects as $subject)
                                     <option value="{{ $subject->id }}">{{ $subject->course_code }} - {{ $subject->name }}</option>
                                 @endforeach
@@ -153,14 +153,18 @@
                                                 <i class="bi bi-pencil-square me-1"></i> Manage Questions
                                             </button>
                                             
-                                                                        <div class="btn-group w-100" role="group">
-                                <a href="{{ route('question.sets.import', $set->id) }}" class="btn btn-outline-warning btn-sm">
-                                    <i class="bi bi-upload me-1"></i>Import
-                                </a>
-                                <a href="{{ route('question.sets.questions.create', $set->id) }}" class="btn btn-outline-success btn-sm">
-                                    <i class="bi bi-plus me-1"></i>Add Question
-                                </a>
-                            </div>
+                                            <div class="btn-group w-100" role="group">
+                                                <a href="{{ route('question.sets.import', $set->id) }}" class="btn btn-outline-warning btn-sm">
+                                                    <i class="bi bi-upload me-1"></i>Import
+                                                </a>
+                                                <a href="{{ route('question.sets.questions.create', $set->id) }}" class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-plus me-1"></i>Add Question
+                                                </a>
+                                            </div>
+                                            
+                                            <button type="button" class="btn btn-outline-info btn-sm" wire:click.prevent="showCopyModal({{ $set->id }})">
+                                                <i class="bi bi-files me-1"></i> Copy to Another Course
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -427,6 +431,26 @@
                                     <textarea rows="3" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter Question"></textarea>
                                 </div>
 
+                                {{-- Display attached images if any --}}
+                                @if(isset($question['attachments']) && count($question['attachments']) > 0)
+                                    @php
+                                        $images = array_filter($question['attachments'], fn($attachment) => $attachment['attachment_type'] === 'image');
+                                    @endphp
+                                    @if(count($images) > 0)
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Question Images:</label>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach($images as $image)
+                                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('exams')->url($image['file_path']) }}" 
+                                                         alt="Question image" 
+                                                         class="img-thumbnail" 
+                                                         style="max-height: 150px; object-fit: contain;">
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
+
                                 <div class="row">
                                     <div class="mb-3 col-md-3">
                                         <label class="form-label">Section:</label>
@@ -544,6 +568,132 @@
                         <button type="button" class="btn btn-secondary" wire:click="$set('duplicateSetId', null)">Cancel</button>
                         <button type="button" class="btn btn-success" wire:click="confirmDuplicate">
                             <i class="bi bi-copy me-1"></i>Duplicate Question Set
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Copy Question Set Modal -->
+    @if($isCopyModalOpen)
+        <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-files me-2"></i>Copy Question Set to Another Course
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" wire:click="closeCopyModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- New Question Set Name -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">New Question Set Name *</label>
+                            <input type="text" class="form-control" wire:model="copySetName" 
+                                placeholder="Enter name for copied question set">
+                            @error('copySetName') 
+                                <div class="text-danger small mt-1">{{ $message }}</div> 
+                            @enderror
+                        </div>
+
+                        <!-- Filter Section -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">
+                                    <i class="bi bi-funnel me-2"></i>Filter Target Course
+                                </h6>
+                                
+                                <div class="row g-3">
+                                    <!-- Program Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">Program</label>
+                                        <select class="form-select" wire:model.live="copyFilterProgram">
+                                            <option value="">All Programs</option>
+                                            @foreach($availablePrograms as $program)
+                                                <option value="{{ $program['id'] }}">{{ $program['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Year Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-select" wire:model.live="copyFilterYear">
+                                            <option value="">All Years</option>
+                                            @foreach($availableYears as $year)
+                                                <option value="{{ $year['id'] }}">{{ $year['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Semester Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">Semester</label>
+                                        <select class="form-select" wire:model.live="copyFilterSemester">
+                                            <option value="">All Semesters</option>
+                                            @foreach($availableSemesters as $semester)
+                                                <option value="{{ $semester['id'] }}">{{ $semester['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <!-- Academic Year Filter -->
+                                    <div class="col-md-6">
+                                        <label class="form-label">Academic Year</label>
+                                        <select class="form-select" wire:model.live="copyFilterAcademicYear">
+                                            <option value="">All Academic Years</option>
+                                            @foreach($availableAcademicYears as $academicYear)
+                                                <option value="{{ $academicYear['id'] }}">{{ $academicYear['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Target Course Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Target Course *</label>
+                            <select class="form-select" wire:model="copyTargetCourseId">
+                                <option value="">-- Select Course --</option>
+                                @foreach($filteredCourses as $course)
+                                    <option value="{{ $course['id'] }}">
+                                        {{ $course['course_code'] }} - {{ $course['name'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('copyTargetCourseId') 
+                                <div class="text-danger small mt-1">{{ $message }}</div> 
+                            @enderror
+                            
+                            @if(empty($filteredCourses) && ($copyFilterProgram || $copyFilterYear || $copyFilterSemester))
+                                <div class="alert alert-warning small mt-2 mb-0">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    No courses found matching the selected filters. Try adjusting your filters.
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Info Message -->
+                        <div class="alert alert-info small mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            This will create a complete copy of the question set including all questions, options, and settings.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeCopyModal">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary" wire:click="copyQuestionSet"
+                            wire:loading.attr="disabled" wire:target="copyQuestionSet">
+                            <span wire:loading.remove wire:target="copyQuestionSet">
+                                <i class="bi bi-files me-1"></i>Copy Question Set
+                            </span>
+                            <span wire:loading wire:target="copyQuestionSet">
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                                Copying...
+                            </span>
                         </button>
                     </div>
                 </div>

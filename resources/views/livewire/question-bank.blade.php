@@ -72,6 +72,41 @@
                         <textarea rows="4" id="question{{ $index }}" class="form-control" wire:model="questions.{{ $index }}.question_text" placeholder="Enter your question here..."></textarea>
                     </div>
 
+                    {{-- DEBUG: Show attachments data --}}
+                    @if(isset($question['attachments']))
+                        <div class="alert alert-info">
+                            <strong>DEBUG:</strong> Attachments count: {{ count($question['attachments']) }}
+                            @if(count($question['attachments']) > 0)
+                                <br>First attachment type: {{ $question['attachments'][0]['attachment_type'] ?? 'N/A' }}
+                                <br>First attachment path: {{ $question['attachments'][0]['file_path'] ?? 'N/A' }}
+                            @endif
+                        </div>
+                    @else
+                        <div class="alert alert-warning">
+                            <strong>DEBUG:</strong> No attachments key found in question array
+                        </div>
+                    @endif
+
+                    {{-- Display attached images if any --}}
+                    @if(isset($question['attachments']) && count($question['attachments']) > 0)
+                        @php
+                            $images = array_filter($question['attachments'], fn($attachment) => $attachment['attachment_type'] === 'image');
+                        @endphp
+                        @if(count($images) > 0)
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Question Images:</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach($images as $image)
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::disk('exams')->url($image['file_path']) }}" 
+                                             alt="Question image" 
+                                             class="img-thumbnail" 
+                                             style="max-height: 150px; object-fit: contain;">
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+
                     <div class="row">
                         <div class="mb-3 col-md-6">
                             <label for="section{{ $index }}" class="form-label">Section:</label>

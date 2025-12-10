@@ -57,6 +57,38 @@ class Question extends Model
     }
 
     /**
+     * Attachments associated with this question (images, tables).
+     */
+    public function attachments()
+    {
+        return $this->hasMany(QuestionAttachment::class)->orderBy('display_order');
+    }
+
+    /**
+     * Get only image attachments for this question.
+     */
+    public function images()
+    {
+        return $this->attachments()->where('attachment_type', 'image');
+    }
+
+    /**
+     * Get only table attachments for this question.
+     */
+    public function tables()
+    {
+        return $this->attachments()->where('attachment_type', 'table');
+    }
+
+    /**
+     * Get responses for this question.
+     */
+    public function responses()
+    {
+        return $this->hasMany(Response::class);
+    }
+
+    /**
      * Get the course/subject this question belongs to
      * (either through exam or question set)
      */
