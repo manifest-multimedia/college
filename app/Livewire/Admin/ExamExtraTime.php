@@ -86,7 +86,7 @@ class ExamExtraTime extends Component
 
     // Rules for validation
     protected $rules = [
-        'extraTimeMinutes' => 'required|integer|min:1|max:60',
+        'extraTimeMinutes' => 'required|integer|min:-60|max:60',
         'selectedSessions' => 'required_if:applyToAll,false',
         'exam_id' => 'required',
         'bulkResumeMinutes' => 'required|integer|min:5|max:120',
@@ -97,8 +97,8 @@ class ExamExtraTime extends Component
 
     protected $messages = [
         'selectedSessions.required_if' => 'Please select at least one exam session',
-        'extraTimeMinutes.min' => 'Extra time must be at least 1 minute',
-        'extraTimeMinutes.max' => 'Extra time cannot exceed 60 minutes',
+        'extraTimeMinutes.min' => 'Time adjustment cannot be less than -60 minutes',
+        'extraTimeMinutes.max' => 'Time adjustment cannot exceed 60 minutes',
         'bulkResumeMinutes.required' => 'Please specify resume time in minutes',
         'bulkResumeMinutes.min' => 'Resume time must be at least 5 minutes',
         'bulkResumeMinutes.max' => 'Resume time cannot exceed 120 minutes',
@@ -271,8 +271,8 @@ class ExamExtraTime extends Component
         }
 
         // Validate extra time minutes
-        if ($this->extraTimeMinutes < 1 || $this->extraTimeMinutes > 60) {
-            $this->errorMessage = 'Extra time must be between 1 and 60 minutes.';
+        if ($this->extraTimeMinutes < -60 || $this->extraTimeMinutes > 60) {
+            $this->errorMessage = 'Time adjustment must be between -60 and 60 minutes.';
             return;
         }
 
@@ -323,7 +323,9 @@ class ExamExtraTime extends Component
             }
 
             if ($sessionsUpdated > 0) {
-                $this->successMessage = $sessionsUpdated.' exam session(s) were granted '.$this->extraTimeMinutes.' extra minute(s)';
+                $action = $this->extraTimeMinutes >= 0 ? 'granted' : 'reduced by';
+                $minutes = abs($this->extraTimeMinutes);
+                $this->successMessage = $sessionsUpdated.' exam session(s) time was '.$action.' '.$minutes.' minute(s)';
                 $this->selectedSessions = [];
                 $this->extraTimeMinutes = 20; // Reset to default
 
@@ -413,8 +415,8 @@ class ExamExtraTime extends Component
             $sessionId = $this->viewingSession->id;
 
             // Validate the extra time value
-            if ($this->extraTimeMinutes < 1 || $this->extraTimeMinutes > 60) {
-                $this->errorMessage = 'Extra time must be between 1 and 60 minutes.';
+            if ($this->extraTimeMinutes < -60 || $this->extraTimeMinutes > 60) {
+                $this->errorMessage = 'Time adjustment must be between -60 and 60 minutes.';
 
                 return;
             }
@@ -456,7 +458,9 @@ class ExamExtraTime extends Component
                     'responses.question.options',
                 ])->find($sessionId);
 
-                $message = 'Successfully added '.$extraTimeMinutes.' extra minute(s) to the exam session.';
+                $action = $extraTimeMinutes >= 0 ? 'added' : 'reduced by';
+                $minutes = abs($extraTimeMinutes);
+                $message = 'Successfully '.$action.' '.$minutes.' minute(s) to the exam session.';
 
                 if ($isReactivation) {
                     $message .= ' The session has been reactivated for the student to continue.';

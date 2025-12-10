@@ -158,12 +158,12 @@
                 
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3">
-                        <label for="extraTimeMinutes" class="form-label fw-semibold required">Extra Time (Minutes)</label>
-                        <input type="number" id="extraTimeMinutes" wire:model="extraTimeMinutes" class="form-control @error('extraTimeMinutes') is-invalid @enderror" min="1" max="60">
+                        <label for="extraTimeMinutes" class="form-label fw-semibold required">Time Adjustment (Minutes)</label>
+                        <input type="number" id="extraTimeMinutes" wire:model="extraTimeMinutes" class="form-control @error('extraTimeMinutes') is-invalid @enderror" min="-60" max="60">
                         @error('extraTimeMinutes') 
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <div class="form-text">Enter the amount of extra time to add (1-60 minutes)</div>
+                        <div class="form-text">Enter time adjustment (-60 to 60 minutes). Use negative values to reduce time.</div>
                     </div>
                     
                     <div class="col-md-6 mb-3">
@@ -676,9 +676,13 @@
                         <div>
                             <button type="button" class="btn btn-light" wire:click="closeViewModal">Close</button>
                             
-                            <!-- Always show the add extra time button -->
+                            <!-- Always show the time adjustment button -->
                             <button type="button" class="btn btn-primary" wire:click="addExtraTimeFromModal">
-                                <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes Extra Time
+                                @if($extraTimeMinutes >= 0)
+                                    <i class="bi bi-plus-circle me-2"></i> Add {{ $extraTimeMinutes }} Minutes
+                                @else
+                                    <i class="bi bi-dash-circle me-2"></i> Reduce by {{ abs($extraTimeMinutes) }} Minutes
+                                @endif
                             </button>
                         </div>
                     </div>
