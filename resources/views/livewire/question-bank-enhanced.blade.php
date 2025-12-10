@@ -163,7 +163,7 @@
                                             </div>
                                             
                                             <button type="button" class="btn btn-outline-info btn-sm" wire:click.prevent="showCopyModal({{ $set->id }})">
-                                                <i class="bi bi-files me-1"></i> Copy to Another Course
+                                                <i class="bi bi-files me-1"></i> Duplicate
                                             </button>
                                         </div>
                                     </div>
@@ -581,8 +581,8 @@
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="bi bi-files me-2"></i>Copy Question Set to Another Course
+                        <h5 class="modal-title text-white">
+                            <i class="bi bi-files me-2 text-white"></i>Copy Question Set to Another Course
                         </h5>
                         <button type="button" class="btn-close btn-close-white" wire:click="closeCopyModal"></button>
                     </div>
