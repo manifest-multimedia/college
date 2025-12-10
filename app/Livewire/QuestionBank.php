@@ -881,9 +881,6 @@ class QuestionBank extends Component
             
             // Reset modal
             $this->closeCopyModal();
-            
-            // Reload question sets
-            $this->loadQuestionSets();
 
         } catch (\Exception $e) {
             Log::error('Error copying question set', [
