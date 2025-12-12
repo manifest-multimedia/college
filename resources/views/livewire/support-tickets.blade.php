@@ -1,5 +1,4 @@
 <div>
-    <x-dashboard.default title="Support Tickets">
         <!--begin::Card-->
         <div class="card">
             <!--begin::Card header-->
@@ -216,20 +215,20 @@
                 </div>
             </div>
         </div>
-    </x-dashboard.default>
-
-    @push('scripts')
-    <script>
-        // Close modal on successful ticket creation
-        Livewire.on('close-modal', (modalId) => {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                const bsModal = bootstrap.Modal.getInstance(modal);
-                if (bsModal) {
-                    bsModal.hide();
-                }
-            }
-        });
-    </script>
-    @endpush
+   
 </div>
+
+@push('scripts')
+<script>
+    // Close modal on successful ticket creation
+    Livewire.on('close-modal', (modalId) => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        }
+    });
+</script>
+@endpush

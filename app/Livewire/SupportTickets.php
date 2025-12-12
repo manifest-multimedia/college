@@ -65,7 +65,7 @@ class SupportTickets extends Component
         return view('livewire.support-tickets', [
             'tickets' => $tickets,
             'categories' => $categories,
-        ]);
+        ])->layout('components.dashboard.default');
     }
 
     public function createTicket()
