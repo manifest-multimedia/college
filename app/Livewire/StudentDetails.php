@@ -83,14 +83,17 @@ class StudentDetails extends Component
             'session_id' => $session->id,
             'student_name' => $session->student->name ?? 'Unknown',
             'correct_answers' => $result['correct_answers'],
+            'total_questions' => $result['total_questions'],
             'obtained_marks' => $result['obtained_marks'],
             'total_marks' => $result['total_marks'],
             'percentage' => $result['percentage'],
         ]);
 
+        // Return correct answers / total questions (not marks)
+        // This ensures display shows 27/120 instead of 27/49
         return [
-            'obtained' => $result['obtained_marks'],
-            'total' => $result['total_marks'],
+            'obtained' => $result['correct_answers'],
+            'total' => $result['total_questions'],
             'percentage' => $result['percentage'],
         ];
     }

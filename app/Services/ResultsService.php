@@ -73,9 +73,9 @@ class ResultsService
 
         $totalQuestions = min($responses->count(), $questionsPerSession);
         $correctAnswers = 0;
-        $totalMarks = 0.0;
         $obtainedMarks = 0.0;
 
+        // Calculate marks from actual responses
         foreach ($responses as $response) {
             $question = $response->question;
             if (! $question) {
@@ -84,7 +84,6 @@ class ResultsService
 
             // Get question mark value (default to 1 if not specified)
             $questionMark = (float) ($question->mark ?? 1);
-            $totalMarks += $questionMark;
 
             // Find the correct option
             $correctOption = $question->options->where('is_correct', true)->first();
@@ -95,6 +94,17 @@ class ResultsService
                 $obtainedMarks += $questionMark;
             }
         }
+
+        // Calculate total possible marks based on ALL questions in the exam session
+        // Not just the answered ones - this ensures percentage is calculated correctly
+        // Get average mark per question from responses, or default to 1
+        $averageMarkPerQuestion = $responses->count() > 0 
+            ? $responses->avg(function($response) {
+                return (float) ($response->question->mark ?? 1);
+            })
+            : 1.0;
+        
+        $totalMarks = $averageMarkPerQuestion * $questionsPerSession;
 
         // Log final calculation
         Log::info('ResultsService final calculation', [
