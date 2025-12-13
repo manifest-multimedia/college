@@ -34,8 +34,12 @@ class ExamResultsExport implements FromCollection, WithHeadings
             $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
 
             // Base query for exam sessions
+            // Include sessions with completed_at OR auto_submitted flag (for expired exams)
             $query = ExamSession::where('exam_id', $this->exam_id)
-                ->whereNotNull('completed_at')
+                ->where(function($q) {
+                    $q->whereNotNull('completed_at')
+                      ->orWhere('auto_submitted', true);
+                })
                 ->with([
                     'student', // This is actually User model
                     'exam.course',
@@ -78,7 +82,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
                 $scorePercentage = $result['percentage'];                // Return formatted row for export
 
                 return [
-                    'date' => $session->completed_at->format('Y-m-d'),
+                    'date' => $session->completed_at ? $session->completed_at->format('Y-m-d') : ($session->started_at ? $session->started_at->format('Y-m-d') : 'N/A'),
                     'student_id' => $student ? $student->student_id : 'N/A',
                     'student_name' => $session->student->name ?? 'N/A',
                     'course' => $session->exam->course->name ?? 'N/A',

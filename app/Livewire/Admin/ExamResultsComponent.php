@@ -530,8 +530,12 @@ class ExamResultsComponent extends Component
             $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
 
             // Base query for exam sessions
+            // Include sessions with completed_at OR auto_submitted flag (for expired exams)
             $query = ExamSession::where('exam_id', $this->exam_id)
-                ->whereNotNull('completed_at')
+                ->where(function($q) {
+                    $q->whereNotNull('completed_at')
+                      ->orWhere('auto_submitted', true);
+                })
                 ->with([
                     'student', // This is actually User model
                     'exam.course',
@@ -743,8 +747,12 @@ class ExamResultsComponent extends Component
         $examSessions = collect([]);
         if ($this->exam_id) {
             // Build base query for exam sessions
+            // Include sessions with completed_at OR auto_submitted flag (for expired exams)
             $query = ExamSession::where('exam_id', $this->exam_id)
-                ->whereNotNull('completed_at')
+                ->where(function($q) {
+                    $q->whereNotNull('completed_at')
+                      ->orWhere('auto_submitted', true);
+                })
                 ->with([
                     'student',
                     'exam.course',

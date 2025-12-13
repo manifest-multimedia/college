@@ -72,8 +72,11 @@ class StudentDetails extends Component
         }
 
         // Use ResultsService for consistent calculation
+        // IMPORTANT: Pass questions_per_session to ensure percentage is calculated correctly
+        // (e.g., 27/120 = 22.5%, not 27/49 = 55.1%)
+        $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
         $resultsService = app(\App\Services\ResultsService::class);
-        $result = $resultsService->calculateOnlineExamScore($session);
+        $result = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
 
         // Debug logging for score comparison
         Log::info('StudentDetails score calculation', [
