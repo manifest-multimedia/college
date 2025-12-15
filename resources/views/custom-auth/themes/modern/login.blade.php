@@ -92,6 +92,10 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
             animation: slideUp 0.6s ease-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 400px;
         }
 
         @keyframes slideUp {
@@ -484,14 +488,17 @@
                     <p class="sso-description">Single Sign-On - Quick & Secure</p>
                 </div>
 
-                {{-- Divider --}}
-                <div class="divider">
-                    <span>OR</span>
-                </div>
+                @if(config('branding.theme_settings.show_regular_login', true))
+                    {{-- Divider --}}
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                @endif
             @endif
 
-            {{-- Email/Password Login Form --}}
-            <form method="POST" action="{{ route('regular.login') }}">
+            @if(config('branding.theme_settings.show_regular_login', true))
+                {{-- Email/Password Login Form --}}
+                <form method="POST" action="{{ route('regular.login') }}">
                 @csrf
                 
                 <div class="form-group">
@@ -550,6 +557,7 @@
                     Sign In with Email
                 </button>
             </form>
+            @endif
 
             {{-- Registration Links --}}
             <div class="registration-section">

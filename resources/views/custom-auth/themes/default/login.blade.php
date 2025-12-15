@@ -30,17 +30,20 @@
                 <p class="text-center text-muted fs-13 mt-2 mb-0">Single Sign-On (SSO) - Quick & Secure</p>
             </div>
 
-            {{-- Divider --}}
-            <div class="text-center my-4">
-                <span class="text-muted fs-13 px-3" style="background: white; position: relative; z-index: 1;">
-                    OR
-                </span>
-                <hr style="margin-top: -12px; border-color: #dee2e6;">
-            </div>
+            @if(config('branding.theme_settings.show_regular_login', true))
+                {{-- Divider --}}
+                <div class="text-center my-4">
+                    <span class="text-muted fs-13 px-3" style="background: white; position: relative; z-index: 1;">
+                        OR
+                    </span>
+                    <hr style="margin-top: -12px; border-color: #dee2e6;">
+                </div>
+            @endif
         @endif
 
-        {{-- Email/Password Login Form --}}
-        <form method="POST" action="{{ route('regular.login') }}">
+        @if(config('branding.theme_settings.show_regular_login', true))
+            {{-- Email/Password Login Form --}}
+            <form method="POST" action="{{ route('regular.login') }}">
             @csrf
             
             <div class="mb-4">
@@ -107,6 +110,7 @@
                 </button>
             </div>
         </form>
+        @endif
 
         {{-- Registration Links --}}
         <div class="text-center">

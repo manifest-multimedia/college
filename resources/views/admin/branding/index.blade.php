@@ -614,24 +614,93 @@
                                             </label>
                                             <div class="form-text">Hide Auth Central button if your institution doesn't use SSO authentication</div>
                                         </div>
+                                        
+                                        <div class="form-check form-switch form-check-custom form-check-solid">
+                                            <input type="hidden" name="show_regular_login" value="0">
+                                            <input class="form-check-input" type="checkbox" name="show_regular_login" value="1" 
+                                                   id="show_regular_login" {{ old('show_regular_login', $themeSettings['show_regular_login'] ?? true) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="show_regular_login">
+                                                Show Regular Login Form
+                                            </label>
+                                            <div class="form-text">Hide regular email/password login form if your institution only uses SSO</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card-footer d-flex justify-content-end">
-                            <button type="submit" class="btn btn-success">
-                                <i class="ki-duotone ki-check fs-2 me-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                                Save Theme Settings
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="card-footer d-flex justify-content-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="ki-duotone ki-check fs-2 me-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            Save Theme Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
+    </div>
 
-        <!-- Student ID Configuration -->
+    <!-- Lecturer Access Control -->
+    <div class="row mb-8">
+        <div class="col-12">
+            <div class="card card-flush">
+                <div class="card-header">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bold text-gray-900">Lecturer Access Control Mode</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7">Configure how lecturers access exam results</span>
+                    </h3>
+                </div>
+                <form method="POST" action="{{ route('admin.branding.update-theme-settings') }}">
+                    @csrf
+                    <div class="card-body">
+                        <div class="mb-10">
+                            <label class="form-label required">Access Control Mode</label>
+                            <select name="lecturer_access_mode" class="form-select form-select-solid" required>
+                                <option value="exam_creator" {{ old('lecturer_access_mode', $themeSettings['lecturer_access_mode'] ?? 'exam_creator') == 'exam_creator' ? 'selected' : '' }}>
+                                    Exam Creator Mode
+                                </option>
+                                <option value="course_assignment" {{ old('lecturer_access_mode', $themeSettings['lecturer_access_mode'] ?? 'exam_creator') == 'course_assignment' ? 'selected' : '' }}>
+                                    Course Assignment Mode
+                                </option>
+                            </select>
+                            <div class="form-text mt-3">
+                                <div class="alert alert-info mb-0">
+                                    <h6 class="mb-2"><i class="bi bi-info-circle"></i> Access Mode Comparison:</h6>
+                                    <ul class="mb-2">
+                                        <li><strong>Exam Creator Mode:</strong> Lecturers can only view and manage exam results for exams they personally created</li>
+                                        <li><strong>Course Assignment Mode:</strong> Lecturers can view and manage exam results for any courses they're assigned to, regardless of who created the exam</li>
+                                    </ul>
+                                    <div class="mt-3 pt-2 border-top">
+                                        <i class="bi bi-gear"></i> To assign courses to lecturers, go to <a href="{{ route('admin.course-assignments') }}" target="_blank" class="fw-bold">Settings → Course Assignments</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden fields to preserve other theme settings -->
+                        <input type="hidden" name="card_style" value="{{ $themeSettings['card_style'] ?? 'elevated' }}">
+                        <input type="hidden" name="show_institution_name" value="{{ $themeSettings['show_institution_name'] ?? 1 }}">
+                        <input type="hidden" name="enable_animations" value="{{ $themeSettings['enable_animations'] ?? 1 }}">
+                        <input type="hidden" name="show_auth_central_button" value="{{ $themeSettings['show_auth_central_button'] ?? 1 }}">
+                        <input type="hidden" name="show_regular_login" value="{{ $themeSettings['show_regular_login'] ?? 1 }}">
+                    </div>
+                    <div class="card-footer d-flex justify-content-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="ki-duotone ki-check fs-2 me-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            Save Access Control Mode
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student ID Configuration -->
         <div class="row mb-8">
             <div class="col-12">
                 <div class="card card-flush">

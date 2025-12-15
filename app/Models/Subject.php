@@ -27,4 +27,13 @@ class Subject extends Model
     {
         return $this->belongsTo(CollegeClass::class);
     }
+
+    /**
+     * The lecturers assigned to this course.
+     */
+    public function assignedLecturers()
+    {
+        return $this->belongsToMany(User::class, 'course_lecturer', 'subject_id', 'user_id')
+            ->withTimestamps();
+    }
 }

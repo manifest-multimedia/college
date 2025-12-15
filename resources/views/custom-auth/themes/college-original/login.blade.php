@@ -144,6 +144,10 @@
             margin-left: 2rem;
             max-height: none;
             overflow: visible;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 500px;
         }
 
         .login-header {
@@ -520,12 +524,15 @@
                     </a>
                 </div>
 
-                <div class="divider">
-                    <span>Or with email</span>
-                </div>
+                @if(config('branding.theme_settings.show_regular_login', true))
+                    <div class="divider">
+                        <span>Or with email</span>
+                    </div>
+                @endif
             @endif
 
-            <form method="POST" action="{{ route('regular.login') }}">
+            @if(config('branding.theme_settings.show_regular_login', true))
+                <form method="POST" action="{{ route('regular.login') }}">
                 @csrf
                 
                 <div class="form-group">
@@ -578,6 +585,7 @@
                     Sign In
                 </button>
             </form>
+            @endif
 
             <div class="registration-section">
                 <p class="registration-text">Don't have an account?</p>

@@ -195,19 +195,30 @@ class BrandingController extends Controller
                 'show_institution_name' => 'nullable|in:0,1',
                 'enable_animations' => 'nullable|in:0,1',
                 'show_auth_central_button' => 'nullable|in:0,1',
+                'show_regular_login' => 'nullable|in:0,1',
+                'lecturer_access_mode' => 'nullable|string|in:exam_creator,course_assignment',
             ]);
 
             // Convert string values to proper boolean strings for environment
             $showInstitutionName = $request->show_institution_name == '1' ? 'true' : 'false';
             $enableAnimations = $request->enable_animations == '1' ? 'true' : 'false';
             $showAuthCentralButton = $request->show_auth_central_button == '1' ? 'true' : 'false';
+            $showRegularLogin = $request->show_regular_login == '1' ? 'true' : 'false';
 
-            $this->updateEnvFile([
+            $envUpdates = [
                 'AUTH_CARD_STYLE' => $request->card_style,
                 'SHOW_INSTITUTION_NAME' => $showInstitutionName,
                 'ENABLE_AUTH_ANIMATIONS' => $enableAnimations,
                 'SHOW_AUTH_CENTRAL_BUTTON' => $showAuthCentralButton,
-            ]);
+                'SHOW_REGULAR_LOGIN' => $showRegularLogin,
+            ];
+
+            // Only update lecturer access mode if provided
+            if ($request->has('lecturer_access_mode')) {
+                $envUpdates['LECTURER_ACCESS_MODE'] = $request->lecturer_access_mode;
+            }
+
+            $this->updateEnvFile($envUpdates);
 
             $this->refreshConfiguration();
 

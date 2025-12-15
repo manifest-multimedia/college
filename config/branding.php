@@ -116,6 +116,8 @@ return [
         'enable_animations' => env('ENABLE_AUTH_ANIMATIONS', true),
         'card_style' => env('AUTH_CARD_STYLE', 'elevated'), // elevated, flat, bordered
         'show_auth_central_button' => env('SHOW_AUTH_CENTRAL_BUTTON', true), // Show/hide Auth Central SSO button
+        'show_regular_login' => env('SHOW_REGULAR_LOGIN', true), // Show/hide regular login form
+        'lecturer_access_mode' => env('LECTURER_ACCESS_MODE', 'exam_creator'), // exam_creator or course_assignment
     ],
 
     /*

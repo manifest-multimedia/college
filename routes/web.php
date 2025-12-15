@@ -551,6 +551,9 @@ Route::middleware([
         Route::post('/branding/update-colors', [App\Http\Controllers\Admin\BrandingController::class, 'updateColors'])->name('admin.branding.update-colors');
         Route::post('/branding/update-theme-settings', [App\Http\Controllers\Admin\BrandingController::class, 'updateThemeSettings'])->name('admin.branding.update-theme-settings');
         Route::post('/branding/update-student-id', [App\Http\Controllers\Admin\BrandingController::class, 'updateStudentIdSettings'])->name('admin.branding.update-student-id');
+
+        // Course Assignment Management
+        Route::get('/course-assignments', fn () => view('admin.course-assignments'))->name('admin.course-assignments');
     });
 
     /*

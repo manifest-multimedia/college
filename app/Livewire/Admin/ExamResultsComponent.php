@@ -179,11 +179,26 @@ class ExamResultsComponent extends Component
                 return;
             }
 
-            // Security check: Lecturers can only view results for their own exams
-            if ($this->isLecturer && $exam->user_id !== $this->currentUser->id) {
-                $this->hasResults = false;
-                session()->flash('error', 'You do not have permission to view results for this exam.');
-                return;
+            // Security check: Lecturers can only view results based on access mode
+            if ($this->isLecturer) {
+                $lecturerAccessMode = config('branding.theme_settings.lecturer_access_mode', 'exam_creator');
+
+                $hasAccess = false;
+
+                if ($lecturerAccessMode === 'course_assignment') {
+                    // Check if lecturer is assigned to this exam's course
+                    $hasAccess = $this->currentUser->isAssignedToCourse($exam->course_id);
+                } else {
+                    // Check if lecturer created this exam
+                    $hasAccess = ($exam->user_id === $this->currentUser->id);
+                }
+
+                if (! $hasAccess) {
+                    $this->hasResults = false;
+                    session()->flash('error', 'You do not have permission to view results for this exam.');
+
+                    return;
+                }
             }
 
             // Questions per session (configured or default)
@@ -434,13 +449,25 @@ class ExamResultsComponent extends Component
         try {
             // Increase execution time for large exports
             set_time_limit(300); // 5 minutes
-            
+
             $exam = Exam::find($this->exam_id);
-            
-            // Security check: Lecturers can only export results for their own exams
-            if ($this->isLecturer && $exam->user_id !== $this->currentUser->id) {
-                session()->flash('error', 'You do not have permission to export results for this exam.');
-                return;
+
+            // Security check: Lecturers can only export results based on access mode
+            if ($this->isLecturer) {
+                $lecturerAccessMode = config('branding.theme_settings.lecturer_access_mode', 'exam_creator');
+                $hasAccess = false;
+
+                if ($lecturerAccessMode === 'course_assignment') {
+                    $hasAccess = $this->currentUser->isAssignedToCourse($exam->course_id);
+                } else {
+                    $hasAccess = ($exam->user_id === $this->currentUser->id);
+                }
+
+                if (! $hasAccess) {
+                    session()->flash('error', 'You do not have permission to export results for this exam.');
+
+                    return;
+                }
             }
 
             // Properly sanitize the filename to remove any invalid characters
@@ -471,7 +498,7 @@ class ExamResultsComponent extends Component
         try {
             // Increase execution time for large exports
             set_time_limit(300); // 5 minutes
-            
+
             $exam = Exam::with('course')->find($this->exam_id);
             if (! $exam) {
                 $this->dispatch('notify', [
@@ -481,14 +508,26 @@ class ExamResultsComponent extends Component
 
                 return;
             }
-            
-            // Security check: Lecturers can only export results for their own exams
-            if ($this->isLecturer && $exam->user_id !== $this->currentUser->id) {
-                $this->dispatch('notify', [
-                    'type' => 'error',
-                    'message' => 'You do not have permission to export results for this exam.',
-                ]);
-                return;
+
+            // Security check: Lecturers can only export results based on access mode
+            if ($this->isLecturer) {
+                $lecturerAccessMode = config('branding.theme_settings.lecturer_access_mode', 'exam_creator');
+                $hasAccess = false;
+
+                if ($lecturerAccessMode === 'course_assignment') {
+                    $hasAccess = $this->currentUser->isAssignedToCourse($exam->course_id);
+                } else {
+                    $hasAccess = ($exam->user_id === $this->currentUser->id);
+                }
+
+                if (! $hasAccess) {
+                    $this->dispatch('notify', [
+                        'type' => 'error',
+                        'message' => 'You do not have permission to export results for this exam.',
+                    ]);
+
+                    return;
+                }
             }
 
             // Fetch all results directly instead of using the paginated data
@@ -551,9 +590,9 @@ class ExamResultsComponent extends Component
             // Base query for exam sessions
             // Include sessions with completed_at OR auto_submitted flag (for expired exams)
             $query = ExamSession::where('exam_id', $this->exam_id)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNotNull('completed_at')
-                      ->orWhere('auto_submitted', true);
+                        ->orWhere('auto_submitted', true);
                 })
                 ->with([
                     'student', // This is actually User model
@@ -751,12 +790,28 @@ class ExamResultsComponent extends Component
 
     public function render()
     {
+        // Get lecturer access mode from branding settings
+        $lecturerAccessMode = config('branding.theme_settings.lecturer_access_mode', 'exam_creator');
+
         // Query builder for exams
         $examsQuery = Exam::with('course');
 
-        // If user is a lecturer, only show their exams
+        // If user is a lecturer, filter based on access mode
         if ($this->isLecturer && $this->currentUser) {
-            $examsQuery->where('user_id', $this->currentUser->id);
+            if ($lecturerAccessMode === 'course_assignment') {
+                // Course Assignment Mode: Filter by assigned courses
+                $assignedCourseIds = $this->currentUser->assignedCourses()->pluck('subjects.id')->toArray();
+
+                if (empty($assignedCourseIds)) {
+                    // No courses assigned, show empty result
+                    $examsQuery->whereRaw('1 = 0'); // Always false condition
+                } else {
+                    $examsQuery->whereIn('course_id', $assignedCourseIds);
+                }
+            } else {
+                // Exam Creator Mode (default): Filter by created exams
+                $examsQuery->where('user_id', $this->currentUser->id);
+            }
         }
 
         // Get the exams based on the filter
@@ -768,9 +823,9 @@ class ExamResultsComponent extends Component
             // Build base query for exam sessions
             // Include sessions with completed_at OR auto_submitted flag (for expired exams)
             $query = ExamSession::where('exam_id', $this->exam_id)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNotNull('completed_at')
-                      ->orWhere('auto_submitted', true);
+                        ->orWhere('auto_submitted', true);
                 })
                 ->with([
                     'student',

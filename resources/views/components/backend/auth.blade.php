@@ -57,6 +57,14 @@
         .auth-form-container {
             width: 100%;
             padding: 1rem 0;
+            min-height: 200px; /* Ensure minimum height for centering */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .auth-form-container > div {
+            width: 100%;
         }
         
         /* Make sure content doesn't overflow horizontally */
@@ -119,6 +127,14 @@
         .form-content {
             max-width: 90%;
             width: 450px; /* Match the testimonial content width */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Remove unnecessary flexbox from auth-form-container */
+        .auth-form-container {
+            width: 100%;
         }
         
         .testimonial-side {

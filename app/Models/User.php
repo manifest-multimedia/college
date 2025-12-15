@@ -110,6 +110,23 @@ class User extends Authenticatable
     }
 
     /**
+     * The courses/subjects assigned to this lecturer.
+     */
+    public function assignedCourses()
+    {
+        return $this->belongsToMany(Subject::class, 'course_lecturer', 'user_id', 'subject_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user is assigned to a specific course.
+     */
+    public function isAssignedToCourse($courseId): bool
+    {
+        return $this->assignedCourses()->where('subjects.id', $courseId)->exists();
+    }
+
+    /**
      * Check if this user was created via AuthCentral.
      * AuthCentral users have random passwords and typically a legacy 'role' field.
      */

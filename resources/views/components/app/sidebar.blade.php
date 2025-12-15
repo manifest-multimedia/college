@@ -1157,6 +1157,21 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     @endhasrole
                     
+                    @hasrole('Super Admin|Administrator|System')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.course-assignments') ? 'active' : '' }}" href="{{ route('admin.course-assignments') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                               Course Assignments
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasrole
+                    
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('settings.departments') ? 'active' : '' }}" href="{{ route('settings.departments') }}">
