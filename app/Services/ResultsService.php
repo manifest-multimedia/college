@@ -56,26 +56,16 @@ class ResultsService
                 ->get();
         }
 
-        // Log before limiting
-        $responsesCountBefore = $responses->count();
-
         // Ensure we only process up to questionsPerSession, even if more responses provided
         $responses = $responses->take($questionsPerSession);
-
-        // Log what we're processing
-        Log::info('ResultsService processing responses', [
-            'session_id' => $session->id,
-            'responses_provided' => $responsesWereProvided,
-            'responses_before_limit' => $responsesCountBefore,
-            'responses_after_limit' => $responses->count(),
-            'questions_per_session' => $questionsPerSession,
-        ]);
 
         $totalQuestions = min($responses->count(), $questionsPerSession);
         $correctAnswers = 0;
         $obtainedMarks = 0.0;
+        $markSum = 0.0;
+        $markCount = 0;
 
-        // Calculate marks from actual responses
+        // Calculate marks from actual responses in a single pass
         foreach ($responses as $response) {
             $question = $response->question;
             if (! $question) {
@@ -84,6 +74,10 @@ class ResultsService
 
             // Get question mark value (default to 1 if not specified)
             $questionMark = (float) ($question->mark ?? 1);
+            
+            // Track mark sum for average calculation
+            $markSum += $questionMark;
+            $markCount++;
 
             // Find the correct option
             $correctOption = $question->options->where('is_correct', true)->first();
@@ -96,24 +90,9 @@ class ResultsService
         }
 
         // Calculate total possible marks based on ALL questions in the exam session
-        // Not just the answered ones - this ensures percentage is calculated correctly
-        // Get average mark per question from responses, or default to 1
-        $averageMarkPerQuestion = $responses->count() > 0 
-            ? $responses->avg(function($response) {
-                return (float) ($response->question->mark ?? 1);
-            })
-            : 1.0;
-        
+        // Use average mark per question from responses, or default to 1
+        $averageMarkPerQuestion = $markCount > 0 ? ($markSum / $markCount) : 1.0;
         $totalMarks = $averageMarkPerQuestion * $questionsPerSession;
-
-        // Log final calculation
-        Log::info('ResultsService final calculation', [
-            'session_id' => $session->id,
-            'correct_answers' => $correctAnswers,
-            'obtained_marks' => $obtainedMarks,
-            'total_marks' => $totalMarks,
-            'percentage' => round(($obtainedMarks / max($totalMarks, 1)) * 100, 2),
-        ]);
 
         // Calculate percentage
         $percentage = $this->calculatePercentage($obtainedMarks, $totalMarks);

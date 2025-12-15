@@ -432,6 +432,9 @@ class ExamResultsComponent extends Component
     public function exportToExcel()
     {
         try {
+            // Increase execution time for large exports
+            set_time_limit(300); // 5 minutes
+            
             $exam = Exam::find($this->exam_id);
             
             // Security check: Lecturers can only export results for their own exams
@@ -466,6 +469,9 @@ class ExamResultsComponent extends Component
     public function exportToPDF()
     {
         try {
+            // Increase execution time for large exports
+            set_time_limit(300); // 5 minutes
+            
             $exam = Exam::with('course')->find($this->exam_id);
             if (! $exam) {
                 $this->dispatch('notify', [

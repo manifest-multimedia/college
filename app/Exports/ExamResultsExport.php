@@ -59,27 +59,27 @@ class ExamResultsExport implements FromCollection, WithHeadings
             // Get all results (no pagination)
             $examSessions = $query->get();
 
-            // Process results for export
-            return $examSessions->map(function ($session) use ($questionsPerSession) {
-                // Find the student record using the user email
-                $userEmail = $session->student->email ?? null;
-                $student = $userEmail ? Student::where('email', $userEmail)->first() : null;
+            // Create a single instance of ResultsService to reuse
+            $resultsService = app(\App\Services\ResultsService::class);
+            
+            // Pre-load all students in one query to avoid N+1
+            $userEmails = $examSessions->pluck('student.email')->filter()->unique();
+            $students = Student::whereIn('email', $userEmails)->get()->keyBy('email');
 
-                // Initialize counters
-                $totalAttempted = 0;
-                $totalCorrect = 0;
-                $totalMarks = 0;
-                $obtainedMarks = 0;
+            // Process results for export
+            return $examSessions->map(function ($session) use ($questionsPerSession, $resultsService, $students) {
+                // Find the student record using pre-loaded data
+                $userEmail = $session->student->email ?? null;
+                $student = $userEmail && isset($students[$userEmail]) ? $students[$userEmail] : null;
 
                 // Use ResultsService for consistent calculation
-                $resultsService = app(\App\Services\ResultsService::class);
                 $result = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
 
                 $totalAttempted = $result['total_answered'];
                 $totalCorrect = $result['correct_answers'];
                 $obtainedMarks = $result['obtained_marks'];
                 $totalMarks = $result['total_marks'];
-                $scorePercentage = $result['percentage'];                // Return formatted row for export
+                $scorePercentage = $result['percentage'];
 
                 return [
                     'date' => $session->completed_at ? $session->completed_at->format('Y-m-d') : ($session->started_at ? $session->started_at->format('Y-m-d') : 'N/A'),
