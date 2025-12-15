@@ -87,7 +87,7 @@
                         <!-- Subject Filter (only show if not in exam context) -->
                         <div class="mb-4">
                             <label for="subjectFilter" class="form-label fw-bold">Filter by Course:</label>
-                            <select id="subjectFilter" class="form-select" wire:model="subject_id">
+                            <select id="subjectFilter" class="form-select" wire:model.live="subject_id">
                                 <option value="">All Courses</option>
                                 @foreach($subjects as $subject)
                                     <option value="{{ $subject->id }}">{{ $subject->course_code }} - {{ $subject->name }}</option>

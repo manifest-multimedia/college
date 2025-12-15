@@ -74,27 +74,18 @@ class ExamResultsComponent extends Component
             return $this->redirectToLogin();
         }
 
-        // Check if user has one of the allowed roles
-        $allowedRoles = ['System', 'Administrator', 'Super Admin', 'Lecturer'];
-        $authorized = false;
-
-        foreach ($allowedRoles as $role) {
-            if ($this->currentUser->hasRole($role)) {
-                $authorized = true;
-
-                if ($role === 'Lecturer') {
-                    $this->isLecturer = true;
-                }
-
-                break;
-            }
-        }
-
-        if (! $authorized) {
+        // Check if user has admin roles first (takes precedence over lecturer)
+        // This ensures users with both admin and lecturer roles are treated as admins
+        if ($this->currentUser->hasRole(['Super Admin', 'Administrator', 'admin', 'System'])) {
+            $this->isLecturer = false;
+            $this->authorized = true;
+        } elseif ($this->currentUser->hasRole('Lecturer')) {
+            $this->isLecturer = true;
+            $this->authorized = true;
+        } else {
+            // User doesn't have required roles
             return $this->redirectToUnauthorized();
         }
-
-        $this->authorized = true;
 
         // Load results if exam_id is provided in URL
         if ($this->exam_id) {
@@ -185,6 +176,13 @@ class ExamResultsComponent extends Component
             if (! $exam) {
                 $this->hasResults = false;
 
+                return;
+            }
+
+            // Security check: Lecturers can only view results for their own exams
+            if ($this->isLecturer && $exam->user_id !== $this->currentUser->id) {
+                $this->hasResults = false;
+                session()->flash('error', 'You do not have permission to view results for this exam.');
                 return;
             }
 
@@ -435,6 +433,12 @@ class ExamResultsComponent extends Component
     {
         try {
             $exam = Exam::find($this->exam_id);
+            
+            // Security check: Lecturers can only export results for their own exams
+            if ($this->isLecturer && $exam->user_id !== $this->currentUser->id) {
+                session()->flash('error', 'You do not have permission to export results for this exam.');
+                return;
+            }
 
             // Properly sanitize the filename to remove any invalid characters
             $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->course->name ?? 'unknown');
@@ -469,6 +473,15 @@ class ExamResultsComponent extends Component
                     'message' => 'Exam not found',
                 ]);
 
+                return;
+            }
+            
+            // Security check: Lecturers can only export results for their own exams
+            if ($this->isLecturer && $exam->user_id !== $this->currentUser->id) {
+                $this->dispatch('notify', [
+                    'type' => 'error',
+                    'message' => 'You do not have permission to export results for this exam.',
+                ]);
                 return;
             }
 
