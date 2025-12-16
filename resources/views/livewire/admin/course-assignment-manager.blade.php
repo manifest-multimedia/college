@@ -98,8 +98,8 @@
 
     <!-- Assignment Modal -->
     @if($showAssignModal)
-        <div class="modal fade show" style="display: block;" tabindex="-1">
-            <div class="modal-dialog modal-lg">
+        <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Assign Courses to Lecturer</h5>
@@ -147,8 +147,8 @@
                             <i class="bi bi-check-circle"></i> Save Assignments
                         </button>
                     </div>
+                </div>
             </div>
         </div>
-        <div class="modal-backdrop fade show"></div>
     @endif
 </div>
