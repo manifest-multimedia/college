@@ -52,15 +52,16 @@
                                             <td>{{ $lecturer->email }}</td>
                                             <td>
                                                 @if($lecturer->assignedCourses->count() > 0)
-                                                    <div class="d-flex flex-wrap gap-1">
+                                                    <div class="d-flex flex-wrap gap-2">
                                                         @foreach($lecturer->assignedCourses as $course)
-                                                            <span class="badge bg-primary position-relative">
+                                                            <span class="badge bg-primary d-inline-flex align-items-center gap-1" style="font-size: 0.875rem; padding: 0.4rem 0.6rem;">
                                                                 {{ $course->course_code }}
                                                                 <button type="button" 
-                                                                        class="btn-close btn-close-white position-absolute top-0 start-100 translate-middle" 
-                                                                        style="font-size: 0.6rem; padding: 0.15rem;"
+                                                                        class="btn btn-sm rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                                        style="background-color: #dc3545; border: none; width: 18px; height: 18px; padding: 0; margin-left: 4px;"
                                                                         wire:click="removeCourseAssignment({{ $lecturer->id }}, {{ $course->id }})"
                                                                         wire:confirm="Are you sure you want to remove this course assignment?">
+                                                                    <i class="bi bi-x text-white" style="font-size: 14px; line-height: 1;"></i>
                                                                 </button>
                                                             </span>
                                                         @endforeach
@@ -115,29 +116,70 @@
                             </div>
                         @endif
 
+                        <!-- Search Filter -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Search courses by code or name..." 
+                                       wire:model.live.debounce.300ms="modalSearchCourse">
+                                @if($modalSearchCourse)
+                                    <button class="btn btn-outline-secondary" 
+                                            type="button" 
+                                            wire:click="$set('modalSearchCourse', '')">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Select Courses:</label>
-                            <div class="row">
-                                @foreach($allCourses as $course)
-                                    <div class="col-md-6 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" 
-                                                   type="checkbox" 
-                                                   id="course-{{ $course->id }}" 
-                                                   value="{{ $course->id }}" 
-                                                   wire:model="assignCourseIds">
-                                            <label class="form-check-label" for="course-{{ $course->id }}">
-                                                <strong>{{ $course->course_code }}</strong> - {{ $course->name }}
-                                                @if($course->collegeClass)
-                                                    <br><small class="text-muted">Class: {{ $course->collegeClass->name }}</small>
-                                                @endif
-                                            </label>
-                                        </div>
+                            
+                            @if(count($allCourses) > 0)
+                                <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="row">
+                                        @foreach($allCourses as $course)
+                                            <div class="col-md-12 mb-3">
+                                                <div class="form-check border-bottom pb-2">
+                                                    <input class="form-check-input" 
+                                                           type="checkbox" 
+                                                           id="course-{{ $course->id }}" 
+                                                           value="{{ $course->id }}" 
+                                                           wire:model="assignCourseIds">
+                                                    <label class="form-check-label w-100" for="course-{{ $course->id }}">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <strong class="text-primary">{{ $course->course_code }}</strong> - {{ $course->name }}
+                                                                <br>
+                                                                <small class="text-muted">
+                                                                    @if($course->collegeClass)
+                                                                        <i class="bi bi-building"></i> Program: {{ $course->collegeClass->name }}
+                                                                    @endif
+                                                                    @if($course->year)
+                                                                        | <i class="bi bi-calendar"></i> Year: {{ $course->year->name }}
+                                                                    @endif
+                                                                    @if($course->semester)
+                                                                        | <i class="bi bi-calendar3"></i> Semester: {{ $course->semester->name }}
+                                                                    @endif
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                @endforeach
-                            </div>
+                                </div>
+                            @else
+                                <div class="alert alert-warning mb-0">
+                                    <i class="bi bi-info-circle"></i> No courses found matching your search.
+                                </div>
+                            @endif
+                            
                             @error('assignCourseIds') 
-                                <span class="text-danger">{{ $message }}</span> 
+                                <span class="text-danger mt-2 d-block">{{ $message }}</span> 
                             @enderror
                         </div>
                     </div>

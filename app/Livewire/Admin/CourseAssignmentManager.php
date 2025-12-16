@@ -32,6 +32,9 @@ class CourseAssignmentManager extends Component
 
     public $assignCourseIds = [];
 
+    // Modal search
+    public $modalSearchCourse = '';
+
     protected $queryString = [
         'searchLecturer' => ['except' => ''],
         'searchCourse' => ['except' => ''],
@@ -76,6 +79,7 @@ class CourseAssignmentManager extends Component
         $this->showAssignModal = false;
         $this->assignLecturerId = null;
         $this->assignCourseIds = [];
+        $this->modalSearchCourse = '';
     }
 
     public function assignCourses()
@@ -83,16 +87,16 @@ class CourseAssignmentManager extends Component
         try {
             $this->validate([
                 'assignLecturerId' => 'required|exists:users,id',
-                'assignCourseIds' => 'required|array|min:1',
+                'assignCourseIds' => 'nullable|array',
                 'assignCourseIds.*' => 'exists:subjects,id',
             ]);
 
             $lecturer = User::findOrFail($this->assignLecturerId);
 
-            // Sync the courses (removes old assignments, adds new ones)
-            $lecturer->assignedCourses()->sync($this->assignCourseIds);
+            // Sync the courses (this will remove assignments not in the array and add new ones)
+            $lecturer->assignedCourses()->sync($this->assignCourseIds ?? []);
 
-            session()->flash('success', 'Courses assigned successfully!');
+            session()->flash('success', 'Course assignments updated successfully!');
             $this->closeAssignModal();
 
             Log::info('Courses assigned to lecturer', [
@@ -150,10 +154,17 @@ class CourseAssignmentManager extends Component
 
         $lecturers = $lecturersQuery->paginate(15);
 
-        // Get all courses for assignment modal
-        $allCourses = Subject::with(['semester', 'year', 'collegeClass'])
-            ->orderBy('course_code')
-            ->get();
+        // Get all courses for assignment modal with search filter
+        $allCoursesQuery = Subject::with(['semester', 'year', 'collegeClass']);
+
+        if ($this->modalSearchCourse) {
+            $allCoursesQuery->where(function ($q) {
+                $q->where('course_code', 'like', '%'.$this->modalSearchCourse.'%')
+                    ->orWhere('name', 'like', '%'.$this->modalSearchCourse.'%');
+            });
+        }
+
+        $allCourses = $allCoursesQuery->orderBy('course_code')->get();
 
         return view('livewire.admin.course-assignment-manager', [
             'lecturers' => $lecturers,
