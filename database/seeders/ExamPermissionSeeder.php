@@ -71,6 +71,21 @@ class ExamPermissionSeeder extends Seeder
     {
         // Define role to permission mappings
         $rolePermissions = [
+            'System' => [
+                'view offline exams', 'create offline exams', 'update offline exams', 'delete offline exams',
+                'view clearances', 'manage clearances', 'override clearances',
+                'view entry tickets', 'issue entry tickets', 'verify entry tickets',
+            ],
+            'Super Admin' => [
+                'view offline exams', 'create offline exams', 'update offline exams', 'delete offline exams',
+                'view clearances', 'manage clearances', 'override clearances',
+                'view entry tickets', 'issue entry tickets', 'verify entry tickets',
+            ],
+            'Administrator' => [
+                'view offline exams', 'create offline exams', 'update offline exams', 'delete offline exams',
+                'view clearances', 'manage clearances', 'override clearances',
+                'view entry tickets', 'issue entry tickets', 'verify entry tickets',
+            ],
             'admin' => [
                 'view offline exams', 'create offline exams', 'update offline exams', 'delete offline exams',
                 'view clearances', 'manage clearances', 'override clearances',
@@ -80,7 +95,15 @@ class ExamPermissionSeeder extends Seeder
                 'view offline exams', 'create offline exams', 'update offline exams',
                 'view clearances', 'view entry tickets', 'verify entry tickets',
             ],
+            'Lecturer' => [
+                'view offline exams', 'create offline exams', 'update offline exams',
+                'view clearances', 'view entry tickets', 'verify entry tickets',
+            ],
             'finance' => [
+                'view offline exams', 'view clearances', 'manage clearances', 'override clearances',
+                'view entry tickets', 'issue entry tickets',
+            ],
+            'Finance Manager' => [
                 'view offline exams', 'view clearances', 'manage clearances', 'override clearances',
                 'view entry tickets', 'issue entry tickets',
             ],

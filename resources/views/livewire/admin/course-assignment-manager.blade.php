@@ -57,11 +57,11 @@
                                                             <span class="badge bg-primary d-inline-flex align-items-center gap-1" style="font-size: 0.875rem; padding: 0.4rem 0.6rem;">
                                                                 {{ $course->course_code }}
                                                                 <button type="button" 
-                                                                        class="btn btn-sm rounded-circle d-inline-flex align-items-center justify-content-center"
-                                                                        style="background-color: #dc3545; border: none; width: 18px; height: 18px; padding: 0; margin-left: 4px;"
+                                                                        class="rounded-circle d-flex align-items-center justify-content-center"
+                                                                        style="background-color: #dc3545; border: none; width: 20px; height: 20px; padding: 0; margin-left: 4px; min-width: 20px; cursor: pointer;"
                                                                         wire:click="removeCourseAssignment({{ $lecturer->id }}, {{ $course->id }})"
                                                                         wire:confirm="Are you sure you want to remove this course assignment?">
-                                                                    <i class="bi bi-x text-white" style="font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;"></i>
+                                                                    <i class="bi bi-x text-white" style="font-size: 18px; line-height: 0;"></i>
                                                                 </button>
                                                             </span>
                                                         @endforeach
