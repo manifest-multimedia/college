@@ -70,7 +70,7 @@ class ExamResultsController extends Controller
     {
         // Increase execution time and memory limit for large exams
         set_time_limit(300); // 5 minutes
-        ini_set('memory_limit', '256M'); // Increase memory limit
+        ini_set('memory_limit', '512M'); // Increase memory limit
 
         try {
             $user = auth()->user();
