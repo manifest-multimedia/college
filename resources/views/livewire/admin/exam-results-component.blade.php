@@ -57,18 +57,6 @@
                                 </select>
                             </div>
                             
-                            <!-- Results per page -->
-                            <div class="col-md-2 mb-3">
-                                <label for="perPage" class="form-label">Results per page</label>
-                                <select wire:model.live="perPage" id="perPage" class="form-select">
-                                    <option value="10">10</option>
-                                    <option value="15">15</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                            </div>
-                            
                             <!-- Search -->
                             <div class="col-md-3">
                                 <label for="search" class="form-label">Search</label>
@@ -218,7 +206,29 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($examResults as $result)
+                                        @foreach($paginatedSessions as $session)
+                                            @php
+                                                // Find the student record
+                                                $userEmail = $session->student->email ?? null;
+                                                $student = $userEmail ? \App\Models\Student::where('email', $userEmail)->first() : null;
+                                                
+                                                // Calculate score using ResultsService
+                                                $exam = $session->exam;
+                                                $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
+                                                $resultsService = app(\App\Services\ResultsService::class);
+                                                $scoreData = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
+                                                
+                                                $result = [
+                                                    'session_id' => $session->id,
+                                                    'student_id' => $student ? $student->student_id : 'N/A',
+                                                    'name' => $session->student->name ?? 'N/A',
+                                                    'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
+                                                    'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
+                                                    'score' => $scoreData['correct_answers'] . '/' . $questionsPerSession,
+                                                    'answered' => $scoreData['total_answered'] . '/' . $questionsPerSession,
+                                                    'score_percentage' => $scoreData['percentage'],
+                                                ];
+                                            @endphp
                                             @php
                                                 $statusClass = 'danger';
                                                 $statusText = 'Failed';

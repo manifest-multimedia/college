@@ -1,18 +1,14 @@
 <div>
     <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="card-title">
-                    <i class="fas fa-clipboard-list me-2"></i> Offline Exams Management
-                </h1>
-                <div>
-                    @can('create offline exams')
-                        <button wire:click="create" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> New Offline Exam
-                        </button>
-                    @endcan
-                </div>
-            </div>
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h1 class="card-title mb-0">
+                <i class="fas fa-clipboard-list me-2"></i> Offline Exams Management
+            </h1>
+            @can('create offline exams')
+                <button wire:click="create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Offline Exam
+                </button>
+            @endcan
         </div>
         <div class="card-body">
             <!-- Filters -->
@@ -32,15 +28,7 @@
                         <option value="canceled">Canceled</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <select wire:model.live="typeFilter" class="form-select">
-                        <option value="">All Types</option>
-                        @foreach($examTypes as $type)
-                            <option value="{{ $type->id }}">{{ $type->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <select wire:model.live="perPage" class="form-select">
                         <option value="10">10 per page</option>
                         <option value="25">25 per page</option>
@@ -68,7 +56,7 @@
                         @forelse($exams as $exam)
                             <tr>
                                 <td>{{ $exam->title }}</td>
-                                <td>{{ $exam->course->title ?? 'N/A' }}</td>
+                                <td>{{ $exam->course ? $exam->course->course_code . ' - ' . $exam->course->name : 'N/A' }}</td>
                                 <td>{{ $exam->date->format('M d, Y g:i A') }}</td>
                                 <td>{{ $exam->venue }}</td>
                                 <td>
@@ -111,7 +99,7 @@
                                         <p class="text-muted">
                                             @if($search)
                                                 No exams match your search criteria.
-                                            @elseif($statusFilter || $typeFilter)
+                                            @elseif($statusFilter)
                                                 No exams match the selected filters.
                                             @else
                                                 Get started by creating your first offline exam.
@@ -177,25 +165,15 @@
                         </div>
                         
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="course_id" class="form-label">Course <span class="text-danger">*</span></label>
                                 <select id="course_id" wire:model="course_id" class="form-select @error('course_id') is-invalid @enderror">
                                     <option value="">Select Course</option>
-                                    @foreach(\App\Models\Subject::orderBy('name')->get() as $course)
-                                        <option value="{{ $course->id }}">{{ $course->name }}</option>
+                                    @foreach($courses as $course)
+                                        <option value="{{ $course->id }}">{{ $course->course_code }} - {{ $course->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('course_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label for="type_id" class="form-label">Exam Type</label>
-                                <select id="type_id" wire:model="type_id" class="form-select @error('type_id') is-invalid @enderror">
-                                    <option value="">Select Type</option>
-                                    @foreach($examTypes as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('type_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
                         
@@ -206,11 +184,11 @@
                                 @error('venue') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
-                                <label for="proctor_id" class="form-label">Proctor</label>
+                                <label for="proctor_id" class="form-label">Invigilator</label>
                                 <select id="proctor_id" wire:model="proctor_id" class="form-select @error('proctor_id') is-invalid @enderror">
-                                    <option value="">Select Proctor</option>
-                                    @foreach(\App\Models\User::role('lecturer')->orderBy('name')->get() as $proctor)
-                                        <option value="{{ $proctor->id }}">{{ $proctor->name }}</option>
+                                    <option value="">Select Invigilator</option>
+                                    @foreach($invigilators as $invigilator)
+                                        <option value="{{ $invigilator->id }}">{{ $invigilator->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('proctor_id') <div class="invalid-feedback">{{ $message }}</div> @enderror

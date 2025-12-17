@@ -27,8 +27,6 @@ class OfflineExams extends Component
 
     public $course_id;
 
-    public $type_id;
-
     public $proctor_id;
 
     public $venue;
@@ -42,14 +40,15 @@ class OfflineExams extends Component
     // Properties for the exam details modal
     public $selectedExam = null;
 
-    public $examTypes = [];
+    // Data collections
+    public $courses = [];
+
+    public $invigilators = [];
 
     // Properties for filtering
     public $search = '';
 
     public $statusFilter = '';
-
-    public $typeFilter = '';
 
     public $perPage = 10;
 
@@ -77,7 +76,6 @@ class OfflineExams extends Component
         'date' => 'required|date|after:today',
         'duration' => 'required|integer|min:15|max:300',
         'course_id' => 'required|exists:subjects,id',
-        'type_id' => 'nullable|exists:exam_types,id',
         'proctor_id' => 'nullable|exists:users,id',
         'venue' => 'required|string|max:255',
         'clearance_threshold' => 'nullable|integer|min:0|max:100',
@@ -98,13 +96,22 @@ class OfflineExams extends Component
 
     public function mount()
     {
-        // Load exam types for dropdown
-        $this->loadExamTypes();
+        // Load courses and invigilators for dropdowns
+        $this->loadCourses();
+        $this->loadInvigilators();
     }
 
-    public function loadExamTypes()
+    public function loadCourses()
     {
-        $this->examTypes = ExamType::orderBy('name')->get();
+        $this->courses = \App\Models\Subject::orderBy('course_code')->orderBy('name')->get();
+    }
+
+    public function loadInvigilators()
+    {
+        // Load users excluding Student, Parent, and System roles
+        $this->invigilators = \App\Models\User::whereHas('roles', function($query) {
+            $query->whereNotIn('name', ['Student', 'Parent', 'System']);
+        })->orderBy('name')->get();
     }
 
     public function updatedSearch()
@@ -117,17 +124,13 @@ class OfflineExams extends Component
         $this->resetPage();
     }
 
-    public function updatedTypeFilter()
-    {
-        $this->resetPage();
-    }
-
     public function create()
     {
         $this->resetForm();
         $this->formMode = 'create';
         $this->showForm = true;
         $this->isEditing = false;
+        $this->dispatch('showFormModal');
     }
 
     public function edit($examId)
@@ -144,7 +147,6 @@ class OfflineExams extends Component
         $this->date = $exam->date->format('Y-m-d\TH:i');
         $this->duration = $exam->duration;
         $this->course_id = $exam->course_id;
-        $this->type_id = $exam->type_id;
         $this->proctor_id = $exam->proctor_id;
         $this->venue = $exam->venue;
         $this->clearance_threshold = $exam->clearance_threshold;
@@ -152,6 +154,7 @@ class OfflineExams extends Component
         $this->status = $exam->status;
 
         $this->showForm = true;
+        $this->dispatch('showFormModal');
     }
 
     public function rules()
@@ -186,7 +189,6 @@ class OfflineExams extends Component
         $exam->date = $this->date;
         $exam->duration = $this->duration;
         $exam->course_id = $this->course_id;
-        $exam->type_id = $this->type_id;
         $exam->proctor_id = $this->proctor_id;
         $exam->venue = $this->venue;
         $exam->clearance_threshold = $this->clearance_threshold;
@@ -300,7 +302,7 @@ class OfflineExams extends Component
     {
         $this->reset([
             'title', 'description', 'date', 'duration', 'course_id',
-            'type_id', 'proctor_id', 'venue', 'status', 'editingId',
+            'proctor_id', 'venue', 'status', 'editingId',
         ]);
 
         $this->clearance_threshold = 60;
@@ -322,24 +324,22 @@ class OfflineExams extends Component
                     $query->where('title', 'like', '%'.$this->search.'%')
                         ->orWhere('venue', 'like', '%'.$this->search.'%')
                         ->orWhereHas('course', function ($q) {
-                            $q->where('title', 'like', '%'.$this->search.'%');
+                            $q->where('name', 'like', '%'.$this->search.'%')
+                              ->orWhere('course_code', 'like', '%'.$this->search.'%');
                         });
                 });
             })
             ->when($this->statusFilter, function ($query) {
                 $query->where('status', $this->statusFilter);
             })
-            ->when($this->typeFilter, function ($query) {
-                $query->where('type_id', $this->typeFilter);
-            })
             ->latest();
 
         $exams = $examsQuery->paginate($this->perPage);
-        $examTypes = $this->examTypes;
 
         return view('livewire.admin.offline-exams', [
             'exams' => $exams,
-            'examTypes' => $examTypes,
+            'courses' => $this->courses,
+            'invigilators' => $this->invigilators,
         ]);
     }
 }
