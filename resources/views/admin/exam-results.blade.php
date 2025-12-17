@@ -27,7 +27,7 @@
                                 <label for="exam_id" class="form-label fw-semibold">
                                     <i class="bi bi-file-earmark-text me-1"></i>Select Exam
                                 </label>
-                                <select id="exam_id" class="form-select">
+                                <select id="exam_id" class="form-select form-select-lg rounded">
                                     <option value="">-- Select an Exam to View Results --</option>
                                     @foreach($exams as $exam)
                                         <option value="{{ $exam->id }}">

@@ -197,16 +197,17 @@ class ExamResultsController extends Controller
             // Process results for current page
             $results = [];
             foreach ($examSessions as $session) {
-                $userEmail = $session->student->email ?? null;
-                $student = $userEmail ? Student::where('email', $userEmail)->first() : null;
+                // Use the already-loaded relationship instead of a separate query
+                $user = $session->student; // This is the User model
+                $student = $user ? $user->student : null; // This is the Student model via the relationship
 
                 $scoreData = $this->resultsService->calculateOnlineExamScore($session, $questionsPerSession);
 
                 $results[] = [
                     'session_id' => $session->id,
                     'student_id' => $student ? $student->student_id : 'N/A',
-                    'name' => $session->student->name ?? 'N/A',
-                    'email' => $session->student->email ?? 'N/A',
+                    'name' => $student ? $student->name : ($user->name ?? 'N/A'), // Use Student's name (includes first, other, last)
+                    'email' => $user->email ?? 'N/A',
                     'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
                     'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
                     'course' => $session->exam->course->name ?? 'N/A',
@@ -451,16 +452,17 @@ class ExamResultsController extends Controller
 
         $results = [];
         foreach ($examSessions as $session) {
-            $userEmail = $session->student->email ?? null;
-            $student = $userEmail ? Student::where('email', $userEmail)->first() : null;
+            // Use the already-loaded relationship instead of a separate query
+            $user = $session->student; // This is the User model
+            $student = $user ? $user->student : null; // This is the Student model via the relationship
 
             $scoreData = $this->resultsService->calculateOnlineExamScore($session, $questionsPerSession);
 
             $results[] = [
                 'session_id' => $session->id,
                 'student_id' => $student ? $student->student_id : 'N/A',
-                'name' => $session->student->name ?? 'N/A',
-                'email' => $session->student->email ?? 'N/A',
+                'name' => $student ? $student->name : ($user->name ?? 'N/A'), // Use Student's name (includes first, other, last)
+                'email' => $user->email ?? 'N/A',
                 'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
                 'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
                 'course' => $session->exam->course->name ?? 'N/A',
