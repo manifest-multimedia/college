@@ -21,12 +21,14 @@
                 <div class="card-body">
                     <!-- Search & Filter Section -->
                     <div class="mb-4">
-                        <div class="row g-3 align-items-end">
-                            <!-- Exam Selection -->
-                            <div class="col-md-5">
-                                <label for="exam_id" class="form-label">Select Exam</label>
+                        <!-- Primary Filter Row: Exam Selection -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="exam_id" class="form-label fw-semibold">
+                                    <i class="bi bi-file-earmark-text me-1"></i>Select Exam
+                                </label>
                                 <select id="exam_id" class="form-select">
-                                    <option value="">-- Select an Exam --</option>
+                                    <option value="">-- Select an Exam to View Results --</option>
                                     @foreach($exams as $exam)
                                         <option value="{{ $exam->id }}">
                                             {{ $exam->course->name ?? 'Unknown Course' }} ({{ $exam->created_at->format('d M, Y') }})
@@ -34,10 +36,15 @@
                                     @endforeach
                                 </select>
                             </div>
-                            
+                        </div>
+                        
+                        <!-- Secondary Filters Row: Class, Cohort, Search, Export -->
+                        <div class="row g-3 align-items-end">
                             <!-- Class Filter -->
-                            <div class="col-md-3 mb-3">
-                                <label for="college_class_id" class="form-label">Filter by Class</label>
+                            <div class="col-lg-3 col-md-6">
+                                <label for="college_class_id" class="form-label text-muted small">
+                                    <i class="bi bi-funnel me-1"></i>Filter by Class
+                                </label>
                                 <select id="college_class_id" class="form-select">
                                     <option value="">All Classes</option>
                                     @foreach($collegeClasses as $class)
@@ -47,8 +54,10 @@
                             </div>
 
                             <!-- Cohort Filter -->
-                            <div class="col-md-3 mb-3">
-                                <label for="cohort_id" class="form-label">Filter by Cohort</label>
+                            <div class="col-lg-3 col-md-6">
+                                <label for="cohort_id" class="form-label text-muted small">
+                                    <i class="bi bi-people me-1"></i>Filter by Cohort
+                                </label>
                                 <select id="cohort_id" class="form-select">
                                     <option value="">All Cohorts</option>
                                     @foreach($cohorts as $cohort)
@@ -58,21 +67,31 @@
                             </div>
                             
                             <!-- Search -->
-                            <div class="col-md-3">
-                                <label for="search" class="form-label">Search</label>
+                            <div class="col-lg-4 col-md-8">
+                                <label for="search" class="form-label text-muted small">
+                                    <i class="bi bi-search me-1"></i>Search Students
+                                </label>
                                 <input type="text" id="search" class="form-control" placeholder="Student ID, Name, Email...">
                             </div>
                             
                             <!-- Export Options -->
-                            <div class="col-md-1">
-                                <div class="dropdown">
+                            <div class="col-lg-2 col-md-4">
+                                <div class="dropdown d-grid">
                                     <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" 
                                             data-bs-toggle="dropdown" aria-expanded="false">
-                                        Export
+                                        <i class="bi bi-download me-1"></i>Export
                                     </button>
-                                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
-                                        <li><button id="export-excel" class="dropdown-item">Excel</button></li>
-                                        <li><button id="export-pdf" class="dropdown-item">PDF</button></li>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                                        <li>
+                                            <button id="export-excel" class="dropdown-item">
+                                                <i class="bi bi-file-earmark-excel text-success me-2"></i>Excel
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button id="export-pdf" class="dropdown-item">
+                                                <i class="bi bi-file-earmark-pdf text-danger me-2"></i>PDF
+                                            </button>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
