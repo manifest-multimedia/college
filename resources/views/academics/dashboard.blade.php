@@ -121,7 +121,14 @@
                                     </div>
                                     <div class="card-body">
                                         <p>Create and manage courses offered by the institution.</p>
-                                        <a href="{{ route('academics.courses.index') }}" class="btn btn-outline-primary">Manage</a>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ route('academics.courses.index') }}" class="btn btn-outline-primary">Manage</a>
+                                            @hasrole('Super Admin|Administrator|System')
+                                            <a href="{{ route('admin.course-assignments') }}" class="btn btn-outline-secondary">
+                                                <i class="fas fa-user-plus me-1"></i>Assign Courses
+                                            </a>
+                                            @endhasrole
+                                        </div>
                                     </div>
                                 </div>
                             </div>

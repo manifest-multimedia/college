@@ -61,7 +61,7 @@
                                                                         style="background-color: #dc3545; border: none; width: 18px; height: 18px; padding: 0; margin-left: 4px;"
                                                                         wire:click="removeCourseAssignment({{ $lecturer->id }}, {{ $course->id }})"
                                                                         wire:confirm="Are you sure you want to remove this course assignment?">
-                                                                    <i class="bi bi-x text-white" style="font-size: 14px; line-height: 1;"></i>
+                                                                    <i class="bi bi-x text-white" style="font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;"></i>
                                                                 </button>
                                                             </span>
                                                         @endforeach

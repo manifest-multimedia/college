@@ -385,6 +385,21 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    
+                    @hasrole('Super Admin|Administrator|System')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.course-assignments') ? 'active' : '' }}" href="{{ route('admin.course-assignments') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                               Course Assignments
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasrole
                 
                 </div>
                 <!--end:Menu sub-->
@@ -1151,21 +1166,6 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             </span>
                             <span class="menu-title">
                                Branding
-                            </span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    @endhasrole
-                    
-                    @hasrole('Super Admin|Administrator|System')
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('admin.course-assignments') ? 'active' : '' }}" href="{{ route('admin.course-assignments') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">
-                               Course Assignments
                             </span>
                         </a>
                     </div>
