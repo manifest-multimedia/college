@@ -256,9 +256,46 @@ class ExamResultsComponent extends Component
             // Reset stats - we need to calculate from ALL sessions for accurate stats
             $this->totalStudents = $examSessions->total();
             
-            // For stats, we need to query all sessions (not just current page)
-            $allSessionsQuery = clone $query->getQuery();
-            $allSessions = $allSessionsQuery->get();
+            // For stats, we need to get all sessions (not just current page)
+            // Create a fresh query with same filters to get all sessions
+            $statsQuery = ExamSession::where('exam_id', $this->exam_id)
+                ->whereNotNull('completed_at')
+                ->with([
+                    'student',
+                    'exam.course',
+                    'responses.question.options',
+                    'student.student',
+                ]);
+
+            // Apply same filters
+            if ($this->search) {
+                $searchTerm = $this->search;
+                $statsQuery->where(function ($query) use ($searchTerm) {
+                    $query->whereHas('student', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', '%'.$searchTerm.'%')
+                            ->orWhere('email', 'like', '%'.$searchTerm.'%');
+                    });
+                    $query->orWhereHas('student.student', function ($q) use ($searchTerm) {
+                        $q->where('student_id', 'like', '%'.$searchTerm.'%');
+                    });
+                });
+            }
+
+            if ($this->college_class_id) {
+                $studentIds = Student::where('college_class_id', $this->college_class_id)
+                    ->join('users', 'students.email', '=', 'users.email')
+                    ->pluck('users.id');
+                $statsQuery->whereIn('student_id', $studentIds);
+            }
+
+            if ($this->cohort_id) {
+                $studentIds = Student::where('cohort_id', $this->cohort_id)
+                    ->join('users', 'students.email', '=', 'users.email')
+                    ->pluck('users.id');
+                $statsQuery->whereIn('student_id', $studentIds);
+            }
+            
+            $allSessions = $statsQuery->get();
             
             $totalScorePercentage = 0;
             $passCount = 0;
