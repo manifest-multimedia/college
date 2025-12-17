@@ -13,10 +13,15 @@ return new class extends Migration
     {
         Schema::table('offline_exams', function (Blueprint $table) {
             // Rename created_by to user_id for consistency
-            $table->renameColumn('created_by', 'user_id');
+            // Check if column exists before renaming
+            if (Schema::hasColumn('offline_exams', 'created_by')) {
+                $table->renameColumn('created_by', 'user_id');
+            }
             
             // Rename exam_date to date
-            $table->renameColumn('exam_date', 'date');
+            if (Schema::hasColumn('offline_exams', 'exam_date')) {
+                $table->renameColumn('exam_date', 'date');
+            }
             
             // Add missing columns
             $table->integer('duration')->nullable()->after('date'); // Duration in minutes
