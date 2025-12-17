@@ -206,29 +206,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($paginatedSessions as $session)
-                                            @php
-                                                // Find the student record
-                                                $userEmail = $session->student->email ?? null;
-                                                $student = $userEmail ? \App\Models\Student::where('email', $userEmail)->first() : null;
-                                                
-                                                // Calculate score using ResultsService
-                                                $exam = $session->exam;
-                                                $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
-                                                $resultsService = app(\App\Services\ResultsService::class);
-                                                $scoreData = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
-                                                
-                                                $result = [
-                                                    'session_id' => $session->id,
-                                                    'student_id' => $student ? $student->student_id : 'N/A',
-                                                    'name' => $session->student->name ?? 'N/A',
-                                                    'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
-                                                    'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
-                                                    'score' => $scoreData['correct_answers'] . '/' . $questionsPerSession,
-                                                    'answered' => $scoreData['total_answered'] . '/' . $questionsPerSession,
-                                                    'score_percentage' => $scoreData['percentage'],
-                                                ];
-                                            @endphp
+                                        @foreach($examResults as $result)
                                             @php
                                                 $statusClass = 'danger';
                                                 $statusText = 'Failed';

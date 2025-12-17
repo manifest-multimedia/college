@@ -253,14 +253,36 @@ class ExamResultsComponent extends Component
             $examSessions = $query->paginate($this->perPage);
             $this->hasResults = $examSessions->count() > 0;
 
-            // Reset stats
+            // Reset stats - we need to calculate from ALL sessions for accurate stats
             $this->totalStudents = $examSessions->total();
+            
+            // For stats, we need to query all sessions (not just current page)
+            $allSessionsQuery = clone $query->getQuery();
+            $allSessions = $allSessionsQuery->get();
+            
             $totalScorePercentage = 0;
             $passCount = 0;
             $this->highestScore = 0;
             $this->lowestScore = $this->totalStudents > 0 ? 100 : 0;
+            
+            $resultsService = app(\App\Services\ResultsService::class);
+            
+            // Calculate stats from all sessions
+            foreach ($allSessions as $session) {
+                $scoreData = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
+                $scorePercentage = $scoreData['percentage'];
+                
+                $totalScorePercentage += $scorePercentage;
+                if ($scorePercentage >= 50) {
+                    $passCount++;
+                }
+                if ($this->totalStudents > 0) {
+                    $this->highestScore = max($this->highestScore, $scorePercentage);
+                    $this->lowestScore = min($this->lowestScore, $scorePercentage);
+                }
+            }
 
-            // Process results for display
+            // Process results for display (only current page)
             $this->examResults = [];
 
             foreach ($examSessions as $session) {
@@ -268,127 +290,8 @@ class ExamResultsComponent extends Component
                 $userEmail = $session->student->email ?? null;
                 $student = $userEmail ? Student::where('email', $userEmail)->first() : null;
 
-                // Reset counters for each session
-                $totalQuestions = 0;
-                $totalAttempted = 0;
-                $totalCorrect = 0;
-                $totalMarks = 0;
-                $obtainedMarks = 0;
-                $scorePercentage = 0;
-
-                // Get all responses with their questions and options
-                $responses = $session->responses;
-
-                // Check if this session has defined session questions for proper ordering
-                $sessionQuestions = $session->sessionQuestions()->with('question.options')->get();
-                $hasSessionQuestions = $sessionQuestions->isNotEmpty();
-
-                // Create a collection of processed responses so we can sort/limit them
-                $processedResponses = collect();
-
-                if ($hasSessionQuestions) {
-                    // Use session question order to ensure consistent results calculation
-                    foreach ($sessionQuestions as $sessionQuestion) {
-                        $question = $sessionQuestion->question;
-                        if (! $question) {
-                            continue;
-                        }
-
-                        // Find the response for this specific session question
-                        $response = $responses->where('question_id', $question->id)->first();
-
-                        // Find the correct option
-                        $correctOption = $question->options->where('is_correct', true)->first();
-
-                        // Question mark value (default to 1 if not specified)
-                        $questionMark = $question->mark ?? 1;
-
-                        // Check if the answer is correct (only if there was a response)
-                        $isCorrect = ($response && $correctOption && $response->selected_option == $correctOption->id);
-                        $isAttempted = ($response && ! is_null($response->selected_option));
-
-                        // Add to processed responses collection with relevant metrics
-                        $processedResponses->push([
-                            'response' => $response,
-                            'question' => $question,
-                            'session_question' => $sessionQuestion,
-                            'is_correct' => $isCorrect,
-                            'is_attempted' => $isAttempted,
-                            'mark_value' => $questionMark,
-                        ]);
-                    }
-                } else {
-                    // Fallback to original approach for backward compatibility
-                    foreach ($responses as $response) {
-                        $question = $response->question;
-                        if (! $question) {
-                            continue;
-                        }
-
-                        // Find the correct option
-                        $correctOption = $question->options->where('is_correct', true)->first();
-
-                        // Question mark value (default to 1 if not specified)
-                        $questionMark = $question->mark ?? 1;
-
-                        // Check if the answer is correct
-                        $isCorrect = ($correctOption && $response->selected_option == $correctOption->id);
-                        $isAttempted = ! is_null($response->selected_option);
-
-                        // Add to processed responses collection with relevant metrics
-                        $processedResponses->push([
-                            'response' => $response,
-                            'question' => $question,
-                            'session_question' => null,
-                            'is_correct' => $isCorrect,
-                            'is_attempted' => $isAttempted,
-                            'mark_value' => $questionMark,
-                        ]);
-                    }
-                }
-
-                // Log the original counts for debugging
-                $originalAttempted = $processedResponses->where('is_attempted', true)->count();
-
-                // For session-based questions, we already have the correct number
-                // For legacy questions, limit to questionsPerSession
-                $limitedResponses = $hasSessionQuestions ? $processedResponses : $processedResponses->take($questionsPerSession);
-
-                // Use ResultsService for consistent score calculation across all locations
-                $resultsService = app(\App\Services\ResultsService::class);
-
-                // Let ResultsService fetch and calculate responses itself to ensure consistency
-                // Don't pass responses manually as that can cause discrepancies in correctness calculation
+                // Use ResultsService for consistent score calculation
                 $scoreData = $resultsService->calculateOnlineExamScore($session, $questionsPerSession);
-
-                // Extract calculated values
-                $totalQuestions = $limitedResponses->count();
-                $totalAttempted = $limitedResponses->where('is_attempted', true)->count();
-                $totalCorrect = $scoreData['correct_answers'];
-                $obtainedMarks = $scoreData['obtained_marks'];
-                $totalMarks = $scoreData['total_marks'];
-                $scorePercentage = $scoreData['percentage'];
-
-                // Track stats
-                $totalScorePercentage += $scorePercentage;
-                if ($scorePercentage >= 50) {
-                    $passCount++;
-                } // 50% is passing
-                if ($this->totalStudents > 0) {
-                    $this->highestScore = max($this->highestScore, $scorePercentage);
-                    $this->lowestScore = min($this->lowestScore, $scorePercentage);
-                }
-
-                // Log if we're limiting the displayed responses for troubleshooting
-                if ($originalAttempted > $questionsPerSession) {
-                    Log::info('Limiting displayed responses for student', [
-                        'session_id' => $session->id,
-                        'student_name' => $session->student->name ?? 'Unknown',
-                        'original_attempted' => $originalAttempted,
-                        'limited_to' => $totalAttempted,
-                        'questions_per_session' => $questionsPerSession,
-                    ]);
-                }
 
                 // Add to results
                 $this->examResults[] = [
@@ -396,14 +299,14 @@ class ExamResultsComponent extends Component
                     'student_id' => $student ? $student->student_id : 'N/A',
                     'name' => $session->student->name ?? 'N/A',
                     'email' => $session->student->email ?? 'N/A',
-                    'completed_at' => $session->completed_at->format('Y-m-d H:i'),
+                    'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
                     'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
                     'course' => $session->exam->course->name ?? 'N/A',
-                    'score' => $totalCorrect.'/'.$questionsPerSession,
-                    'total_marks' => $totalMarks,
-                    'obtained_marks' => $obtainedMarks,
-                    'answered' => min($totalAttempted, $questionsPerSession).'/'.$questionsPerSession,
-                    'score_percentage' => $scorePercentage,
+                    'score' => $scoreData['correct_answers'].'/'.$questionsPerSession,
+                    'total_marks' => $scoreData['total_marks'],
+                    'obtained_marks' => $scoreData['obtained_marks'],
+                    'answered' => $scoreData['total_answered'].'/'.$questionsPerSession,
+                    'score_percentage' => $scoreData['percentage'],
                 ];
             }
 
@@ -868,10 +771,8 @@ class ExamResultsComponent extends Component
             // Get paginated results
             $examSessions = $query->paginate($this->perPage);
 
-            // Load results if needed
-            if (! $this->hasResults && $examSessions->count() > 0) {
-                $this->loadExamResults();
-            }
+            // Load and process results
+            $this->loadExamResults();
         }
 
         return view('livewire.admin.exam-results-component', [
