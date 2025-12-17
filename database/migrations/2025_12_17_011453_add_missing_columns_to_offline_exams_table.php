@@ -48,7 +48,10 @@ return new class extends Migration
             }
             
             // Drop total_marks column as it's not used in the current implementation
+            // Check if column exists before dropping
+            if (Schema::hasColumn('offline_exams', 'total_marks')) {
             $table->dropColumn('total_marks');
+            }
         });
     }
 
