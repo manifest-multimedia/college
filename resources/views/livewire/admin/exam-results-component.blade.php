@@ -137,7 +137,7 @@
                                 <!-- Records Per Page -->
                                 <div class="col-md-2">
                                     <div class="card bg-light h-100">
-                                        <div class="card-body text-center">
+                                        <div class="card-body text-center position-relative">
                                             <h6 class="card-title text-muted mb-1">Display</h6>
                                             <select wire:model.live="perPage" class="form-select form-select-sm mx-auto" style="max-width: 80px;">
                                                 <option value="15">15</option>
@@ -145,6 +145,12 @@
                                                 <option value="50">50</option>
                                                 <option value="100">100</option>
                                             </select>
+                                            <!-- Loading spinner overlay -->
+                                            <div wire:loading wire:target="perPage" class="position-absolute top-50 start-50 translate-middle">
+                                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -155,6 +161,22 @@
                     <!-- Results Table Section -->
                     @if($exam_id)
                         @if($hasResults)
+                            <!-- Loading Overlay -->
+                            <div wire:loading wire:target="perPage,updatedSearch,updatedCollegeClassId,updatedCohortId" class="position-relative">
+                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1000; min-height: 400px;">
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <div class="mt-3">
+                                            <h5>Loading results...</h5>
+                                            <p class="text-muted">Please wait while we process the data</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div wire:loading.remove wire:target="perPage,updatedSearch,updatedCollegeClassId,updatedCohortId">
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
                                     <thead>
@@ -262,8 +284,17 @@
                             </div>
                             
                             <!-- Pagination Section -->
-                            <div class="d-flex justify-content-center mt-4">
-                                {{ $paginatedSessions->links() }}
+                            <div class="d-flex justify-content-center mt-4 position-relative">
+                                <!-- Loading indicator for pagination -->
+                                <div wire:loading wire:target="perPage" class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div wire:loading.remove wire:target="perPage">
+                                    {{ $paginatedSessions->links() }}
+                                </div>
+                            </div>
                             </div>
                         @else
                             <div class="alert alert-info">
