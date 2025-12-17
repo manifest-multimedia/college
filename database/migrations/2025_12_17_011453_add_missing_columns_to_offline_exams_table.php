@@ -24,13 +24,28 @@ return new class extends Migration
             }
             
             // Add missing columns
+            // Add if column does not exist
+            if (!Schema::hasColumn('offline_exams', 'duration')) {
             $table->integer('duration')->nullable()->after('date'); // Duration in minutes
+            }
+            if (!Schema::hasColumn('offline_exams', 'status')) {
             $table->string('status')->default('draft')->after('duration'); // draft, published, completed, canceled
+            }
+            if(!Schema::hasColumn('offline_exams', 'proctor_id')) {
             $table->unsignedBigInteger('proctor_id')->nullable()->after('user_id'); // Invigilator
-            $table->foreign('proctor_id')->references('id')->on('users')->onDelete('set null');
+            }
+            if (!Schema::hasColumn('offline_exams', 'proctor_id')) {
+                $table->foreign('proctor_id')->references('id')->on('users')->onDelete('set null');
+            }
+            if (!Schema::hasColumn('offline_exams', 'venue')) {
             $table->string('venue')->nullable()->after('proctor_id');
+            }
+            if (!Schema::hasColumn('offline_exams', 'clearance_threshold')) {
             $table->integer('clearance_threshold')->default(60)->after('venue'); // Percentage required for clearance
+            }
+            if (!Schema::hasColumn('offline_exams', 'passing_percentage')) {
             $table->integer('passing_percentage')->default(50)->after('clearance_threshold');
+            }
             
             // Drop total_marks column as it's not used in the current implementation
             $table->dropColumn('total_marks');
