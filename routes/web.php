@@ -16,6 +16,21 @@ Route::get('/mcq', function () {
 
 Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file.upload');
 
+// Exam Results Routes (MUST be before wildcard /exams/{slug}/{student_id} route to avoid conflicts)
+Route::middleware(['auth:sanctum', 'role:System|Academic Officer|Administrator|Lecturer'])->group(function () {
+    Route::get('/exams/results', [App\Http\Controllers\Admin\ExamResultsController::class, 'index'])
+        ->name('exams.results');
+    
+    Route::get('/exams/results/get', [App\Http\Controllers\Admin\ExamResultsController::class, 'getResults'])
+        ->name('admin.exam-results.get');
+    
+    Route::get('/exams/results/export/excel', [App\Http\Controllers\Admin\ExamResultsController::class, 'exportExcel'])
+        ->name('admin.exam-results.export.excel');
+    
+    Route::get('/exams/results/export/pdf', [App\Http\Controllers\Admin\ExamResultsController::class, 'exportPDF'])
+        ->name('admin.exam-results.export.pdf');
+});
+
 // Authentication Routes
 Route::get('/auth/callback', [AuthController::class, 'handleCallback'])->name('auth.callback');
 
@@ -134,25 +149,6 @@ Route::middleware([
         })->name('exam.result.import');
 
         Route::get('/edit-exam/{exam_slug}', ExamEdit::class)->name('exams.edit');
-
-        // NEW: AJAX-based Exam Results (replaces Livewire version)
-        Route::get('/exams/results', [App\Http\Controllers\Admin\ExamResultsController::class, 'index'])
-            ->middleware('role:System|Academic Officer|Administrator|Lecturer')
-            ->name('exams.results');
-        Route::get('/exams/results/get', [App\Http\Controllers\Admin\ExamResultsController::class, 'getResults'])
-            ->middleware('role:System|Academic Officer|Administrator|Lecturer')
-            ->name('admin.exam-results.get');
-        Route::get('/exams/results/export/excel', [App\Http\Controllers\Admin\ExamResultsController::class, 'exportExcel'])
-            ->middleware('role:System|Academic Officer|Administrator|Lecturer')
-            ->name('admin.exam-results.export.excel');
-        Route::get('/exams/results/export/pdf', [App\Http\Controllers\Admin\ExamResultsController::class, 'exportPDF'])
-            ->middleware('role:System|Academic Officer|Administrator|Lecturer')
-            ->name('admin.exam-results.export.pdf');
-        
-        // OLD LIVEWIRE VERSION (deprecated - keep temporarily for rollback if needed)
-        // Route::get('/exams/results-old', function () {
-        //     return view('exams.results');
-        // })->middleware('role:System|Academic Officer|Administrator|Lecturer')->name('exams.results.old');
 
         Route::get('/exam-center', function () {
             return view('examcenter');
@@ -768,7 +764,7 @@ Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
         'examPassword' => $exam->password,
         'student_id' => $student_id,
     ]);
-})->name('exams');
+})->where('slug', '(?!results).*')->name('exams'); // Exclude 'results' from matching
 
 Route::get('/take-exam', function () {
     return view('frontend.take-exam');
