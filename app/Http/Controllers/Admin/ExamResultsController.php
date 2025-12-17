@@ -110,17 +110,19 @@ class ExamResultsController extends Controller
             // Questions per session
             $questionsPerSession = $exam->questions_per_session ?? $exam->questions()->count();
 
-            // Base query for exam sessions
+            // Base query for exam sessions - optimized to prevent memory exhaustion
             $query = ExamSession::where('exam_id', $examId)
                 ->where(function ($q) {
                     $q->whereNotNull('completed_at')
                         ->orWhere('auto_submitted', true);
                 })
+                ->select('exam_sessions.*') // Only load exam_sessions columns
                 ->with([
-                    'student',
-                    'exam.course',
-                    'responses.question.options',
-                    'student.student',
+                    'student:id,name,email', // Only load necessary user fields
+                    'exam:id,course_id,questions_per_session',
+                    'exam.course:id,name',
+                    'student.student:id,student_id,first_name,last_name,other_name,email,college_class_id', // Only necessary student fields
+                    'student.student.collegeClass:id,name',
                 ]);
 
             // Apply search filter
@@ -158,29 +160,31 @@ class ExamResultsController extends Controller
             // Get total count for stats (before pagination)
             $totalStudents = $query->count();
 
-            // Get all sessions for stats calculation
-            $statsQuery = clone $query;
-            $allSessions = $statsQuery->get();
-
-            // Calculate stats from all sessions
+            // Calculate stats using chunking to prevent memory exhaustion
             $totalScorePercentage = 0;
             $passCount = 0;
             $highestScore = 0;
             $lowestScore = $totalStudents > 0 ? 100 : 0;
 
-            foreach ($allSessions as $session) {
-                $scoreData = $this->resultsService->calculateOnlineExamScore($session, $questionsPerSession);
-                $scorePercentage = $scoreData['percentage'];
+            // Use chunking for stats calculation to handle large datasets
+            $statsQuery = clone $query;
+            $statsQuery->chunk(100, function ($sessions) use (&$totalScorePercentage, &$passCount, &$highestScore, &$lowestScore, $questionsPerSession) {
+                foreach ($sessions as $session) {
+                    // Load responses only when needed
+                    $scoreData = $this->resultsService->calculateOnlineExamScore(
+                        $session->load('responses.question.options'), 
+                        $questionsPerSession
+                    );
+                    $scorePercentage = $scoreData['percentage'];
 
-                $totalScorePercentage += $scorePercentage;
-                if ($scorePercentage >= 50) {
-                    $passCount++;
-                }
-                if ($totalStudents > 0) {
+                    $totalScorePercentage += $scorePercentage;
+                    if ($scorePercentage >= 50) {
+                        $passCount++;
+                    }
                     $highestScore = max($highestScore, $scorePercentage);
                     $lowestScore = min($lowestScore, $scorePercentage);
                 }
-            }
+            });
 
             // Calculate stats
             $stats = [
@@ -201,7 +205,11 @@ class ExamResultsController extends Controller
                 $user = $session->student; // This is the User model
                 $student = $user ? $user->student : null; // This is the Student model via the relationship
 
-                $scoreData = $this->resultsService->calculateOnlineExamScore($session, $questionsPerSession);
+                // Load responses only for this specific session to save memory
+                $scoreData = $this->resultsService->calculateOnlineExamScore(
+                    $session->load('responses.question.options'), 
+                    $questionsPerSession
+                );
 
                 $results[] = [
                     'session_id' => $session->id,
@@ -412,11 +420,13 @@ class ExamResultsController extends Controller
                 $q->whereNotNull('completed_at')
                     ->orWhere('auto_submitted', true);
             })
+            ->select('exam_sessions.*') // Only load exam_sessions columns
             ->with([
-                'student',
-                'exam.course',
-                'responses.question.options',
-                'student.student',
+                'student:id,name,email', // Only load necessary user fields
+                'exam:id,course_id,questions_per_session',
+                'exam.course:id,name',
+                'student.student:id,student_id,first_name,last_name,other_name,email,college_class_id',
+                'student.student.collegeClass:id,name',
             ]);
 
         if ($search) {
@@ -456,7 +466,11 @@ class ExamResultsController extends Controller
             $user = $session->student; // This is the User model
             $student = $user ? $user->student : null; // This is the Student model via the relationship
 
-            $scoreData = $this->resultsService->calculateOnlineExamScore($session, $questionsPerSession);
+            // Load responses only for this specific session to save memory
+            $scoreData = $this->resultsService->calculateOnlineExamScore(
+                $session->load('responses.question.options'), 
+                $questionsPerSession
+            );
 
             $results[] = [
                 'session_id' => $session->id,
