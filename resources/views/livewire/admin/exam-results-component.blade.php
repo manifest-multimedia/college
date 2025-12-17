@@ -161,9 +161,9 @@
                     <!-- Results Table Section -->
                     @if($exam_id)
                         @if($hasResults)
-                            <!-- Loading Overlay -->
-                            <div wire:loading wire:target="perPage,updatedSearch,updatedCollegeClassId,updatedCohortId" class="position-relative">
-                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(255,255,255,0.8); z-index: 1000; min-height: 400px;">
+                            <div class="position-relative" style="min-height: 500px;">
+                                <!-- Loading Overlay -->
+                                <div wire:loading class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(255,255,255,0.9); z-index: 1050; min-height: 500px;">
                                     <div class="text-center">
                                         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                                             <span class="visually-hidden">Loading...</span>
@@ -174,9 +174,8 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div wire:loading.remove wire:target="perPage,updatedSearch,updatedCollegeClassId,updatedCohortId">
+                                
+                                <!-- Results Content -->
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
                                     <thead>
@@ -284,16 +283,8 @@
                             </div>
                             
                             <!-- Pagination Section -->
-                            <div class="d-flex justify-content-center mt-4 position-relative">
-                                <!-- Loading indicator for pagination -->
-                                <div wire:loading wire:target="perPage" class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                                <div wire:loading.remove wire:target="perPage">
-                                    {{ $paginatedSessions->links() }}
-                                </div>
+                            <div class="d-flex justify-content-center mt-4">
+                                {{ $paginatedSessions->links() }}
                             </div>
                             </div>
                         @else
