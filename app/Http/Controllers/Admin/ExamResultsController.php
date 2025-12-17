@@ -68,6 +68,10 @@ class ExamResultsController extends Controller
      */
     public function getResults(Request $request)
     {
+        // Increase execution time and memory limit for large exams
+        set_time_limit(300); // 5 minutes
+        ini_set('memory_limit', '256M'); // Increase memory limit
+
         try {
             $user = auth()->user();
             $examId = $request->input('exam_id');
@@ -172,7 +176,7 @@ class ExamResultsController extends Controller
                 foreach ($sessions as $session) {
                     // Load responses only when needed
                     $scoreData = $this->resultsService->calculateOnlineExamScore(
-                        $session->load('responses.question.options'), 
+                        $session->load('responses.question.options'),
                         $questionsPerSession
                     );
                     $scorePercentage = $scoreData['percentage'];
@@ -207,7 +211,7 @@ class ExamResultsController extends Controller
 
                 // Load responses only for this specific session to save memory
                 $scoreData = $this->resultsService->calculateOnlineExamScore(
-                    $session->load('responses.question.options'), 
+                    $session->load('responses.question.options'),
                     $questionsPerSession
                 );
 
@@ -284,7 +288,8 @@ class ExamResultsController extends Controller
     public function exportExcel(Request $request)
     {
         try {
-            set_time_limit(300);
+            set_time_limit(300); // 5 minutes
+            ini_set('memory_limit', '256M'); // Increase memory limit
 
             $examId = $request->input('exam_id');
             $collegeClassId = $request->input('college_class_id');
@@ -336,7 +341,8 @@ class ExamResultsController extends Controller
     public function exportPDF(Request $request)
     {
         try {
-            set_time_limit(300);
+            set_time_limit(300); // 5 minutes
+            ini_set('memory_limit', '256M'); // Increase memory limit
 
             $examId = $request->input('exam_id');
             $exam = Exam::with('course')->find($examId);
@@ -468,7 +474,7 @@ class ExamResultsController extends Controller
 
             // Load responses only for this specific session to save memory
             $scoreData = $this->resultsService->calculateOnlineExamScore(
-                $session->load('responses.question.options'), 
+                $session->load('responses.question.options'),
                 $questionsPerSession
             );
 
