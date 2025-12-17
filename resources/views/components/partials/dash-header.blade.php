@@ -257,7 +257,7 @@
                                                 <span
                                                     class="px-3 py-2 rounded fs-8 bg-light position-absolute translate-middle-y top-50 end-0">English
                                                     <img class="w-15px h-15px rounded-1 ms-2"
-                                                        src="assets/media/flags/united-states.svg"
+                                                        src="{{ asset('dashboard/assets/media/flags/united-states.svg') }}"
                                                         alt="" /></span></span>
                                         </a>
                                         <!--begin::Menu sub-->

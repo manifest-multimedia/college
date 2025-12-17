@@ -34,6 +34,9 @@ class ExamResultsComponent extends Component
 
     public $sortDirection = 'desc';
 
+    // Loading state
+    public $isLoading = false;
+
     // Results data
     public $examResults = [];
 
@@ -170,6 +173,8 @@ class ExamResultsComponent extends Component
         if (! $this->exam_id) {
             return;
         }
+
+        $this->isLoading = true;
 
         try {
             $exam = Exam::find($this->exam_id);
@@ -364,6 +369,7 @@ class ExamResultsComponent extends Component
             ]);
 
             $this->hasResults = false;
+            $this->isLoading = false;
         }
     }
 
@@ -808,8 +814,10 @@ class ExamResultsComponent extends Component
             // Get paginated results
             $examSessions = $query->paginate($this->perPage);
 
-            // Load and process results
-            $this->loadExamResults();
+            // Process results if not already loaded or if filters changed
+            if ($this->hasResults === false || empty($this->examResults)) {
+                $this->loadExamResults();
+            }
         }
 
         return view('livewire.admin.exam-results-component', [

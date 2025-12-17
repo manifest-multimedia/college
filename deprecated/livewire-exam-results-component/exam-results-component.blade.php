@@ -161,10 +161,10 @@
                     <!-- Results Table Section -->
                     @if($exam_id)
                         @if($hasResults)
-                            <div class="position-relative" style="min-height: 500px;">
-                                <!-- Loading Overlay -->
-                                <div wire:loading class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" style="background: rgba(255,255,255,0.9); z-index: 1050; min-height: 500px;">
-                                    <div class="text-center">
+                            <div class="position-relative" style="min-height: 400px;">
+                                <!-- Loading Overlay for results table only -->
+                                <div wire:loading wire:target="gotoPage,nextPage,previousPage,perPage,sortBy" class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-start pt-5" style="background: rgba(255,255,255,0.95); z-index: 1050;">
+                                    <div class="text-center py-5">
                                         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
@@ -175,7 +175,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Results Content -->
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
                                     <thead>
