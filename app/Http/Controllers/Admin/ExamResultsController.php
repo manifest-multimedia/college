@@ -161,20 +161,23 @@ class ExamResultsController extends Controller
                 $query->whereIn('student_id', $studentIds);
             }
 
-            // Get total count for stats (before pagination)
-            $totalStudents = $query->count();
+            // Get paginated results FIRST
+            $examSessions = $query->paginate($perPage);
 
-            // Calculate stats using chunking to prevent memory exhaustion
+            // Calculate stats from paginated results (faster for filtered views)
+            $totalStudents = $examSessions->total();
             $totalScorePercentage = 0;
             $passCount = 0;
             $highestScore = 0;
             $lowestScore = $totalStudents > 0 ? 100 : 0;
 
-            // Use chunking for stats calculation to handle large datasets
-            $statsQuery = clone $query;
-            $statsQuery->chunk(100, function ($sessions) use (&$totalScorePercentage, &$passCount, &$highestScore, &$lowestScore, $questionsPerSession) {
-                foreach ($sessions as $session) {
-                    // Load responses only when needed
+            // If we have filters, calculate stats from current page only (fast)
+            // If no filters, use cache for full exam stats
+            $useQuickStats = $search || $collegeClassId || $cohortId;
+
+            if ($useQuickStats) {
+                // Quick stats from current page results
+                foreach ($examSessions as $session) {
                     $scoreData = $this->resultsService->calculateOnlineExamScore(
                         $session->load('responses.question.options'),
                         $questionsPerSession
@@ -188,19 +191,52 @@ class ExamResultsController extends Controller
                     $highestScore = max($highestScore, $scorePercentage);
                     $lowestScore = min($lowestScore, $scorePercentage);
                 }
-            });
 
-            // Calculate stats
-            $stats = [
-                'totalStudents' => $totalStudents,
-                'averageScore' => $totalStudents > 0 ? round($totalScorePercentage / $totalStudents, 2) : 0,
-                'passRate' => $totalStudents > 0 ? round(($passCount / $totalStudents) * 100, 2) : 0,
-                'highestScore' => $highestScore,
-                'lowestScore' => $lowestScore,
-            ];
+                $stats = [
+                    'totalStudents' => $totalStudents,
+                    'averageScore' => count($examSessions) > 0 ? round($totalScorePercentage / count($examSessions), 2) : 0,
+                    'passRate' => count($examSessions) > 0 ? round(($passCount / count($examSessions)) * 100, 2) : 0,
+                    'highestScore' => $highestScore,
+                    'lowestScore' => $lowestScore,
+                ];
+            } else {
+                // Full exam stats with caching
+                $cacheKey = "exam_stats_{$examId}";
+                $stats = cache()->remember($cacheKey, 300, function () use ($query, $questionsPerSession, $totalStudents) {
+                    $totalScorePercentage = 0;
+                    $passCount = 0;
+                    $highestScore = 0;
+                    $lowestScore = $totalStudents > 0 ? 100 : 0;
 
-            // Get paginated results
-            $examSessions = $query->paginate($perPage);
+                    $statsQuery = clone $query;
+                    $statsQuery->chunk(100, function ($sessions) use (&$totalScorePercentage, &$passCount, &$highestScore, &$lowestScore, $questionsPerSession) {
+                        foreach ($sessions as $session) {
+                            $scoreData = $this->resultsService->calculateOnlineExamScore(
+                                $session->load('responses.question.options'),
+                                $questionsPerSession
+                            );
+                            $scorePercentage = $scoreData['percentage'];
+
+                            $totalScorePercentage += $scorePercentage;
+                            if ($scorePercentage >= 50) {
+                                $passCount++;
+                            }
+                            $highestScore = max($highestScore, $scorePercentage);
+                            $lowestScore = min($lowestScore, $scorePercentage);
+                        }
+                    });
+
+                    return [
+                        'totalStudents' => $totalStudents,
+                        'averageScore' => $totalStudents > 0 ? round($totalScorePercentage / $totalStudents, 2) : 0,
+                        'passRate' => $totalStudents > 0 ? round(($passCount / $totalStudents) * 100, 2) : 0,
+                        'highestScore' => $highestScore,
+                        'lowestScore' => $lowestScore,
+                    ];
+                });
+
+                $stats['totalStudents'] = $totalStudents; // Update with current total
+            }
 
             // Process results for current page
             $results = [];

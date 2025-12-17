@@ -36,9 +36,9 @@ class ExamResultsExport implements FromCollection, WithHeadings
             // Base query for exam sessions
             // Include sessions with completed_at OR auto_submitted flag (for expired exams)
             $query = ExamSession::where('exam_id', $this->exam_id)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNotNull('completed_at')
-                      ->orWhere('auto_submitted', true);
+                        ->orWhere('auto_submitted', true);
                 })
                 ->with([
                     'student', // This is actually User model
@@ -61,7 +61,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
 
             // Create a single instance of ResultsService to reuse
             $resultsService = app(\App\Services\ResultsService::class);
-            
+
             // Pre-load all students in one query to avoid N+1
             $userEmails = $examSessions->pluck('student.email')->filter()->unique();
             $students = Student::whereIn('email', $userEmails)->get()->keyBy('email');
@@ -84,7 +84,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
                 return [
                     'date' => $session->completed_at ? $session->completed_at->format('Y-m-d') : ($session->started_at ? $session->started_at->format('Y-m-d') : 'N/A'),
                     'student_id' => $student ? $student->student_id : 'N/A',
-                    'student_name' => $session->student->name ?? 'N/A',
+                    'student_name' => $student ? $student->name : ($session->student->name ?? 'N/A'), // Use Student model's name
                     'course' => $session->exam->course->name ?? 'N/A',
                     'score' => "{$totalCorrect}/{$questionsPerSession}",
                     'marks' => "{$obtainedMarks}/{$totalMarks}",
