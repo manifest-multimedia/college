@@ -35,6 +35,11 @@ class CourseAssignmentManager extends Component
     // Modal search
     public $modalSearchCourse = '';
 
+    // Modal filters
+    public $modalFilterProgramId = '';
+    public $modalFilterSemesterId = '';
+    public $modalFilterYearId = '';
+
     protected $queryString = [
         'searchLecturer' => ['except' => ''],
         'searchCourse' => ['except' => ''],
@@ -80,6 +85,9 @@ class CourseAssignmentManager extends Component
         $this->assignLecturerId = null;
         $this->assignCourseIds = [];
         $this->modalSearchCourse = '';
+        $this->modalFilterProgramId = '';
+        $this->modalFilterSemesterId = '';
+        $this->modalFilterYearId = '';
     }
 
     public function assignCourses()
@@ -154,7 +162,7 @@ class CourseAssignmentManager extends Component
 
         $lecturers = $lecturersQuery->paginate(15);
 
-        // Get all courses for assignment modal with search filter
+        // Get all courses for assignment modal with search and filters
         $allCoursesQuery = Subject::with(['semester', 'year', 'collegeClass']);
 
         if ($this->modalSearchCourse) {
@@ -164,11 +172,32 @@ class CourseAssignmentManager extends Component
             });
         }
 
+        // Apply filters
+        if ($this->modalFilterProgramId) {
+            $allCoursesQuery->where('college_class_id', $this->modalFilterProgramId);
+        }
+
+        if ($this->modalFilterSemesterId) {
+            $allCoursesQuery->where('semester_id', $this->modalFilterSemesterId);
+        }
+
+        if ($this->modalFilterYearId) {
+            $allCoursesQuery->where('year_id', $this->modalFilterYearId);
+        }
+
         $allCourses = $allCoursesQuery->orderBy('course_code')->get();
+
+        // Get filter options
+        $programs = \App\Models\CollegeClass::orderBy('name')->get();
+        $semesters = \App\Models\Semester::orderBy('name')->get();
+        $years = \App\Models\Year::orderBy('name')->get();
 
         return view('livewire.admin.course-assignment-manager', [
             'lecturers' => $lecturers,
             'allCourses' => $allCourses,
+            'programs' => $programs,
+            'semesters' => $semesters,
+            'years' => $years,
         ]);
     }
 }

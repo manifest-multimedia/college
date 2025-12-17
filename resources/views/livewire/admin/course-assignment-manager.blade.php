@@ -19,7 +19,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-person-badge"></i> Course Assignments for Lecturers
+                        <i class="bi bi-person-badge me-2"></i>Course Assignments for Lecturers
                     </h5>
                 </div>
                 <div class="card-body">
@@ -131,6 +131,37 @@
                                         <i class="bi bi-x"></i>
                                     </button>
                                 @endif
+                            </div>
+                        </div>
+
+                        <!-- Filter Options -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="bi bi-building"></i> Program</label>
+                                <select class="form-select" wire:model.live="modalFilterProgramId">
+                                    <option value="">All Programs</option>
+                                    @foreach($programs as $program)
+                                        <option value="{{ $program->id }}">{{ $program->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="bi bi-calendar3"></i> Semester</label>
+                                <select class="form-select" wire:model.live="modalFilterSemesterId">
+                                    <option value="">All Semesters</option>
+                                    @foreach($semesters as $semester)
+                                        <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="bi bi-calendar"></i> Year</label>
+                                <select class="form-select" wire:model.live="modalFilterYearId">
+                                    <option value="">All Years</option>
+                                    @foreach($years as $year)
+                                        <option value="{{ $year->id }}">{{ $year->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
 
