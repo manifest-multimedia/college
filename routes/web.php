@@ -138,8 +138,8 @@ Route::middleware([
         })->name('student.information');
     });
 
-    // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin)
-    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin|System'])->group(function () {
+    // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin, Finance Manager)
+    Route::middleware(['role:Lecturer|Academic Officer|Administrator|Super Admin|System|Finance Manager'])->group(function () {
         Route::get('exam-results', function () {
             return view('exams.correct-data');
         })->name('exam.results');
@@ -228,7 +228,7 @@ Route::middleware([
     });
 
     // Administrator routes
-    Route::middleware(['role:Administrator|Super Admin|Academic Officer|System'])->group(function () {
+    Route::middleware(['role:Administrator|Super Admin|Academic Officer|System|Finance Manager'])->group(function () {
         Route::get('/students', function () {
             return view('students');
         })->name('students');
@@ -376,7 +376,7 @@ Route::middleware([
     | Finance Management & Fee Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Officer'])->prefix('finance')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Officer|Finance Manager'])->prefix('finance')->group(function () {
         Route::get('/billing', function () {
             return view('finance.billing');
         })->name('finance.billing');
