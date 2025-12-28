@@ -57,7 +57,7 @@
                         <select wire:model="selectedAcademicYearId" id="academicYear" class="form-select">
                             <option value="">Select Year</option>
                             @foreach($academicYears as $year)
-                                <option value="{{ $year->id }}">{{ $year->year }}</option>
+                                <option value="{{ $year->id }}">{{ $year->name }}</option>
                             @endforeach
                         </select>
                         @error('selectedAcademicYearId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
