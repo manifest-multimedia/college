@@ -85,6 +85,18 @@
                             Loading...
                         </span>
                     </button>
+
+                    <button wire:click="downloadExcelTemplate" class="btn btn-outline-success" 
+                            @if(!$selectedCourseId || !$selectedClassId || !$selectedAcademicYearId || !$selectedSemesterId) disabled @endif
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="downloadExcelTemplate">
+                            <i class="fas fa-download me-2"></i>Download Excel Template
+                        </span>
+                        <span wire:loading wire:target="downloadExcelTemplate">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Generating...
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -96,9 +108,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1">Grading Weights</h6>
-                        <div class="d-flex gap-4">
+                        <div class="d-flex gap-4 flex-wrap">
                             <span class="badge bg-gradient-primary px-3 py-2">
-                                Assignments: <strong>{{ $assignmentWeight }}%</strong>
+                                Assignments ({{ $assignmentCount }}): <strong>{{ $assignmentWeight }}%</strong>
                             </span>
                             <span class="badge bg-gradient-info px-3 py-2">
                                 Mid-Semester: <strong>{{ $midSemesterWeight }}%</strong>
@@ -108,9 +120,23 @@
                             </span>
                         </div>
                     </div>
-                    <button wire:click="toggleWeightConfig" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-cog me-1"></i>Configure Weights
-                    </button>
+                    <div class="d-flex gap-2">
+                        <div class="btn-group" role="group">
+                            <button wire:click="removeAssignmentColumn" class="btn btn-sm btn-outline-danger" 
+                                    @if($assignmentCount <= 3) disabled @endif
+                                    title="Remove assignment column">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button wire:click="addAssignmentColumn" class="btn btn-sm btn-outline-success" 
+                                    @if($assignmentCount >= 5) disabled @endif
+                                    title="Add assignment column">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <button wire:click="toggleWeightConfig" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-cog me-1"></i>Configure Weights
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Weight Configuration Modal --}}
@@ -146,6 +172,129 @@
                 @endif
             </div>
         </div>
+
+        {{-- Excel Import Section --}}
+        @if($isLoaded)
+        <div class="card mb-4">
+            <div class="card-header pb-0">
+                <h6>Excel Import</h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-end">
+                    <div class="col-md-6">
+                        <label for="importFile" class="form-label">Upload Excel File</label>
+                        <input type="file" wire:model="importFile" id="importFile" class="form-control" accept=".xlsx,.xls">
+                        @error('importFile') <span class="text-danger text-sm">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <button wire:click="importFromExcel" class="btn btn-primary" 
+                                @if(!$importFile) disabled @endif 
+                                wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="importFromExcel">
+                                <i class="fas fa-upload me-2"></i>Preview Import
+                            </span>
+                            <span wire:loading wire:target="importFromExcel">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Processing...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                @if(!empty($importErrors))
+                <div class="alert alert-danger mt-3">
+                    <h6 class="alert-heading">Import Validation Errors ({{ count($importErrors) }})</h6>
+                    <hr>
+                    <ul class="mb-0">
+                        @foreach($importErrors as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Import Preview Modal --}}
+        @if($showImportPreview)
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-gradient-primary pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="text-white">Import Preview - Review Before Saving</h6>
+                    <button wire:click="cancelImport" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">Import Summary</h6>
+                    <ul class="mb-0">
+                        <li>Total rows: {{ $importSummary['total'] ?? 0 }}</li>
+                        <li>Valid records: {{ $importSummary['valid'] ?? 0 }}</li>
+                        <li>New records: {{ $importSummary['new'] ?? 0 }}</li>
+                        <li>Records to update: {{ $importSummary['updates'] ?? 0 }}</li>
+                        @if(($importSummary['errors'] ?? 0) > 0)
+                            <li class="text-danger">Errors: {{ $importSummary['errors'] }}</li>
+                        @endif
+                    </ul>
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-striped">
+                        <thead class="sticky-top bg-light">
+                            <tr>
+                                <th>Action</th>
+                                <th>INDEX NO</th>
+                                <th>STUDENT NAME</th>
+                                <th>ASSIGN 1</th>
+                                <th>ASSIGN 2</th>
+                                <th>ASSIGN 3</th>
+                                <th>MID-SEM</th>
+                                <th>END-SEM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($importPreviewData as $data)
+                                <tr>
+                                    <td>
+                                        @if($data['is_update'])
+                                            <span class="badge badge-sm bg-gradient-warning">UPDATE</span>
+                                        @else
+                                            <span class="badge badge-sm bg-gradient-success">NEW</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $data['student_number'] }}</td>
+                                    <td>{{ $data['student_name'] }}</td>
+                                    <td>{{ $data['assignment_1'] ?? '--' }}</td>
+                                    <td>{{ $data['assignment_2'] ?? '--' }}</td>
+                                    <td>{{ $data['assignment_3'] ?? '--' }}</td>
+                                    <td>{{ $data['mid_semester'] ?? '--' }}</td>
+                                    <td>{{ $data['end_semester'] ?? '--' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3 d-flex justify-content-end gap-2">
+                    <button wire:click="cancelImport" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button wire:click="confirmImport" class="btn btn-success" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="confirmImport">
+                            <i class="fas fa-check me-1"></i>Confirm & Save Import
+                        </span>
+                        <span wire:loading wire:target="confirmImport">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Importing...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+        @endif
 
         {{-- Statistics Summary --}}
         <div class="row mb-4">
@@ -238,6 +387,12 @@
                                 <th class="text-center" style="width: 8%">Assign 1</th>
                                 <th class="text-center" style="width: 8%">Assign 2</th>
                                 <th class="text-center" style="width: 8%">Assign 3</th>
+                                @if($assignmentCount >= 4)
+                                <th class="text-center" style="width: 8%">Assign 4</th>
+                                @endif
+                                @if($assignmentCount >= 5)
+                                <th class="text-center" style="width: 8%">Assign 5</th>
+                                @endif
                                 <th class="text-center" style="width: 10%">Mid-Sem ({{ $midSemesterWeight }}%)</th>
                                 <th class="text-center" style="width: 10%">End-Sem ({{ $endSemesterWeight }}%)</th>
                                 <th class="text-center bg-light" style="width: 10%">Total</th>
@@ -277,6 +432,28 @@
                                            min="0" max="100" step="0.01"
                                            placeholder="--">
                                 </td>
+
+                                {{-- Assignment 4 (conditional) --}}
+                                @if($assignmentCount >= 4)
+                                <td class="text-center">
+                                    <input type="number" 
+                                           wire:model.blur="studentScores.{{ $index }}.assignment_4"
+                                           class="form-control form-control-sm text-center" 
+                                           min="0" max="100" step="0.01"
+                                           placeholder="--">
+                                </td>
+                                @endif
+
+                                {{-- Assignment 5 (conditional) --}}
+                                @if($assignmentCount >= 5)
+                                <td class="text-center">
+                                    <input type="number" 
+                                           wire:model.blur="studentScores.{{ $index }}.assignment_5"
+                                           class="form-control form-control-sm text-center" 
+                                           min="0" max="100" step="0.01"
+                                           placeholder="--">
+                                </td>
+                                @endif
                                 
                                 {{-- Mid-Semester --}}
                                 <td class="text-center">
@@ -330,22 +507,34 @@
                 </div>
 
                 @if(count($studentScores) > 0)
-                <div class="mt-3 d-flex justify-content-between align-items-center">
+                <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div class="text-muted">
                         <small>
                             <i class="fas fa-info-circle me-1"></i>
                             Enter scores and press Tab or click outside the field to auto-calculate. Leave blank if not taken.
                         </small>
                     </div>
-                    <button wire:click="saveScores" class="btn btn-success" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="saveScores">
-                            <i class="fas fa-save me-2"></i>Save All Scores
-                        </span>
-                        <span wire:loading wire:target="saveScores">
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Saving...
-                        </span>
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button wire:click="saveScores" class="btn btn-success" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="saveScores">
+                                <i class="fas fa-save me-1"></i>Save All Scores
+                            </span>
+                            <span wire:loading wire:target="saveScores">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Saving...
+                            </span>
+                        </button>
+
+                        <button wire:click="exportToExcel" class="btn btn-outline-primary" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="exportToExcel">
+                                <i class="fas fa-file-excel me-1"></i>Export
+                            </span>
+                            <span wire:loading wire:target="exportToExcel">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Exporting...
+                            </span>
+                        </button>
+                    </div>
                 </div>
                 @endif
             </div>

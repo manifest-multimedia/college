@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exports\TranscriptExport;
 use App\Models\AcademicYear;
+use App\Models\AssessmentScore;
 use App\Models\Exam;
 use App\Models\ExamSession;
 use App\Models\OfflineExamScore;
@@ -205,6 +206,27 @@ class TranscriptService
      */
     protected function getOfflineExamScore($student, $subject)
     {
+        // First, try to get from new assessment_scores table
+        $assessmentScore = AssessmentScore::where('course_id', $subject->id)
+            ->where('student_id', $student->id)
+            ->latest('created_at')
+            ->first();
+
+        if ($assessmentScore) {
+            // Use total_score accessor which calculates weighted total
+            return [
+                'exam_id' => $assessmentScore->id,
+                'exam_title' => 'Continuous Assessment',
+                'score' => $assessmentScore->total_score,
+                'total_marks' => 100,
+                'percentage' => $assessmentScore->total_score,
+                'remarks' => 'Grade: '.$assessmentScore->grade_letter,
+                'exam_date' => $assessmentScore->created_at->format('Y-m-d'),
+                'recorded_at' => $assessmentScore->created_at,
+            ];
+        }
+
+        // Fallback to old offline_exam_scores table for backward compatibility
         $score = OfflineExamScore::whereHas('offlineExam', function ($query) use ($subject) {
             $query->where('course_id', $subject->id);
         })
