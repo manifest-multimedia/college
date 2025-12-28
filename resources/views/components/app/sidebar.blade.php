@@ -644,7 +644,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     @endhasanyrole
                     
-                    @can('view exams')
+                    @hasanyrole(['Administrator', 'Super Admin', 'Academic Officer', 'System', 'Finance Manager', 'Lecturer'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('assessment-scores') ? 'active' : '' }}" href="{{ route('assessment-scores') }}">
@@ -656,7 +656,9 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
+                    @endhasanyrole
                     
+                    @can('view exams')
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('admin.exams.offline') ? 'active' : '' }}" href="{{ route('admin.exams.offline') }}">
