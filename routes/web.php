@@ -241,11 +241,6 @@ Route::middleware([
             return view('students.create');
         })->name('students.create');
 
-        // Assessment Scores Route
-        Route::get('/assessment-scores', function () {
-            return view('admin.assessment-scores');
-        })->name('assessment-scores');
-
         // Student individual routes
         Route::get('/students/{student}', function ($student) {
             return view('students.show', ['studentId' => $student]);
@@ -259,6 +254,13 @@ Route::middleware([
             ->name('students.destroy');
 
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
+
+        // Assessment Scores - Accessible by teaching and administrative staff (all roles except Student)
+        Route::middleware(['auth:sanctum', 'role:Administrator|Super Admin|Academic Officer|System|Finance Manager|Lecturer'])->group(function () {
+            Route::get('/assessment-scores', function () {
+                return view('assessment-scores.index');
+            })->name('assessment-scores');
+        });
 
         // Settings Routes
         Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('settings')->group(function () {
