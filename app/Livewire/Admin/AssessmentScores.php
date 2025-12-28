@@ -123,7 +123,7 @@ class AssessmentScores extends Component
         $savedCount = 0;
         $updatedCount = 0;
 
-        foreach ($this->studentScores as $studentScore) {
+        foreach ($this->studentScores as $index => $studentScore) {
             // Skip if no scores entered
             if (
                 $studentScore['assignment_1'] === null &&
@@ -135,16 +135,17 @@ class AssessmentScores extends Component
                 continue;
             }
 
+            // Convert empty strings to NULL for decimal fields
             $data = [
                 'course_id' => $this->selectedCourseId,
                 'student_id' => $studentScore['student_id'],
                 'academic_year_id' => $this->selectedAcademicYearId,
                 'semester_id' => $this->selectedSemesterId,
-                'assignment_1_score' => $studentScore['assignment_1'],
-                'assignment_2_score' => $studentScore['assignment_2'],
-                'assignment_3_score' => $studentScore['assignment_3'],
-                'mid_semester_score' => $studentScore['mid_semester'],
-                'end_semester_score' => $studentScore['end_semester'],
+                'assignment_1_score' => $studentScore['assignment_1'] === '' ? null : $studentScore['assignment_1'],
+                'assignment_2_score' => $studentScore['assignment_2'] === '' ? null : $studentScore['assignment_2'],
+                'assignment_3_score' => $studentScore['assignment_3'] === '' ? null : $studentScore['assignment_3'],
+                'mid_semester_score' => $studentScore['mid_semester'] === '' ? null : $studentScore['mid_semester'],
+                'end_semester_score' => $studentScore['end_semester'] === '' ? null : $studentScore['end_semester'],
                 'assignment_weight' => $this->assignmentWeight,
                 'mid_semester_weight' => $this->midSemesterWeight,
                 'end_semester_weight' => $this->endSemesterWeight,
@@ -153,16 +154,21 @@ class AssessmentScores extends Component
             ];
 
             if ($studentScore['existing_id']) {
-                AssessmentScore::find($studentScore['existing_id'])->update($data);
+                $saved = AssessmentScore::find($studentScore['existing_id']);
+                $saved->update($data);
+                // Update the display with calculated values from model
+                $this->studentScores[$index]['total'] = $saved->fresh()->total_score;
+                $this->studentScores[$index]['grade'] = $saved->fresh()->grade_letter;
                 $updatedCount++;
             } else {
-                AssessmentScore::create($data);
+                $saved = AssessmentScore::create($data);
+                // Update the display with calculated values from model
+                $this->studentScores[$index]['existing_id'] = $saved->id;
+                $this->studentScores[$index]['total'] = $saved->total_score;
+                $this->studentScores[$index]['grade'] = $saved->grade_letter;
                 $savedCount++;
             }
         }
-
-        // Reload scoresheet to show updated calculations
-        $this->loadScoresheet();
 
         $message = 'Scores saved successfully! ';
         if ($savedCount > 0) {

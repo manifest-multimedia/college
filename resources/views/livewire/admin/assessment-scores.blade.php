@@ -254,8 +254,7 @@
                                 {{-- Assignment 1 --}}
                                 <td class="text-center">
                                     <input type="number" 
-                                           wire:model.lazy="studentScores.{{ $index }}.assignment_1"
-                                           wire:change="calculateStudentTotal({{ $index }})"
+                                           wire:model.blur="studentScores.{{ $index }}.assignment_1"
                                            class="form-control form-control-sm text-center" 
                                            min="0" max="100" step="0.01"
                                            placeholder="--">
@@ -264,8 +263,7 @@
                                 {{-- Assignment 2 --}}
                                 <td class="text-center">
                                     <input type="number" 
-                                           wire:model.lazy="studentScores.{{ $index }}.assignment_2"
-                                           wire:change="calculateStudentTotal({{ $index }})"
+                                           wire:model.blur="studentScores.{{ $index }}.assignment_2"
                                            class="form-control form-control-sm text-center" 
                                            min="0" max="100" step="0.01"
                                            placeholder="--">
@@ -274,8 +272,7 @@
                                 {{-- Assignment 3 --}}
                                 <td class="text-center">
                                     <input type="number" 
-                                           wire:model.lazy="studentScores.{{ $index }}.assignment_3"
-                                           wire:change="calculateStudentTotal({{ $index }})"
+                                           wire:model.blur="studentScores.{{ $index }}.assignment_3"
                                            class="form-control form-control-sm text-center" 
                                            min="0" max="100" step="0.01"
                                            placeholder="--">
@@ -284,8 +281,7 @@
                                 {{-- Mid-Semester --}}
                                 <td class="text-center">
                                     <input type="number" 
-                                           wire:model.lazy="studentScores.{{ $index }}.mid_semester"
-                                           wire:change="calculateStudentTotal({{ $index }})"
+                                           wire:model.blur="studentScores.{{ $index }}.mid_semester"
                                            class="form-control form-control-sm text-center" 
                                            min="0" max="100" step="0.01"
                                            placeholder="--">
@@ -294,8 +290,7 @@
                                 {{-- End-Semester --}}
                                 <td class="text-center">
                                     <input type="number" 
-                                           wire:model.lazy="studentScores.{{ $index }}.end_semester"
-                                           wire:change="calculateStudentTotal({{ $index }})"
+                                           wire:model.blur="studentScores.{{ $index }}.end_semester"
                                            class="form-control form-control-sm text-center" 
                                            min="0" max="100" step="0.01"
                                            placeholder="--">
