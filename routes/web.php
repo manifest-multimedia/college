@@ -20,13 +20,13 @@ Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file
 Route::middleware(['auth:sanctum', 'role:System|Academic Officer|Administrator|Lecturer'])->group(function () {
     Route::get('/exams/results', [App\Http\Controllers\Admin\ExamResultsController::class, 'index'])
         ->name('exams.results');
-    
+
     Route::get('/exams/results/get', [App\Http\Controllers\Admin\ExamResultsController::class, 'getResults'])
         ->name('admin.exam-results.get');
-    
+
     Route::get('/exams/results/export/excel', [App\Http\Controllers\Admin\ExamResultsController::class, 'exportExcel'])
         ->name('admin.exam-results.export.excel');
-    
+
     Route::get('/exams/results/export/pdf', [App\Http\Controllers\Admin\ExamResultsController::class, 'exportPDF'])
         ->name('admin.exam-results.export.pdf');
 });
@@ -240,6 +240,11 @@ Route::middleware([
         Route::get('/students/create', function () {
             return view('students.create');
         })->name('students.create');
+
+        // Assessment Scores Route
+        Route::get('/assessment-scores', function () {
+            return view('admin.assessment-scores');
+        })->name('assessment-scores');
 
         // Student individual routes
         Route::get('/students/{student}', function ($student) {
@@ -748,8 +753,6 @@ Route::prefix('public/elections')->name('public.elections.')->group(function () 
 
     Route::get('/{election}/expired', \App\Livewire\ElectionExpired::class)->name('expired');
 });
-
-
 
 // Staff Exam Preview (must be before generic student exam route to avoid conflicts)
 Route::get('/exams/{exam}/preview', \App\Livewire\ExamPreview::class)

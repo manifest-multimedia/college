@@ -647,12 +647,23 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     @can('view exams')
                     <!--begin:Menu item-->
                     <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('assessment-scores') ? 'active' : '' }}" href="{{ route('assessment-scores') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Assessment Scores</span>
+                            <span class="badge badge-light-primary">Simplified</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('admin.exams.offline') ? 'active' : '' }}" href="{{ route('admin.exams.offline') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Offline Exams</span>
-                            <span class="badge badge-light-success">New</span>
+                            <span class="menu-title">Offline Exams (Legacy)</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -663,8 +674,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Offline Exam Scores</span>
-                            <span class="badge badge-light-success">New</span>
+                            <span class="menu-title">Offline Exam Scores (Legacy)</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
