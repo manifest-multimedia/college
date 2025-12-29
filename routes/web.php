@@ -304,6 +304,11 @@ Route::middleware([
             Route::get('/user-departments', function () {
                 return view('settings.user-departments');
             })->name('settings.user-departments');
+
+            // Assessment Settings
+            Route::get('/assessment-settings', function () {
+                return view('settings.assessment-settings');
+            })->name('settings.assessment-settings');
         });
     });
 

@@ -1099,7 +1099,8 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 $settingsRoutes = [
                     'settings.general', 'settings.users', 'settings.roles', 
                     'settings.permissions', 'settings.backup', 'settings.departments',
-                    'settings.user-departments', 'admin.branding.index', 'settings.api'
+                    'settings.user-departments', 'admin.branding.index', 'settings.api',
+                    'settings.assessment-settings'
                 ];
                 $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
             @endphp
@@ -1202,6 +1203,17 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">User Departments</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('settings.assessment-settings') ? 'active' : '' }}" href="{{ route('settings.assessment-settings') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Assessment Settings</span>
                         </a>
                     </div>
                     <!--end:Menu item-->

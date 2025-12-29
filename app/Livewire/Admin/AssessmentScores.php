@@ -70,6 +70,21 @@ class AssessmentScores extends Component
         if ($currentSemester) {
             $this->selectedSemesterId = $currentSemester->id;
         }
+
+        // Load default weights from system settings
+        $this->loadDefaultWeights();
+    }
+
+    protected function loadDefaultWeights()
+    {
+        $settings = DB::table('system_settings')
+            ->whereIn('key', ['default_assignment_weight', 'default_mid_semester_weight', 'default_end_semester_weight'])
+            ->get()
+            ->keyBy('key');
+
+        $this->assignmentWeight = $settings->get('default_assignment_weight')->value ?? 20;
+        $this->midSemesterWeight = $settings->get('default_mid_semester_weight')->value ?? 20;
+        $this->endSemesterWeight = $settings->get('default_end_semester_weight')->value ?? 60;
     }
 
     public function loadScoresheet()
