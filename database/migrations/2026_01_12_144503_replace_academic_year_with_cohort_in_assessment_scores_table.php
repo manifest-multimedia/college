@@ -10,16 +10,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assessment_scores', function (Blueprint $table) {
-
+            
             // -----------------------------
-            // DROP OLD FK (if exists)
+            // DROP OLD FK constraints first (before dropping indexes that might be used by them)
             // -----------------------------
-            if ($this->foreignKeyExists('assessment_scores', 'assessment_scores_academic_year_id_foreign')) {
-                $table->dropForeign('assessment_scores_academic_year_id_foreign');
+            $academicYearFkName = $this->getForeignKeyConstraintName('assessment_scores', 'academic_year_id');
+            if ($academicYearFkName && $this->foreignKeyExists('assessment_scores', $academicYearFkName)) {
+                $table->dropForeign($academicYearFkName);
             }
 
             // -----------------------------
-            // DROP OLD INDEXES (if exist)
+            // DROP OLD INDEXES (now that FK constraints are removed)
             // -----------------------------
             if ($this->indexExists('assessment_scores', 'assessment_scores_student_id_academic_year_id_semester_id_index')) {
                 $table->dropIndex('assessment_scores_student_id_academic_year_id_semester_id_index');
@@ -88,8 +89,9 @@ return new class extends Migration
             // -----------------------------
             // DROP NEW FK
             // -----------------------------
-            if ($this->foreignKeyExists('assessment_scores', 'assessment_scores_cohort_id_foreign')) {
-                $table->dropForeign('assessment_scores_cohort_id_foreign');
+            $cohortFkName = $this->getForeignKeyConstraintName('assessment_scores', 'cohort_id');
+            if ($cohortFkName && $this->foreignKeyExists('assessment_scores', $cohortFkName)) {
+                $table->dropForeign($cohortFkName);
             }
 
             // -----------------------------
@@ -184,5 +186,22 @@ return new class extends Migration
         ", [$table, $indexName]);
 
         return !empty($rows);
+    }
+    
+    /**
+     * Get the foreign key constraint name for a specific column
+     */
+    private function getForeignKeyConstraintName(string $table, string $column): ?string
+    {
+        $result = DB::select("
+            SELECT CONSTRAINT_NAME
+            FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+              AND COLUMN_NAME = ?
+              AND REFERENCED_TABLE_NAME IS NOT NULL
+        ", [$table, $column]);
+        
+        return !empty($result) ? $result[0]->CONSTRAINT_NAME : null;
     }
 };
