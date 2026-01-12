@@ -12,8 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Step 1: Drop the foreign key constraint first
-        DB::statement('ALTER TABLE assessment_scores DROP FOREIGN KEY IF EXISTS assessment_scores_academic_year_id_foreign');
+        // Step 1: Drop the foreign key constraint first (no IF EXISTS for DROP FOREIGN KEY in MySQL)
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP FOREIGN KEY assessment_scores_academic_year_id_foreign');
+        } catch (\Exception $e) {
+            // Foreign key might not exist
+        }
         
         // Step 2: Drop the unique constraint
         try {
@@ -55,8 +59,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Step 1: Drop the foreign key constraint
-        DB::statement('ALTER TABLE assessment_scores DROP FOREIGN KEY IF EXISTS assessment_scores_cohort_id_foreign');
+        // Step 1: Drop the foreign key constraint (no IF EXISTS for DROP FOREIGN KEY in MySQL)
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP FOREIGN KEY assessment_scores_cohort_id_foreign');
+        } catch (\Exception $e) {
+            // Foreign key might not exist
+        }
         
         // Step 2: Drop the unique constraint
         try {
