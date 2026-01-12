@@ -22,7 +22,19 @@ return new class extends Migration
         // -----------------------------
         // BACKFILL DATA FOR cohort_id
         // -----------------------------
-        DB::table('assessment_scores')->update(['cohort_id' => null]); // Set to NULL temporarily
+        // Set cohort_id to a default valid value (e.g., the first cohort ID)
+        $defaultCohortId = DB::table('cohorts')->value('id'); // Fetch the first cohort ID
+        if ($defaultCohortId) {
+            DB::table('assessment_scores')->update(['cohort_id' => $defaultCohortId]);
+        } else {
+            // If no cohorts exist, create a placeholder cohort and use its ID
+            $defaultCohortId = DB::table('cohorts')->insertGetId([
+                'name' => 'Default Cohort',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            DB::table('assessment_scores')->update(['cohort_id' => $defaultCohortId]);
+        }
 
         Schema::table('assessment_scores', function (Blueprint $table) {
 
