@@ -15,8 +15,16 @@ return new class extends Migration
             // ADD NEW COLUMN (if not exists)
             // -----------------------------
             if (!Schema::hasColumn('assessment_scores', 'cohort_id')) {
-                $table->unsignedBigInteger('cohort_id')->after('student_id');
+                $table->unsignedBigInteger('cohort_id')->nullable()->after('student_id');
             }
+        });
+
+        // -----------------------------
+        // BACKFILL DATA FOR cohort_id
+        // -----------------------------
+        DB::table('assessment_scores')->update(['cohort_id' => null]); // Set to NULL temporarily
+
+        Schema::table('assessment_scores', function (Blueprint $table) {
 
             // -----------------------------
             // ADD NEW FK (if not exists)
