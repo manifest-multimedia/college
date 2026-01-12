@@ -12,33 +12,40 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('assessment_scores', function (Blueprint $table) {
-            // Drop the unique constraint first
-            $table->dropUnique('unique_student_course_semester');
-        });
+        // Step 1: Drop the foreign key constraint first
+        DB::statement('ALTER TABLE assessment_scores DROP FOREIGN KEY IF EXISTS assessment_scores_academic_year_id_foreign');
         
+        // Step 2: Drop the unique constraint
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP INDEX unique_student_course_semester');
+        } catch (\Exception $e) {
+            // Index might not exist with this exact name
+        }
+        
+        // Step 3: Drop the indexes
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP INDEX assessment_scores_student_id_academic_year_id_semester_id_index');
+        } catch (\Exception $e) {
+            // Index might not exist
+        }
+        
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP INDEX assessment_scores_course_id_academic_year_id_semester_id_index');
+        } catch (\Exception $e) {
+            // Index might not exist
+        }
+        
+        // Step 4: Drop the old column and add the new one
         Schema::table('assessment_scores', function (Blueprint $table) {
-            // Drop existing indexes
-            $table->dropIndex('assessment_scores_student_id_academic_year_id_semester_id_index');
-            $table->dropIndex('assessment_scores_course_id_academic_year_id_semester_id_index');
-            
-            // Drop foreign key
-            $table->dropForeignKey('assessment_scores_academic_year_id_foreign');
-            
-            // Drop the old column
             $table->dropColumn('academic_year_id');
         });
         
+        // Step 5: Add new cohort_id column with all constraints
         Schema::table('assessment_scores', function (Blueprint $table) {
-            // Add new cohort_id column
             $table->unsignedInteger('cohort_id')->after('student_id');
             $table->foreign('cohort_id')->references('id')->on('cohorts')->onDelete('cascade');
-            
-            // Add indexes with cohort_id
             $table->index(['student_id', 'cohort_id', 'semester_id']);
             $table->index(['course_id', 'cohort_id', 'semester_id']);
-            
-            // Add unique constraint with cohort_id
             $table->unique(['course_id', 'student_id', 'cohort_id', 'semester_id'], 'unique_student_course_semester');
         });
     }
@@ -48,31 +55,40 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('assessment_scores', function (Blueprint $table) {
-            // Drop unique constraint
-            $table->dropUnique('unique_student_course_semester');
-        });
+        // Step 1: Drop the foreign key constraint
+        DB::statement('ALTER TABLE assessment_scores DROP FOREIGN KEY IF EXISTS assessment_scores_cohort_id_foreign');
         
+        // Step 2: Drop the unique constraint
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP INDEX unique_student_course_semester');
+        } catch (\Exception $e) {
+            // Index might not exist
+        }
+        
+        // Step 3: Drop the indexes
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP INDEX assessment_scores_student_id_cohort_id_semester_id_index');
+        } catch (\Exception $e) {
+            // Index might not exist
+        }
+        
+        try {
+            DB::statement('ALTER TABLE assessment_scores DROP INDEX assessment_scores_course_id_cohort_id_semester_id_index');
+        } catch (\Exception $e) {
+            // Index might not exist
+        }
+        
+        // Step 4: Drop cohort_id and restore academic_year_id
         Schema::table('assessment_scores', function (Blueprint $table) {
-            // Drop new indexes and foreign key
-            $table->dropIndex('assessment_scores_student_id_cohort_id_semester_id_index');
-            $table->dropIndex('assessment_scores_course_id_cohort_id_semester_id_index');
-            $table->dropForeignKey('assessment_scores_cohort_id_foreign');
-            
-            // Drop cohort_id column
             $table->dropColumn('cohort_id');
         });
         
+        // Step 5: Restore academic_year_id column with all constraints
         Schema::table('assessment_scores', function (Blueprint $table) {
-            // Restore academic_year_id
             $table->unsignedInteger('academic_year_id')->after('student_id');
             $table->foreign('academic_year_id')->references('id')->on('academic_years')->onDelete('cascade');
-            
-            // Restore old indexes
             $table->index(['student_id', 'academic_year_id', 'semester_id']);
             $table->index(['course_id', 'academic_year_id', 'semester_id']);
-            
-            // Restore old unique constraint
             $table->unique(['course_id', 'student_id', 'academic_year_id', 'semester_id'], 'unique_student_course_semester');
         });
     }
