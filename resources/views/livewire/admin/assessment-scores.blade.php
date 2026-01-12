@@ -87,7 +87,7 @@
                     </button>
 
                     <button wire:click="downloadExcelTemplate" class="btn btn-outline-success" 
-                            @if(!$selectedCourseId || !$selectedClassId || !$selectedAcademicYearId || !$selectedSemesterId) disabled @endif
+                            @if(!$selectedCourseId || !$selectedClassId || !$selectedCohortId || !$selectedSemesterId) disabled @endif
                             wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="downloadExcelTemplate">
                             <i class="fas fa-download me-2"></i>Download Excel Template
