@@ -6,6 +6,7 @@ use App\Exports\AssessmentScoresExport;
 use App\Exports\AssessmentScoresTemplateExport;
 use App\Imports\AssessmentScoresImport;
 use App\Models\AssessmentScore;
+use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Semester;
@@ -65,10 +66,10 @@ class AssessmentScores extends Component
     public function mount()
     {
         // Fetch distinct academic years from cohorts
-        $this->academicYears = Cohort::query()
-            ->select('academic_year')
+        $this->academicYears = AcademicYear::query()
+            ->select('name')
             ->distinct()
-            ->pluck('academic_year');
+            ->pluck('name');
 
         // Auto-select current cohort and semester if available
         $currentCohort = Cohort::where('is_active', true)->first();
