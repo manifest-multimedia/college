@@ -31,6 +31,17 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3">
+                        <label for="program" class="form-label">Program <span class="text-danger">*</span></label>
+                        <select wire:model="selectedClassId" id="program" class="form-select">
+                            <option value="">Select Program</option>
+                            @foreach($collegeClasses as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('selectedClassId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="col-md-3">
                         <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
                         <select wire:model="selectedCourseId" id="course" class="form-select">
                             <option value="">Select Course</option>
@@ -42,25 +53,14 @@
                     </div>
 
                     <div class="col-md-3">
-                        <label for="class" class="form-label">Class <span class="text-danger">*</span></label>
-                        <select wire:model="selectedClassId" id="class" class="form-select">
-                            <option value="">Select Class</option>
-                            @foreach($collegeClasses as $class)
-                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        <label for="cohort" class="form-label">Cohort <span class="text-danger">*</span></label>
+                        <select wire:model="selectedCohortId" id="cohort" class="form-select">
+                            <option value="">Select Cohort</option>
+                            @foreach($cohorts as $cohort)
+                                <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
                             @endforeach
                         </select>
-                        @error('selectedClassId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="academicYear" class="form-label">Academic Year <span class="text-danger">*</span></label>
-                        <select wire:model="selectedAcademicYearId" id="academicYear" class="form-select">
-                            <option value="">Select Year</option>
-                            @foreach($academicYears as $year)
-                                <option value="{{ $year->id }}">{{ $year->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('selectedAcademicYearId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
+                        @error('selectedCohortId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="col-md-3">

@@ -13,7 +13,7 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow
 {
     protected $courseId;
 
-    protected $academicYearId;
+    protected $cohortId;
 
     protected $semesterId;
 
@@ -31,10 +31,10 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow
         'errors' => 0,
     ];
 
-    public function __construct($courseId, $academicYearId, $semesterId, $recordedBy)
+    public function __construct($courseId, $cohortId, $semesterId, $recordedBy)
     {
         $this->courseId = $courseId;
-        $this->academicYearId = $academicYearId;
+        $this->cohortId = $cohortId;
         $this->semesterId = $semesterId;
         $this->recordedBy = $recordedBy;
     }
@@ -85,7 +85,7 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow
             $existing = AssessmentScore::where([
                 'course_id' => $this->courseId,
                 'student_id' => $student->id,
-                'academic_year_id' => $this->academicYearId,
+                'cohort_id' => $this->cohortId,
                 'semester_id' => $this->semesterId,
             ])->first();
 

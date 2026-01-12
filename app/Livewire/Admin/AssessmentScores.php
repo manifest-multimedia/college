@@ -5,8 +5,8 @@ namespace App\Livewire\Admin;
 use App\Exports\AssessmentScoresExport;
 use App\Exports\AssessmentScoresTemplateExport;
 use App\Imports\AssessmentScoresImport;
-use App\Models\AcademicYear;
 use App\Models\AssessmentScore;
+use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Semester;
 use App\Models\Student;
@@ -26,7 +26,7 @@ class AssessmentScores extends Component
 
     public $selectedClassId = null;
 
-    public $selectedAcademicYearId = null;
+    public $selectedCohortId = null;
 
     public $selectedSemesterId = null;
 
@@ -60,12 +60,12 @@ class AssessmentScores extends Component
 
     public function mount()
     {
-        // Auto-select current academic year and semester if available
-        $currentAcademicYear = AcademicYear::where('is_current', true)->first();
+        // Auto-select current cohort and semester if available
+        $currentCohort = Cohort::where('is_active', true)->first();
         $currentSemester = Semester::where('is_current', true)->first();
 
-        if ($currentAcademicYear) {
-            $this->selectedAcademicYearId = $currentAcademicYear->id;
+        if ($currentCohort) {
+            $this->selectedCohortId = $currentCohort->id;
         }
 
         if ($currentSemester) {
@@ -93,12 +93,12 @@ class AssessmentScores extends Component
         $this->validate([
             'selectedCourseId' => 'required',
             'selectedClassId' => 'required',
-            'selectedAcademicYearId' => 'required',
+            'selectedCohortId' => 'required',
             'selectedSemesterId' => 'required',
         ], [
             'selectedCourseId.required' => 'Please select a course',
-            'selectedClassId.required' => 'Please select a class',
-            'selectedAcademicYearId.required' => 'Please select an academic year',
+            'selectedClassId.required' => 'Please select a program',
+            'selectedCohortId.required' => 'Please select a cohort',
             'selectedSemesterId.required' => 'Please select a semester',
         ]);
 
@@ -114,7 +114,7 @@ class AssessmentScores extends Component
             $existingScore = AssessmentScore::where([
                 'course_id' => $this->selectedCourseId,
                 'student_id' => $student->id,
-                'academic_year_id' => $this->selectedAcademicYearId,
+                'cohort_id' => $this->selectedCohortId,
                 'semester_id' => $this->selectedSemesterId,
             ])->first();
 
@@ -194,7 +194,7 @@ class AssessmentScores extends Component
             $data = [
                 'course_id' => $this->selectedCourseId,
                 'student_id' => $studentScore['student_id'],
-                'academic_year_id' => $this->selectedAcademicYearId,
+                'cohort_id' => $this->selectedCohortId,
                 'semester_id' => $this->selectedSemesterId,
                 'assignment_1_score' => $studentScore['assignment_1'] === '' ? null : $studentScore['assignment_1'],
                 'assignment_2_score' => $studentScore['assignment_2'] === '' ? null : $studentScore['assignment_2'],
@@ -391,7 +391,7 @@ class AssessmentScores extends Component
         $this->validate([
             'selectedCourseId' => 'required',
             'selectedClassId' => 'required',
-            'selectedAcademicYearId' => 'required',
+            'selectedCohortId' => 'required',
             'selectedSemesterId' => 'required',
         ]);
 
@@ -401,13 +401,13 @@ class AssessmentScores extends Component
 
         $course = Subject::find($this->selectedCourseId);
         $class = CollegeClass::find($this->selectedClassId);
-        $academicYear = AcademicYear::find($this->selectedAcademicYearId);
+        $cohort = Cohort::find($this->selectedCohortId);
         $semester = Semester::find($this->selectedSemesterId);
 
         $courseInfo = [
             'course' => $course->name,
             'programme' => $class->name,
-            'class' => $class->name,
+            'cohort' => $cohort->name,
             'semester' => $semester->name,
             'academic_year' => $academicYear->name,
         ];
@@ -428,14 +428,14 @@ class AssessmentScores extends Component
         $this->validate([
             'importFile' => 'required|file|mimes:xlsx,xls|max:10240',
             'selectedCourseId' => 'required',
-            'selectedAcademicYearId' => 'required',
+            'selectedCohortId' => 'required',
             'selectedSemesterId' => 'required',
         ]);
 
         try {
             $import = new AssessmentScoresImport(
                 $this->selectedCourseId,
-                $this->selectedAcademicYearId,
+                $this->selectedCohortId,
                 $this->selectedSemesterId,
                 Auth::id()
             );
@@ -527,15 +527,14 @@ class AssessmentScores extends Component
 
         $course = Subject::find($this->selectedCourseId);
         $class = CollegeClass::find($this->selectedClassId);
-        $academicYear = AcademicYear::find($this->selectedAcademicYearId);
+        $cohort = Cohort::find($this->selectedCohortId);
         $semester = Semester::find($this->selectedSemesterId);
 
         $courseInfo = [
             'course' => $course->name,
             'programme' => $class->name,
-            'class' => $class->name,
+            'cohort' => $cohort->name,
             'semester' => $semester->name,
-            'academic_year' => $academicYear->name,
         ];
 
         $weights = [
@@ -577,13 +576,13 @@ class AssessmentScores extends Component
     {
         $courses = Subject::orderBy('name')->get();
         $collegeClasses = CollegeClass::orderBy('name')->get();
-        $academicYears = AcademicYear::orderBy('name', 'desc')->get();
+        $cohorts = Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
         $semesters = Semester::orderBy('name')->get();
 
         return view('livewire.admin.assessment-scores', [
             'courses' => $courses,
             'collegeClasses' => $collegeClasses,
-            'academicYears' => $academicYears,
+            'cohorts' => $cohorts,
             'semesters' => $semesters,
         ]);
     }

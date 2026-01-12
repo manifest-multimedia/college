@@ -10,7 +10,7 @@ class AssessmentScore extends Model
     protected $fillable = [
         'course_id',
         'student_id',
-        'academic_year_id',
+        'cohort_id',
         'semester_id',
         'assignment_1_score',
         'assignment_2_score',
@@ -53,7 +53,7 @@ class AssessmentScore extends Model
 
     public function academicYear(): BelongsTo
     {
-        return $this->belongsTo(AcademicYear::class);
+        return $this->belongsTo(Cohort::class, 'cohort_id');
     }
 
     public function semester(): BelongsTo
