@@ -21,9 +21,17 @@ return new class extends Migration
             // -----------------------------
             // DROP OLD INDEXES (if exist)
             // -----------------------------
-            $this->dropIndexIfExists('assessment_scores', $table, 'unique_student_course_semester');
-            $this->dropIndexIfExists('assessment_scores', $table, 'assessment_scores_student_id_academic_year_id_semester_id_index');
-            $this->dropIndexIfExists('assessment_scores', $table, 'assessment_scores_course_id_academic_year_id_semester_id_index');
+            if ($this->indexExists('assessment_scores', 'assessment_scores_student_id_academic_year_id_semester_id_index')) {
+                $table->dropIndex('assessment_scores_student_id_academic_year_id_semester_id_index');
+            }
+
+            if ($this->indexExists('assessment_scores', 'assessment_scores_course_id_academic_year_id_semester_id_index')) {
+                $table->dropIndex('assessment_scores_course_id_academic_year_id_semester_id_index');
+            }
+
+            if ($this->indexExists('assessment_scores', 'unique_student_course_semester')) {
+                $table->dropIndex('unique_student_course_semester');
+            }
 
             // -----------------------------
             // DROP OLD COLUMN (if exists)
@@ -87,9 +95,17 @@ return new class extends Migration
             // -----------------------------
             // DROP NEW INDEXES
             // -----------------------------
-            $this->dropIndexIfExists('assessment_scores', $table, 'unique_student_course_semester_cohort');
-            $this->dropIndexIfExists('assessment_scores', $table, 'assessment_scores_student_id_cohort_id_semester_id_index');
-            $this->dropIndexIfExists('assessment_scores', $table, 'assessment_scores_course_id_cohort_id_semester_id_index');
+            if ($this->indexExists('assessment_scores', 'assessment_scores_student_id_cohort_id_semester_id_index')) {
+                $table->dropIndex('assessment_scores_student_id_cohort_id_semester_id_index');
+            }
+
+            if ($this->indexExists('assessment_scores', 'assessment_scores_course_id_cohort_id_semester_id_index')) {
+                $table->dropIndex('assessment_scores_course_id_cohort_id_semester_id_index');
+            }
+
+            if ($this->indexExists('assessment_scores', 'unique_student_course_semester_cohort')) {
+                $table->dropIndex('unique_student_course_semester_cohort');
+            }
 
             // -----------------------------
             // DROP NEW COLUMN
@@ -168,12 +184,5 @@ return new class extends Migration
         ", [$table, $indexName]);
 
         return !empty($rows);
-    }
-
-    private function dropIndexIfExists(string $tableName, Blueprint $table, string $indexName): void
-    {
-        if ($this->indexExists($tableName, $indexName)) {
-            $table->dropIndex($indexName);
-        }
     }
 };
