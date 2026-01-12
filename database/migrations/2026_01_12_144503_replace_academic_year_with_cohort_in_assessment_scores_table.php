@@ -10,49 +10,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assessment_scores', function (Blueprint $table) {
-            
-            // -----------------------------
-            // DROP OLD FK constraints first (before dropping indexes that might be used by them)
-            // -----------------------------
-            $academicYearFkName = $this->getForeignKeyConstraintName('assessment_scores', 'academic_year_id');
-            if ($academicYearFkName && $this->foreignKeyExists('assessment_scores', $academicYearFkName)) {
-                $table->dropForeign($academicYearFkName);
-            }
 
             // -----------------------------
-            // DROP OLD INDEXES (now that FK constraints are removed)
-            // -----------------------------
-            if ($this->indexExists('assessment_scores', 'assessment_scores_student_id_academic_year_id_semester_id_index')) {
-                $table->dropIndex('assessment_scores_student_id_academic_year_id_semester_id_index');
-            }
-
-            if ($this->indexExists('assessment_scores', 'assessment_scores_course_id_academic_year_id_semester_id_index')) {
-                $table->dropIndex('assessment_scores_course_id_academic_year_id_semester_id_index');
-            }
-
-            if ($this->indexExists('assessment_scores', 'unique_student_course_semester')) {
-                $table->dropIndex('unique_student_course_semester');
-            }
-
-            // -----------------------------
-            // DROP OLD COLUMN (if exists)
-            // -----------------------------
-            if (Schema::hasColumn('assessment_scores', 'academic_year_id')) {
-                $table->dropColumn('academic_year_id');
-            }
-        });
-
-        Schema::table('assessment_scores', function (Blueprint $table) {
-
-            // -----------------------------
-            // ADD NEW COLUMN
+            // ADD NEW COLUMN (if not exists)
             // -----------------------------
             if (!Schema::hasColumn('assessment_scores', 'cohort_id')) {
                 $table->unsignedBigInteger('cohort_id')->after('student_id');
             }
 
             // -----------------------------
-            // ADD NEW FK
+            // ADD NEW FK (if not exists)
             // -----------------------------
             $table->foreign('cohort_id')
                 ->references('id')
@@ -60,25 +27,28 @@ return new class extends Migration
                 ->onDelete('cascade');
 
             // -----------------------------
-            // ADD INDEXES
+            // ADD NEW INDEXES (if not exists)
             // -----------------------------
-            $table->index(
-                ['student_id', 'cohort_id', 'semester_id'],
-                'assessment_scores_student_id_cohort_id_semester_id_index'
-            );
+            if (!$this->indexExists('assessment_scores', 'assessment_scores_student_id_cohort_id_semester_id_index')) {
+                $table->index(
+                    ['student_id', 'cohort_id', 'semester_id'],
+                    'assessment_scores_student_id_cohort_id_semester_id_index'
+                );
+            }
 
-            $table->index(
-                ['course_id', 'cohort_id', 'semester_id'],
-                'assessment_scores_course_id_cohort_id_semester_id_index'
-            );
+            if (!$this->indexExists('assessment_scores', 'assessment_scores_course_id_cohort_id_semester_id_index')) {
+                $table->index(
+                    ['course_id', 'cohort_id', 'semester_id'],
+                    'assessment_scores_course_id_cohort_id_semester_id_index'
+                );
+            }
 
-            // -----------------------------
-            // ADD UNIQUE CONSTRAINT
-            // -----------------------------
-            $table->unique(
-                ['course_id', 'student_id', 'cohort_id', 'semester_id'],
-                'unique_student_course_semester_cohort'
-            );
+            if (!$this->indexExists('assessment_scores', 'unique_student_course_semester_cohort')) {
+                $table->unique(
+                    ['course_id', 'student_id', 'cohort_id', 'semester_id'],
+                    'unique_student_course_semester_cohort'
+                );
+            }
         });
     }
 
@@ -87,15 +57,14 @@ return new class extends Migration
         Schema::table('assessment_scores', function (Blueprint $table) {
 
             // -----------------------------
-            // DROP NEW FK
+            // REMOVE NEW FK (if exists)
             // -----------------------------
-            $cohortFkName = $this->getForeignKeyConstraintName('assessment_scores', 'cohort_id');
-            if ($cohortFkName && $this->foreignKeyExists('assessment_scores', $cohortFkName)) {
-                $table->dropForeign($cohortFkName);
+            if ($this->foreignKeyExists('assessment_scores', 'assessment_scores_cohort_id_foreign')) {
+                $table->dropForeign('assessment_scores_cohort_id_foreign');
             }
 
             // -----------------------------
-            // DROP NEW INDEXES
+            // REMOVE NEW INDEXES (if exists)
             // -----------------------------
             if ($this->indexExists('assessment_scores', 'assessment_scores_student_id_cohort_id_semester_id_index')) {
                 $table->dropIndex('assessment_scores_student_id_cohort_id_semester_id_index');
@@ -110,50 +79,11 @@ return new class extends Migration
             }
 
             // -----------------------------
-            // DROP NEW COLUMN
+            // REMOVE NEW COLUMN (if exists)
             // -----------------------------
             if (Schema::hasColumn('assessment_scores', 'cohort_id')) {
                 $table->dropColumn('cohort_id');
             }
-        });
-
-        Schema::table('assessment_scores', function (Blueprint $table) {
-
-            // -----------------------------
-            // RESTORE OLD COLUMN
-            // -----------------------------
-            if (!Schema::hasColumn('assessment_scores', 'academic_year_id')) {
-                $table->unsignedBigInteger('academic_year_id')->after('student_id');
-            }
-
-            // -----------------------------
-            // RESTORE FK
-            // -----------------------------
-            $table->foreign('academic_year_id')
-                ->references('id')
-                ->on('academic_years')
-                ->onDelete('cascade');
-
-            // -----------------------------
-            // RESTORE INDEXES
-            // -----------------------------
-            $table->index(
-                ['student_id', 'academic_year_id', 'semester_id'],
-                'assessment_scores_student_id_academic_year_id_semester_id_index'
-            );
-
-            $table->index(
-                ['course_id', 'academic_year_id', 'semester_id'],
-                'assessment_scores_course_id_academic_year_id_semester_id_index'
-            );
-
-            // -----------------------------
-            // RESTORE UNIQUE
-            // -----------------------------
-            $table->unique(
-                ['course_id', 'student_id', 'academic_year_id', 'semester_id'],
-                'unique_student_course_semester'
-            );
         });
     }
 
@@ -186,22 +116,5 @@ return new class extends Migration
         ", [$table, $indexName]);
 
         return !empty($rows);
-    }
-    
-    /**
-     * Get the foreign key constraint name for a specific column
-     */
-    private function getForeignKeyConstraintName(string $table, string $column): ?string
-    {
-        $result = DB::select("
-            SELECT CONSTRAINT_NAME
-            FROM information_schema.KEY_COLUMN_USAGE
-            WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = ?
-              AND COLUMN_NAME = ?
-              AND REFERENCED_TABLE_NAME IS NOT NULL
-        ", [$table, $column]);
-        
-        return !empty($result) ? $result[0]->CONSTRAINT_NAME : null;
     }
 };
