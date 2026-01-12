@@ -73,6 +73,17 @@
                         </select>
                         @error('selectedSemesterId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
                     </div>
+
+                    <div class="col-md-3">
+                        <label for="academicYear" class="form-label">Academic Year</label>
+                        <select id="academicYear" wire:model="selectedAcademicYear" class="form-select">
+                            <option value="">Select Academic Year</option>
+                            @foreach($academicYears as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                        @error('selectedAcademicYear') <span class="text-danger text-sm">{{ $message }}</span> @enderror
+                    </div>
                 </div>
 
                 <div class="mt-3">

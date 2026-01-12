@@ -30,6 +30,10 @@ class AssessmentScores extends Component
 
     public $selectedSemesterId = null;
 
+    public $selectedAcademicYear = null;
+
+    public $academicYears = [];
+
     // Weight configuration
     public $assignmentWeight = 20;
 
@@ -60,12 +64,19 @@ class AssessmentScores extends Component
 
     public function mount()
     {
+        // Fetch distinct academic years from cohorts
+        $this->academicYears = Cohort::query()
+            ->select('academic_year')
+            ->distinct()
+            ->pluck('academic_year');
+
         // Auto-select current cohort and semester if available
         $currentCohort = Cohort::where('is_active', true)->first();
         $currentSemester = Semester::where('is_current', true)->first();
 
         if ($currentCohort) {
             $this->selectedCohortId = $currentCohort->id;
+            $this->selectedAcademicYear = $currentCohort->academic_year;
         }
 
         if ($currentSemester) {
