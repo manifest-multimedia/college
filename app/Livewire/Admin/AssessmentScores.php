@@ -441,7 +441,7 @@ class AssessmentScores extends Component
             'programme' => $class->name,
             'cohort' => $cohort->name,
             'semester' => $semester->name,
-            'academic_year' => $academicYear->name,
+            'academic_year' => $this->selectedAcademicYear ?? $cohort->academic_year,
         ];
 
         $weights = [
