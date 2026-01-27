@@ -5,8 +5,8 @@ namespace App\Livewire\Admin;
 use App\Exports\AssessmentScoresExport;
 use App\Exports\AssessmentScoresTemplateExport;
 use App\Imports\AssessmentScoresImport;
-use App\Models\AssessmentScore;
 use App\Models\AcademicYear;
+use App\Models\AssessmentScore;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Semester;
@@ -14,6 +14,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
@@ -88,6 +89,18 @@ class AssessmentScores extends Component
         $this->loadDefaultWeights();
     }
 
+    public function updatedSelectedClassId(): void
+    {
+        $this->selectedCourseId = null;
+        $this->studentScores = [];
+        $this->isLoaded = false;
+        $this->importPreviewData = [];
+        $this->importSummary = [];
+        $this->importErrors = [];
+        $this->showImportPreview = false;
+        $this->importFile = null;
+    }
+
     protected function loadDefaultWeights()
     {
         $settings = DB::table('system_settings')
@@ -103,13 +116,17 @@ class AssessmentScores extends Component
     public function loadScoresheet()
     {
         $this->validate([
-            'selectedCourseId' => 'required',
-            'selectedClassId' => 'required',
+            'selectedClassId' => 'required|exists:college_classes,id',
+            'selectedCourseId' => [
+                'required',
+                Rule::exists('subjects', 'id')->where(fn ($query) => $query->where('college_class_id', $this->selectedClassId)),
+            ],
             'selectedCohortId' => 'required',
             'selectedSemesterId' => 'required',
         ], [
             'selectedCourseId.required' => 'Please select a course',
             'selectedClassId.required' => 'Please select a program',
+            'selectedCourseId.exists' => 'Selected course does not belong to the chosen program.',
             'selectedCohortId.required' => 'Please select a cohort',
             'selectedSemesterId.required' => 'Please select a semester',
         ]);
@@ -401,8 +418,11 @@ class AssessmentScores extends Component
     public function downloadExcelTemplate()
     {
         $this->validate([
-            'selectedCourseId' => 'required',
-            'selectedClassId' => 'required',
+            'selectedClassId' => 'required|exists:college_classes,id',
+            'selectedCourseId' => [
+                'required',
+                Rule::exists('subjects', 'id')->where(fn ($query) => $query->where('college_class_id', $this->selectedClassId)),
+            ],
             'selectedCohortId' => 'required',
             'selectedSemesterId' => 'required',
         ]);
@@ -439,7 +459,11 @@ class AssessmentScores extends Component
     {
         $this->validate([
             'importFile' => 'required|file|mimes:xlsx,xls|max:10240',
-            'selectedCourseId' => 'required',
+            'selectedClassId' => 'required|exists:college_classes,id',
+            'selectedCourseId' => [
+                'required',
+                Rule::exists('subjects', 'id')->where(fn ($query) => $query->where('college_class_id', $this->selectedClassId)),
+            ],
             'selectedCohortId' => 'required',
             'selectedSemesterId' => 'required',
         ]);
@@ -586,7 +610,10 @@ class AssessmentScores extends Component
 
     public function render()
     {
-        $courses = Subject::orderBy('name')->get();
+        $courses = Subject::query()
+            ->when($this->selectedClassId, fn ($query) => $query->where('college_class_id', $this->selectedClassId))
+            ->orderBy('name')
+            ->get();
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $cohorts = Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
         $semesters = Semester::orderBy('name')->get();

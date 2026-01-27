@@ -43,11 +43,13 @@
 
                     <div class="col-md-3">
                         <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
-                        <select wire:model="selectedCourseId" id="course" class="form-select">
-                            <option value="">Select Course</option>
-                            @foreach($courses as $course)
-                                <option value="{{ $course->id }}">{{ $course->name }}</option>
-                            @endforeach
+                        <select wire:model="selectedCourseId" id="course" class="form-select" @disabled(!$selectedClassId)>
+                            <option value="">@if($selectedClassId) Select Course @else Select a program first @endif</option>
+                            @if($selectedClassId)
+                                @foreach($courses as $course)
+                                    <option value="{{ $course->id }}">{{ $course->name }}</option>
+                                @endforeach
+                            @endif
                         </select>
                         @error('selectedCourseId') <span class="text-danger text-sm">{{ $message }}</span> @enderror
                     </div>
