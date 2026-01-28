@@ -288,6 +288,7 @@ class AssessmentScoresController extends Controller
         $courseInfo = [
             'course' => $course->name,
             'programme' => $class->name,
+            'class' => $class->name, // For backwards compatibility with the export template
             'cohort' => $cohort->name,
             'semester' => $semester->name,
             'academic_year' => $validated['academic_year'] ?? $cohort->academic_year,
@@ -323,6 +324,7 @@ class AssessmentScoresController extends Controller
         $courseInfo = [
             'course' => $course->name,
             'programme' => $class->name,
+            'class' => $class->name, // For backwards compatibility with the export template
             'cohort' => $cohort->name,
             'semester' => $semester->name,
         ];
