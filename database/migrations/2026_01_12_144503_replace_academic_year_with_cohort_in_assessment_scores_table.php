@@ -15,7 +15,8 @@ return new class extends Migration
             // ADD NEW COLUMN (if not exists)
             // -----------------------------
             if (!Schema::hasColumn('assessment_scores', 'cohort_id')) {
-                $table->unsignedBigInteger('cohort_id')->nullable()->after('student_id');
+                // Cohorts table uses unsignedInteger for its primary key, keep types compatible
+                $table->unsignedInteger('cohort_id')->nullable()->after('student_id');
             }
         });
 
