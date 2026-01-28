@@ -227,13 +227,22 @@ Route::middleware([
         })->name('courses.import');
     });
 
-     // Assessment Scores - Accessible by teaching and administrative staff (all roles except Student)
-        Route::middleware(['auth:sanctum', 'role:Administrator|Super Admin|Academic Officer|System|Finance Manager|Lecturer'])->group(function () {
-            Route::get('/assessment-scores', function () {
-                return view('assessment-scores.index');
-            })->name('assessment-scores');
-        });
+    // Assessment Scores - Accessible by teaching and administrative staff (all roles except Student)
+    Route::middleware(['auth:sanctum', 'role:Administrator|Super Admin|Academic Officer|System|Finance Manager|Lecturer'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/assessment-scores', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'index'])->name('assessment-scores.index');
+        Route::get('/assessment-scores/get-courses', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'getCourses'])->name('assessment-scores.get-courses');
+        Route::post('/assessment-scores/load-scoresheet', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'loadScoresheet'])->name('assessment-scores.load-scoresheet');
+        Route::post('/assessment-scores/save-scores', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'saveScores'])->name('assessment-scores.save-scores');
+        Route::get('/assessment-scores/download-template', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'downloadTemplate'])->name('assessment-scores.download-template');
+        Route::post('/assessment-scores/import-excel', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'importExcel'])->name('assessment-scores.import-excel');
+        Route::post('/assessment-scores/confirm-import', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'confirmImport'])->name('assessment-scores.confirm-import');
+        Route::post('/assessment-scores/export-excel', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'exportExcel'])->name('assessment-scores.export-excel');
+    });
 
+    // Backward compatibility - redirect old route to new one
+    Route::get('/assessment-scores', function () {
+        return redirect()->route('admin.assessment-scores.index');
+    })->middleware(['auth:sanctum', 'role:Administrator|Super Admin|Academic Officer|System|Finance Manager|Lecturer'])->name('assessment-scores');
 
     // Administrator routes
     Route::middleware(['role:Administrator|Super Admin|Academic Officer|System|Finance Manager'])->group(function () {
@@ -263,7 +272,6 @@ Route::middleware([
 
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
 
-       
         // Settings Routes
         Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('settings')->group(function () {
             Route::get('/general', function () {

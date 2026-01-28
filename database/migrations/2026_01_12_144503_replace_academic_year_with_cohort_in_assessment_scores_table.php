@@ -31,6 +31,8 @@ return new class extends Migration
             // If no cohorts exist, create a placeholder cohort and use its ID
             $defaultCohortId = DB::table('cohorts')->insertGetId([
                 'name' => 'Default Cohort',
+                'slug' => 'default-cohort',
+                'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
