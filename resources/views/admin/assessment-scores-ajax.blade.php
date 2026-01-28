@@ -23,9 +23,22 @@
                     </div>
 
                     <div class="col-md-3">
+                        <label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
+                        <select id="semester" class="form-select">
+                            <option value="">Select Semester</option>
+                            @foreach($semesters as $semester)
+                                <option value="{{ $semester->id }}" @if($currentSemester && $currentSemester->id == $semester->id) selected @endif>
+                                    {{ $semester->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <span class="text-danger text-sm" id="semester-error"></span>
+                    </div>
+
+                    <div class="col-md-3">
                         <label for="course" class="form-label">Course <span class="text-danger">*</span></label>
                         <select id="course" class="form-select" disabled>
-                            <option value="">Select a program first</option>
+                            <option value="">Select program & semester first</option>
                         </select>
                         <span class="text-danger text-sm" id="course-error"></span>
                     </div>
@@ -41,29 +54,6 @@
                             @endforeach
                         </select>
                         <span class="text-danger text-sm" id="cohort-error"></span>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="semester" class="form-label">Semester <span class="text-danger">*</span></label>
-                        <select id="semester" class="form-select">
-                            <option value="">Select Semester</option>
-                            @foreach($semesters as $semester)
-                                <option value="{{ $semester->id }}" @if($currentSemester && $currentSemester->id == $semester->id) selected @endif>
-                                    {{ $semester->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <span class="text-danger text-sm" id="semester-error"></span>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="academicYear" class="form-label">Academic Year</label>
-                        <select id="academicYear" class="form-select">
-                            <option value="">Select Academic Year</option>
-                            @foreach($academicYears as $year)
-                                <option value="{{ $year }}">{{ $year }}</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
 
@@ -366,26 +356,54 @@
             class_id: null,
             course_id: null,
             cohort_id: '{{ $currentCohort?->id ?? '' }}',
-            semester_id: '{{ $currentSemester?->id ?? '' }}',
-            academic_year: null
+            semester_id: '{{ $currentSemester?->id ?? '' }}'
         };
 
         $(document).ready(function() {
             // Initialize
             initializeEventListeners();
             
-            // Program change - load courses
+            // Program change - reset course and check if we can load courses
             $('#program').on('change', function() {
                 const classId = $(this).val();
                 filters.class_id = classId;
                 filters.course_id = null;
+                $('#course').val('');
                 
-                if (classId) {
-                    loadCourses(classId);
+                if (classId && filters.semester_id) {
+                    loadCourses(classId, filters.semester_id);
                 } else {
-                    $('#course').prop('disabled', true).html('<option value="">Select a program first</option>');
+                    $('#course').prop('disabled', true).html('<option value="">Select program & semester first</option>');
                     clearScoresheet();
                 }
+                updateTemplateButtonState();
+            });
+
+            // Semester change - reload courses if program is selected
+            $('#semester').on('change', function() {
+                const semesterId = $(this).val();
+                filters.semester_id = semesterId;
+                filters.course_id = null;
+                $('#course').val('');
+                
+                if (semesterId && filters.class_id) {
+                    loadCourses(filters.class_id, semesterId);
+                } else if (!semesterId) {
+                    $('#course').prop('disabled', true).html('<option value="">Select program & semester first</option>');
+                    clearScoresheet();
+                }
+                updateTemplateButtonState();
+            });
+
+            // Course change
+            $('#course').on('change', function() {
+                filters.course_id = $(this).val();
+                updateTemplateButtonState();
+            });
+
+            // Cohort change
+            $('#cohort').on('change', function() {
+                filters.cohort_id = $(this).val();
                 updateTemplateButtonState();
             });
 
@@ -526,12 +544,15 @@
             $('#loadingSpinner').fadeOut(200);
         }
 
-        function loadCourses(classId) {
+        function loadCourses(classId, semesterId) {
             showSpinner('Loading courses...');
             $.ajax({
                 url: '{{ route("admin.assessment-scores.get-courses") }}',
                 method: 'GET',
-                data: { class_id: classId },
+                data: { 
+                    class_id: classId,
+                    semester_id: semesterId
+                },
                 success: function(response) {
                     if (response.success) {
                         let options = '<option value="">Select Course</option>';
@@ -539,6 +560,10 @@
                             options += `<option value="${course.id}">${course.name}</option>`;
                         });
                         $('#course').prop('disabled', false).html(options);
+                        
+                        if (response.courses.length === 0) {
+                            showFlashMessage('No courses found for this program and semester', 'info');
+                        }
                     }
                 },
                 error: function(xhr) {

@@ -61,9 +61,11 @@ class AssessmentScoresController extends Controller
     public function getCourses(Request $request)
     {
         $classId = $request->input('class_id');
+        $semesterId = $request->input('semester_id');
 
         $courses = Subject::query()
             ->when($classId, fn ($query) => $query->where('college_class_id', $classId))
+            ->when($semesterId, fn ($query) => $query->where('semester_id', $semesterId))
             ->orderBy('name')
             ->get(['id', 'name', 'course_code']);
 
