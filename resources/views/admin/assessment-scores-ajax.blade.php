@@ -265,20 +265,20 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle" id="scoresheetTable">
-                        <thead class="table-light">
+                        <thead class="table-light sticky-top">
                             <tr>
-                                <th class="text-center" style="width: 5%">#</th>
-                                <th style="width: 10%">Index No</th>
-                                <th style="width: 20%">Student Name</th>
-                                <th class="text-center" style="width: 8%">Assign 1</th>
-                                <th class="text-center" style="width: 8%">Assign 2</th>
-                                <th class="text-center" style="width: 8%">Assign 3</th>
-                                <th class="text-center assignment-4-col" style="width: 8%; display: none;">Assign 4</th>
-                                <th class="text-center assignment-5-col" style="width: 8%; display: none;">Assign 5</th>
-                                <th class="text-center" style="width: 8%">Mid-Sem</th>
-                                <th class="text-center" style="width: 8%">End-Sem</th>
-                                <th class="text-center" style="width: 6%">Total</th>
-                                <th class="text-center" style="width: 5%">Grade</th>
+                                <th class="text-center" style="min-width: 50px; width: 50px;">#</th>
+                                <th style="min-width: 120px; width: 120px;">Index No</th>
+                                <th style="min-width: 200px; width: 250px;">Student Name</th>
+                                <th class="text-center" style="min-width: 100px; width: 110px;">Assign 1</th>
+                                <th class="text-center" style="min-width: 100px; width: 110px;">Assign 2</th>
+                                <th class="text-center" style="min-width: 100px; width: 110px;">Assign 3</th>
+                                <th class="text-center assignment-4-col" style="min-width: 100px; width: 110px; display: none;">Assign 4</th>
+                                <th class="text-center assignment-5-col" style="min-width: 100px; width: 110px; display: none;">Assign 5</th>
+                                <th class="text-center" style="min-width: 100px; width: 110px;">Mid-Sem</th>
+                                <th class="text-center" style="min-width: 100px; width: 110px;">End-Sem</th>
+                                <th class="text-center" style="min-width: 80px; width: 80px;">Total</th>
+                                <th class="text-center" style="min-width: 60px; width: 60px;">Grade</th>
                             </tr>
                         </thead>
                         <tbody id="scoresheetBody">
@@ -322,22 +322,118 @@
         .spinner-content {
             text-align: center;
         }
+        
+        /* Score input styling */
+        .score-input {
+            width: 100%;
+            min-width: 80px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+        }
+        
         .score-input:invalid {
             border-color: #dc3545 !important;
         }
+        
+        .score-input:focus {
+            font-size: 1rem;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        
         .field-error {
             color: #dc3545;
             font-size: 0.875rem;
             margin-top: 0.25rem;
         }
+        
+        /* Table responsive with horizontal scroll */
         .table-responsive {
             position: relative;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
+        
+        #scoresheetTable {
+            width: max-content;
+            min-width: 100%;
+        }
+        
         .sticky-top {
             position: sticky;
             top: 0;
             z-index: 10;
             background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* First two columns sticky on horizontal scroll */
+        #scoresheetTable thead th:nth-child(1),
+        #scoresheetTable thead th:nth-child(2),
+        #scoresheetTable thead th:nth-child(3),
+        #scoresheetTable tbody td:nth-child(1),
+        #scoresheetTable tbody td:nth-child(2),
+        #scoresheetTable tbody td:nth-child(3) {
+            position: sticky;
+            background: white;
+            z-index: 5;
+        }
+        
+        #scoresheetTable thead th:nth-child(1),
+        #scoresheetTable tbody td:nth-child(1) {
+            left: 0;
+        }
+        
+        #scoresheetTable thead th:nth-child(2),
+        #scoresheetTable tbody td:nth-child(2) {
+            left: 50px;
+        }
+        
+        #scoresheetTable thead th:nth-child(3),
+        #scoresheetTable tbody td:nth-child(3) {
+            left: 170px;
+        }
+        
+        /* Add shadow to sticky columns */
+        #scoresheetTable thead th:nth-child(3)::after,
+        #scoresheetTable tbody td:nth-child(3)::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -10px;
+            bottom: 0;
+            width: 10px;
+            background: linear-gradient(to right, rgba(0,0,0,0.05), transparent);
+        }
+        
+        /* Alternating row colors for better readability */
+        #scoresheetTable tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        #scoresheetTable tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        /* Total and grade cells styling */
+        .total-cell {
+            font-weight: 600;
+            color: #0d6efd;
+            font-size: 1rem;
+        }
+        
+        .grade-cell {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .score-input {
+                font-size: 0.9rem;
+                padding: 0.4rem 0.5rem;
+            }
         }
     </style>
     @endpush
