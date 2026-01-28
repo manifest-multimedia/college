@@ -85,19 +85,21 @@ class AssessmentScoresController extends Controller
             ],
             'cohort_id' => 'required|exists:cohorts,id',
             'semester_id' => 'required|exists:semesters,id',
-            'academic_year' => 'nullable|string',
         ]);
 
-        // Load students for the selected filters
-        $studentsQuery = Student::query()
+        // Load students for the selected program and cohort
+        $students = Student::query()
             ->where('college_class_id', $validated['class_id'])
-            ->when($validated['cohort_id'], fn ($q) => $q->where('cohort_id', $validated['cohort_id']));
+            ->where('cohort_id', $validated['cohort_id'])
+            ->orderBy('student_id')
+            ->get();
 
-        if (! empty($validated['academic_year'])) {
-            $studentsQuery->whereHas('cohort', fn ($q) => $q->where('academic_year', $validated['academic_year']));
+        if ($students->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found for the selected program and cohort. Please verify that students are assigned to this program and cohort.',
+            ], 404);
         }
-
-        $students = $studentsQuery->orderBy('student_id')->get();
 
         $studentScores = [];
         $maxAssignmentCount = 3;
