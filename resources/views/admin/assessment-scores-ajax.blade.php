@@ -253,7 +253,15 @@
         <div id="scoresheetSection" class="card" style="display: none;">
             <div class="card-header pb-0 d-flex justify-content-between align-items-center">
                 <h6 class="card-title">Assessment Scoresheet</h6>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 align-items-center">
+                    <label for="perPageSelect" class="mb-0 me-2">Show:</label>
+                    <select id="perPageSelect" class="form-select form-select-sm me-3" style="width: auto;">
+                        <option value="15" selected>15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">All</option>
+                    </select>
                     <button id="saveScoresBtn" class="btn btn-success btn-sm">
                         <i class="fas fa-save me-1"></i>Save All Scores
                     </button>
@@ -263,6 +271,17 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Pagination Info -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div id="paginationInfo" class="text-muted">
+                        <small>Showing <span id="recordsFrom">0</span> to <span id="recordsTo">0</span> of <span id="recordsTotal">0</span> students</small>
+                    </div>
+                    <nav id="paginationNav" aria-label="Students pagination">
+                        <ul class="pagination pagination-sm mb-0" id="paginationList">
+                            <!-- Pagination buttons will be inserted here -->
+                        </ul>
+                    </nav>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle" id="scoresheetTable">
                         <thead class="table-light sticky-top">
@@ -454,6 +473,16 @@
             cohort_id: '{{ $currentCohort?->id ?? '' }}',
             semester_id: '{{ $currentSemester?->id ?? '' }}'
         };
+        
+        // Pagination variables
+        let pagination = {
+            current_page: 1,
+            last_page: 1,
+            per_page: 15,
+            total: 0,
+            from: 0,
+            to: 0
+        };
 
         $(document).ready(function() {
             // Initialize
@@ -506,6 +535,13 @@
             // Load Scoresheet
             $('#loadScoresheetBtn').on('click', function() {
                 loadScoresheet();
+            });
+            
+            // Per page change
+            $('#perPageSelect').on('change', function() {
+                if (studentScores.length > 0) {
+                    loadScoresheet(1); // Reload from page 1 with new per_page value
+                }
             });
 
             // Download Template
@@ -671,7 +707,7 @@
             });
         }
 
-        function loadScoresheet() {
+        function loadScoresheet(page = 1) {
             // Validate required fields
             if (!filters.class_id) {
                 showFlashMessage('Please select a program', 'danger');
@@ -702,11 +738,17 @@
             showSpinner('Loading scoresheet...');
             const btn = $('#loadScoresheetBtn');
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Loading...');
+            
+            const perPage = $('#perPageSelect').val() || 15;
 
             $.ajax({
                 url: '{{ route("admin.assessment-scores.load-scoresheet") }}',
                 method: 'POST',
-                data: filters,
+                data: {
+                    ...filters,
+                    page: page,
+                    per_page: perPage
+                },
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
@@ -715,8 +757,10 @@
                         studentScores = response.students;
                         assignmentCount = response.assignment_count;
                         weights = response.weights;
+                        pagination = response.pagination;
                         
                         renderScoresheet();
+                        renderPagination();
                         updateWeightDisplay();
                         updateStatistics();
                         
@@ -743,10 +787,13 @@
 
         function renderScoresheet() {
             let html = '';
+            const offset = (pagination.current_page - 1) * pagination.per_page;
+            
             studentScores.forEach(function(student, index) {
+                const displayIndex = offset + index + 1;
                 html += `
                     <tr data-index="${index}" data-student-id="${student.student_id}">
-                        <td class="text-center">${index + 1}</td>
+                        <td class="text-center">${displayIndex}</td>
                         <td>${student.student_number}</td>
                         <td>${student.student_name}</td>
                         <td><input type="number" class="form-control form-control-sm score-input" data-field="assignment_1" value="${student.assignment_1 || ''}" min="0" max="100" step="0.01"></td>
@@ -763,6 +810,88 @@
             });
             $('#scoresheetBody').html(html);
             updateAssignmentColumns();
+        }
+        
+        function renderPagination() {
+            // Update pagination info
+            $('#recordsFrom').text(pagination.from || 0);
+            $('#recordsTo').text(pagination.to || 0);
+            $('#recordsTotal').text(pagination.total);
+            
+            // Build pagination buttons
+            let paginationHtml = '';
+            
+            // Previous button
+            paginationHtml += `
+                <li class="page-item ${pagination.current_page === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${pagination.current_page - 1}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            `;
+            
+            // Page numbers
+            const maxVisible = 5;
+            let startPage = Math.max(1, pagination.current_page - Math.floor(maxVisible / 2));
+            let endPage = Math.min(pagination.last_page, startPage + maxVisible - 1);
+            
+            // Adjust start if we're near the end
+            if (endPage - startPage < maxVisible - 1) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            // First page
+            if (startPage > 1) {
+                paginationHtml += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="1">1</a>
+                    </li>
+                `;
+                if (startPage > 2) {
+                    paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `
+                    <li class="page-item ${i === pagination.current_page ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Last page
+            if (endPage < pagination.last_page) {
+                if (endPage < pagination.last_page - 1) {
+                    paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                paginationHtml += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="${pagination.last_page}">${pagination.last_page}</a>
+                    </li>
+                `;
+            }
+            
+            // Next button
+            paginationHtml += `
+                <li class="page-item ${pagination.current_page === pagination.last_page ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${pagination.current_page + 1}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            `;
+            
+            $('#paginationList').html(paginationHtml);
+            
+            // Attach click handlers
+            $('#paginationList a.page-link').on('click', function(e) {
+                e.preventDefault();
+                const page = parseInt($(this).data('page'));
+                if (!isNaN(page) && page !== pagination.current_page) {
+                    loadScoresheet(page);
+                }
+            });
         }
 
         function calculateStudentTotal(index) {

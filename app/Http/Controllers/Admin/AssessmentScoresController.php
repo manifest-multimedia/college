@@ -85,14 +85,21 @@ class AssessmentScoresController extends Controller
             ],
             'cohort_id' => 'required|exists:cohorts,id',
             'semester_id' => 'required|exists:semesters,id',
+            'per_page' => 'nullable|integer|min:5|max:200',
+            'page' => 'nullable|integer|min:1',
         ]);
 
-        // Load students for the selected program and cohort
-        $students = Student::query()
+        $perPage = $validated['per_page'] ?? 15;
+        $page = $validated['page'] ?? 1;
+
+        // Load students for the selected program and cohort with pagination
+        $studentsQuery = Student::query()
             ->where('college_class_id', $validated['class_id'])
             ->where('cohort_id', $validated['cohort_id'])
-            ->orderBy('student_id')
-            ->get();
+            ->orderBy('student_id');
+
+        $totalStudents = $studentsQuery->count();
+        $students = $studentsQuery->paginate($perPage, ['*'], 'page', $page);
 
         if ($students->isEmpty()) {
             return response()->json([
@@ -153,7 +160,15 @@ class AssessmentScoresController extends Controller
             'students' => $studentScores,
             'assignment_count' => $maxAssignmentCount,
             'weights' => $weights,
-            'message' => count($studentScores).' students loaded successfully',
+            'pagination' => [
+                'current_page' => $students->currentPage(),
+                'last_page' => $students->lastPage(),
+                'per_page' => $students->perPage(),
+                'total' => $totalStudents,
+                'from' => $students->firstItem(),
+                'to' => $students->lastItem(),
+            ],
+            'message' => count($studentScores).' students loaded successfully (Page '.$students->currentPage().' of '.$students->lastPage().')',
         ]);
     }
 
