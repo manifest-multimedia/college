@@ -131,10 +131,19 @@ class AssessmentScores extends Component
             'selectedSemesterId.required' => 'Please select a semester',
         ]);
 
-        // Load students for the selected class
-        $students = Student::where('college_class_id', $this->selectedClassId)
-            ->orderBy('student_id')
-            ->get();
+        // Load students for the selected class and cohort (and academic year when selected)
+        $studentsQuery = Student::query()
+            ->where('college_class_id', $this->selectedClassId)
+            ->when($this->selectedCohortId, fn ($q) => $q->where('cohort_id', $this->selectedCohortId));
+
+        // If an academic year string is selected (from the dropdown), try to filter by it
+        if ($this->selectedAcademicYear) {
+            // Some Student records may have an academic_year column or relation via cohort.
+            // Prefer cohort relation lookup when possible: filter students whose cohort's academic_year matches.
+            $studentsQuery = $studentsQuery->whereHas('cohort', fn ($q) => $q->where('academic_year', $this->selectedAcademicYear));
+        }
+
+        $students = $studentsQuery->orderBy('student_id')->get();
 
         $this->studentScores = [];
 
