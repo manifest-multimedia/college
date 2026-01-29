@@ -286,6 +286,7 @@ class AssessmentScoresController extends Controller
         ]);
 
         $students = Student::where('college_class_id', $validated['class_id'])
+            ->where('cohort_id', $validated['cohort_id'])
             ->orderBy('student_id')
             ->get();
 
