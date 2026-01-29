@@ -238,12 +238,21 @@ class AssessmentScoresController extends Controller
                 'recorded_by' => Auth::id(),
             ];
 
-            if (! empty($studentScore['existing_id'])) {
-                AssessmentScore::find($studentScore['existing_id'])->update($data);
-                $updatedCount++;
-            } else {
-                AssessmentScore::create($data);
+            // Use updateOrCreate to handle both insert and update cases
+            $score = AssessmentScore::updateOrCreate(
+                [
+                    'course_id' => $validated['course_id'],
+                    'student_id' => $studentScore['student_id'],
+                    'cohort_id' => $validated['cohort_id'],
+                    'semester_id' => $validated['semester_id'],
+                ],
+                $data
+            );
+
+            if ($score->wasRecentlyCreated) {
                 $savedCount++;
+            } else {
+                $updatedCount++;
             }
         }
 
