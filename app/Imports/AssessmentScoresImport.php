@@ -63,18 +63,28 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow, WithStartR
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 7; // +7 because data starts at row 7
 
+            // Debug: Check what keys are available in the first row
+            if ($index === 0) {
+                $availableKeys = array_keys($row->toArray());
+                \Log::info('Excel Import - Available column keys:', $availableKeys);
+            }
+
+            // Try multiple possible key variations for INDEX NO
+            $indexNo = $row['index_no'] ?? $row['indexno'] ?? $row['index_number'] ?? $row['sn'] ?? null;
+
             // Validate required fields
-            if (empty($row['index_no'])) {
-                $this->errors[] = "Row {$rowNumber}: INDEX NO is required";
+            if (empty($indexNo)) {
+                $availableKeys = implode(', ', array_keys($row->toArray()));
+                $this->errors[] = "Row {$rowNumber}: INDEX NO is required. Available columns: {$availableKeys}";
                 $this->summary['errors']++;
 
                 continue;
             }
 
             // Find student
-            $student = Student::where('student_id', $row['index_no'])->first();
+            $student = Student::where('student_id', $indexNo)->first();
             if (! $student) {
-                $this->errors[] = "Row {$rowNumber}: Student with INDEX NO '{$row['index_no']}' not found";
+                $this->errors[] = "Row {$rowNumber}: Student with INDEX NO '{$indexNo}' not found";
                 $this->summary['errors']++;
 
                 continue;
