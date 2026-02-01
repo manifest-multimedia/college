@@ -1222,8 +1222,13 @@
             form.append($('<input>', { type: 'hidden', name: 'weights', value: JSON.stringify(weights) }));
             
             $('body').append(form);
-            submitExportForm(form);
-            form.remove();
+            form.submit();
+            
+            // Remove form and hide spinner after submission
+            setTimeout(function() {
+                form.remove();
+                hideSpinner();
+            }, 1000);
         }
 
         function updateTemplateButtonState() {
@@ -1254,14 +1259,6 @@
             setTimeout(function() {
                 $('#flash-message .alert').alert('close');
             }, 5000);
-        }
-
-        // Export function continuation
-        function submitExportForm(form) {
-            form.submit();
-            setTimeout(function() {
-                hideSpinner();
-            }, 1000);
         }
     </script>
     @endpush

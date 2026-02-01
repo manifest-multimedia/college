@@ -44,7 +44,7 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow
      */
     public function headingRow(): int
     {
-        return 5; // The actual column headers are on row 5
+        return 5; // The actual column headers are on row 5 (row 6 has placeholders)
     }
 
     public function collection(Collection $rows)
@@ -52,7 +52,15 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow
         $this->summary['total'] = $rows->count();
 
         foreach ($rows as $index => $row) {
-            $rowNumber = $index + 6; // +6 because heading is row 5, data starts at 6
+            $rowNumber = $index + 7; // +7 because heading is row 5, placeholder is row 6, data starts at 7
+
+            // Skip placeholder row (contains text like "(Required)", "(Auto-filled)", etc.)
+            if (isset($row['index_no']) && (
+                $row['index_no'] === '(Required)' ||
+                strpos($row['index_no'], '(') === 0
+            )) {
+                continue;
+            }
 
             // Validate required fields
             if (empty($row['index_no'])) {
