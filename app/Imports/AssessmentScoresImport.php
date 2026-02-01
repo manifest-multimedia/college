@@ -89,9 +89,20 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
             $midSem = $rowData[6] ?? null;
             $endSem = $rowData[7] ?? null;
 
-            // Skip empty rows
+            // Skip empty rows (no INDEX NO)
             if (empty($indexNo)) {
                 continue;
+            }
+
+            // Skip rows with no scores at all
+            $hasScores = ($assignment1 !== null && $assignment1 !== '') ||
+                        ($assignment2 !== null && $assignment2 !== '') ||
+                        ($assignment3 !== null && $assignment3 !== '') ||
+                        ($midSem !== null && $midSem !== '') ||
+                        ($endSem !== null && $endSem !== '');
+
+            if (! $hasScores) {
+                continue; // Skip this row - student has no scores
             }
 
             // Find student

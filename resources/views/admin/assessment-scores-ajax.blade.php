@@ -1194,9 +1194,34 @@
                     }
                 },
                 error: function(xhr) {
-                    const message = xhr.responseJSON?.message || 'Failed to import scores';
-                    showFlashMessage(message, 'danger');
-                    console.error('Import error:', xhr);
+                    let errorMessage = 'Failed to import scores';
+                    
+                    if (xhr.responseJSON) {
+                        // Show validation errors if available
+                        if (xhr.responseJSON.errors) {
+                            const errors = xhr.responseJSON.errors;
+                            const errorList = Object.keys(errors).map(key => {
+                                return `${key}: ${errors[key].join(', ')}`;
+                            }).join('<br>');
+                            errorMessage = `<strong>Validation Errors:</strong><br>${errorList}`;
+                        } else if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                    }
+                    
+                    showFlashMessage(errorMessage, 'danger');
+                    console.error('Import error details:', xhr.responseJSON);
+                    console.error('Request data:', {
+                        preview_data_count: importPreviewData.length,
+                        first_record: importPreviewData[0],
+                        course_id: filters.course_id,
+                        cohort_id: filters.cohort_id,
+                        semester_id: filters.semester_id,
+                        assignment_weight: weights.assignment,
+                        mid_semester_weight: weights.mid_semester,
+                        end_semester_weight: weights.end_semester,
+                        assignment_count: assignmentCount
+                    });
                 },
                 complete: function() {
                     btn.prop('disabled', false);
