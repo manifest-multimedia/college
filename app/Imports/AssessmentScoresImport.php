@@ -39,12 +39,20 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow
         $this->recordedBy = $recordedBy;
     }
 
+    /**
+     * Specify which row contains the headings
+     */
+    public function headingRow(): int
+    {
+        return 5; // The actual column headers are on row 5
+    }
+
     public function collection(Collection $rows)
     {
         $this->summary['total'] = $rows->count();
 
         foreach ($rows as $index => $row) {
-            $rowNumber = $index + 2; // +2 because heading row is 1, data starts at 2
+            $rowNumber = $index + 6; // +6 because heading is row 5, data starts at 6
 
             // Validate required fields
             if (empty($row['index_no'])) {
