@@ -54,6 +54,18 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 7; // +7 because data starts at row 7
 
+            // Debug: Log the first row to see what we're getting
+            if ($index === 0) {
+                \Log::info('Excel Import - First row type:', ['type' => gettype($row)]);
+                \Log::info('Excel Import - First row is array?', ['is_array' => is_array($row)]);
+                \Log::info('Excel Import - First row is Collection?', ['is_collection' => $row instanceof Collection]);
+                if ($row instanceof Collection) {
+                    \Log::info('Excel Import - Row as array:', $row->toArray());
+                } else {
+                    \Log::info('Excel Import - Row data:', [(array) $row]);
+                }
+            }
+
             // Map columns by position (0-based index):
             // Column A (0) = S/N
             // Column B (1) = INDEX NO
@@ -64,12 +76,18 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
             // Column G (6) = MID-SEM
             // Column H (7) = END-SEM
 
-            $indexNo = isset($row[1]) ? trim($row[1]) : null;
-            $assignment1 = $row[3] ?? null;
-            $assignment2 = $row[4] ?? null;
-            $assignment3 = $row[5] ?? null;
-            $midSem = $row[6] ?? null;
-            $endSem = $row[7] ?? null;
+            // Convert row to array if it's a Collection
+            $rowData = $row instanceof Collection ? $row->toArray() : (array) $row;
+            
+            // Convert row to array if it's a Collection
+            $rowData = $row instanceof Collection ? $row->toArray() : (array) $row;
+            
+            $indexNo = isset($rowData[1]) ? trim($rowData[1]) : null;
+            $assignment1 = $rowData[3] ?? null;
+            $assignment2 = $rowData[4] ?? null;
+            $assignment3 = $rowData[5] ?? null;
+            $midSem = $rowData[6] ?? null;
+            $endSem = $rowData[7] ?? null;
 
             // Skip empty rows
             if (empty($indexNo)) {
