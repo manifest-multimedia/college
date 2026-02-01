@@ -1070,7 +1070,7 @@
             }
 
             const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            formData.append('import_file', fileInput.files[0]);
             formData.append('class_id', filters.class_id);
             formData.append('course_id', filters.course_id);
             formData.append('cohort_id', filters.cohort_id);
