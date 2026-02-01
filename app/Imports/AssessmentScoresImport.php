@@ -143,6 +143,8 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
                 'assignment_1' => $assignment1 !== '' && $assignment1 !== null ? $assignment1 : null,
                 'assignment_2' => $assignment2 !== '' && $assignment2 !== null ? $assignment2 : null,
                 'assignment_3' => $assignment3 !== '' && $assignment3 !== null ? $assignment3 : null,
+                'assignment_4' => null,  // Optional - template doesn't include this column
+                'assignment_5' => null,  // Optional - template doesn't include this column
                 'mid_semester' => $midSem !== '' && $midSem !== null ? $midSem : null,
                 'end_semester' => $endSem !== '' && $endSem !== null ? $endSem : null,
                 'action' => $existing !== null ? 'update' : 'create',
