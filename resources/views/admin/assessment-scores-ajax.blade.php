@@ -1170,7 +1170,11 @@
                     preview_data: importPreviewData,
                     course_id: filters.course_id,
                     cohort_id: filters.cohort_id,
-                    semester_id: filters.semester_id
+                    semester_id: filters.semester_id,
+                    assignment_weight: weights.assignment,
+                    mid_semester_weight: weights.mid_semester,
+                    end_semester_weight: weights.end_semester,
+                    assignment_count: assignmentCount
                 },
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -1192,6 +1196,7 @@
                 error: function(xhr) {
                     const message = xhr.responseJSON?.message || 'Failed to import scores';
                     showFlashMessage(message, 'danger');
+                    console.error('Import error:', xhr);
                 },
                 complete: function() {
                     btn.prop('disabled', false);
