@@ -1159,21 +1159,29 @@
                 return;
             }
 
+            // Debug: Log current state
+            console.log('Confirm import - Current state:', {
+                filters: filters,
+                weights: weights,
+                assignmentCount: assignmentCount,
+                previewDataCount: importPreviewData.length
+            });
+
             // Validate all required data is available
             if (!filters.course_id || !filters.cohort_id || !filters.semester_id) {
-                showFlashMessage('Missing required filter data. Please load a scoresheet first before importing.', 'danger');
+                showFlashMessage('Missing required filter data. Please reload the scoresheet and try again.', 'danger');
                 console.error('Missing filters:', filters);
                 return;
             }
 
-            if (!weights.assignment || !weights.mid_semester || !weights.end_semester) {
-                showFlashMessage('Missing weight configuration. Please load a scoresheet first before importing.', 'danger');
+            if (!weights || !weights.assignment || !weights.mid_semester || !weights.end_semester) {
+                showFlashMessage('Missing weight configuration. Please reload the scoresheet and try again.', 'danger');
                 console.error('Missing weights:', weights);
                 return;
             }
 
             if (!assignmentCount || assignmentCount < 3 || assignmentCount > 5) {
-                showFlashMessage('Invalid assignment count. Please load a scoresheet first before importing.', 'danger');
+                showFlashMessage('Invalid assignment count. Please reload the scoresheet and try again.', 'danger');
                 console.error('Invalid assignmentCount:', assignmentCount);
                 return;
             }
