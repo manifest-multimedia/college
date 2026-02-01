@@ -7,10 +7,9 @@ use App\Models\Student;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 
-class AssessmentScoresImport implements ToCollection, WithHeadingRow, WithStartRow
+class AssessmentScoresImport implements ToCollection, WithStartRow
 {
     protected $courseId;
 
@@ -41,15 +40,7 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow, WithStartR
     }
 
     /**
-     * Specify which row contains the headings
-     */
-    public function headingRow(): int
-    {
-        return 5; // The actual column headers are on row 5
-    }
-
-    /**
-     * Specify which row to start reading data from (skip placeholder row 6)
+     * Specify which row to start reading data from (skip header rows and placeholder)
      */
     public function startRow(): int
     {
@@ -63,21 +54,25 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow, WithStartR
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 7; // +7 because data starts at row 7
 
-            // Debug: Check what keys are available in the first row
-            if ($index === 0) {
-                $availableKeys = array_keys($row->toArray());
-                \Log::info('Excel Import - Available column keys:', $availableKeys);
-            }
+            // Map columns by position (0-based index):
+            // Column A (0) = S/N
+            // Column B (1) = INDEX NO
+            // Column C (2) = STUDENT NAME
+            // Column D (3) = ASSIGNMENT 1
+            // Column E (4) = ASSIGNMENT 2
+            // Column F (5) = ASSIGNMENT 3
+            // Column G (6) = MID-SEM
+            // Column H (7) = END-SEM
 
-            // Try multiple possible key variations for INDEX NO
-            $indexNo = $row['index_no'] ?? $row['indexno'] ?? $row['index_number'] ?? $row['sn'] ?? null;
+            $indexNo = isset($row[1]) ? trim($row[1]) : null;
+            $assignment1 = $row[3] ?? null;
+            $assignment2 = $row[4] ?? null;
+            $assignment3 = $row[5] ?? null;
+            $midSem = $row[6] ?? null;
+            $endSem = $row[7] ?? null;
 
-            // Validate required fields
+            // Skip empty rows
             if (empty($indexNo)) {
-                $availableKeys = implode(', ', array_keys($row->toArray()));
-                $this->errors[] = "Row {$rowNumber}: INDEX NO is required. Available columns: {$availableKeys}";
-                $this->summary['errors']++;
-
                 continue;
             }
 
@@ -91,7 +86,13 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow, WithStartR
             }
 
             // Validate scores
-            $validator = Validator::make($row->toArray(), [
+            $validator = Validator::make([
+                'assignment_1' => $assignment1,
+                'assignment_2' => $assignment2,
+                'assignment_3' => $assignment3,
+                'mid_sem' => $midSem,
+                'end_sem' => $endSem,
+            ], [
                 'assignment_1' => 'nullable|numeric|min:0|max:100',
                 'assignment_2' => 'nullable|numeric|min:0|max:100',
                 'assignment_3' => 'nullable|numeric|min:0|max:100',
@@ -121,11 +122,11 @@ class AssessmentScoresImport implements ToCollection, WithHeadingRow, WithStartR
                 'student_id' => $student->id,
                 'student_number' => $student->student_id,
                 'student_name' => $student->name,
-                'assignment_1' => $row['assignment_1'] ?? null,
-                'assignment_2' => $row['assignment_2'] ?? null,
-                'assignment_3' => $row['assignment_3'] ?? null,
-                'mid_semester' => $row['mid_sem'] ?? null,
-                'end_semester' => $row['end_sem'] ?? null,
+                'assignment_1' => $assignment1 !== '' && $assignment1 !== null ? $assignment1 : null,
+                'assignment_2' => $assignment2 !== '' && $assignment2 !== null ? $assignment2 : null,
+                'assignment_3' => $assignment3 !== '' && $assignment3 !== null ? $assignment3 : null,
+                'mid_semester' => $midSem !== '' && $midSem !== null ? $midSem : null,
+                'end_semester' => $endSem !== '' && $endSem !== null ? $endSem : null,
                 'is_update' => $existing !== null,
                 'existing_id' => $existing?->id,
             ];
