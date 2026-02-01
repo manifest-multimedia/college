@@ -1159,6 +1159,25 @@
                 return;
             }
 
+            // Validate all required data is available
+            if (!filters.course_id || !filters.cohort_id || !filters.semester_id) {
+                showFlashMessage('Missing required filter data. Please load a scoresheet first before importing.', 'danger');
+                console.error('Missing filters:', filters);
+                return;
+            }
+
+            if (!weights.assignment || !weights.mid_semester || !weights.end_semester) {
+                showFlashMessage('Missing weight configuration. Please load a scoresheet first before importing.', 'danger');
+                console.error('Missing weights:', weights);
+                return;
+            }
+
+            if (!assignmentCount || assignmentCount < 3 || assignmentCount > 5) {
+                showFlashMessage('Invalid assignment count. Please load a scoresheet first before importing.', 'danger');
+                console.error('Invalid assignmentCount:', assignmentCount);
+                return;
+            }
+
             showSpinner('Importing scores...');
             const btn = $('#confirmImportBtn');
             btn.prop('disabled', true);
