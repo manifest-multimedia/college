@@ -24,10 +24,10 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
     protected $validatedData = [];
 
     protected $summary = [
-        'total' => 0,
+        'total_records' => 0,
         'valid' => 0,
-        'updates' => 0,
-        'new' => 0,
+        'updated_records' => 0,
+        'new_records' => 0,
         'errors' => 0,
     ];
 
@@ -49,7 +49,7 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
 
     public function collection(Collection $rows)
     {
-        $this->summary['total'] = $rows->count();
+        $this->summary['total_records'] = $rows->count();
 
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 7; // +7 because data starts at row 7
@@ -78,10 +78,10 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
 
             // Convert row to array if it's a Collection
             $rowData = $row instanceof Collection ? $row->toArray() : (array) $row;
-            
+
             // Convert row to array if it's a Collection
             $rowData = $row instanceof Collection ? $row->toArray() : (array) $row;
-            
+
             $indexNo = isset($rowData[1]) ? trim($rowData[1]) : null;
             $assignment1 = $rowData[3] ?? null;
             $assignment2 = $rowData[4] ?? null;
@@ -138,21 +138,21 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
             $this->validatedData[] = [
                 'row_number' => $rowNumber,
                 'student_id' => $student->id,
-                'student_number' => $student->student_id,
+                'student_index_number' => $student->student_id,
                 'student_name' => $student->name,
                 'assignment_1' => $assignment1 !== '' && $assignment1 !== null ? $assignment1 : null,
                 'assignment_2' => $assignment2 !== '' && $assignment2 !== null ? $assignment2 : null,
                 'assignment_3' => $assignment3 !== '' && $assignment3 !== null ? $assignment3 : null,
                 'mid_semester' => $midSem !== '' && $midSem !== null ? $midSem : null,
                 'end_semester' => $endSem !== '' && $endSem !== null ? $endSem : null,
-                'is_update' => $existing !== null,
+                'action' => $existing !== null ? 'update' : 'create',
                 'existing_id' => $existing?->id,
             ];
 
             if ($existing) {
-                $this->summary['updates']++;
+                $this->summary['updated_records']++;
             } else {
-                $this->summary['new']++;
+                $this->summary['new_records']++;
             }
 
             $this->summary['valid']++;
