@@ -1268,14 +1268,18 @@
                         
                         // Reset import file input
                         $('#importFile').val('');
-                    } else if (xhr.status === 0) {
-                        errorMessage = 'Import timeout or network error. For large datasets, please try importing in smaller batches.';
-                    } else if (xhr.status === 504 || xhr.status === 503) {
-                        errorMessage = 'Server timeout processing large dataset. Please try importing in smaller chunks or contact support.';
+                        $('#selectImportFileBtn').html('<i class="fas fa-file-upload me-1"></i>Choose File');
+                        $('#importExcelBtn').prop('disabled', true);
+                        
+                        // Reload scoresheet to show imported data
+                        loadScoresheet();
+                        
+                        // Log performance metrics for large imports
+                        if (recordCount > 100) {
+                            console.log(`Import Performance: ${recordCount} records in ${processingTime}s 
+                                (${(recordCount/processingTime).toFixed(1)} records/sec)`);
+                        }
                     }
-                    
-                    showImportModalError(errorMessage);
-                    console.error('Import error details:', xhr.responseJSON, 'Status:', xhr.status, 'Records:', recordCount);
                 },
                 complete: function() {
                     btn.prop('disabled', false);
