@@ -431,15 +431,44 @@ class AssessmentScoresController extends Controller
             ];
 
             // Use updateOrCreate to handle both new and existing records safely
-            $assessmentScore = AssessmentScore::updateOrCreate(
-                [
-                    'course_id' => $validated['course_id'],
-                    'student_id' => $data['student_id'],
-                    'cohort_id' => $validated['cohort_id'],
-                    'semester_id' => $validated['semester_id'],
-                ],
-                $scoreData
-            );
+            $uniqueKeys = [
+                'course_id' => (int) $validated['course_id'],
+                'student_id' => (int) $data['student_id'], 
+                'cohort_id' => (int) $validated['cohort_id'],
+                'semester_id' => (int) $validated['semester_id'],
+            ];
+
+            // Debug: Log the values being used for lookup
+            \Log::info('Import: updateOrCreate keys', [
+                'keys' => $uniqueKeys,
+                'duplicate_key' => '37-955-3-1'
+            ]);
+
+            // Check if record exists before updateOrCreate
+            $existingRecord = AssessmentScore::where($uniqueKeys)->first();
+            if ($existingRecord) {
+                \Log::info('Import: Found existing record', [
+                    'id' => $existingRecord->id,
+                    'keys' => $uniqueKeys
+                ]);
+            } else {
+                \Log::info('Import: No existing record found', [
+                    'keys' => $uniqueKeys
+                ]);
+            }
+
+            try {
+                $assessmentScore = AssessmentScore::updateOrCreate(
+                    $uniqueKeys,
+                    $scoreData
+                );
+            } catch (\Exception $e) {
+                \Log::error('Import: updateOrCreate failed', [
+                    'keys' => $uniqueKeys,
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
 
             if ($assessmentScore->wasRecentlyCreated) {
                 $savedCount++;
