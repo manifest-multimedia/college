@@ -41,17 +41,44 @@ return new class extends Migration
             }
         }
 
+        // Step 2b: Delete any records that still have NULL or invalid academic_year_id
+        // Get all valid academic year IDs
+        $validAcademicYearIds = DB::table('academic_years')->pluck('id')->toArray();
+        
+        // Delete records with NULL academic_year_id
+        DB::table('assessment_scores')
+            ->whereNull('academic_year_id')
+            ->delete();
+        
+        // Delete records with invalid academic_year_id (not in academic_years table)
+        if (!empty($validAcademicYearIds)) {
+            DB::table('assessment_scores')
+                ->whereNotNull('academic_year_id')
+                ->whereNotIn('academic_year_id', $validAcademicYearIds)
+                ->delete();
+        }
+
         // Step 3: Make column NOT NULL and add foreign key
         Schema::table('assessment_scores', function (Blueprint $table) {
             $table->unsignedInteger('academic_year_id')->nullable(false)->change();
-            
-            // Add foreign key if it doesn't exist
-            try {
-                $table->foreign('academic_year_id')->references('id')->on('academic_years')->onDelete('cascade');
-            } catch (\Exception $e) {
-                // Foreign key might already exist, continue
-            }
         });
+        
+        // Add foreign key in separate schema call after column is NOT NULL
+        // Only add if it doesn't already exist
+        $foreignKeyExists = DB::select("
+            SELECT CONSTRAINT_NAME 
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'assessment_scores' 
+            AND COLUMN_NAME = 'academic_year_id' 
+            AND REFERENCED_TABLE_NAME = 'academic_years'
+        ");
+        
+        if (empty($foreignKeyExists)) {
+            Schema::table('assessment_scores', function (Blueprint $table) {
+                $table->foreign('academic_year_id')->references('id')->on('academic_years')->onDelete('cascade');
+            });
+        }
 
         // Step 4: Update unique constraint to include academic_year_id
         Schema::table('assessment_scores', function (Blueprint $table) {
