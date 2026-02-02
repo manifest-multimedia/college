@@ -85,6 +85,7 @@ class AssessmentScoresController extends Controller
             ],
             'cohort_id' => 'required|exists:cohorts,id',
             'semester_id' => 'required|exists:semesters,id',
+            'academic_year_id' => 'nullable|exists:academic_years,id', // For storage context only, not query filtering
             'per_page' => 'nullable|integer|min:5|max:200',
             'page' => 'nullable|integer|min:1',
         ]);
@@ -108,16 +109,38 @@ class AssessmentScoresController extends Controller
             ], 404);
         }
 
+        // Get academic year for score storage context
+        // Note: This academic year is used ONLY for storing/updating scores, NOT for filtering the scoresheet query
+        // The scoresheet always shows all students regardless of academic year to allow comprehensive score entry
+        $selectedAcademicYear = null;
+        if ($validated['academic_year_id']) {
+            $selectedAcademicYear = AcademicYear::find($validated['academic_year_id']);
+        }
+
+        if (! $selectedAcademicYear) {
+            $selectedAcademicYear = AcademicYear::getCurrent();
+        }
+
+        if (! $selectedAcademicYear) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No academic year selected or available. Please select an academic year or set one as current.',
+            ], 422);
+        }
+
         $studentScores = [];
         $maxAssignmentCount = 3;
 
         foreach ($students as $student) {
+            // Query for existing scores WITHOUT academic year filter to show comprehensive view
+            // This allows users to see scores from any academic year for the same course/semester combination
             $existingScore = AssessmentScore::where([
                 'course_id' => $validated['course_id'],
                 'student_id' => $student->id,
                 'cohort_id' => $validated['cohort_id'],
                 'semester_id' => $validated['semester_id'],
-            ])->first();
+                // Note: academic_year_id is NOT included in this query per user requirements
+            ])->latest('updated_at')->first(); // Get most recent if multiple exist
 
             if ($existingScore && $existingScore->assignment_count) {
                 $maxAssignmentCount = max($maxAssignmentCount, $existingScore->assignment_count);
@@ -160,6 +183,10 @@ class AssessmentScoresController extends Controller
             'students' => $studentScores,
             'assignment_count' => $maxAssignmentCount,
             'weights' => $weights,
+            'academic_year' => [
+                'id' => $selectedAcademicYear->id,
+                'name' => $selectedAcademicYear->name,
+            ],
             'pagination' => [
                 'current_page' => $students->currentPage(),
                 'last_page' => $students->lastPage(),
@@ -178,6 +205,7 @@ class AssessmentScoresController extends Controller
             'course_id' => 'required|exists:subjects,id',
             'cohort_id' => 'required|exists:cohorts,id',
             'semester_id' => 'required|exists:semesters,id',
+            'academic_year_id' => 'nullable|exists:academic_years,id', // Allow user-selected academic year
             'assignment_weight' => 'required|numeric|min:0|max:100',
             'mid_semester_weight' => 'required|numeric|min:0|max:100',
             'end_semester_weight' => 'required|numeric|min:0|max:100',
@@ -203,6 +231,23 @@ class AssessmentScoresController extends Controller
             ], 422);
         }
 
+        // Get academic year for score storage (user-selected or current)
+        $selectedAcademicYear = null;
+        if ($validated['academic_year_id']) {
+            $selectedAcademicYear = AcademicYear::find($validated['academic_year_id']);
+        }
+
+        if (! $selectedAcademicYear) {
+            $selectedAcademicYear = AcademicYear::getCurrent();
+        }
+
+        if (! $selectedAcademicYear) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No academic year selected or available. Please select an academic year or set one as current.',
+            ], 422);
+        }
+
         $savedCount = 0;
         $updatedCount = 0;
 
@@ -220,10 +265,6 @@ class AssessmentScoresController extends Controller
             }
 
             $data = [
-                'course_id' => $validated['course_id'],
-                'student_id' => $studentScore['student_id'],
-                'cohort_id' => $validated['cohort_id'],
-                'semester_id' => $validated['semester_id'],
                 'assignment_1_score' => $studentScore['assignment_1'] ?? null,
                 'assignment_2_score' => $studentScore['assignment_2'] ?? null,
                 'assignment_3_score' => $studentScore['assignment_3'] ?? null,
@@ -245,6 +286,7 @@ class AssessmentScoresController extends Controller
                     'student_id' => $studentScore['student_id'],
                     'cohort_id' => $validated['cohort_id'],
                     'semester_id' => $validated['semester_id'],
+                    'academic_year_id' => $selectedAcademicYear->id, // Use selected academic year
                 ],
                 $data
             );
@@ -400,6 +442,7 @@ class AssessmentScoresController extends Controller
             'course_id' => 'required|exists:subjects,id',
             'cohort_id' => 'required|exists:cohorts,id',
             'semester_id' => 'required|exists:semesters,id',
+            'academic_year_id' => 'nullable|exists:academic_years,id', // Allow user-selected academic year
             'preview_data' => 'required|array',
             'assignment_weight' => 'required|numeric|min:0|max:100',
             'mid_semester_weight' => 'required|numeric|min:0|max:100',
@@ -407,77 +450,158 @@ class AssessmentScoresController extends Controller
             'assignment_count' => 'required|integer|min:3|max:5',
         ]);
 
+        // Get academic year for score storage (user-selected or current)
+        $selectedAcademicYear = null;
+        if ($validated['academic_year_id']) {
+            $selectedAcademicYear = AcademicYear::find($validated['academic_year_id']);
+        }
+
+        if (! $selectedAcademicYear) {
+            $selectedAcademicYear = AcademicYear::getCurrent();
+        }
+
+        if (! $selectedAcademicYear) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No academic year selected or available. Please select an academic year or set one as current.',
+            ], 422);
+        }
+
+        // Process in batches with database transaction for data integrity
+        $batchSize = 50; // Process 50 records at a time
+        $totalRecords = count($validated['preview_data']);
         $savedCount = 0;
         $updatedCount = 0;
+        $skippedCount = 0;
+        $errorCount = 0;
 
-        foreach ($validated['preview_data'] as $data) {
-            // Separate unique keys from updateable data
-            $uniqueKeys = [
-                'course_id' => (int) $validated['course_id'],
-                'student_id' => (int) $data['student_id'], 
-                'cohort_id' => (int) $validated['cohort_id'],
-                'semester_id' => (int) $validated['semester_id'],
-            ];
+        try {
+            // Process data in batches
+            $batches = array_chunk($validated['preview_data'], $batchSize);
 
-            $scoreData = [
-                'assignment_1_score' => $data['assignment_1'] ?? null,
-                'assignment_2_score' => $data['assignment_2'] ?? null,
-                'assignment_3_score' => $data['assignment_3'] ?? null,
-                'assignment_4_score' => $data['assignment_4'] ?? null,
-                'assignment_5_score' => $data['assignment_5'] ?? null,
-                'mid_semester_score' => $data['mid_semester'] ?? null,
-                'end_semester_score' => $data['end_semester'] ?? null,
-                'assignment_weight' => $validated['assignment_weight'],
-                'mid_semester_weight' => $validated['mid_semester_weight'],
-                'end_semester_weight' => $validated['end_semester_weight'],
-                'assignment_count' => $validated['assignment_count'],
-                'recorded_by' => Auth::id(),
-            ];
+            foreach ($batches as $batchIndex => $batch) {
+                DB::transaction(function () use ($batch, $validated, $selectedAcademicYear, &$savedCount, &$updatedCount, &$skippedCount, &$errorCount) {
+                    foreach ($batch as $data) {
+                        try {
+                            // Separate unique keys from updateable data
+                            $uniqueKeys = [
+                                'course_id' => (int) $validated['course_id'],
+                                'student_id' => (int) $data['student_id'],
+                                'cohort_id' => (int) $validated['cohort_id'],
+                                'semester_id' => (int) $validated['semester_id'],
+                                'academic_year_id' => $selectedAcademicYear->id, // Use selected academic year
+                            ];
 
-            // Debug: Log the values being used for lookup
-            \Log::info('Import: updateOrCreate keys', [
-                'keys' => $uniqueKeys,
-                'duplicate_key' => '37-955-3-1'
+                            $scoreData = [
+                                'assignment_1_score' => $data['assignment_1'] ?? null,
+                                'assignment_2_score' => $data['assignment_2'] ?? null,
+                                'assignment_3_score' => $data['assignment_3'] ?? null,
+                                'assignment_4_score' => $data['assignment_4'] ?? null,
+                                'assignment_5_score' => $data['assignment_5'] ?? null,
+                                'mid_semester_score' => $data['mid_semester'] ?? null,
+                                'end_semester_score' => $data['end_semester'] ?? null,
+                                'assignment_weight' => $validated['assignment_weight'],
+                                'mid_semester_weight' => $validated['mid_semester_weight'],
+                                'end_semester_weight' => $validated['end_semester_weight'],
+                                'assignment_count' => $validated['assignment_count'],
+                                'recorded_by' => Auth::id(),
+                                'updated_at' => now(), // Force timestamp update for re-uploads
+                            ];
+
+                            $assessmentScore = AssessmentScore::updateOrCreate(
+                                $uniqueKeys,
+                                $scoreData
+                            );
+
+                            if ($assessmentScore->wasRecentlyCreated) {
+                                $savedCount++;
+                            } else {
+                                $updatedCount++;
+                            }
+
+                        } catch (\Exception $e) {
+                            $errorCount++;
+                            \Log::error('Import record failed in batch', [
+                                'student_id' => $data['student_id'] ?? 'unknown',
+                                'error' => $e->getMessage(),
+                                'batch_index' => $batchIndex ?? 0,
+                                'academic_year_id' => $selectedAcademicYear->id,
+                            ]);
+                            // Don't throw here - let batch complete, just count errors
+                        }
+                    }
+                });
+
+                // Optional: Add small delay between batches for very large imports
+                if ($totalRecords > 1000 && $batchIndex < count($batches) - 1) {
+                    usleep(100000); // 0.1 second pause
+                }
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Import batch transaction failed', [
+                'error' => $e->getMessage(),
+                'course_id' => $validated['course_id'],
+                'total_records' => $totalRecords,
+                'academic_year_id' => $selectedAcademicYear->id,
             ]);
 
-            // Check if record exists before updateOrCreate
-            $existingRecord = AssessmentScore::where($uniqueKeys)->first();
-            if ($existingRecord) {
-                \Log::info('Import: Found existing record', [
-                    'id' => $existingRecord->id,
-                    'keys' => $uniqueKeys
-                ]);
-            } else {
-                \Log::info('Import: No existing record found', [
-                    'keys' => $uniqueKeys
-                ]);
-            }
-
-            try {
-                $assessmentScore = AssessmentScore::updateOrCreate(
-                    $uniqueKeys,
-                    $scoreData
-                );
-            } catch (\Exception $e) {
-                \Log::error('Import: updateOrCreate failed', [
-                    'keys' => $uniqueKeys,
-                    'error' => $e->getMessage()
-                ]);
-                throw $e;
-            }
-
-            if ($assessmentScore->wasRecentlyCreated) {
-                $savedCount++;
-            } else {
-                $updatedCount++;
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Import failed due to database error. Please try again.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
+
+        // Calculate final counts
+        $processedCount = $savedCount + $updatedCount;
+        $skippedCount = $totalRecords - $processedCount - $errorCount;
+
+        $message = 'Import completed successfully!';
+        $summaryDetails = [];
+
+        if ($savedCount > 0) {
+            $summaryDetails[] = "{$savedCount} new records created";
+        }
+        if ($updatedCount > 0) {
+            $summaryDetails[] = "{$updatedCount} records updated";
+        }
+        if ($errorCount > 0) {
+            $summaryDetails[] = "{$errorCount} records failed";
+        }
+        if ($skippedCount > 0) {
+            $summaryDetails[] = "{$skippedCount} records skipped";
+        }
+
+        if (! empty($summaryDetails)) {
+            $message .= ' '.implode(', ', $summaryDetails).'.';
+        }
+
+        // Log comprehensive summary for admin reference
+        \Log::info('Assessment Scores Import Summary', [
+            'total_records' => $totalRecords,
+            'processed_records' => $processedCount,
+            'new_records' => $savedCount,
+            'updated_records' => $updatedCount,
+            'error_records' => $errorCount,
+            'skipped_records' => $skippedCount,
+            'batch_size' => $batchSize,
+            'total_batches' => count($batches ?? []),
+            'course_id' => $validated['course_id'],
+            'cohort_id' => $validated['cohort_id'],
+            'semester_id' => $validated['semester_id'],
+            'academic_year_id' => $selectedAcademicYear->id,
+            'import_time' => now()->toDateTimeString(),
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => "Import completed: {$savedCount} new records, {$updatedCount} updated records",
+            'message' => $message,
             'saved_count' => $savedCount,
             'updated_count' => $updatedCount,
+            'error_count' => $errorCount,
+            'total_processed' => $processedCount,
+            'total_records' => $totalRecords,
         ]);
     }
 }

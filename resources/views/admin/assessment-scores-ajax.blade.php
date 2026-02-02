@@ -55,6 +55,19 @@
                         </select>
                         <span class="text-danger text-sm" id="cohort-error"></span>
                     </div>
+
+                    <div class="col-md-3">
+                        <label for="academicYear" class="form-label">Academic Year</label>
+                        <select id="academicYear" class="form-select">
+                            <option value="">Current Academic Year</option>
+                            @foreach(\App\Models\AcademicYear::orderBy('start_date', 'desc')->get() as $year)
+                                <option value="{{ $year->id }}" @if($year->is_current) selected @endif>
+                                    {{ $year->name }} @if($year->is_current) (Current) @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">Scores will be stored for the selected academic year</small>
+                    </div>
                 </div>
 
                 <div class="mt-3">
@@ -475,7 +488,8 @@
             class_id: null,
             course_id: null,
             cohort_id: '{{ $currentCohort?->id ?? '' }}',
-            semester_id: '{{ $currentSemester?->id ?? '' }}'
+            semester_id: '{{ $currentSemester?->id ?? '' }}',
+            academic_year_id: null // Used for score storage context, not scoresheet filtering
         };
         
         // Pagination variables
@@ -654,10 +668,17 @@
             });
 
             // Track filter changes
-            $('#course, #cohort, #semester, #academicYear').on('change', function() {
+            $('#course, #cohort, #semester').on('change', function() {
                 const id = $(this).attr('id');
-                filters[id === 'academicYear' ? 'academic_year' : id + '_id'] = $(this).val();
+                filters[id + '_id'] = $(this).val();
                 updateTemplateButtonState();
+            });
+            
+            // Academic year change - affects score storage context only, not scoresheet loading
+            $('#academicYear').on('change', function() {
+                filters.academic_year_id = $(this).val();
+                updateTemplateButtonState();
+                // Note: This doesn't trigger scoresheet reload as it only affects storage, not display
             });
         });
 
@@ -1029,6 +1050,7 @@
                     course_id: filters.course_id,
                     cohort_id: filters.cohort_id,
                     semester_id: filters.semester_id,
+                    academic_year_id: filters.academic_year_id, // Include selected academic year
                     assignment_weight: weights.assignment,
                     mid_semester_weight: weights.mid_semester,
                     end_semester_weight: weights.end_semester,
@@ -1171,6 +1193,7 @@
                 course_id: filters.course_id,
                 cohort_id: filters.cohort_id, 
                 semester_id: filters.semester_id,
+                academic_year_id: filters.academic_year_id, // Include selected academic year
                 assignment_weight: weights.assignment,
                 mid_semester_weight: weights.mid_semester,
                 end_semester_weight: weights.end_semester,
@@ -1199,10 +1222,22 @@
                 return;
             }
 
-            showSpinner('Importing scores...');
+            // Enhanced loading message based on data size
+            const recordCount = importPreviewData.length;
+            let loadingMessage = 'Importing scores...';
+            if (recordCount > 100) {
+                loadingMessage = `Processing ${recordCount} records in batches...`;
+            } else if (recordCount > 500) {
+                loadingMessage = `Processing large dataset (${recordCount} records)...`;
+            }
+            
+            showSpinner(loadingMessage);
             const btn = $('#confirmImportBtn');
             btn.prop('disabled', true);
 
+            // Start time for performance tracking
+            const startTime = Date.now();
+            
             $.ajax({
                 url: '{{ route("admin.assessment-scores.confirm-import") }}',
                 method: 'POST',
@@ -1210,14 +1245,64 @@
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                timeout: 300000, // 5 minute timeout for large imports
                 success: function(response) {
                     if (response.success) {
+                        const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                        const performanceInfo = recordCount > 50 ? 
+                            ` (Processed ${recordCount} records in ${processingTime}s using batch processing)` : '';
+                        
                         $('#importPreviewModal').modal('hide');
-                        showFlashMessage(response.message, 'success');
+                        showFlashMessage(response.message + performanceInfo, 'success');
                         
                         // Reset import file input
                         $('#importFile').val('');
                         $('#selectImportFileBtn').html('<i class="fas fa-file-upload me-1"></i>Choose File');
+                        $('#importExcelBtn').prop('disabled', true);
+                        
+                        // Reload scoresheet to show imported data
+                        loadScoresheet();
+                        
+                        // Log performance metrics for large imports
+                        if (recordCount > 100) {
+                            console.log(`Import Performance: ${recordCount} records in ${processingTime}s 
+                                (${(recordCount/processingTime).toFixed(1)} records/sec)`);
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Failed to import scores';
+                    
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            const errors = xhr.responseJSON.errors;
+                            const errorList = Object.keys(errors).map(key => {
+                                return `${key}: ${errors[key].join(', ')}`;
+                            }).join('<br>');
+                            errorMessage = `<strong>Validation Errors:</strong><br>${errorList}`;
+                        } else if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                            
+                            // Add specific guidance for large import errors
+                            if (recordCount > 500 && xhr.responseJSON.error) {
+                                errorMessage += '<br><br><strong>Large Dataset Detected:</strong> If this error persists, try breaking your import into smaller chunks (200-300 records each).';
+                            }
+                        }
+                    } else if (xhr.status === 0) {
+                        errorMessage = 'Import timeout or network error. For large datasets, please try importing in smaller batches.';
+                    } else if (xhr.status === 504 || xhr.status === 503) {
+                        errorMessage = 'Server timeout processing large dataset. Please try importing in smaller chunks or contact support.';
+                    }
+                    
+                    showImportModalError(errorMessage);
+                    console.error('Import error details:', xhr.responseJSON, 'Status:', xhr.status, 'Records:', recordCount);
+                },
+                complete: function() {
+                    btn.prop('disabled', false);
+                    hideSpinner();
+                }
+            });
+        }
                         $('#importExcelBtn').prop('disabled', true);
                         
                         // Reload scoresheet to show imported data
