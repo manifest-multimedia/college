@@ -503,8 +503,19 @@
         };
 
         $(document).ready(function() {
+            // Initialize filters based on pre-selected values
+            filters.class_id = $('#program').val() || null;
+            filters.semester_id = $('#semester').val() || null;
+            filters.cohort_id = $('#cohort').val() || null;
+            filters.academic_year_id = $('#academicYear').val() || null;
+            
             // Initialize
             initializeEventListeners();
+            
+            // If both program and semester are pre-selected, load courses
+            if (filters.class_id && filters.semester_id) {
+                loadCourses(filters.class_id, filters.semester_id);
+            }
             
             // Program change - reset course and check if we can load courses
             $('#program').on('change', function() {
