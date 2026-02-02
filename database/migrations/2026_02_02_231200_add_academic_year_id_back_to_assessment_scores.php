@@ -81,21 +81,35 @@ return new class extends Migration
         }
 
         // Step 4: Update unique constraint to include academic_year_id
-        Schema::table('assessment_scores', function (Blueprint $table) {
-            // Drop old unique constraint if it exists
-            try {
+        // Check if old constraint exists before trying to drop it
+        $oldConstraintExists = DB::select("
+            SELECT CONSTRAINT_NAME 
+            FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'assessment_scores' 
+            AND CONSTRAINT_NAME = 'unique_student_course_semester'
+        ");
+        
+        if (!empty($oldConstraintExists)) {
+            Schema::table('assessment_scores', function (Blueprint $table) {
                 $table->dropUnique('unique_student_course_semester');
-            } catch (\Exception $e) {
-                // Constraint might not exist, continue
-            }
+            });
+        }
 
-            // Add new unique constraint with academic_year_id
-            try {
+        // Check if new constraint already exists
+        $newConstraintExists = DB::select("
+            SELECT CONSTRAINT_NAME 
+            FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'assessment_scores' 
+            AND CONSTRAINT_NAME = 'unique_student_course_year_semester'
+        ");
+        
+        if (empty($newConstraintExists)) {
+            Schema::table('assessment_scores', function (Blueprint $table) {
                 $table->unique(['course_id', 'student_id', 'cohort_id', 'semester_id', 'academic_year_id'], 'unique_student_course_year_semester');
-            } catch (\Exception $e) {
-                // Constraint might already exist, continue
-            }
-        });
+            });
+        }
     }
 
     /**
