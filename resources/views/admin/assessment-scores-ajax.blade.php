@@ -1268,37 +1268,6 @@
                         
                         // Reset import file input
                         $('#importFile').val('');
-                        $('#selectImportFileBtn').html('<i class="fas fa-file-upload me-1"></i>Choose File');
-                        $('#importExcelBtn').prop('disabled', true);
-                        
-                        // Reload scoresheet to show imported data
-                        loadScoresheet();
-                        
-                        // Log performance metrics for large imports
-                        if (recordCount > 100) {
-                            console.log(`Import Performance: ${recordCount} records in ${processingTime}s 
-                                (${(recordCount/processingTime).toFixed(1)} records/sec)`);
-                        }
-                    }
-                },
-                error: function(xhr) {
-                    let errorMessage = 'Failed to import scores';
-                    
-                    if (xhr.responseJSON) {
-                        if (xhr.responseJSON.errors) {
-                            const errors = xhr.responseJSON.errors;
-                            const errorList = Object.keys(errors).map(key => {
-                                return `${key}: ${errors[key].join(', ')}`;
-                            }).join('<br>');
-                            errorMessage = `<strong>Validation Errors:</strong><br>${errorList}`;
-                        } else if (xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                            
-                            // Add specific guidance for large import errors
-                            if (recordCount > 500 && xhr.responseJSON.error) {
-                                errorMessage += '<br><br><strong>Large Dataset Detected:</strong> If this error persists, try breaking your import into smaller chunks (200-300 records each).';
-                            }
-                        }
                     } else if (xhr.status === 0) {
                         errorMessage = 'Import timeout or network error. For large datasets, please try importing in smaller batches.';
                     } else if (xhr.status === 504 || xhr.status === 503) {
@@ -1351,7 +1320,25 @@
         }
 
         function downloadTemplate() {
-            const params = new URLSearchParams(filters);
+            // Build parameters to match backend expectations
+            const params = new URLSearchParams({
+                class_id: filters.class_id,
+                course_id: filters.course_id,
+                cohort_id: filters.cohort_id,
+                semester_id: filters.semester_id,
+            });
+
+            // Academic year: controller expects a string name; derive from selected option text
+            const $selectedYear = $('#academicYear option:selected');
+            if ($selectedYear.length) {
+                let yearText = $selectedYear.text() || '';
+                // Strip " (Current)" suffix if present
+                yearText = yearText.replace(/\s*\(Current\)\s*$/, '');
+                if (yearText.trim().length > 0 && $('#academicYear').val()) {
+                    params.append('academic_year', yearText.trim());
+                }
+            }
+
             window.location.href = '{{ route("admin.assessment-scores.download-template") }}?' + params.toString();
         }
 
