@@ -1283,36 +1283,6 @@
                 }
             });
         }
-                        $('#importExcelBtn').prop('disabled', true);
-                        
-                        // Reload scoresheet to show imported data
-                        loadScoresheet();
-                    }
-                },
-                error: function(xhr) {
-                    let errorMessage = 'Failed to import scores';
-                    
-                    if (xhr.responseJSON) {
-                        if (xhr.responseJSON.errors) {
-                            const errors = xhr.responseJSON.errors;
-                            const errorList = Object.keys(errors).map(key => {
-                                return `${key}: ${errors[key].join(', ')}`;
-                            }).join('<br>');
-                            errorMessage = `<strong>Validation Errors:</strong><br>${errorList}`;
-                        } else if (xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        }
-                    }
-                    
-                    showImportModalError(errorMessage);
-                    console.error('Import error details:', xhr.responseJSON);
-                },
-                complete: function() {
-                    btn.prop('disabled', false);
-                    hideSpinner();
-                }
-            });
-        }
 
         function showImportModalError(message) {
             $('#importModalErrorText').html(message);
