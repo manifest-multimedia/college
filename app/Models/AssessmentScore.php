@@ -12,6 +12,7 @@ class AssessmentScore extends Model
         'student_id',
         'cohort_id',
         'semester_id',
+        'academic_year_id',
         'assignment_1_score',
         'assignment_2_score',
         'assignment_3_score',
