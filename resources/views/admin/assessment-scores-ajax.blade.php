@@ -217,6 +217,10 @@
                             <strong>Summary:</strong>
                             <span id="importSummary"></span>
                         </div>
+                        <div id="importModalError" class="alert alert-danger" style="display: none;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="importModalErrorText"></span>
+                        </div>
                         <div class="table-responsive" style="max-height: 500px;">
                             <table class="table table-bordered table-sm">
                                 <thead class="table-light sticky-top">
@@ -1154,35 +1158,44 @@
         }
 
         function confirmImport() {
+            // Clear any previous errors in modal
+            $('#importModalError').hide();
+            
             if (!importPreviewData.length) {
-                showFlashMessage('No import data available', 'warning');
+                showImportModalError('No import data available');
                 return;
             }
 
-            // Debug: Log current state
-            console.log('Confirm import - Current state:', {
-                filters: filters,
-                weights: weights,
-                assignmentCount: assignmentCount,
-                previewDataCount: importPreviewData.length
-            });
+            // Capture current values at the time of import
+            const importData = {
+                course_id: filters.course_id,
+                cohort_id: filters.cohort_id, 
+                semester_id: filters.semester_id,
+                assignment_weight: weights.assignment,
+                mid_semester_weight: weights.mid_semester,
+                end_semester_weight: weights.end_semester,
+                assignment_count: assignmentCount,
+                preview_data: importPreviewData
+            };
 
-            // Validate all required data is available
-            if (!filters.course_id || !filters.cohort_id || !filters.semester_id) {
-                showFlashMessage('Missing required filter data. Please reload the scoresheet and try again.', 'danger');
-                console.error('Missing filters:', filters);
-                return;
-            }
+            // Debug: Log data being sent
+            console.log('Import data being sent:', importData);
 
-            if (!weights || !weights.assignment || !weights.mid_semester || !weights.end_semester) {
-                showFlashMessage('Missing weight configuration. Please reload the scoresheet and try again.', 'danger');
-                console.error('Missing weights:', weights);
-                return;
-            }
+            // Validate required fields
+            const requiredFields = [
+                { field: 'course_id', name: 'Course' },
+                { field: 'cohort_id', name: 'Cohort' },
+                { field: 'semester_id', name: 'Semester' },
+                { field: 'assignment_weight', name: 'Assignment Weight' },
+                { field: 'mid_semester_weight', name: 'Mid-semester Weight' },
+                { field: 'end_semester_weight', name: 'End-semester Weight' },
+                { field: 'assignment_count', name: 'Assignment Count' }
+            ];
 
-            if (!assignmentCount || assignmentCount < 3 || assignmentCount > 5) {
-                showFlashMessage('Invalid assignment count. Please reload the scoresheet and try again.', 'danger');
-                console.error('Invalid assignmentCount:', assignmentCount);
+            const missingFields = requiredFields.filter(item => !importData[item.field]);
+            if (missingFields.length > 0) {
+                const fieldNames = missingFields.map(item => item.name).join(', ');
+                showImportModalError(`Missing required data: ${fieldNames}. Please reload the scoresheet and try again.`);
                 return;
             }
 
@@ -1193,16 +1206,7 @@
             $.ajax({
                 url: '{{ route("admin.assessment-scores.confirm-import") }}',
                 method: 'POST',
-                data: {
-                    preview_data: importPreviewData,
-                    course_id: filters.course_id,
-                    cohort_id: filters.cohort_id,
-                    semester_id: filters.semester_id,
-                    assignment_weight: weights.assignment,
-                    mid_semester_weight: weights.mid_semester,
-                    end_semester_weight: weights.end_semester,
-                    assignment_count: assignmentCount
-                },
+                data: importData,
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
@@ -1224,7 +1228,6 @@
                     let errorMessage = 'Failed to import scores';
                     
                     if (xhr.responseJSON) {
-                        // Show validation errors if available
                         if (xhr.responseJSON.errors) {
                             const errors = xhr.responseJSON.errors;
                             const errorList = Object.keys(errors).map(key => {
@@ -1236,25 +1239,19 @@
                         }
                     }
                     
-                    showFlashMessage(errorMessage, 'danger');
+                    showImportModalError(errorMessage);
                     console.error('Import error details:', xhr.responseJSON);
-                    console.error('Request data:', {
-                        preview_data_count: importPreviewData.length,
-                        first_record: importPreviewData[0],
-                        course_id: filters.course_id,
-                        cohort_id: filters.cohort_id,
-                        semester_id: filters.semester_id,
-                        assignment_weight: weights.assignment,
-                        mid_semester_weight: weights.mid_semester,
-                        end_semester_weight: weights.end_semester,
-                        assignment_count: assignmentCount
-                    });
                 },
                 complete: function() {
                     btn.prop('disabled', false);
                     hideSpinner();
                 }
             });
+        }
+
+        function showImportModalError(message) {
+            $('#importModalErrorText').html(message);
+            $('#importModalError').show();
         }
 
         function downloadTemplate() {
