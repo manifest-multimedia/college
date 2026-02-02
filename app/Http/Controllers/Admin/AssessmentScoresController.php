@@ -411,11 +411,15 @@ class AssessmentScoresController extends Controller
         $updatedCount = 0;
 
         foreach ($validated['preview_data'] as $data) {
+            // Separate unique keys from updateable data
+            $uniqueKeys = [
+                'course_id' => (int) $validated['course_id'],
+                'student_id' => (int) $data['student_id'], 
+                'cohort_id' => (int) $validated['cohort_id'],
+                'semester_id' => (int) $validated['semester_id'],
+            ];
+
             $scoreData = [
-                'course_id' => $validated['course_id'],
-                'student_id' => $data['student_id'],
-                'cohort_id' => $validated['cohort_id'],
-                'semester_id' => $validated['semester_id'],
                 'assignment_1_score' => $data['assignment_1'] ?? null,
                 'assignment_2_score' => $data['assignment_2'] ?? null,
                 'assignment_3_score' => $data['assignment_3'] ?? null,
@@ -428,14 +432,6 @@ class AssessmentScoresController extends Controller
                 'end_semester_weight' => $validated['end_semester_weight'],
                 'assignment_count' => $validated['assignment_count'],
                 'recorded_by' => Auth::id(),
-            ];
-
-            // Use updateOrCreate to handle both new and existing records safely
-            $uniqueKeys = [
-                'course_id' => (int) $validated['course_id'],
-                'student_id' => (int) $data['student_id'], 
-                'cohort_id' => (int) $validated['cohort_id'],
-                'semester_id' => (int) $validated['semester_id'],
             ];
 
             // Debug: Log the values being used for lookup
