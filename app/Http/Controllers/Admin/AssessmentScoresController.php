@@ -359,14 +359,28 @@ class AssessmentScoresController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $validated = $request->validate([
-            'course_id' => 'required|exists:subjects,id',
-            'class_id' => 'required|exists:college_classes,id',
-            'cohort_id' => 'required|exists:cohorts,id',
-            'semester_id' => 'required|exists:semesters,id',
-            'scores' => 'required|array',
-            'weights' => 'required|array',
-        ]);
+        // Handle JSON request payload
+        if ($request->isJson()) {
+            $data = $request->json()->all();
+            $validated = validator($data, [
+                'course_id' => 'required|exists:subjects,id',
+                'class_id' => 'required|exists:college_classes,id',
+                'cohort_id' => 'required|exists:cohorts,id',
+                'semester_id' => 'required|exists:semesters,id',
+                'scores' => 'required|array',
+                'weights' => 'required|array',
+            ])->validate();
+        } else {
+            // Handle traditional form request
+            $validated = $request->validate([
+                'course_id' => 'required|exists:subjects,id',
+                'class_id' => 'required|exists:college_classes,id',
+                'cohort_id' => 'required|exists:cohorts,id',
+                'semester_id' => 'required|exists:semesters,id',
+                'scores' => 'required|array',
+                'weights' => 'required|array',
+            ]);
+        }
 
         $course = Subject::find($validated['course_id']);
         $class = CollegeClass::find($validated['class_id']);
