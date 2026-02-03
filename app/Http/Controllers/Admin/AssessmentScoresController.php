@@ -393,6 +393,7 @@ class AssessmentScoresController extends Controller
             'class' => $class->name, // For backwards compatibility with the export template
             'cohort' => $cohort->name,
             'semester' => $semester->name,
+            'academic_year' => $cohort->academic_year ?? now()->year,
         ];
 
         $filename = 'assessment_scores_'.str_replace(' ', '_', $course->name).'_'.now()->format('Y-m-d').'.xlsx';
