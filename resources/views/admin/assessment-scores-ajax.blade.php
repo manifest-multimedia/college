@@ -1236,11 +1236,12 @@
 
             // Enhanced loading message based on data size
             const recordCount = importPreviewData.length;
+            const batchSize = 50;
+            const totalBatches = Math.ceil(recordCount / batchSize);
+            
             let loadingMessage = 'Importing scores...';
             if (recordCount > 100) {
-                loadingMessage = `Processing ${recordCount} records in batches...`;
-            } else if (recordCount > 500) {
-                loadingMessage = `Processing large dataset (${recordCount} records)...`;
+                loadingMessage = `Processing ${recordCount} records in ${totalBatches} batches...`;
             }
             
             showSpinner(loadingMessage);
@@ -1249,45 +1250,76 @@
 
             // Start time for performance tracking
             const startTime = Date.now();
-            
-            $.ajax({
-                url: '{{ route("admin.assessment-scores.confirm-import") }}',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(importData),
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                timeout: 300000, // 5 minute timeout for large imports
-                success: function(response) {
-                    if (response.success) {
-                        const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
-                        const performanceInfo = recordCount > 50 ? 
-                            ` (Processed ${recordCount} records in ${processingTime}s using batch processing)` : '';
-                        
-                        $('#importPreviewModal').modal('hide');
-                        showFlashMessage(response.message + performanceInfo, 'success');
-                        
-                        // Reset import file input
-                        $('#importFile').val('');
-                        $('#selectImportFileBtn').html('<i class="fas fa-file-upload me-1"></i>Choose File');
-                        $('#importExcelBtn').prop('disabled', true);
-                        
-                        // Reload scoresheet to show imported data
-                        loadScoresheet();
-                        
-                        // Log performance metrics for large imports
-                        if (recordCount > 100) {
-                            console.log(`Import Performance: ${recordCount} records in ${processingTime}s 
-                                (${(recordCount/processingTime).toFixed(1)} records/sec)`);
+
+            // Process matches sequentially
+            const processBatch = async (batchIndex) => {
+                if (batchIndex >= totalBatches) {
+                    // All batches completed
+                    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                    const performanceInfo = recordCount > 50 ? 
+                        ` (Processed ${recordCount} records in ${processingTime}s)` : '';
+                    
+                    $('#importPreviewModal').modal('hide');
+                    showFlashMessage('Import completed successfully!' + performanceInfo, 'success');
+                    
+                    // Reset import file input
+                    $('#importFile').val('');
+                    $('#selectImportFileBtn').html('<i class="fas fa-file-upload me-1"></i>Choose File');
+                    $('#importExcelBtn').prop('disabled', true);
+                    
+                    // Reload scoresheet
+                    loadScoresheet();
+                    
+                    btn.prop('disabled', false);
+                    hideSpinner();
+                    return;
+                }
+
+                const start = batchIndex * batchSize;
+                const end = Math.min(start + batchSize, recordCount);
+                const batchData = importPreviewData.slice(start, end);
+
+                // Update loading message
+                $('#loadingMessage').text(`Processing batch ${batchIndex + 1} of ${totalBatches}...`);
+
+                // Prepare payload for this batch
+                const batchPayload = {
+                    ...importData,
+                    preview_data: batchData // Override with just this chunk
+                };
+
+                try {
+                    await $.ajax({
+                        url: '{{ route("admin.assessment-scores.confirm-import") }}',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(batchPayload),
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         }
+                    });
+
+                    // Success - move to next batch
+                    processBatch(batchIndex + 1);
+
+                } catch (xhr) {
+                   // Stop on error
+                    const errors = xhr.responseJSON?.errors || {};
+                    let errorMsg = xhr.responseJSON?.message || 'Failed to process import batch ' + (batchIndex + 1);
+                    
+                    if (Object.keys(errors).length > 0) {
+                        errorMsg += ':\n' + Object.values(errors).map(e => '- ' + e).join('\n');
                     }
-                },
-                complete: function() {
+                    
+                    $('#importPreviewModal').modal('hide');
+                    showFlashMessage(errorMsg, 'danger');
                     btn.prop('disabled', false);
                     hideSpinner();
                 }
-            });
+            };
+
+            // Start processing
+            processBatch(0);
         }
 
         function showImportModalError(message) {
