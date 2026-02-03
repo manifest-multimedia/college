@@ -1057,7 +1057,8 @@
             $.ajax({
                 url: '{{ route("admin.assessment-scores.save-scores") }}',
                 method: 'POST',
-                data: {
+                contentType: 'application/json',
+                data: JSON.stringify({
                     course_id: filters.course_id,
                     cohort_id: filters.cohort_id,
                     semester_id: filters.semester_id,
@@ -1067,7 +1068,7 @@
                     end_semester_weight: weights.end_semester,
                     assignment_count: assignmentCount,
                     scores: studentScores
-                },
+                }),
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
@@ -1252,7 +1253,8 @@
             $.ajax({
                 url: '{{ route("admin.assessment-scores.confirm-import") }}',
                 method: 'POST',
-                data: importData,
+                contentType: 'application/json',
+                data: JSON.stringify(importData),
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
