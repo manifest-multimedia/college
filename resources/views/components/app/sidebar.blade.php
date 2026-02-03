@@ -658,6 +658,33 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     @endhasanyrole
                     
+                    @hasanyrole(['Academic Officer', 'Super Admin'])
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('academic-officer.assessment-scores') ? 'active' : '' }}" href="{{ route('academic-officer.assessment-scores') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Publish Scores</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasanyrole
+                    
+                    @hasrole('Student')
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('student.assessment-scores') ? 'active' : '' }}" href="{{ route('student.assessment-scores') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">My Assessment Scores</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasrole
+                    
                     @can('view exams')
                     <!--begin:Menu item-->
                     <div class="menu-item">

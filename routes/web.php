@@ -136,6 +136,10 @@ Route::middleware([
         Route::get('/student-information', function () {
             return view('students.information');
         })->name('student.information');
+
+        // Student Assessment Scores
+        Route::get('/student/assessment-scores', [App\Http\Controllers\Student\AssessmentScoresController::class, 'index'])->name('student.assessment-scores');
+        Route::get('/student/assessment-scores/get', [App\Http\Controllers\Student\AssessmentScoresController::class, 'getScores'])->name('student.assessment-scores.get');
     });
 
     // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin, Finance Manager)
@@ -237,6 +241,17 @@ Route::middleware([
         Route::post('/assessment-scores/import-excel', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'importExcel'])->name('assessment-scores.import-excel');
         Route::post('/assessment-scores/confirm-import', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'confirmImport'])->name('assessment-scores.confirm-import');
         Route::post('/assessment-scores/export-excel', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'exportExcel'])->name('assessment-scores.export-excel');
+
+        // Get courses by class
+        Route::get('/courses/by-class', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'getCoursesByClass'])->name('courses.by-class');
+    });
+
+    // Academic Officer Assessment Score Management
+    Route::middleware(['auth:sanctum', 'role:Academic Officer|Super Admin'])->prefix('academic-officer')->name('academic-officer.')->group(function () {
+        Route::get('/assessment-scores', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'index'])->name('assessment-scores');
+        Route::get('/assessment-scores/get', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'getScores'])->name('assessment-scores.get');
+        Route::post('/assessment-scores/{id}/toggle-publish', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'togglePublish'])->name('assessment-scores.toggle-publish');
+        Route::post('/assessment-scores/bulk-publish', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'bulkPublish'])->name('assessment-scores.bulk-publish');
     });
 
     // Backward compatibility - redirect old route to new one

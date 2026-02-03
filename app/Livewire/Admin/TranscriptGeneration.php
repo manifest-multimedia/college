@@ -18,10 +18,14 @@ class TranscriptGeneration extends Component
 {
     use WithPagination;
 
+    protected $paginationTheme = 'bootstrap';
+
     // Search and filter properties
     public $search = '';
 
     public $selectedClassId = null;
+
+    public $selectedCohortId = null;
 
     public $selectedAcademicYearId = null;
 
@@ -59,6 +63,12 @@ class TranscriptGeneration extends Component
     }
 
     public function updatedSelectedClassId()
+    {
+        $this->resetPage();
+        $this->selectedStudents = [];
+    }
+
+    public function updatedSelectedCohortId()
     {
         $this->resetPage();
         $this->selectedStudents = [];
@@ -368,6 +378,10 @@ class TranscriptGeneration extends Component
             $query->where('college_class_id', $this->selectedClassId);
         }
 
+        if ($this->selectedCohortId) {
+            $query->where('cohort_id', $this->selectedCohortId);
+        }
+
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('student_id', 'like', '%'.$this->search.'%')
@@ -385,12 +399,14 @@ class TranscriptGeneration extends Component
         $students = $this->getFilteredStudents()->paginate($this->perPage);
 
         $collegeClasses = CollegeClass::orderBy('name')->get();
+        $cohorts = \App\Models\Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
         $semesters = Semester::orderBy('name')->get();
 
         return view('livewire.admin.transcript-generation', [
             'students' => $students,
             'collegeClasses' => $collegeClasses,
+            'cohorts' => $cohorts,
             'academicYears' => $academicYears,
             'semesters' => $semesters,
         ]);

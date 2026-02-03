@@ -44,14 +44,25 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Class Filter</label>
+                                <label class="form-label">Program</label>
                                 <select class="form-select" wire:model.live="selectedClassId">
-                                    <option value="">All Classes</option>
+                                    <option value="">All Programs</option>
                                     @foreach($collegeClasses as $class)
                                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Cohort</label>
+                                <select class="form-select" wire:model.live="selectedCohortId">
+                                    <option value="">All Cohorts</option>
+                                    @foreach($cohorts as $cohort)
+                                        <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
                             <div class="col-md-3">
                                 <label class="form-label">Export Format</label>
                                 <div class="btn-group w-100" role="group" aria-label="Export format">

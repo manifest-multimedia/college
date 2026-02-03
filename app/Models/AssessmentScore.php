@@ -26,6 +26,14 @@ class AssessmentScore extends Model
         'end_semester_weight',
         'recorded_by',
         'remarks',
+        'is_published',
+        'published_at',
+        'published_by',
+    ];
+
+    protected $casts = [
+        'is_published' => 'boolean',
+        'published_at' => 'datetime',
     ];
 
     protected $appends = [
@@ -65,6 +73,11 @@ class AssessmentScore extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function publishedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'published_by');
     }
 
     /**

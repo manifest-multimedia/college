@@ -75,6 +75,21 @@ class AssessmentScoresController extends Controller
         ]);
     }
 
+    public function getCoursesByClass(Request $request)
+    {
+        $classId = $request->input('college_class_id');
+
+        $courses = Subject::query()
+            ->where('college_class_id', $classId)
+            ->orderBy('course_code')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json([
+            'success' => true,
+            'courses' => $courses,
+        ]);
+    }
+
     public function loadScoresheet(Request $request)
     {
         $validated = $request->validate([
@@ -160,6 +175,8 @@ class AssessmentScoresController extends Controller
                 'total' => $existingScore?->total_score ?? 0,
                 'grade' => $existingScore?->grade_letter ?? '',
                 'existing_id' => $existingScore?->id,
+                'score_id' => $existingScore?->id,
+                'is_published' => $existingScore?->is_published ?? false,
             ];
 
             $studentScores[] = $studentData;

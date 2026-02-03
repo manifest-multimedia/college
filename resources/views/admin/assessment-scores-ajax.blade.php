@@ -315,6 +315,7 @@
                                 <th class="text-center" style="min-width: 100px; width: 110px;">End-Sem</th>
                                 <th class="text-center" style="min-width: 80px; width: 80px;">Total</th>
                                 <th class="text-center" style="min-width: 60px; width: 60px;">Grade</th>
+                                <th class="text-center" style="min-width: 100px; width: 110px;">Published</th>
                             </tr>
                         </thead>
                         <tbody id="scoresheetBody">
@@ -691,6 +692,30 @@
                 updateTemplateButtonState();
                 // Note: This doesn't trigger scoresheet reload as it only affects storage, not display
             });
+            
+            // Toggle publish status
+            $(document).on('click', '.toggle-publish-btn', function() {
+                const scoreId = $(this).data('score-id');
+                const btn = $(this);
+                btn.prop('disabled', true);
+                
+                $.ajax({
+                    url: `/academic-officer/assessment-scores/${scoreId}/toggle-publish`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        showFlashMessage(response.message, 'success');
+                        // Reload the current page of scoresheet to refresh publish status
+                        loadScoresheet(pagination.current_page);
+                    },
+                    error: function(xhr) {
+                        showFlashMessage(xhr.responseJSON?.message || 'Failed to update publish status', 'danger');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
         });
 
         function initializeEventListeners() {
@@ -827,6 +852,14 @@
             
             studentScores.forEach(function(student, index) {
                 const displayIndex = offset + index + 1;
+                const publishedBadge = student.is_published 
+                    ? '<span class="badge bg-success">Published</span>'
+                    : '<span class="badge bg-secondary">Unpublished</span>';
+                    
+                const toggleBtn = student.is_published
+                    ? `<button class="btn btn-sm btn-warning toggle-publish-btn" data-score-id="${student.score_id}" data-student-id="${student.student_id}"><i class="bi bi-x-circle"></i></button>`
+                    : `<button class="btn btn-sm btn-success toggle-publish-btn" data-score-id="${student.score_id}" data-student-id="${student.student_id}"><i class="bi bi-check-circle"></i></button>`;
+                    
                 html += `
                     <tr data-index="${index}" data-student-id="${student.student_id}">
                         <td class="text-center">${displayIndex}</td>
@@ -841,6 +874,12 @@
                         <td><input type="number" class="form-control form-control-sm score-input" data-field="end_semester" value="${student.end_semester || ''}" min="0" max="100" step="0.01"></td>
                         <td class="text-center fw-bold total-cell">${student.total}</td>
                         <td class="text-center grade-cell">${student.grade}</td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column gap-1">
+                                ${publishedBadge}
+                                ${student.score_id ? toggleBtn : '<small class="text-muted">No score</small>'}
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
