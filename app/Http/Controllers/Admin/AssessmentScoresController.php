@@ -82,11 +82,17 @@ class AssessmentScoresController extends Controller
         $courses = Subject::query()
             ->where('college_class_id', $classId)
             ->orderBy('course_code')
-            ->get(['id', 'name', 'code']);
+            ->get(['id', 'name', 'course_code']);
 
         return response()->json([
             'success' => true,
-            'courses' => $courses,
+            'courses' => $courses->map(function ($course) {
+                return [
+                    'id' => $course->id,
+                    'name' => $course->name,
+                    'code' => $course->course_code,
+                ];
+            }),
         ]);
     }
 
