@@ -658,6 +658,20 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     @endhasanyrole
                     
+                    @hasanyrole(['Administrator', 'Super Admin', 'Academic Officer', 'System', 'Finance Manager', 'Lecturer'])
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('assessment-scores') ? 'active' : '' }}" href="{{ route('assessment-scores') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Assessment Scores</span>
+                            <span class="badge badge-light-primary">Simplified</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasanyrole
+                    
                     @hasanyrole(['Academic Officer', 'Super Admin'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
