@@ -1351,29 +1351,61 @@
         }
 
         function exportExcel() {
+            if (!studentScores || studentScores.length === 0) {
+                showFlashMessage('No scores loaded to export', 'warning');
+                return;
+            }
+
             showSpinner('Generating Excel file...');
             
-            const form = $('<form>', {
+            $.ajax({
+                url: '{{ route("admin.assessment-scores.export-excel") }}',
                 method: 'POST',
-                action: '{{ route("admin.assessment-scores.export-excel") }}'
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    course_id: filters.course_id,
+                    class_id: filters.class_id,
+                    cohort_id: filters.cohort_id,
+                    semester_id: filters.semester_id,
+                    scores: studentScores,
+                    weights: weights
+                }),
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                xhrFields: {
+                    responseType: 'blob' // Important for file download
+                },
+                success: function(blob, status, xhr) {
+                    // Get filename from Content-Disposition header or use default
+                    const disposition = xhr.getResponseHeader('Content-Disposition');
+                    let filename = 'assessment_scores_export.xlsx';
+                    if (disposition && disposition.indexOf('filename=') !== -1) {
+                        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        const matches = filenameRegex.exec(disposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    hideSpinner();
+                },
+                error: function(xhr) {
+                    hideSpinner();
+                    const errorMsg = xhr.responseJSON?.message || 'Failed to generate Excel file';
+                    showFlashMessage(errorMsg, 'danger');
+                }
             });
-            
-            form.append($('<input>', { type: 'hidden', name: '_token', value: '{{ csrf_token() }}' }));
-            form.append($('<input>', { type: 'hidden', name: 'course_id', value: filters.course_id }));
-            form.append($('<input>', { type: 'hidden', name: 'class_id', value: filters.class_id }));
-            form.append($('<input>', { type: 'hidden', name: 'cohort_id', value: filters.cohort_id }));
-            form.append($('<input>', { type: 'hidden', name: 'semester_id', value: filters.semester_id }));
-            form.append($('<input>', { type: 'hidden', name: 'scores', value: JSON.stringify(studentScores) }));
-            form.append($('<input>', { type: 'hidden', name: 'weights', value: JSON.stringify(weights) }));
-            
-            $('body').append(form);
-            form.submit();
-            
-            // Remove form and hide spinner after submission
-            setTimeout(function() {
-                form.remove();
-                hideSpinner();
-            }, 1000);
         }
 
         function updateTemplateButtonState() {
