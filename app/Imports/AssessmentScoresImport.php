@@ -7,10 +7,9 @@ use App\Models\Student;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 
-class AssessmentScoresImport implements ToCollection, WithChunkReading, WithStartRow
+class AssessmentScoresImport implements ToCollection, WithStartRow
 {
     protected $courseId;
 
@@ -43,14 +42,6 @@ class AssessmentScoresImport implements ToCollection, WithChunkReading, WithStar
     }
 
     /**
-     * Process Excel in chunks for memory efficiency with large files
-     */
-    public function chunkSize(): int
-    {
-        return 100; // Process 100 rows at a time
-    }
-
-    /**
      * Specify which row to start reading data from (skip header rows and placeholder)
      */
     public function startRow(): int
@@ -63,14 +54,13 @@ class AssessmentScoresImport implements ToCollection, WithChunkReading, WithStar
         $currentChunkRows = $rows->count();
         $this->summary['total_records'] += $currentChunkRows;
 
-        \Log::info('Excel Import Chunk Started', [
-            'chunk_rows' => $currentChunkRows,
-            'total_processed' => $this->processedRows,
+        \Log::info('Excel Import Started', [
+            'total_rows' => $currentChunkRows,
             'starting_row' => 7,
         ]);
 
         foreach ($rows as $index => $row) {
-            $actualRowNumber = $this->processedRows + $index + 7; // Adjust for chunk processing
+            $actualRowNumber = $this->processedRows + $index + 7;
 
             try {
                 $this->processRow($row, $index, $actualRowNumber);
@@ -87,11 +77,10 @@ class AssessmentScoresImport implements ToCollection, WithChunkReading, WithStar
 
         $this->processedRows += $currentChunkRows;
 
-        \Log::info('Excel Import Chunk Completed', [
-            'chunk_rows' => $currentChunkRows,
+        \Log::info('Excel Import Completed', [
             'total_processed' => $this->processedRows,
-            'chunk_valid' => $this->summary['valid'],
-            'chunk_errors' => $this->summary['errors'],
+            'total_valid' => $this->summary['valid'],
+            'total_errors' => $this->summary['errors'],
         ]);
     }
 
