@@ -367,8 +367,7 @@ class AssessmentScoresController extends Controller
                 'class_id' => 'required|exists:college_classes,id',
                 'cohort_id' => 'required|exists:cohorts,id',
                 'semester_id' => 'required|exists:semesters,id',
-                'scores' => 'required|array',
-                'weights' => 'required|array',
+                'academic_year_id' => 'nullable|exists:academic_years,id',
             ])->validate();
         } else {
             // Handle traditional form request
@@ -377,9 +376,62 @@ class AssessmentScoresController extends Controller
                 'class_id' => 'required|exists:college_classes,id',
                 'cohort_id' => 'required|exists:cohorts,id',
                 'semester_id' => 'required|exists:semesters,id',
-                'scores' => 'required|array',
-                'weights' => 'required|array',
+                'academic_year_id' => 'nullable|exists:academic_years,id',
             ]);
+        }
+
+        // Fetch ALL students for the export (not paginated)
+        $students = Student::where('college_class_id', $validated['class_id'])
+            ->where('cohort_id', $validated['cohort_id'])
+            ->orderBy('student_id')
+            ->get();
+
+        // Get weights from first existing score or defaults
+        $firstScore = AssessmentScore::where([
+            'course_id' => $validated['course_id'],
+            'cohort_id' => $validated['cohort_id'],
+            'semester_id' => $validated['semester_id'],
+        ])->first();
+
+        $weights = [
+            'assignment' => $firstScore?->assignment_weight ?? 20,
+            'mid_semester' => $firstScore?->mid_semester_weight ?? 20,
+            'end_semester' => $firstScore?->end_semester_weight ?? 60,
+        ];
+
+        // Build scores array with ALL students
+        $studentScores = [];
+        foreach ($students as $student) {
+            $existingScore = AssessmentScore::where([
+                'course_id' => $validated['course_id'],
+                'student_id' => $student->id,
+                'cohort_id' => $validated['cohort_id'],
+                'semester_id' => $validated['semester_id'],
+            ])->latest('updated_at')->first();
+
+            $studentScores[] = [
+                'student_number' => $student->student_id,
+                'student_name' => $student->name,
+                'assignment_1' => $existingScore?->assignment_1_score,
+                'assignment_2' => $existingScore?->assignment_2_score,
+                'assignment_3' => $existingScore?->assignment_3_score,
+                'assignment_average' => $existingScore ? round(collect([
+                    $existingScore->assignment_1_score,
+                    $existingScore->assignment_2_score,
+                    $existingScore->assignment_3_score,
+                ])->filter()->avg(), 2) : null,
+                'assignment_weighted' => $existingScore ? round(collect([
+                    $existingScore->assignment_1_score,
+                    $existingScore->assignment_2_score,
+                    $existingScore->assignment_3_score,
+                ])->filter()->avg() * ($weights['assignment'] / 100), 2) : null,
+                'mid_semester' => $existingScore?->mid_semester_score,
+                'mid_weighted' => $existingScore?->mid_semester_score ? round($existingScore->mid_semester_score * ($weights['mid_semester'] / 100), 2) : null,
+                'end_semester' => $existingScore?->end_semester_score,
+                'end_weighted' => $existingScore?->end_semester_score ? round($existingScore->end_semester_score * ($weights['end_semester'] / 100), 2) : null,
+                'total' => $existingScore?->total_score ?? 0,
+                'grade' => $existingScore?->grade_letter ?? '',
+            ];
         }
 
         $course = Subject::find($validated['course_id']);
@@ -390,7 +442,7 @@ class AssessmentScoresController extends Controller
         $courseInfo = [
             'course' => $course->name,
             'programme' => $class->name,
-            'class' => $class->name, // For backwards compatibility with the export template
+            'class' => $class->name,
             'cohort' => $cohort->name,
             'semester' => $semester->name,
             'academic_year' => $cohort->academic_year ?? now()->year,
@@ -398,7 +450,7 @@ class AssessmentScoresController extends Controller
 
         $filename = 'assessment_scores_'.str_replace(' ', '_', $course->name).'_'.now()->format('Y-m-d').'.xlsx';
 
-        return Excel::download(new AssessmentScoresExport(collect($validated['scores']), $courseInfo, $validated['weights']), $filename);
+        return Excel::download(new AssessmentScoresExport(collect($studentScores), $courseInfo, $weights), $filename);
     }
 
     public function importExcel(Request $request)

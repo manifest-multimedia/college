@@ -1351,8 +1351,8 @@
         }
 
         function exportExcel() {
-            if (!studentScores || studentScores.length === 0) {
-                showFlashMessage('No scores loaded to export', 'warning');
+            if (!filters.course_id || !filters.class_id || !filters.cohort_id || !filters.semester_id) {
+                showFlashMessage('Please load scoresheet first before exporting', 'warning');
                 return;
             }
 
@@ -1367,8 +1367,7 @@
                     class_id: filters.class_id,
                     cohort_id: filters.cohort_id,
                     semester_id: filters.semester_id,
-                    scores: studentScores,
-                    weights: weights
+                    academic_year_id: filters.academic_year_id
                 }),
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
