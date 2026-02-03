@@ -13,11 +13,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AssessmentScoreManagementController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'role:Academic Officer|Super Admin']);
-    }
-
     public function index()
     {
         $collegeClasses = CollegeClass::orderBy('name')->get();

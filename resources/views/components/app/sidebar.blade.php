@@ -346,7 +346,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @hasrole('Super Admin|Administrator|Academic Officer')
             <!--begin:Menu item-->
             @php
-                $academicRoutes = ['academics.dashboard', 'academics.exam-types'];
+                $academicRoutes = ['academics.dashboard', 'academics.exam-types', 'academic-officer.assessment-scores', 'assessment-scores'];
                 $isAcademicActive = in_array(request()->route()->getName(), $academicRoutes);
             @endphp
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isAcademicActive ? 'show' : '' }}">
@@ -400,6 +400,20 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
+                    
+                    @hasanyrole(['Academic Officer', 'Super Admin'])
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('academic-officer.assessment-scores') ? 'active' : '' }}" href="{{ route('academic-officer.assessment-scores') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Publish Scores</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasanyrole
                 
                 </div>
                 <!--end:Menu sub-->
@@ -639,20 +653,6 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             </span>
                             <span class="menu-title">Extra Time Manager</span>
                             <span class="badge badge-light-primary">New</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    @endhasanyrole
-                    
-                    @hasanyrole(['Administrator', 'Super Admin', 'Academic Officer', 'System', 'Finance Manager', 'Lecturer'])
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('assessment-scores') ? 'active' : '' }}" href="{{ route('assessment-scores') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Assessment Scores</span>
-                            <span class="badge badge-light-primary">Simplified</span>
                         </a>
                     </div>
                     <!--end:Menu item-->

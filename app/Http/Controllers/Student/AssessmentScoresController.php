@@ -9,11 +9,6 @@ use Illuminate\Support\Facades\Auth;
 
 class AssessmentScoresController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'role:Student']);
-    }
-
     public function index()
     {
         return view('student.assessment-scores');
