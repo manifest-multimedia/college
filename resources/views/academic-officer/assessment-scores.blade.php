@@ -11,7 +11,7 @@
                     <select id="academicYear" class="form-select">
                         <option value="">Select Academic Year</option>
                         @foreach($academicYears as $year)
-                            <option value="{{ $year }}">{{ $year }}</option>
+                            <option value="{{ $year->id }}">{{ $year->name }}</option>
                         @endforeach
                     </select>
                 </div>

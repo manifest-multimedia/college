@@ -408,7 +408,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
                             </span>
-                            <span class="menu-title">Publish Scores</span>
+                            <span class="menu-title">Assessment Dashboard</span>
                             <span class="badge badge-light-success">New</span>
                         </a>
                     </div>
@@ -667,20 +667,6 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             </span>
                             <span class="menu-title">Assessment Scores</span>
                             <span class="badge badge-light-primary">Simplified</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    @endhasanyrole
-                    
-                    @hasanyrole(['Academic Officer', 'Super Admin'])
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('academic-officer.assessment-scores') ? 'active' : '' }}" href="{{ route('academic-officer.assessment-scores') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Publish Scores</span>
-                            <span class="badge badge-light-success">New</span>
                         </a>
                     </div>
                     <!--end:Menu item-->

@@ -19,9 +19,10 @@ class AssessmentScoreManagementController extends Controller
         $cohorts = Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
         $semesters = Semester::orderBy('name')->get();
         $academicYears = AcademicYear::query()
-            ->select('name')
+            ->select('id', 'name')
             ->distinct()
-            ->pluck('name');
+            ->orderBy('name', 'desc')
+            ->get();
 
         $currentCohort = Cohort::where('is_active', true)->first();
         $currentSemester = Semester::where('is_current', true)->first();
@@ -39,7 +40,7 @@ class AssessmentScoreManagementController extends Controller
     public function getScores(Request $request)
     {
         $request->validate([
-            'academic_year' => 'required|string',
+            'academic_year' => 'required|integer|exists:academic_years,id',
             'semester_id' => 'required|exists:semesters,id',
             'college_class_id' => 'nullable|exists:college_classes,id',
             'course_id' => 'nullable|exists:subjects,id',
