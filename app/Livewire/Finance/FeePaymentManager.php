@@ -75,6 +75,23 @@ class FeePaymentManager extends Component
 
         // Set today's date as default payment date
         $this->paymentDate = now()->format('Y-m-d');
+
+        // Check for URL parameters (student and bill)
+        $studentIdFromUrl = request()->query('student');
+        $billIdFromUrl = request()->query('bill');
+
+        if ($studentIdFromUrl && $billIdFromUrl) {
+            // Load the student
+            $this->loadStudent($studentIdFromUrl);
+
+            // Load the specific bill
+            $this->loadBill($billIdFromUrl);
+
+            // Open the payment form automatically
+            if ($this->loadedBill) {
+                $this->openPaymentForm();
+            }
+        }
     }
 
     public function updatedSearch()
