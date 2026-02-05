@@ -75,9 +75,9 @@ class AssessmentScoreManagementController extends Controller
                 return [
                     'id' => $score->id,
                     'student_name' => $score->student->full_name,
-                    'student_index' => $score->student->index_no,
+                    'student_index' => $score->student->student_id,
                     'course_name' => $score->course->name,
-                    'course_code' => $score->course->code,
+                    'course_code' => $score->course->course_code,
                     'cohort' => $score->cohort->name,
                     'total_score' => $score->total_score,
                     'grade_letter' => $score->grade_letter,
