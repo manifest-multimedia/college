@@ -60,9 +60,14 @@ class AssessmentScore extends Model
         return $this->belongsTo(Subject::class, 'course_id');
     }
 
-    public function academicYear(): BelongsTo
+    public function cohort(): BelongsTo
     {
         return $this->belongsTo(Cohort::class, 'cohort_id');
+    }
+
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
     public function semester(): BelongsTo
