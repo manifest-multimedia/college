@@ -109,11 +109,11 @@ class StudentFeeBill extends Model
 
         // Update status based on payment percentage
         if ($this->payment_percentage >= 100) {
-            $this->status = 'Paid';
+            $this->status = 'paid';
         } elseif ($this->payment_percentage > 0) {
-            $this->status = 'Partial';
+            $this->status = 'partially_paid';
         } else {
-            $this->status = 'Unpaid';
+            $this->status = 'pending';
         }
 
         return $this->save();
