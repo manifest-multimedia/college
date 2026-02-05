@@ -88,6 +88,21 @@ class StudentFeeBill extends Model
     }
 
     /**
+     * Get the computed payment status based on current payment percentage
+     * This is useful for displaying correct status even if DB is not updated
+     */
+    public function getComputedStatus(): string
+    {
+        if ($this->payment_percentage >= 100) {
+            return 'paid';
+        } elseif ($this->payment_percentage > 0) {
+            return 'partially_paid';
+        } else {
+            return 'pending';
+        }
+    }
+
+    /**
      * Recalculate payment status after a payment is recorded
      * Updates amount_paid, balance, payment_percentage and status fields
      */
