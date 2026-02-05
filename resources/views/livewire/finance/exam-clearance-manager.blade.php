@@ -78,8 +78,11 @@
                                 <td>{{ $student->collegeClass->name ?? 'Not Assigned' }}</td>
                                 <td>
                                     @if($feeBill)
-                                        <span class="badge bg-{{ $feeBill->status === 'paid' ? 'success' : ($feeBill->status === 'partially_paid' ? 'warning' : 'danger') }}">
-                                            {{ ucfirst(str_replace('_', ' ', $feeBill->status)) }}
+                                        @php
+                                            $status = $feeBill->getPaymentStatus();
+                                        @endphp
+                                        <span class="badge bg-{{ $status === 'paid' ? 'success' : ($status === 'partial' ? 'warning' : 'danger') }}">
+                                            {{ $status === 'paid' ? 'Paid' : ($status === 'partial' ? 'Partial' : 'Unpaid') }}
                                         </span>
                                     @else
                                         <span class="badge bg-secondary">Not Billed</span>

@@ -217,9 +217,12 @@
                                             <td class="text-end">{{ number_format($bill->total_paid, 2) }}</td>
                                             <td class="text-end">{{ number_format($bill->balance, 2) }}</td>
                                             <td>
-                                                @if($bill->payment_percentage >= 100)
-                                                    <span class="badge bg-success">PAID</span>
-                                                @elseif($bill->payment_percentage >= 60)
+                                                @php
+                                                    $status = $bill->getPaymentStatus();
+                                                @endphp
+                                                @if($status === 'paid')
+                                                    <span class="badge bg-success">PAID (100%)</span>
+                                                @elseif($status === 'partial')
                                                     <span class="badge bg-primary">PARTIAL ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                                                 @else
                                                     <span class="badge bg-danger">UNPAID ({{ number_format($bill->payment_percentage, 1) }}%)</span>

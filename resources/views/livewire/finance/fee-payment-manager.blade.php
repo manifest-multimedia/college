@@ -157,9 +157,12 @@
                                     </div>
                                     <div class="mt-2">
                                         <span class="fs-6">Payment Status: </span>
-                                        @if($loadedBill->payment_percentage >= 100)
+                                        @php
+                                            $status = $loadedBill->getPaymentStatus();
+                                        @endphp
+                                        @if($status === 'paid')
                                             <span class="badge bg-success fs-6">PAID (100%)</span>
-                                        @elseif($loadedBill->payment_percentage >= 60)
+                                        @elseif($status === 'partial')
                                             <span class="badge bg-primary fs-6">PARTIAL ({{ number_format($loadedBill->payment_percentage, 1) }}%)</span>
                                         @else
                                             <span class="badge bg-danger fs-6">UNPAID ({{ number_format($loadedBill->payment_percentage, 1) }}%)</span>

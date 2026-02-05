@@ -93,13 +93,16 @@
                                     <td>GH₵ {{ number_format($bill->amount_paid, 2) }}</td>
                                     <td>GH₵ {{ number_format($bill->balance, 2) }}</td>
                                     <td>
-                                        @if ($bill->status === 'paid')
-                                            <span class="badge bg-success">Paid</span>
-                                        @elseif($bill->status === 'partially_paid')
+                                        @php
+                                            $status = $bill->getPaymentStatus();
+                                        @endphp
+                                        @if ($status === 'paid')
+                                            <span class="badge bg-success">Paid (100%)</span>
+                                        @elseif($status === 'partial')
                                             <span class="badge bg-warning text-dark">Partially Paid
                                                 ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                                         @else
-                                            <span class="badge bg-danger">Pending</span>
+                                            <span class="badge bg-danger">Unpaid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                                         @endif
                                     </td>
                                     <td>

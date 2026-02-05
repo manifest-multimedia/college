@@ -88,6 +88,34 @@ class StudentFeeBill extends Model
     }
 
     /**
+     * Accessor for total_paid (alias for amount_paid)
+     * This ensures consistency across views
+     */
+    public function getTotalPaidAttribute(): float
+    {
+        return $this->amount_paid;
+    }
+
+    /**
+     * Get simple payment status based on balance
+     * Returns: 'paid', 'partial', or 'unpaid'
+     */
+    public function getPaymentStatus(): string
+    {
+        // Simple logic: if balance is 0, it's paid
+        if ($this->balance <= 0.01) {
+            return 'paid';
+        }
+        // If some amount has been paid, it's partial
+        if ($this->amount_paid > 0) {
+            return 'partial';
+        }
+
+        // Otherwise it's unpaid
+        return 'unpaid';
+    }
+
+    /**
      * Get the computed payment status based on current payment percentage
      * This is useful for displaying correct status even if DB is not updated
      */
@@ -103,12 +131,34 @@ class StudentFeeBill extends Model
     }
 
     /**
+     * Get HTML badge for payment status
+     */
+    public function getStatusBadgeHtml(): string
+    {
+        $status = $this->getPaymentStatus();
+
+        return match ($status) {
+            'paid' => '<span class="badge bg-success">PAID (100%)</span>',
+            'partial' => '<span class="badge bg-primary">PARTIAL ('.number_format($this->payment_percentage, 1).'%)</span>',
+            'unpaid' => '<span class="badge bg-danger">UNPAID ('.number_format($this->payment_percentage, 1).'%)</span>',
+            default => '<span class="badge bg-secondary">UNKNOWN</span>',
+        };
+    }
+
+    /**
      * Recalculate payment status after a payment is recorded
      * Updates amount_paid, balance, payment_percentage and status fields
+     *
+     * Simple algorithm:
+     * 1. Sum all payments
+     * 2. Calculate balance = total - paid
+     * 3. If balance is 0 (or negative), status is 'paid'
+     * 4. If paid > 0 but balance > 0, status is 'partially_paid'
+     * 5. Otherwise, status is 'pending'
      */
     public function recalculatePaymentStatus()
     {
-        // Calculate total amount paid from all payments
+        // Calculate total amount paid from all confirmed payments
         $totalPaid = $this->payments()->sum('amount');
 
         // Update bill details
@@ -122,12 +172,15 @@ class StudentFeeBill extends Model
             $this->payment_percentage = 0;
         }
 
-        // Update status based on payment percentage
-        if ($this->payment_percentage >= 100) {
+        // Simple status logic based on balance
+        if ($this->balance <= 0.01) {
+            // Balance is effectively zero - PAID
             $this->status = 'paid';
-        } elseif ($this->payment_percentage > 0) {
+        } elseif ($this->amount_paid > 0) {
+            // Some payment made but balance remains - PARTIALLY PAID
             $this->status = 'partially_paid';
         } else {
+            // No payment made - PENDING
             $this->status = 'pending';
         }
 

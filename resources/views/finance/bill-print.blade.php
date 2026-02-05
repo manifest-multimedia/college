@@ -183,12 +183,15 @@
             
             <div class="invoice-total">
                 <p>Payment Status: 
-                    @if($bill->status == 'paid')
-                        <span class="text-success">PAID IN FULL</span>
-                    @elseif($bill->status == 'partially_paid')
-                        <span class="text-warning">PARTIALLY PAID</span>
+                    @php
+                        $status = $bill->getPaymentStatus();
+                    @endphp
+                    @if($status === 'paid')
+                        <span class="text-success">PAID IN FULL (100%)</span>
+                    @elseif($status === 'partial')
+                        <span class="text-warning">PARTIALLY PAID ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                     @else
-                        <span class="text-danger">UNPAID</span>
+                        <span class="text-danger">UNPAID ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                     @endif
                 </p>
             </div>

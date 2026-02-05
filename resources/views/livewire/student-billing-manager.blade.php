@@ -109,14 +109,17 @@
                                                 <td>{{ number_format($bill->amount_paid, 2) }}</td>
                                                 <td>{{ number_format($bill->balance, 2) }}</td>
                                                 <td>
-                                                    @if($bill->status == 'pending')
-                                                        <span class="badge bg-warning">Pending</span>
-                                                    @elseif($bill->status == 'partial')
-                                                        <span class="badge bg-info">Partial ({{ $bill->payment_percentage }}%)</span>
-                                                    @elseif($bill->status == 'paid')
-                                                        <span class="badge bg-success">Paid</span>
+                                                    @php
+                                                        $status = $bill->getPaymentStatus();
+                                                    @endphp
+                                                    @if($status === 'unpaid')
+                                                        <span class="badge bg-danger">Unpaid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                                                    @elseif($status === 'partial')
+                                                        <span class="badge bg-info">Partial ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                                                    @elseif($status === 'paid')
+                                                        <span class="badge bg-success">Paid (100%)</span>
                                                     @else
-                                                        <span class="badge bg-danger">Overdue</span>
+                                                        <span class="badge bg-secondary">Unknown</span>
                                                     @endif
                                                 </td>
                                                 <td>

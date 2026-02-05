@@ -79,12 +79,15 @@
                             <tr>
                                 <th>Status:</th>
                                 <td>
-                                    @if($bill->status === 'paid')
-                                        <span class="badge bg-success">Paid</span>
-                                    @elseif($bill->status === 'partially_paid')
-                                        <span class="badge bg-warning">Partially Paid</span>
+                                    @php
+                                        $status = $bill->getPaymentStatus();
+                                    @endphp
+                                    @if($status === 'paid')
+                                        <span class="badge bg-success">Paid (100%)</span>
+                                    @elseif($status === 'partial')
+                                        <span class="badge bg-warning">Partially Paid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                                     @else
-                                        <span class="badge bg-danger">Unpaid</span>
+                                        <span class="badge bg-danger">Unpaid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
                                     @endif
                                 </td>
                             </tr>
