@@ -50,6 +50,10 @@ class StudentBillingManager extends Component
 
     public $batchClassId = null;
 
+    public $batchAvailableFees = [];
+
+    public $batchSelectedFeeIds = [];
+
     public $showBatchBillsModal = false;
 
     protected $rules = [
@@ -149,8 +153,45 @@ class StudentBillingManager extends Component
     public function closeBatchBillsModal()
     {
         $this->showBatchBillsModal = false;
-        $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId']);
+        $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId', 'batchAvailableFees', 'batchSelectedFeeIds']);
         $this->resetValidation();
+    }
+
+    public function updatedBatchAcademicYearId()
+    {
+        $this->loadBatchAvailableFees();
+    }
+
+    public function updatedBatchSemesterId()
+    {
+        $this->loadBatchAvailableFees();
+    }
+
+    public function updatedBatchClassId()
+    {
+        $this->loadBatchAvailableFees();
+    }
+
+    public function loadBatchAvailableFees()
+    {
+        if ($this->batchClassId && $this->batchAcademicYearId && $this->batchSemesterId) {
+            $this->batchAvailableFees = FeeStructure::with('feeType')
+                ->where('college_class_id', $this->batchClassId)
+                ->where('academic_year_id', $this->batchAcademicYearId)
+                ->where('semester_id', $this->batchSemesterId)
+                ->where('is_active', true)
+                ->get()
+                ->toArray();
+
+            // Auto-select all mandatory fees
+            $this->batchSelectedFeeIds = collect($this->batchAvailableFees)
+                ->filter(fn ($fee) => $fee['is_mandatory'])
+                ->pluck('id')
+                ->toArray();
+        } else {
+            $this->batchAvailableFees = [];
+            $this->batchSelectedFeeIds = [];
+        }
     }
 
     public function createNewBill()
@@ -188,6 +229,14 @@ class StudentBillingManager extends Component
             'batchClassId' => 'required|exists:college_classes,id',
         ]);
 
+        // Validate that at least one fee is selected
+        if (empty($this->batchSelectedFeeIds)) {
+            session()->flash('error', 'Please select at least one fee to include in the bills.');
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Please select at least one fee to include in the bills.']);
+
+            return;
+        }
+
         try {
             $billingService = new StudentBillingService;
             $students = Student::where('college_class_id', $this->batchClassId)
@@ -195,15 +244,15 @@ class StudentBillingManager extends Component
 
             if ($students->isEmpty()) {
 
-                session()->flash('warning', 'No active students found in the selected class!');
-                $this->dispatch('notify', ['type' => 'warning', 'message' => 'No active students found in the selected class!']);
+                session()->flash('warning', 'No active students found in the selected program!');
+                $this->dispatch('notify', ['type' => 'warning', 'message' => 'No active students found in the selected program!']);
 
                 return;
             }
 
             $billCount = 0;
             foreach ($students as $student) {
-                $billingService->generateBill($student, $this->batchAcademicYearId, $this->batchSemesterId);
+                $billingService->generateBill($student, $this->batchAcademicYearId, $this->batchSemesterId, $this->batchSelectedFeeIds);
                 $billCount++;
             }
 

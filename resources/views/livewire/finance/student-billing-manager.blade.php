@@ -230,12 +230,12 @@
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>This will generate bills for all active students in the
-                        selected class.
+                        selected program.
                     </div>
 
                     <div class="mb-3">
                         <label for="batchAcademicYear" class="form-label">Academic Year</label>
-                        <select id="batchAcademicYear" wire:model="batchAcademicYearId" class="form-select">
+                        <select id="batchAcademicYear" wire:model.live="batchAcademicYearId" class="form-select">
                             <option value="">-- Select Academic Year --</option>
                             @foreach ($academicYears as $year)
                                 <option value="{{ $year->id }}">{{ $year->name }}</option>
@@ -248,7 +248,7 @@
 
                     <div class="mb-3">
                         <label for="batchSemester" class="form-label">Semester</label>
-                        <select id="batchSemester" wire:model="batchSemesterId" class="form-select">
+                        <select id="batchSemester" wire:model.live="batchSemesterId" class="form-select">
                             <option value="">-- Select Semester --</option>
                             @foreach ($semesters as $semester)
                                 <option value="{{ $semester->id }}">{{ $semester->name }}</option>
@@ -260,9 +260,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="batchClass" class="form-label">Class</label>
-                        <select id="batchClass" wire:model="batchClassId" class="form-select">
-                            <option value="">-- Select Class --</option>
+                        <label for="batchClass" class="form-label">Program</label>
+                        <select id="batchClass" wire:model.live="batchClassId" class="form-select">
+                            <option value="">-- Select Program --</option>
                             @foreach ($classes as $class)
                                 <option value="{{ $class->id }}">{{ $class->name }}</option>
                             @endforeach
@@ -271,12 +271,46 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    @if (!empty($batchAvailableFees))
+                        <div class="mb-3">
+                            <label class="form-label">Select Fees to Include</label>
+                            <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
+                                @foreach ($batchAvailableFees as $fee)
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" 
+                                            value="{{ $fee['id'] }}" 
+                                            wire:model="batchSelectedFeeIds"
+                                            id="batchFee{{ $fee['id'] }}"
+                                            @if ($fee['is_mandatory']) disabled checked @endif>
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="batchFee{{ $fee['id'] }}">
+                                            <span>
+                                                {{ $fee['fee_type']['name'] ?? 'Unknown Fee' }}
+                                                @if ($fee['is_mandatory'])
+                                                    <span class="badge bg-primary ms-2">Mandatory</span>
+                                                @endif
+                                            </span>
+                                            <strong>GH₵ {{ number_format($fee['amount'], 2) }}</strong>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are automatically selected and cannot be deselected.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Total Selected:</strong> 
+                            GH₵ {{ number_format(collect($batchAvailableFees)->whereIn('id', $batchSelectedFeeIds)->sum('amount'), 2) }}
+                        </div>
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"
                         wire:click="closeBatchBillsModal">Cancel</button>
-                    <button type="button" class="btn btn-success" wire:click="generateBatchBills">Generate
-                        Bills</button>
+                    <button type="button" class="btn btn-success" wire:click="generateBatchBills"
+                        @if (empty($batchSelectedFeeIds)) disabled @endif>Generate Bills</button>
                 </div>
             </div>
         </div>
