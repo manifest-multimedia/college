@@ -137,7 +137,7 @@ class StudentBillingService
     public function updateBillPaymentStatus(StudentFeeBill $bill)
     {
         $totalAmount = $bill->total_amount;
-        $amountPaid = $bill->feePayments()->sum('amount');
+        $amountPaid = $bill->payments()->sum('amount');
         $balance = $totalAmount - $amountPaid;
         $paymentPercentage = $totalAmount > 0 ? ($amountPaid / $totalAmount * 100) : 0;
 

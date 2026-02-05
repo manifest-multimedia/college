@@ -16,6 +16,9 @@ class FeePaymentObserver
      */
     public function created(FeePayment $payment): void
     {
+        // Recalculate the bill's payment status
+        $payment->studentFeeBill?->recalculatePaymentStatus();
+
         $this->processStudentClearance($payment);
     }
 
@@ -24,6 +27,11 @@ class FeePaymentObserver
      */
     public function updated(FeePayment $payment): void
     {
+        // Recalculate bill status if amount changed
+        if ($payment->isDirty('amount')) {
+            $payment->studentFeeBill?->recalculatePaymentStatus();
+        }
+
         // Only process if payment status is changed to confirmed/approved
         if ($payment->isDirty('status') && ($payment->status === 'confirmed' || $payment->status === 'approved')) {
             $this->processStudentClearance($payment);
@@ -45,9 +53,9 @@ class FeePaymentObserver
                 return;
             }
 
-            // Get the current academic year and semester from the payment
-            $academicYearId = $payment->academic_year_id;
-            $semesterId = $payment->semester_id;
+            // Get the current academic year and semester from the payment's bill
+            $academicYearId = $payment->studentFeeBill->academic_year_id;
+            $semesterId = $payment->studentFeeBill->semester_id;
 
             // Find all published exams that might need clearance checks
             // We'll queue up individual jobs for each exam
