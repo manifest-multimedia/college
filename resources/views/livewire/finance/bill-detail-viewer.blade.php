@@ -110,7 +110,7 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $item->feeType->name }}</td>
                                     <td>{{ $item->description ?? $item->feeType->description }}</td>
-                                    <td class="text-end">{{ number_format($item->amount, 2) }}</td>
+                                    <td class="text-end">GH₵ {{ number_format($item->amount, 2) }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -121,16 +121,16 @@
                         <tfoot class="fw-bold">
                             <tr>
                                 <td colspan="3" class="text-end">Total:</td>
-                                <td class="text-end">{{ number_format($bill->total_amount, 2) }}</td>
+                                <td class="text-end">GH₵ {{ number_format($bill->total_amount, 2) }}</td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-end">Amount Paid:</td>
-                                <td class="text-end text-success">{{ number_format($totalPaid, 2) }}</td>
+                                <td class="text-end text-success">GH₵ {{ number_format($totalPaid, 2) }}</td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-end">Balance:</td>
                                 <td class="text-end {{ $balance > 0 ? 'text-danger' : 'text-success' }}">
-                                    {{ number_format($balance, 2) }}
+                                    GH₵ {{ number_format($balance, 2) }}
                                 </td>
                             </tr>
                         </tfoot>
@@ -161,7 +161,7 @@
                                     <td>{{ $payment->payment_method }}</td>
                                     <td>{{ $payment->reference_number }}</td>
                                     <td>{{ $payment->recordedBy->name ?? 'System' }}</td>
-                                    <td class="text-end">{{ number_format($payment->amount, 2) }}</td>
+                                    <td class="text-end">GH₵ {{ number_format($payment->amount, 2) }}</td>
                                 </tr>
                             @empty
                                 <tr>

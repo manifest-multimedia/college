@@ -382,7 +382,7 @@
                         
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Amount:</strong></div>
-                            <div class="col-sm-8 fw-bold">{{ number_format($this->selectedPayment->amount, 2) }}</div>
+                            <div class="col-sm-8 fw-bold">GH₵ {{ number_format($this->selectedPayment->amount, 2) }}</div>
                         </div>
                         
                         <div class="row mb-3">

@@ -89,9 +89,9 @@
                                     </td>
                                     <td>{{ $bill->academicYear->name }}</td>
                                     <td>{{ $bill->semester->name }}</td>
-                                    <td>{{ number_format($bill->total_amount, 2) }}</td>
-                                    <td>{{ number_format($bill->amount_paid, 2) }}</td>
-                                    <td>{{ number_format($bill->balance, 2) }}</td>
+                                    <td>GH₵ {{ number_format($bill->total_amount, 2) }}</td>
+                                    <td>GH₵ {{ number_format($bill->amount_paid, 2) }}</td>
+                                    <td>GH₵ {{ number_format($bill->balance, 2) }}</td>
                                     <td>
                                         @if ($bill->status === 'paid')
                                             <span class="badge bg-success">Paid</span>
