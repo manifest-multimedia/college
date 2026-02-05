@@ -29,25 +29,33 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-5">
+                            <div class="col-md-4">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fa fa-search"></i></span>
                                     <input type="text" class="form-control" placeholder="Search by name or student ID..." wire:model.live.debounce.300ms="search">
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <select class="form-select" wire:model.live="academicYearId">
-                                    <option value="">-- Select Academic Year --</option>
+                                    <option value="">-- Academic Year --</option>
                                     @foreach($academicYears as $year)
                                         <option value="{{ $year->id }}">{{ $year->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <select class="form-select" wire:model.live="semesterId">
-                                    <option value="">-- Select Semester --</option>
+                                    <option value="">-- Semester --</option>
                                     @foreach($semesters as $semester)
                                         <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" wire:model.live="cohortId">
+                                    <option value="">-- Cohort --</option>
+                                    @foreach($cohorts as $cohort)
+                                        <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -455,4 +463,50 @@
             });
         });
     </script>
+
+    <style>
+        @media print {
+            /* Hide everything except the receipt modal content */
+            body * {
+                visibility: hidden;
+            }
+            
+            #paymentDetailsModal,
+            #paymentDetailsModal * {
+                visibility: visible;
+            }
+            
+            #paymentDetailsModal {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 20px;
+                background: white;
+            }
+            
+            #paymentDetailsModal .modal-dialog {
+                max-width: 100%;
+                margin: 0;
+            }
+            
+            #paymentDetailsModal .modal-content {
+                border: none;
+                box-shadow: none;
+            }
+            
+            /* Hide modal header buttons and footer */
+            #paymentDetailsModal .modal-header .btn-close,
+            #paymentDetailsModal .modal-footer {
+                display: none !important;
+            }
+            
+            /* Optimize receipt content for printing */
+            #paymentDetailsModal .modal-body {
+                padding: 20px;
+            }
+        }
+    </style>
 </div>

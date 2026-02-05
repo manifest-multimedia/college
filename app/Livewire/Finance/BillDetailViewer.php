@@ -63,7 +63,7 @@ class BillDetailViewer extends Component
 
     public function recordPayment()
     {
-        return redirect()->route('payment.record', ['billId' => $this->billId]);
+        return redirect()->route('finance.payments', ['student' => $this->bill->student_id, 'bill' => $this->billId]);
     }
 
     public function render()

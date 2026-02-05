@@ -3,7 +3,9 @@
 namespace App\Livewire\Finance;
 
 use App\Models\AcademicYear;
+use App\Models\Cohort;
 use App\Models\CollegeClass;
+use App\Models\FeeStructure;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentFeeBill;
@@ -24,6 +26,8 @@ class StudentBillingManager extends Component
 
     public $collegeClassId = '';
 
+    public $cohortId = '';
+
     public $search = '';
 
     // New Bill Modal Properties
@@ -34,6 +38,10 @@ class StudentBillingManager extends Component
     public $newBillAcademicYearId = null;
 
     public $newBillSemesterId = null;
+
+    public $availableFees = [];
+
+    public $selectedFeeIds = [];
 
     // Batch Billing Properties
     public $batchAcademicYearId = null;
@@ -72,6 +80,11 @@ class StudentBillingManager extends Component
         $this->resetPage();
     }
 
+    public function updatingCohortId()
+    {
+        $this->resetPage();
+    }
+
     public function openNewBillModal()
     {
         $this->showNewBillModal = true;
@@ -80,8 +93,52 @@ class StudentBillingManager extends Component
     public function closeNewBillModal()
     {
         $this->showNewBillModal = false;
-        $this->reset(['newBillStudentId', 'newBillAcademicYearId', 'newBillSemesterId']);
+        $this->reset(['newBillStudentId', 'newBillAcademicYearId', 'newBillSemesterId', 'availableFees', 'selectedFeeIds']);
         $this->resetValidation();
+    }
+
+    public function updatedNewBillStudentId()
+    {
+        $this->loadAvailableFees();
+    }
+
+    public function updatedNewBillAcademicYearId()
+    {
+        $this->loadAvailableFees();
+    }
+
+    public function updatedNewBillSemesterId()
+    {
+        $this->loadAvailableFees();
+    }
+
+    public function loadAvailableFees()
+    {
+        if ($this->newBillStudentId && $this->newBillAcademicYearId && $this->newBillSemesterId) {
+            $student = Student::find($this->newBillStudentId);
+
+            if ($student && $student->college_class_id) {
+                $this->availableFees = FeeStructure::with('feeType')
+                    ->where('college_class_id', $student->college_class_id)
+                    ->where('academic_year_id', $this->newBillAcademicYearId)
+                    ->where('semester_id', $this->newBillSemesterId)
+                    ->where('is_active', true)
+                    ->get()
+                    ->toArray();
+
+                // Auto-select all mandatory fees
+                $this->selectedFeeIds = collect($this->availableFees)
+                    ->filter(fn ($fee) => $fee['is_mandatory'])
+                    ->pluck('id')
+                    ->toArray();
+            } else {
+                $this->availableFees = [];
+                $this->selectedFeeIds = [];
+            }
+        } else {
+            $this->availableFees = [];
+            $this->selectedFeeIds = [];
+        }
     }
 
     public function openBatchBillsModal()
@@ -100,11 +157,19 @@ class StudentBillingManager extends Component
     {
         $this->validate();
 
+        // Validate that at least one fee is selected
+        if (empty($this->selectedFeeIds)) {
+            session()->flash('error', 'Please select at least one fee to include in the bill.');
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Please select at least one fee to include in the bill.']);
+
+            return;
+        }
+
         try {
             $billingService = new StudentBillingService;
             $student = Student::findOrFail($this->newBillStudentId);
 
-            $bill = $billingService->generateBill($student, $this->newBillAcademicYearId, $this->newBillSemesterId);
+            $bill = $billingService->generateBill($student, $this->newBillAcademicYearId, $this->newBillSemesterId, $this->selectedFeeIds);
 
             $this->closeNewBillModal();
             session()->flash('success', 'Student bill created successfully!');
@@ -171,6 +236,11 @@ class StudentBillingManager extends Component
                     $q->where('college_class_id', $this->collegeClassId);
                 });
             })
+            ->when($this->cohortId !== '', function ($query) {
+                return $query->whereHas('student', function ($q) {
+                    $q->where('cohort_id', $this->cohortId);
+                });
+            })
             ->when($this->search !== '', function ($query) {
                 return $query->whereHas('student', function ($q) {
                     $q->where('first_name', 'like', '%'.$this->search.'%')
@@ -186,6 +256,7 @@ class StudentBillingManager extends Component
             'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
             'semesters' => Semester::orderBy('name')->get(),
             'classes' => CollegeClass::orderBy('name')->get(),
+            'cohorts' => Cohort::orderBy('name')->get(),
             'students' => Student::select('id', 'student_id', 'first_name', 'last_name', 'other_name')->orderBy('first_name')->get(),
         ]);
     }

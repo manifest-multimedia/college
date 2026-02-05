@@ -10,4 +10,5 @@
 
 return [
     'prefix' => 'COLLEGE/DEPT',
+    'name' => env('SCHOOL_NAME', 'Presbyterian Nurses and Midwives Training College'),
 ];

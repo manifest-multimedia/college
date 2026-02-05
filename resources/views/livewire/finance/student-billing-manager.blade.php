@@ -27,7 +27,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="semester">Semester</label>
                     <select id="semester" wire:model.live="semesterId" class="form-select">
                         <option value="">All Semesters</option>
@@ -36,10 +36,19 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="class">Class</label>
+                <div class="col-md-2">
+                    <label for="cohort">Cohort</label>
+                    <select id="cohort" wire:model.live="cohortId" class="form-select">
+                        <option value="">All Cohorts</option>
+                        @foreach ($cohorts as $cohort)
+                            <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="class">Program</label>
                     <select id="class" wire:model.live="collegeClassId" class="form-select">
-                        <option value="">All Classes</option>
+                        <option value="">All Programs</option>
                         @foreach ($classes as $class)
                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                         @endforeach
@@ -154,7 +163,7 @@
 
                     <div class="mb-3">
                         <label for="semesterSelect" class="form-label">Semester</label>
-                        <select id="semesterSelect" wire:model="newBillSemesterId" class="form-select">
+                        <select id="semesterSelect" wire:model.live="newBillSemesterId" class="form-select">
                             <option value="">-- Select Semester --</option>
                             @foreach ($semesters as $semester)
                                 <option value="{{ $semester->id }}">{{ $semester->name }}</option>
@@ -164,10 +173,45 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    @if (!empty($availableFees))
+                        <div class="mb-3">
+                            <label class="form-label">Select Fees to Include</label>
+                            <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
+                                @foreach ($availableFees as $fee)
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" 
+                                            value="{{ $fee['id'] }}" 
+                                            wire:model="selectedFeeIds"
+                                            id="fee{{ $fee['id'] }}"
+                                            @if ($fee['is_mandatory']) disabled checked @endif>
+                                        <label class="form-check-label d-flex justify-content-between w-100" for="fee{{ $fee['id'] }}">
+                                            <span>
+                                                {{ $fee['fee_type']['name'] ?? 'Unknown Fee' }}
+                                                @if ($fee['is_mandatory'])
+                                                    <span class="badge bg-primary ms-2">Mandatory</span>
+                                                @endif
+                                            </span>
+                                            <strong>GH₵ {{ number_format($fee['amount'], 2) }}</strong>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are automatically selected and cannot be deselected.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Total Selected:</strong> 
+                            GH₵ {{ number_format(collect($availableFees)->whereIn('id', $selectedFeeIds)->sum('amount'), 2) }}
+                        </div>
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" wire:click="closeNewBillModal">Cancel</button>
-                    <button type="button" class="btn btn-primary" wire:click="createNewBill">Generate Bill</button>
+                    <button type="button" class="btn btn-primary" wire:click="createNewBill" 
+                        @if (empty($selectedFeeIds)) disabled @endif>Generate Bill</button>
                 </div>
             </div>
         </div>

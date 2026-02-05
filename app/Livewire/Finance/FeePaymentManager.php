@@ -3,6 +3,7 @@
 namespace App\Livewire\Finance;
 
 use App\Models\AcademicYear;
+use App\Models\Cohort;
 use App\Models\FeePayment;
 use App\Models\Semester;
 use App\Models\Student;
@@ -26,6 +27,8 @@ class FeePaymentManager extends Component
     public $academicYearId;
 
     public $semesterId;
+
+    public $cohortId = '';
 
     public $showPaymentForm = false;
 
@@ -75,6 +78,11 @@ class FeePaymentManager extends Component
     }
 
     public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCohortId()
     {
         $this->resetPage();
     }
@@ -225,6 +233,11 @@ class FeePaymentManager extends Component
         return Semester::orderBy('name')->get();
     }
 
+    public function getCohortsProperty()
+    {
+        return Cohort::orderBy('name')->get();
+    }
+
     public function getRecentPaymentsProperty()
     {
         return FeePayment::with(['student', 'studentFeeBill'])
@@ -240,6 +253,9 @@ class FeePaymentManager extends Component
                 ->orWhere('last_name', 'like', '%'.$this->search.'%')
                 ->orWhere('student_id', 'like', '%'.$this->search.'%');
         })
+            ->when($this->cohortId !== '', function ($query) {
+                return $query->where('cohort_id', $this->cohortId);
+            })
             ->orderBy('first_name')
             ->paginate(10);
 
@@ -247,6 +263,7 @@ class FeePaymentManager extends Component
             'students' => $students,
             'academicYears' => $this->academicYears,
             'semesters' => $this->semesters,
+            'cohorts' => $this->cohorts,
             'recentPayments' => $this->recentPayments,
             'paymentMethods' => $this->paymentMethods,
         ])->layout('components.dashboard.default');

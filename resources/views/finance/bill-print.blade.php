@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fee Invoice - {{ config('app.name') }}</title>
+    <title>Fee Invoice - {{ config('school.name') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -112,7 +112,7 @@
         <div class="invoice-header">
             <img src="{{ asset('images/school-logo.png') }}" alt="School Logo" class="invoice-logo">
             <h1 class="invoice-title">FEE INVOICE</h1>
-            <p class="invoice-subtitle">{{ config('app.name') }}</p>
+            <p class="invoice-subtitle">{{ config('school.name') }}</p>
         </div>
         
         <div class="invoice-body">

@@ -21,12 +21,13 @@ class StudentBillingService
      *
      * @param  int  $academicYearId
      * @param  int  $semesterId
+     * @param  array|null  $selectedFeeStructureIds  Optional array of fee structure IDs to include
      * @return StudentFeeBill
      */
-    public function generateBill(Student $student, $academicYearId, $semesterId)
+    public function generateBill(Student $student, $academicYearId, $semesterId, ?array $selectedFeeStructureIds = null)
     {
         // Start a transaction to ensure data integrity
-        return DB::transaction(function () use ($student, $academicYearId, $semesterId) {
+        return DB::transaction(function () use ($student, $academicYearId, $semesterId, $selectedFeeStructureIds) {
             // Check if student already has a bill for this academic year and semester
             $existingBill = StudentFeeBill::where('student_id', $student->id)
                 ->where('academic_year_id', $academicYearId)
@@ -38,14 +39,20 @@ class StudentBillingService
             }
 
             // Get all applicable fee structures for this student's class
-            $feeStructures = FeeStructure::where('college_class_id', $student->college_class_id)
+            $feeStructuresQuery = FeeStructure::where('college_class_id', $student->college_class_id)
                 ->where('academic_year_id', $academicYearId)
                 ->where('semester_id', $semesterId)
-                ->where('is_active', true)
-                ->get();
+                ->where('is_active', true);
+
+            // If specific fees are selected, filter by those IDs
+            if ($selectedFeeStructureIds !== null && ! empty($selectedFeeStructureIds)) {
+                $feeStructuresQuery->whereIn('id', $selectedFeeStructureIds);
+            }
+
+            $feeStructures = $feeStructuresQuery->get();
 
             if ($feeStructures->isEmpty()) {
-                throw new \Exception('No fee structures defined for this class, academic year, and semester');
+                throw new \Exception('No fee structures selected or available for this class, academic year, and semester');
             }
 
             // Calculate total amount
