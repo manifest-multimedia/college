@@ -123,8 +123,7 @@
                     <h5>BILL TO:</h5>
                     <p><strong>Name:</strong> {{ $bill->student->full_name }}</p>
                     <p><strong>ID:</strong> {{ $bill->student->student_id }}</p>
-                    <p><strong>Program:</strong> {{ $bill->student->program->name ?? 'Not Assigned' }}</p>
-                    <p><strong>Class:</strong> {{ $bill->student->collegeClass->name ?? 'Not Assigned' }}</p>
+                    <p><strong>Program:</strong> {{ $bill->student->collegeClass->name ?? 'Not Assigned' }}</p>
                 </div>
                 <div class="col-md-6 text-end">
                     <p><strong>Invoice #:</strong> {{ $bill->bill_reference }}</p>

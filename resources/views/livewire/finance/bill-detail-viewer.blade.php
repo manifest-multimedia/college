@@ -53,10 +53,6 @@
                             </tr>
                             <tr>
                                 <th>Program:</th>
-                                <td>{{ $bill->student->program->name ?? 'Not Assigned' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Class:</th>
                                 <td>{{ $bill->student->collegeClass->name ?? 'Not Assigned' }}</td>
                             </tr>
                         </table>
@@ -66,7 +62,7 @@
                         <table class="table table-sm">
                             <tr>
                                 <th style="width: 150px;">Bill Number:</th>
-                                <td>{{ $bill->bill_number }}</td>
+                                <td>{{ $bill->bill_reference }}</td>
                             </tr>
                             <tr>
                                 <th>Academic Year:</th>
