@@ -110,7 +110,9 @@
 
     <div class="invoice-container">
         <div class="invoice-header">
-            <img src="{{ asset('images/school-logo.png') }}" alt="School Logo" class="invoice-logo">
+            @if(config('branding.logo.primary'))
+                <img src="{{ asset(config('branding.logo.primary')) }}" alt="{{ config('branding.institution.name') }} Logo" class="invoice-logo">
+            @endif
             <h1 class="invoice-title">FEE INVOICE</h1>
             <p class="invoice-subtitle">{{ config('branding.institution.name') }}</p>
         </div>
