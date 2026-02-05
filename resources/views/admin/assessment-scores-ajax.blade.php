@@ -248,7 +248,6 @@
                                         <th>Assignment 5</th>
                                         <th>Mid-Semester</th>
                                         <th>End-Semester</th>
-                                        <th>Total</th>
                                     </tr>
                                 </thead>
                                 <tbody id="importPreviewBody">
@@ -856,10 +855,6 @@
                     ? '<span class="badge bg-success">Published</span>'
                     : '<span class="badge bg-secondary">Unpublished</span>';
                     
-                const toggleBtn = student.is_published
-                    ? `<button class="btn btn-sm btn-warning toggle-publish-btn" data-score-id="${student.score_id}" data-student-id="${student.student_id}"><i class="bi bi-x-circle"></i></button>`
-                    : `<button class="btn btn-sm btn-success toggle-publish-btn" data-score-id="${student.score_id}" data-student-id="${student.student_id}"><i class="bi bi-check-circle"></i></button>`;
-                    
                 html += `
                     <tr data-index="${index}" data-student-id="${student.student_id}">
                         <td class="text-center">${displayIndex}</td>
@@ -874,11 +869,7 @@
                         <td><input type="number" class="form-control form-control-sm score-input" data-field="end_semester" value="${student.end_semester || ''}" min="0" max="100" step="0.01"></td>
                         <td class="text-center fw-bold total-cell">${student.total}</td>
                         <td class="text-center grade-cell">${student.grade}</td>
-                        <td class="text-center">
-                            <div class="d-flex flex-column gap-1">
-                                ${publishedBadge}
-                                ${student.score_id ? toggleBtn : '<small class="text-muted">No score</small>'}
-                            </div>
+                        <td class="text-center">${publishedBadge}</td>
                         </td>
                     </tr>
                 `;
@@ -1221,7 +1212,6 @@
                         <td class="text-center">${record.assignment_5 ?? '-'}</td>
                         <td class="text-center">${record.mid_semester ?? '-'}</td>
                         <td class="text-center">${record.end_semester ?? '-'}</td>
-                        <td class="text-center"><strong>${record.total ?? 0}%</strong></td>
                     </tr>
                 `;
             });

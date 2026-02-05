@@ -124,12 +124,20 @@ class AssessmentScore extends Model
 
     public function getTotalScoreAttribute(): float
     {
-        return round(
-            $this->assignment_weighted +
+        $total = $this->assignment_weighted +
             $this->mid_semester_weighted +
-            $this->end_semester_weighted,
-            2
-        );
+            $this->end_semester_weighted;
+
+        // Get the decimal part
+        $decimal = $total - floor($total);
+
+        // If decimal is 0.6 or above, round up to next whole number
+        if ($decimal >= 0.6) {
+            return ceil($total);
+        }
+
+        // Otherwise return with 2 decimal places
+        return round($total, 2);
     }
 
     public function getGradeLetterAttribute(): string
