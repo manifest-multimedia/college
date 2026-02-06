@@ -375,7 +375,10 @@ class AssessmentScoresController extends Controller
             'end_semester' => 60,
         ];
 
-        $filename = 'assessment_scores_template_'.str_replace(' ', '_', $course->name).'_'.now()->format('Y-m-d').'.xlsx';
+        // Sanitize course name: keep only alphabetic characters and spaces, then replace spaces with underscores
+        $sanitizedCourseName = preg_replace('/[^A-Za-z\s]/', '', $course->name);
+        $sanitizedCourseName = preg_replace('/\s+/', '_', trim($sanitizedCourseName));
+        $filename = 'assessment_scores_template_'.$sanitizedCourseName.'_'.now()->format('Y-m-d').'.xlsx';
 
         return Excel::download(new AssessmentScoresTemplateExport($students, $courseInfo, $weights), $filename);
     }
