@@ -2,20 +2,22 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h1 class="card-title">
-                        <i class="fas fa-book-open me-2"></i>Course Registration
-                    </h1>
-                    @if($student)
-                        <p class="card-subtitle text-muted mb-0">
-                            Student: {{ $student->first_name }} {{ $student->last_name }} ({{ $student->student_id }})
-                        </p>
-                        @if($currentAcademicYear && $currentSemester)
-                            <p class="card-subtitle text-muted mb-0">
-                                Academic Year: {{ $currentAcademicYear->name }} | Semester: {{ $currentSemester->name }}
+                <div class="card-header d-flex align-items-center">
+                    <div>
+                        <h1 class="card-title mb-2">
+                            <i class="fas fa-book-open me-2"></i>Course Registration
+                        </h1>
+                        @if($student)
+                            <p class="card-subtitle text-muted mb-1">
+                                Student: {{ $student->first_name }} {{ $student->last_name }} ({{ $student->student_id }})
                             </p>
+                            @if($currentAcademicYear && $currentSemester)
+                                <p class="card-subtitle text-muted mb-0">
+                                    Academic Year: {{ $currentAcademicYear->name }} | Semester: {{ $currentSemester->name }}
+                                </p>
+                            @endif
                         @endif
-                    @endif
+                    </div>
                 </div>
 
                 <div class="card-body">

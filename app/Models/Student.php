@@ -38,6 +38,15 @@ class Student extends Model
         'user_id',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'date_of_birth' => 'datetime',
+    ];
+
     // Get attribute name
     public function getNameAttribute()
     {
