@@ -150,6 +150,21 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 </a>
             </div>
             <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="{{ route('student.assessment-scores') }}" class="menu-link {{ request()->routeIs('student.assessment-scores') ? 'active' : '' }}">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-line fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">My Assessment Scores</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
             <!--end:Student Menu Items-->
             @else
            
