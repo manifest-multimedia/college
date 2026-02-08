@@ -161,7 +161,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                             <span class="path3"></span>
                         </i>
                     </span>
-                    <span class="menu-title">My Assessment Scores</span>
+                    <span class="menu-title">My Results</span>
                 </a>
             </div>
             <!--end:Menu item-->

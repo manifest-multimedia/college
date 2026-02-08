@@ -132,7 +132,7 @@ class ResetStudentPasswords extends Command
             $this->info('Run without --dry-run to apply the changes.');
         } else {
             $this->newLine();
-            $this->success('Password reset completed!');
+            $this->info('✓ Password reset completed!');
             $this->info('Students can now login with their email and student ID (index number) as password.');
         }
 

@@ -1,7 +1,7 @@
-<x-dashboard.default title="My Assessment Scores">
+<x-dashboard.default title="My Results">
     <div class="card">
         <div class="card-header">
-            <h5 class="card-title mb-0">My Published Assessment Scores</h5>
+            <h5 class="card-title mb-0">My Results</h5>
         </div>
         <div class="card-body">
             <!-- Filters Section -->
