@@ -7,7 +7,6 @@ use App\Models\AssessmentScore;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class AssessmentScoresController extends Controller
 {
@@ -104,11 +103,6 @@ class AssessmentScoresController extends Controller
 
         //$cgpa = $overallTotalCredits > 0 ? round($overallTotalGradePoints / $overallTotalCredits, 2) : 0;
         $cgpa = $overallTotalCredits > 0 ? $overallTotalGradePoints / $overallTotalCredits : 0;
-
-        Log::info("Calculated CGPA for student_id {$user->student->id}: {$cgpa}");
-        Log::info("Calculated overallTotalCredits for student_id {$user->student->id}: {$overallTotalCredits}");
-        Log::info("Calculated overallTotalGradePoints for student_id {$user->student->id}: {$overallTotalGradePoints}");
-
         $overallRemark = $this->getOverallRemark($cgpa);
 
         return response()->json([
@@ -157,13 +151,15 @@ class AssessmentScoresController extends Controller
 
     private function getOverallRemark($cgpa): string
     {
-        if ($cgpa >= 3.5) {
+        if ($cgpa >= 3.6) {
             return 'First Class';
         } elseif ($cgpa >= 3.0) {
             return 'Second Class Upper';
         } elseif ($cgpa >= 2.5) {
             return 'Second Class Lower';
         } elseif ($cgpa >= 2.0) {
+            return 'Third Class';
+        } elseif ($cgpa >= 1.5) {
             return 'Pass';
         } else {
             return 'Fail';
