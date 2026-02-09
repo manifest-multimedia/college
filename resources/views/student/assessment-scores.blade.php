@@ -108,7 +108,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Semester Breakdown -->
                             <div id="semesterBreakdown" class="mt-4">
                                 <h6 class="fw-bold mb-3">Semester Breakdown</h6>
@@ -202,7 +202,7 @@
                     data: filters,
                     success: function(response) {
                         $('#loadingSpinner').hide();
-                        
+
                         if (response.scores.length === 0) {
                             $('#noDataMessage').show();
                             return;
@@ -229,7 +229,7 @@
                 scores.forEach((score, index) => {
                     const statusBadge = getStatusBadge(score.status);
                     const rowNumber = ((currentPage - 1) * parseInt($('#perPage').val())) + index + 1;
-                    
+
                     tbody.append(`
                         <tr>
                             <td class="text-center text-muted">${rowNumber}</td>
@@ -237,7 +237,7 @@
                             <td>${score.course_name}</td>
                             <td class="text-center">${score.credit_hours}</td>
                             <td class="text-center"><strong>${score.grade_letter}</strong></td>
-                            <td class="text-center"><strong>${score.grade_points.toFixed(1)}</strong></td>
+                            <td class="text-center"><strong>${score.grade_points.toFixed(1) * score.credit_hours}</strong></td>
                             <td class="text-center">${statusBadge}</td>
                         </tr>
                     `);
@@ -249,7 +249,7 @@
                 $('#totalCredits').text(summary.total_credits);
                 $('#cgpaValue').text(summary.cgpa.toFixed(2));
                 $('#overallRemark').text(summary.overall_remark);
-                
+
                 // Color code the CGPA
                 const cgpaElement = $('#cgpaValue');
                 cgpaElement.removeClass('text-success text-warning text-danger');
@@ -267,7 +267,7 @@
 
                 if (summary.semesters && Object.keys(summary.semesters).length > 0) {
                     $('#semesterBreakdown').show();
-                    
+
                     Object.values(summary.semesters).forEach(sem => {
                         semesterStats.append(`
                             <div class="col-md-4">
