@@ -1,13 +1,23 @@
 <x-dashboard.default title="My Results">
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">My Results</h5>
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-1">My Results</h5>
+                    <p class="text-muted mb-0 small">View your published assessment results</p>
+                </div>
+                <div>
+                    <button id="exportPdfBtn" class="btn btn-sm btn-outline-primary" style="display: none;">
+                        <i class="bi bi-file-pdf"></i> Export PDF
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="card-body">
             <!-- Filters Section -->
-            <div class="row mb-4">
+            <div class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <label for="semester" class="form-label">Semester</label>
+                    <label for="semester" class="form-label fw-semibold">Semester</label>
                     <select id="semester" class="form-select">
                         <option value="">All Semesters</option>
                         @php
@@ -19,7 +29,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="academicYear" class="form-label">Academic Year</label>
+                    <label for="academicYear" class="form-label fw-semibold">Academic Year</label>
                     <select id="academicYear" class="form-select">
                         <option value="">All Academic Years</option>
                         @php
@@ -34,7 +44,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="perPage" class="form-label">Records Per Page</label>
+                    <label for="perPage" class="form-label fw-semibold">Records Per Page</label>
                     <select id="perPage" class="form-select">
                         <option value="15">15</option>
                         <option value="25">25</option>
@@ -43,8 +53,8 @@
                     </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <button id="loadScoresBtn" class="btn btn-primary">
-                        <i class="bi bi-search"></i> Load Scores
+                    <button id="loadScoresBtn" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Load Results
                     </button>
                 </div>
             </div>
@@ -55,20 +65,16 @@
             <!-- Scores Table -->
             <div id="scoresTableContainer" style="display: none;">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
+                    <table class="table table-hover align-middle" id="resultsTable">
                         <thead class="table-light">
                             <tr>
-                                <th>Course Code</th>
-                                <th>Course Name</th>
-                                <th>Semester</th>
-                                <th>Academic Year</th>
-                                <th>Cohort</th>
-                                <th>Assignments</th>
-                                <th>Mid-Semester</th>
-                                <th>End-Semester</th>
-                                <th>Total Score</th>
-                                <th>Grade</th>
-                                <th>Grade Points</th>
+                                <th class="text-center" style="width: 5%;">#</th>
+                                <th style="width: 15%;">Course Code</th>
+                                <th style="width: 30%;">Course Name</th>
+                                <th class="text-center" style="width: 10%;">Credit Hours</th>
+                                <th class="text-center" style="width: 10%;">Grade</th>
+                                <th class="text-center" style="width: 10%;">Grade Points</th>
+                                <th class="text-center" style="width: 15%;">Status</th>
                             </tr>
                         </thead>
                         <tbody id="scoresTableBody">
@@ -77,11 +83,48 @@
                     </table>
                 </div>
 
+                <!-- Summary Section -->
+                <div id="summarySection" class="mt-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3 fw-bold">Academic Summary</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-white rounded">
+                                        <p class="text-muted mb-1 small">Total Credits</p>
+                                        <h4 class="mb-0 text-primary" id="totalCredits">0</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center p-3 bg-white rounded">
+                                        <p class="text-muted mb-1 small">CGPA</p>
+                                        <h4 class="mb-0 text-success" id="cgpaValue">0.00</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="text-center p-3 bg-white rounded">
+                                        <p class="text-muted mb-1 small">Overall Remark</p>
+                                        <h4 class="mb-0" id="overallRemark">-</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Semester Breakdown -->
+                            <div id="semesterBreakdown" class="mt-4">
+                                <h6 class="fw-bold mb-3">Semester Breakdown</h6>
+                                <div class="row g-2" id="semesterStats">
+                                    <!-- Dynamic semester stats -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Pagination -->
-                <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-3">
-                    <div id="paginationInfo"></div>
+                <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4">
+                    <div id="paginationInfo" class="text-muted small"></div>
                     <nav>
-                        <ul id="paginationLinks" class="pagination mb-0">
+                        <ul id="paginationLinks" class="pagination pagination-sm mb-0">
                             <!-- Dynamic pagination -->
                         </ul>
                     </nav>
@@ -93,13 +136,13 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-2">Loading your assessment scores...</p>
+                <p class="mt-3 text-muted">Loading your results...</p>
             </div>
 
             <!-- No Data Message -->
             <div id="noDataMessage" style="display: none;" class="alert alert-info text-center">
                 <i class="bi bi-info-circle me-2"></i>
-                No published assessment scores found. Please check back later or contact your academic officer.
+                No published results found. Please check back later or contact your academic officer.
             </div>
         </div>
     </div>
@@ -108,6 +151,7 @@
     <script>
         $(document).ready(function() {
             let currentPage = 1;
+            let currentSummary = null;
 
             // Auto-load scores on page load
             loadScores();
@@ -134,6 +178,11 @@
                 loadScores();
             });
 
+            // Export PDF
+            $('#exportPdfBtn').on('click', function() {
+                exportToPDF();
+            });
+
             function loadScores() {
                 const filters = {
                     semester_id: $('#semester').val() || '',
@@ -145,6 +194,7 @@
                 $('#loadingSpinner').show();
                 $('#scoresTableContainer').hide();
                 $('#noDataMessage').hide();
+                $('#exportPdfBtn').hide();
 
                 $.ajax({
                     url: '{{ route("student.assessment-scores.get") }}',
@@ -158,13 +208,16 @@
                             return;
                         }
 
+                        currentSummary = response.summary;
                         renderScoresTable(response.scores);
+                        renderSummary(response.summary);
                         renderPagination(response.pagination);
                         $('#scoresTableContainer').show();
+                        $('#exportPdfBtn').show();
                     },
                     error: function(xhr) {
                         $('#loadingSpinner').hide();
-                        showAlert(xhr.responseJSON?.message || 'Failed to load scores', 'danger');
+                        showAlert(xhr.responseJSON?.message || 'Failed to load results', 'danger');
                     }
                 });
             }
@@ -173,37 +226,77 @@
                 const tbody = $('#scoresTableBody');
                 tbody.empty();
 
-                scores.forEach(score => {
-                    // Collect all assignment scores
-                    const assignments = [];
-                    if (score.assignment_1 !== null) assignments.push(score.assignment_1);
-                    if (score.assignment_2 !== null) assignments.push(score.assignment_2);
-                    if (score.assignment_3 !== null) assignments.push(score.assignment_3);
-                    if (score.assignment_4 !== null) assignments.push(score.assignment_4);
-                    if (score.assignment_5 !== null) assignments.push(score.assignment_5);
-                    
-                    const assignmentDisplay = assignments.length > 0 ? assignments.join(', ') : '-';
+                scores.forEach((score, index) => {
+                    const statusBadge = getStatusBadge(score.status);
+                    const rowNumber = ((currentPage - 1) * parseInt($('#perPage').val())) + index + 1;
                     
                     tbody.append(`
                         <tr>
-                            <td>${score.course_code}</td>
+                            <td class="text-center text-muted">${rowNumber}</td>
+                            <td><strong>${score.course_code}</strong></td>
                             <td>${score.course_name}</td>
-                            <td>${score.semester}</td>
-                            <td>${score.academic_year}</td>
-                            <td>${score.cohort}</td>
-                            <td>${assignmentDisplay}</td>
-                            <td>${score.mid_semester || '-'}</td>
-                            <td>${score.end_semester || '-'}</td>
-                            <td><strong>${score.total_score || '-'}</strong></td>
-                            <td><span class="badge bg-primary">${score.grade_letter || '-'}</span></td>
-                            <td>${score.grade_points || '-'}</td>
+                            <td class="text-center">${score.credit_hours}</td>
+                            <td class="text-center">
+                                <span class="badge ${getGradeBadgeClass(score.grade_letter)} fs-6">${score.grade_letter}</span>
+                            </td>
+                            <td class="text-center"><strong>${score.grade_points.toFixed(1)}</strong></td>
+                            <td class="text-center">${statusBadge}</td>
                         </tr>
                     `);
                 });
             }
 
+            function renderSummary(summary) {
+                // Overall summary
+                $('#totalCredits').text(summary.total_credits);
+                $('#cgpaValue').text(summary.cgpa.toFixed(2));
+                $('#overallRemark').text(summary.overall_remark);
+                
+                // Color code the CGPA
+                const cgpaElement = $('#cgpaValue');
+                cgpaElement.removeClass('text-success text-warning text-danger');
+                if (summary.cgpa >= 3.0) {
+                    cgpaElement.addClass('text-success');
+                } else if (summary.cgpa >= 2.0) {
+                    cgpaElement.addClass('text-warning');
+                } else {
+                    cgpaElement.addClass('text-danger');
+                }
+
+                // Semester breakdown
+                const semesterStats = $('#semesterStats');
+                semesterStats.empty();
+
+                if (summary.semesters && Object.keys(summary.semesters).length > 0) {
+                    $('#semesterBreakdown').show();
+                    
+                    Object.values(summary.semesters).forEach(sem => {
+                        semesterStats.append(`
+                            <div class="col-md-4">
+                                <div class="card border">
+                                    <div class="card-body py-2">
+                                        <h6 class="card-title mb-2 text-primary">${sem.semester_name}</h6>
+                                        <div class="d-flex justify-content-between small">
+                                            <span>Credits: <strong>${sem.total_credits}</strong></span>
+                                            <span>GPA: <strong>${sem.gpa.toFixed(2)}</strong></span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            Passed: ${sem.passed_courses} | Failed: ${sem.failed_courses}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                    });
+                } else {
+                    $('#semesterBreakdown').hide();
+                }
+            }
+
             function renderPagination(pagination) {
-                $('#paginationInfo').text(`Showing ${pagination.per_page * (pagination.current_page - 1) + 1} to ${Math.min(pagination.per_page * pagination.current_page, pagination.total)} of ${pagination.total} entries`);
+                const from = pagination.per_page * (pagination.current_page - 1) + 1;
+                const to = Math.min(pagination.per_page * pagination.current_page, pagination.total);
+                $('#paginationInfo').text(`Showing ${from} to ${to} of ${pagination.total} results`);
 
                 const links = $('#paginationLinks');
                 links.empty();
@@ -234,6 +327,33 @@
                         <a class="page-link" href="#" data-page="${pagination.current_page + 1}">Next</a>
                     </li>
                 `);
+            }
+
+            function getStatusBadge(status) {
+                const badges = {
+                    'Pass': '<span class="badge bg-success">Pass</span>',
+                    'Resit': '<span class="badge bg-warning text-dark">Resit</span>',
+                    'Carryover': '<span class="badge bg-danger">Carryover</span>',
+                    'Fail': '<span class="badge bg-danger">Fail</span>'
+                };
+                return badges[status] || '<span class="badge bg-secondary">N/A</span>';
+            }
+
+            function getGradeBadgeClass(grade) {
+                if (['A', 'B+', 'B'].includes(grade)) return 'bg-success';
+                if (['C+', 'C'].includes(grade)) return 'bg-info';
+                if (['D+', 'D'].includes(grade)) return 'bg-warning text-dark';
+                return 'bg-danger';
+            }
+
+            function exportToPDF() {
+                const filters = {
+                    semester_id: $('#semester').val() || '',
+                    academic_year: $('#academicYear').val() || '',
+                };
+
+                const queryString = $.param(filters);
+                window.open(`{{ route('student.assessment-scores.pdf') }}?${queryString}`, '_blank');
             }
 
             function showAlert(message, type) {

@@ -140,6 +140,7 @@ Route::middleware([
         // Student Assessment Scores
         Route::get('/student/assessment-scores', [App\Http\Controllers\Student\AssessmentScoresController::class, 'index'])->name('student.assessment-scores');
         Route::get('/student/assessment-scores/get', [App\Http\Controllers\Student\AssessmentScoresController::class, 'getScores'])->name('student.assessment-scores.get');
+        Route::get('/student/assessment-scores/pdf', [App\Http\Controllers\Student\AssessmentScoresController::class, 'exportPdf'])->name('student.assessment-scores.pdf');
     });
 
     // Academic routes (Lecturer, Academic Officer, Administrator, Super Admin, Finance Manager)
