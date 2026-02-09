@@ -236,9 +236,7 @@
                             <td><strong>${score.course_code}</strong></td>
                             <td>${score.course_name}</td>
                             <td class="text-center">${score.credit_hours}</td>
-                            <td class="text-center">
-                                <span class="badge border border-secondary text-dark fs-6">${score.grade_letter}</span>
-                            </td>
+                            <td class="text-center"><strong>${score.grade_letter}</strong></td>
                             <td class="text-center"><strong>${score.grade_points.toFixed(1)}</strong></td>
                             <td class="text-center">${statusBadge}</td>
                         </tr>

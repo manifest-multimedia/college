@@ -119,16 +119,6 @@
             text-align: center;
         }
         
-        .grade-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            font-weight: bold;
-            font-size: 11px;
-            color: #000;
-            border: 1px solid #dee2e6;
-            border-radius: 3px;
-        }
-        
         .status-pass {
             color: #28a745;
             font-weight: bold;
@@ -214,8 +204,12 @@
     
     <!-- Header -->
     <div class="header">
-        @if(config('branding.logo.primary'))
-            <img src="{{ public_path(config('branding.logo.primary')) }}" alt="Logo" class="logo">
+        @php
+            $logoPath = public_path(config('branding.logo.primary'));
+            $logoExists = file_exists($logoPath);
+        @endphp
+        @if($logoExists)
+            <img src="{{ $logoPath }}" alt="Logo" class="logo">
         @endif
         <h1>{{ config('school.name', 'College Management System') }}</h1>
         <p>{{ config('school.address', '') }}</p>
@@ -271,11 +265,7 @@
                 <td class="text-center"><strong>{{ $score['course_code'] }}</strong></td>
                 <td>{{ $score['course_name'] }}</td>
                 <td class="text-center">{{ $score['credit_hours'] }}</td>
-                <td class="text-center">
-                    <span class="grade-badge">
-                        {{ $score['grade_letter'] }}
-                    </span>
-                </td>
+                <td class="text-center"><strong>{{ $score['grade_letter'] }}</strong></td>
                 <td class="text-center"><strong>{{ number_format($score['grade_points'], 1) }}</strong></td>
                 <td class="text-center status-{{ strtolower($score['status']) }}">{{ $score['status'] }}</td>
             </tr>
