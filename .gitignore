@@ -20,6 +20,7 @@ yarn-error.log
 /.idea
 /.vscode
 /.zed
-deploy.php
+deploy-johnson.php
 deployOld.php
-deploy-pnmtc.php
+deploy.php
+deployGabe.php

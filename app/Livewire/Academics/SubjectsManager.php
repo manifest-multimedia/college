@@ -45,7 +45,7 @@ class SubjectsManager extends Component
         'name' => 'required|min:3',
         'course_code' => 'required|min:2',
         'semester_id' => 'required',
-        'credit_hours' => 'required|integer|min:1',
+        'credit_hours' => 'required|min:1',
         'year_id' => 'required',
         'college_class_id' => 'required',
     ];

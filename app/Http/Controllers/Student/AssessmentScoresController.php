@@ -7,6 +7,7 @@ use App\Models\AssessmentScore;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AssessmentScoresController extends Controller
 {
@@ -79,7 +80,8 @@ class AssessmentScoresController extends Controller
                 }
             }
 
-            $semesterGPA = $totalCredits > 0 ? round($totalGradePoints / $totalCredits, 2) : 0;
+            //$semesterGPA = $totalCredits > 0 ? round($totalGradePoints / $totalCredits, 2) : 0;
+            $semesterGPA = $totalCredits > 0 ? $totalGradePoints / $totalCredits: 0;
 
             $summary[$semesterId] = [
                 'semester_name' => $semesterScores->first()->semester->name ?? 'N/A',
@@ -100,7 +102,13 @@ class AssessmentScoresController extends Controller
             $overallTotalGradePoints += ($score->grade_points * $creditHours);
         }
 
-        $cgpa = $overallTotalCredits > 0 ? round($overallTotalGradePoints / $overallTotalCredits, 2) : 0;
+        //$cgpa = $overallTotalCredits > 0 ? round($overallTotalGradePoints / $overallTotalCredits, 2) : 0;
+        $cgpa = $overallTotalCredits > 0 ? $overallTotalGradePoints / $overallTotalCredits : 0;
+
+        Log::info("Calculated CGPA for student_id {$user->student->id}: {$cgpa}");
+        Log::info("Calculated overallTotalCredits for student_id {$user->student->id}: {$overallTotalCredits}");
+        Log::info("Calculated overallTotalGradePoints for student_id {$user->student->id}: {$overallTotalGradePoints}");
+
         $overallRemark = $this->getOverallRemark($cgpa);
 
         return response()->json([
