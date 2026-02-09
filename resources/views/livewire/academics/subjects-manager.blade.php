@@ -18,7 +18,7 @@
                                 <i class="fas fa-plus-circle me-1"></i> Add New Course
                             </button>
                         </div>
-                    
+
                 </div>
                 <div class="card-body">
                     @if (session()->has('message'))
@@ -42,6 +42,7 @@
                                     <th>Course Code</th>
                                     <th>Name</th>
                                     <th>Program</th>
+                                    <th>Credit Hours</th>
                                     <th>Year</th>
                                     <th>Semester</th>
                                     <th>Actions</th>
@@ -53,6 +54,7 @@
                                         <td>{{ $subject->course_code }}</td>
                                         <td>{{ $subject->name }}</td>
                                         <td>{{ $subject->collegeClass->name ?? 'N/A' }}</td>
+                                        <td>{{ $subject->credit_hours }}</td>
                                         <td>{{ $subject->year->name ?? 'N/A' }}</td>
                                         <td>{{ $subject->semester->name ?? 'N/A' }}</td>
                                         <td>
@@ -92,20 +94,23 @@
                 <div class="modal-body">
                     <form wire:submit.prevent="store">
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-12 mb-3 col-lg-3">
                                 <label for="course_code" class="form-label">Course Code</label>
                                 <input type="text" wire:model="course_code" id="course_code" class="form-control @error('course_code') is-invalid @enderror" placeholder="e.g., CS101">
                                 @error('course_code') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12 mb-3 col-lg-9">
                                 <label for="name" class="form-label">Course Name</label>
                                 <input type="text" wire:model="name" id="name" class="form-control @error('name') is-invalid @enderror" placeholder="e.g., Introduction to Programming">
                                 @error('name') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
-                        </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-12 col-lg-3 mb-3">
+                                <label for="credit_hours" class="form-label">Credit Hour(s)</label>
+                                <input type="number" wire:model="credit_hours" id="credit_hours" class="form-control @error('credit_hours') is-invalid @enderror" placeholder="e.g., 3">
+                                @error('credit_hours') <span class="text-danger">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="col-md-12 col-lg-9 mb-3">
                                 <label for="college_class_id" class="form-label">Program</label>
                                 <select wire:model="college_class_id" id="college_class_id" class="form-select @error('college_class_id') is-invalid @enderror">
                                     <option value="">Select Program</option>
@@ -115,7 +120,8 @@
                                 </select>
                                 @error('college_class_id') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
-                            <div class="col-md-4">
+
+                            <div class="col-md-6 mb-3">
                                 <label for="year_id" class="form-label">Year</label>
                                 <select wire:model="year_id" id="year_id" class="form-select @error('year_id') is-invalid @enderror">
                                     <option value="">Select Year</option>
@@ -125,7 +131,9 @@
                                 </select>
                                 @error('year_id') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
-                            <div class="col-md-4">
+
+
+                            <div class="col-md-6 mb-3">
                                 <label for="semester_id" class="form-label">Semester</label>
                                 <select wire:model="semester_id" id="semester_id" class="form-select @error('semester_id') is-invalid @enderror">
                                     <option value="">Select Semester</option>
@@ -136,7 +144,7 @@
                                 @error('semester_id') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
                             <textarea wire:model="description" id="description" class="form-control" rows="3" placeholder="Course description..."></textarea>

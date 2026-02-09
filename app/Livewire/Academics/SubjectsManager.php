@@ -29,6 +29,8 @@ class SubjectsManager extends Component
 
     public $semester_id;
 
+    public $credit_hours;
+
     public $year_id;
 
     public $college_class_id;
@@ -43,6 +45,7 @@ class SubjectsManager extends Component
         'name' => 'required|min:3',
         'course_code' => 'required|min:2',
         'semester_id' => 'required',
+        'credit_hours' => 'required|integer|min:1',
         'year_id' => 'required',
         'college_class_id' => 'required',
     ];
@@ -99,6 +102,7 @@ class SubjectsManager extends Component
         $this->course_code = '';
         $this->description = '';
         $this->semester_id = '';
+        $this->credit_hours = '';
         $this->year_id = '';
         $this->college_class_id = '';
     }
@@ -113,6 +117,7 @@ class SubjectsManager extends Component
                 'course_code' => $this->course_code,
                 'description' => $this->description,
                 'semester_id' => $this->semester_id,
+                'credit_hours' => $this->credit_hours,
                 'year_id' => $this->year_id,
                 'college_class_id' => $this->college_class_id,
                 'slug' => Str::slug($this->name),
@@ -135,6 +140,7 @@ class SubjectsManager extends Component
         $this->course_code = $subject->course_code;
         $this->description = $subject->description;
         $this->semester_id = $subject->semester_id;
+        $this->credit_hours = $subject->credit_hours;
         $this->year_id = $subject->year_id;
         $this->college_class_id = $subject->college_class_id;
 
