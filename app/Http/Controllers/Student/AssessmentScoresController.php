@@ -41,7 +41,10 @@ class AssessmentScoresController extends Controller
         }
 
         if ($request->filled('academic_year')) {
-            $query->where('academic_year_id', $request->academic_year);
+            // Filter by academic year name through the relationship
+            $query->whereHas('academicYear', function ($q) use ($request) {
+                $q->where('name', $request->academic_year);
+            });
         }
 
         $perPage = $request->input('per_page', 15);
@@ -181,7 +184,10 @@ class AssessmentScoresController extends Controller
         }
 
         if ($request->filled('academic_year')) {
-            $query->where('academic_year_id', $request->academic_year);
+            // Filter by academic year name through the relationship
+            $query->whereHas('academicYear', function ($q) use ($request) {
+                $q->where('name', $request->academic_year);
+            });
         }
 
         $scores = $query->orderBy('semester_id', 'asc')
