@@ -206,10 +206,16 @@
     <div class="header">
         @php
             $logoPath = public_path(config('branding.logo.primary'));
-            $logoExists = file_exists($logoPath);
+            if (file_exists($logoPath)) {
+                $imageData = base64_encode(file_get_contents($logoPath));
+                $mimeType = mime_content_type($logoPath);
+                $logoSrc = "data:{$mimeType};base64,{$imageData}";
+            } else {
+                $logoSrc = null;
+            }
         @endphp
-        @if($logoExists)
-            <img src="{{ $logoPath }}" alt="Logo" class="logo">
+        @if($logoSrc)
+            <img src="{{ $logoSrc }}" alt="College Logo" class="logo">
         @endif
         <h1>{{ config('school.name', 'College Management System') }}</h1>
         <p>{{ config('school.address', '') }}</p>
