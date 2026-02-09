@@ -237,7 +237,7 @@
                             <td>${score.course_name}</td>
                             <td class="text-center">${score.credit_hours}</td>
                             <td class="text-center">
-                                <span class="badge ${getGradeBadgeClass(score.grade_letter)} fs-6">${score.grade_letter}</span>
+                                <span class="badge border border-secondary text-dark fs-6">${score.grade_letter}</span>
                             </td>
                             <td class="text-center"><strong>${score.grade_points.toFixed(1)}</strong></td>
                             <td class="text-center">${statusBadge}</td>
@@ -337,13 +337,6 @@
                     'Fail': '<span class="badge bg-danger">Fail</span>'
                 };
                 return badges[status] || '<span class="badge bg-secondary">N/A</span>';
-            }
-
-            function getGradeBadgeClass(grade) {
-                if (['A', 'B+', 'B'].includes(grade)) return 'bg-success';
-                if (['C+', 'C'].includes(grade)) return 'bg-info';
-                if (['D+', 'D'].includes(grade)) return 'bg-warning text-dark';
-                return 'bg-danger';
             }
 
             function exportToPDF() {

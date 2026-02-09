@@ -23,11 +23,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 80px;
+            font-size: 50px;
             color: rgba(200, 200, 200, 0.2);
             font-weight: bold;
             z-index: -1;
-            white-space: nowrap;
+            text-align: center;
+            line-height: 1.2;
+            width: 100%;
         }
         
         .header {
@@ -35,6 +37,12 @@
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 3px solid #333;
+        }
+        
+        .header .logo {
+            max-width: 120px;
+            max-height: 80px;
+            margin-bottom: 10px;
         }
         
         .header h1 {
@@ -114,29 +122,11 @@
         .grade-badge {
             display: inline-block;
             padding: 3px 8px;
-            border-radius: 3px;
             font-weight: bold;
-            font-size: 10px;
-        }
-        
-        .grade-a, .grade-bplus, .grade-b {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .grade-cplus, .grade-c {
-            background-color: #17a2b8;
-            color: white;
-        }
-        
-        .grade-dplus, .grade-d {
-            background-color: #ffc107;
+            font-size: 11px;
             color: #000;
-        }
-        
-        .grade-e {
-            background-color: #dc3545;
-            color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
         }
         
         .status-pass {
@@ -216,10 +206,17 @@
 </head>
 <body>
     <!-- Watermark -->
-    <div class="watermark">NOT AN OFFICIAL TRANSCRIPT</div>
+    <div class="watermark">
+        NOT AN<br>
+        OFFICIAL<br>
+        TRANSCRIPT
+    </div>
     
     <!-- Header -->
     <div class="header">
+        @if(config('branding.logo.primary'))
+            <img src="{{ public_path(config('branding.logo.primary')) }}" alt="Logo" class="logo">
+        @endif
         <h1>{{ config('school.name', 'College Management System') }}</h1>
         <p>{{ config('school.address', '') }}</p>
         <p style="margin-top: 8px; font-size: 14px; font-weight: bold;">STUDENT ACADEMIC RESULTS</p>
@@ -275,7 +272,7 @@
                 <td>{{ $score['course_name'] }}</td>
                 <td class="text-center">{{ $score['credit_hours'] }}</td>
                 <td class="text-center">
-                    <span class="grade-badge grade-{{ strtolower(str_replace('+', 'plus', $score['grade_letter'])) }}">
+                    <span class="grade-badge">
                         {{ $score['grade_letter'] }}
                     </span>
                 </td>
