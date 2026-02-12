@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset(config('branding.logo.favicon', '/favicon.ico')) }}">
 
@@ -373,21 +373,21 @@
                 overflow-y: auto;
                 padding: 1rem;
             }
-            
+
             .login-container {
                 align-items: flex-start;
                 margin-top: 2rem;
                 margin-bottom: 2rem;
             }
         }
-        
+
         @media (max-width: 1024px) {
             body {
                 align-items: flex-start;
                 overflow-y: auto;
                 padding: 1rem;
             }
-            
+
             .login-container {
                 flex-direction: column;
                 gap: 2rem;
@@ -395,21 +395,21 @@
                 margin-top: 1rem;
                 margin-bottom: 1rem;
             }
-            
+
             .login-side {
                 flex: none;
                 width: 100%;
                 max-width: 450px;
                 margin-left: 0;
             }
-            
+
             .branding-side {
                 text-align: center;
                 padding: 2rem 1rem;
                 align-items: center;
                 min-height: auto;
             }
-            
+
             .institution-name {
                 font-size: 2.5rem;
             }
@@ -420,15 +420,15 @@
                 padding: 0.5rem;
                 overflow-y: auto;
             }
-            
+
             .login-side {
                 padding: 2rem;
             }
-            
+
             .institution-name {
                 font-size: 2rem;
             }
-            
+
             .institution-subtitle {
                 font-size: 1.25rem;
             }
@@ -439,31 +439,31 @@
                 padding: 0.25rem;
                 overflow-y: auto;
             }
-            
+
             .login-container {
                 margin-top: 0.5rem;
                 margin-bottom: 0.5rem;
             }
-            
+
             .login-side {
                 padding: 1.5rem;
             }
-            
+
             .institution-name {
                 font-size: 1.75rem;
             }
-            
+
             .login-title {
                 font-size: 1.5rem;
             }
         }
     </style>
-    
+
     <script>
         function togglePassword() {
             const passwordField = document.querySelector('input[name="password"]');
             const toggleIcon = document.querySelector('.password-toggle i');
-            
+
             if (passwordField.type === 'password') {
                 passwordField.type = 'text';
                 toggleIcon.className = 'fas fa-eye-slash';
@@ -534,14 +534,14 @@
             @if(config('branding.theme_settings.show_regular_login', true))
                 <form method="POST" action="{{ route('regular.login') }}">
                 @csrf
-                
+
                 <div class="form-group">
-                    <input type="email" 
-                           class="form-control @error('email') is-invalid @enderror" 
-                           name="email" 
-                           value="{{ old('email') }}" 
-                           required 
-                           autofocus 
+                    <input type="email"
+                           class="form-control @error('email') is-invalid @enderror"
+                           name="email"
+                           value="{{ old('email') }}"
+                           required
+                           autofocus
                            autocomplete="username"
                            placeholder="Email">
                     @error('email')
@@ -553,15 +553,15 @@
 
                 <div class="form-group">
                     <div style="position: relative;">
-                        <input type="password" 
-                               class="form-control @error('password') is-invalid @enderror" 
-                               name="password" 
-                               required 
+                        <input type="password"
+                               class="form-control @error('password') is-invalid @enderror"
+                               name="password"
+                               required
                                autocomplete="current-password"
                                placeholder="Password"
                                style="padding-right: 3rem;">
-                        <button type="button" 
-                                class="password-toggle" 
+                        <button type="button"
+                                class="password-toggle"
                                 onclick="togglePassword()"
                                 style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem;">
                             <i class="fas fa-eye"></i>
@@ -587,7 +587,7 @@
             </form>
             @endif
 
-            <div class="registration-section">
+            {{-- <div class="registration-section">
                 <p class="registration-text">Don't have an account?</p>
                 <div class="registration-links">
                     @if ($authService->getStaffSignupUrl())
@@ -597,7 +597,7 @@
                         <a class="registration-link" href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
                     @endif
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 </body>
