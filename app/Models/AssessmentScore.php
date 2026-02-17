@@ -86,6 +86,26 @@ class AssessmentScore extends Model
     }
 
     /**
+     * Scopes
+     */
+
+    /**
+     * Scope to only include published assessment scores.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', true);
+    }
+
+    /**
+     * Scope to only include unpublished assessment scores.
+     */
+    public function scopeUnpublished($query)
+    {
+        return $query->where('is_published', false);
+    }
+
+    /**
      * Computed Properties (Accessors)
      */
     public function getAssignmentAverageAttribute(): ?float

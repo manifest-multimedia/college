@@ -207,8 +207,10 @@ class TranscriptService
     protected function getOfflineExamScore($student, $subject)
     {
         // First, try to get from new assessment_scores table
+        // Only include published scores so unpublished results don't affect transcripts/CGPA
         $assessmentScore = AssessmentScore::where('course_id', $subject->id)
             ->where('student_id', $student->id)
+            ->where('is_published', true)
             ->latest('created_at')
             ->first();
 

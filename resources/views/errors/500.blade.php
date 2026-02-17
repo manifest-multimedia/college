@@ -1,20 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Server Error - {{ config('branding.institution.name', config('app.name')) }}</title>
+    @php
+        try {
+            $pageTitle = config('branding.institution.name') ?: config('app.name', 'Application');
+        } catch (\Throwable $e) {
+            $pageTitle = 'Application';
+        }
+    @endphp
+    <title>Server Error - {{ $pageTitle }}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset(config('branding.logo.favicon', '/favicon.ico')) }}">
+    @php
+        try {
+            $faviconPath = asset(config('branding.logo.favicon', '/favicon.ico'));
+        } catch (\Throwable $e) {
+            $faviconPath = '/favicon.ico';
+        }
+    @endphp
+    <link rel="icon" type="image/x-icon" href="{{ $faviconPath }}">
 
+    @php
+        try {
+            $primaryColor = config('branding.colors.primary', '#3B82F6');
+            $secondaryColor = config('branding.colors.secondary', '#64748B');
+            $accentColor = config('branding.colors.accent', '#10B981');
+        } catch (\Throwable $e) {
+            $primaryColor = '#3B82F6';
+            $secondaryColor = '#64748B';
+            $accentColor = '#10B981';
+        }
+    @endphp
     <style>
         :root {
-            --primary-color: {{ config('branding.colors.primary', '#3B82F6') }};
-            --secondary-color: {{ config('branding.colors.secondary', '#64748B') }};
-            --accent-color: {{ config('branding.colors.accent', '#10B981') }};
+            --primary-color: {{ $primaryColor }};
+            --secondary-color: {{ $secondaryColor }};
+            --accent-color: {{ $accentColor }};
             --danger-color: #DC2626;
         }
 
@@ -29,11 +54,13 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 1rem;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* Animated Background Elements */
@@ -293,6 +320,16 @@
                 font-size: 0.9375rem;
             }
         }
+
+        /* Prevent duplicate content if error page renders twice */
+        .error-container ~ .error-container,
+        .error-container ~ style,
+        .error-container ~ link,
+        .error-container ~ meta,
+        .error-container ~ title,
+        .error-container ~ script {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -302,14 +339,31 @@
             <!-- Institution Branding -->
             <div class="institution-branding">
                 <div class="institution-logo">
-                    @if(config('branding.logo.auth') || config('branding.logo.primary'))
-                        <img src="{{ asset(config('branding.logo.auth', config('branding.logo.primary'))) }}" alt="Logo">
+                    @php
+                        try {
+                            $logoPath = config('branding.logo.auth') ?: config('branding.logo.primary');
+                            $logoUrl = $logoPath ? asset($logoPath) : null;
+                        } catch (\Throwable $e) {
+                            $logoUrl = null;
+                        }
+                    @endphp
+                    @if($logoUrl)
+                        <img src="{{ $logoUrl }}" alt="Logo">
                     @else
                         <i class="fas fa-graduation-cap"></i>
                     @endif
                 </div>
-                @if(config('branding.theme_settings.show_institution_name', true))
-                    <div class="institution-name">{{ config('branding.institution.name', config('app.name')) }}</div>
+                @php
+                    try {
+                        $institutionName = config('branding.institution.name') ?: config('app.name', 'Laravel');
+                        $showName = config('branding.theme_settings.show_institution_name', true);
+                    } catch (\Throwable $e) {
+                        $institutionName = 'Laravel';
+                        $showName = true;
+                    }
+                @endphp
+                @if($showName)
+                    <div class="institution-name">{{ $institutionName }}</div>
                 @endif
             </div>
 
@@ -340,29 +394,49 @@
                     <i class="fas fa-sync-alt"></i>
                     Try Again
                 </button>
-                @auth
-                    <a href="{{ route('dashboard') }}" class="btn btn-secondary">
-                        <i class="fas fa-home"></i>
-                        Go to Dashboard
-                    </a>
-                @else
-                    <a href="{{ route('login') }}" class="btn btn-secondary">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Return to Login
-                    </a>
-                @endauth
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-home"></i>
+                    Go to Homepage
+                </a>
             </div>
 
             <!-- Support Information -->
-            @if(config('branding.institution.support_email') || config('branding.institution.website_url'))
+            @php
+                try {
+                    $supportEmail = config('branding.institution.support_email');
+                } catch (\Throwable $e) {
+                    $supportEmail = null;
+                }
+            @endphp
+            @if($supportEmail)
                 <div class="support-info">
                     Need immediate help? 
-                    @if(config('branding.institution.support_email'))
-                        Contact us at <a href="mailto:{{ config('branding.institution.support_email') }}">{{ config('branding.institution.support_email') }}</a>
-                    @endif
+                    Contact us at <a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>
                 </div>
             @endif
         </div>
     </div>
+    <script>
+        // Remove duplicate content if error page was rendered multiple times
+        (function() {
+            var containers = document.querySelectorAll('.error-container');
+            for (var i = 1; i < containers.length; i++) {
+                containers[i].remove();
+            }
+            // Remove any stray elements from concatenated HTML documents
+            var body = document.body;
+            var found = false;
+            var toRemove = [];
+            for (var j = 0; j < body.childNodes.length; j++) {
+                var node = body.childNodes[j];
+                if (node.nodeType === 1 && node.classList && node.classList.contains('error-container')) {
+                    if (found) { toRemove.push(node); } else { found = true; }
+                } else if (found && node.nodeType === 1 && !node.classList.contains('error-container') && node.tagName !== 'SCRIPT') {
+                    toRemove.push(node);
+                }
+            }
+            toRemove.forEach(function(el) { el.remove(); });
+        })();
+    </script>
 </body>
 </html>
