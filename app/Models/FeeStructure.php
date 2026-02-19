@@ -17,7 +17,13 @@ class FeeStructure extends Model
         'amount',
         'is_mandatory',
         'is_active',
+        'applicable_gender',
     ];
+
+    /** Applicable gender: 'all', 'male', 'female' */
+    public const APPLICABLE_GENDER_ALL = 'all';
+    public const APPLICABLE_GENDER_MALE = 'male';
+    public const APPLICABLE_GENDER_FEMALE = 'female';
 
     protected $casts = [
         'is_mandatory' => 'boolean',

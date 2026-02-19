@@ -79,6 +79,7 @@
                                         <th>Academic Year</th>
                                         <th>Semester</th>
                                         <th>Amount</th>
+                                        <th class="text-center">Applicable to</th>
                                         <th class="text-center">Mandatory</th>
                                         <th class="text-center">Status</th>
                                         <th>Actions</th>
@@ -91,7 +92,17 @@
                                             <td>{{ $feeStructure->collegeClass->name }}</td>
                                             <td>{{ $feeStructure->academicYear->name }}</td>
                                             <td>{{ $feeStructure->semester->name }}</td>
-                                            <td>${{ number_format($feeStructure->amount, 2) }}</td>
+                                            <td>GH₵{{ number_format($feeStructure->amount, 2) }}</td>
+                                            <td class="text-center">
+                                                @php $ag = $feeStructure->applicable_gender ?? 'all'; @endphp
+                                                @if($ag === 'female')
+                                                    <span class="badge bg-info">Female only</span>
+                                                @elseif($ag === 'male')
+                                                    <span class="badge bg-primary">Male only</span>
+                                                @else
+                                                    <span class="badge bg-secondary">All</span>
+                                                @endif
+                                            </td>
                                             <td class="text-center">
                                                 <span class="badge bg-{{ $feeStructure->is_mandatory ? 'info' : 'secondary' }}">
                                                     {{ $feeStructure->is_mandatory ? 'Yes' : 'No' }}
@@ -113,7 +124,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="text-center">No fee structures found</td>
+                                            <td colspan="9" class="text-center">No fee structures found</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -194,10 +205,23 @@
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">GH₵</span>
                                 <input type="number" wire:model="amount" id="amount" class="form-control @error('amount') is-invalid @enderror" step="0.01" min="0">
                             </div>
                             @error('amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="applicable_gender" class="form-label">Applicable to</label>
+                            <select wire:model="applicable_gender" id="applicable_gender" class="form-select @error('applicable_gender') is-invalid @enderror">
+                                <option value="all">All students</option>
+                                <option value="male">Male students only</option>
+                                <option value="female">Female students only</option>
+                            </select>
+                            <small class="text-muted">Use e.g. "Female only" for fees like female uniforms.</small>
+                            @error('applicable_gender')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -242,3 +266,24 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:init', function () {
+        Livewire.on('show-delete-modal', () => {
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                new bootstrap.Modal(deleteModal).show();
+            }
+        });
+
+        Livewire.on('close-delete-modal', () => {
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                const modal = bootstrap.Modal.getInstance(deleteModal);
+                if (modal) modal.hide();
+            }
+        });
+    });
+</script>
+@endpush

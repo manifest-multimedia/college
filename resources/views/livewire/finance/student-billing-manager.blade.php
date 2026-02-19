@@ -194,6 +194,9 @@
                                                 @if ($fee['is_mandatory'])
                                                     <span class="badge bg-primary ms-2">Mandatory</span>
                                                 @endif
+                                                @if (!empty($fee['applicable_gender']) && $fee['applicable_gender'] !== 'all')
+                                                    <span class="badge bg-info ms-1">{{ $fee['applicable_gender'] === 'female' ? 'Female only' : 'Male only' }}</span>
+                                                @endif
                                             </span>
                                             <strong>GH₵ {{ number_format($fee['amount'], 2) }}</strong>
                                         </label>
@@ -201,7 +204,7 @@
                                 @endforeach
                             </div>
                             <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are automatically selected and cannot be deselected.
+                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are automatically selected. Only fees applicable to this student’s gender are shown.
                             </small>
                         </div>
 
@@ -232,8 +235,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>This will generate bills for all active students in the
-                        selected program.
+                        <i class="fas fa-info-circle me-2"></i>This will generate bills for active students in the
+                        selected program. Optionally select a batch (cohort) to bill only that group.
                     </div>
 
                     <div class="mb-3">
@@ -275,6 +278,17 @@
                         @enderror
                     </div>
 
+                    <div class="mb-3">
+                        <label for="batchCohort" class="form-label">Batch (Cohort)</label>
+                        <select id="batchCohort" wire:model.live="batchCohortId" class="form-select">
+                            <option value="">All batches in program</option>
+                            @foreach ($cohorts as $cohort)
+                                <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Optional. Select a batch to bill only students in that cohort.</small>
+                    </div>
+
                     @if (!empty($batchAvailableFees))
                         <div class="mb-3">
                             <label class="form-label">Select Fees to Include</label>
@@ -292,6 +306,9 @@
                                                 @if ($fee['is_mandatory'])
                                                     <span class="badge bg-primary ms-2">Mandatory</span>
                                                 @endif
+                                                @if (!empty($fee['applicable_gender']) && $fee['applicable_gender'] !== 'all')
+                                                    <span class="badge bg-info ms-1">{{ $fee['applicable_gender'] === 'female' ? 'Female only' : 'Male only' }}</span>
+                                                @endif
                                             </span>
                                             <strong>GH₵ {{ number_format($fee['amount'], 2) }}</strong>
                                         </label>
@@ -299,7 +316,7 @@
                                 @endforeach
                             </div>
                             <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are automatically selected and cannot be deselected.
+                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are auto-selected. Female/Male-only fees are applied only to students of that gender when bills are generated.
                             </small>
                         </div>
 

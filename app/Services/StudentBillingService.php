@@ -38,11 +38,16 @@ class StudentBillingService
                 throw new \Exception('Student already has a bill for this academic year and semester');
             }
 
-            // Get all applicable fee structures for this student's class
+            // Get all applicable fee structures for this student's class (and gender where applicable)
             $feeStructuresQuery = FeeStructure::where('college_class_id', $student->college_class_id)
                 ->where('academic_year_id', $academicYearId)
                 ->where('semester_id', $semesterId)
-                ->where('is_active', true);
+                ->where('is_active', true)
+                ->where(function ($q) use ($student) {
+                    $q->whereNull('applicable_gender')
+                        ->orWhere('applicable_gender', 'all')
+                        ->orWhereRaw('LOWER(applicable_gender) = LOWER(?)', [trim($student->gender ?? '')]);
+                });
 
             // If specific fees are selected, filter by those IDs
             if ($selectedFeeStructureIds !== null && ! empty($selectedFeeStructureIds)) {

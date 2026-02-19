@@ -50,6 +50,9 @@ class StudentBillingManager extends Component
 
     public $batchClassId = null;
 
+    /** Optional: restrict batch generation to this cohort only. */
+    public $batchCohortId = null;
+
     public $batchAvailableFees = [];
 
     public $batchSelectedFeeIds = [];
@@ -122,13 +125,22 @@ class StudentBillingManager extends Component
             $student = Student::find($this->newBillStudentId);
 
             if ($student && $student->college_class_id) {
-                $this->availableFees = FeeStructure::with('feeType')
+                $studentGender = $student->gender ? strtolower(trim($student->gender)) : '';
+                $feeStructures = FeeStructure::with('feeType')
                     ->where('college_class_id', $student->college_class_id)
                     ->where('academic_year_id', $this->newBillAcademicYearId)
                     ->where('semester_id', $this->newBillSemesterId)
                     ->where('is_active', true)
-                    ->get()
-                    ->toArray();
+                    ->get();
+
+                // Only include fees applicable to this student's gender (all, or matching male/female)
+                $this->availableFees = $feeStructures->filter(function ($fs) use ($studentGender) {
+                    $ag = $fs->applicable_gender ?? 'all';
+                    if (empty($ag) || $ag === 'all') {
+                        return true;
+                    }
+                    return $studentGender && strtolower($ag) === $studentGender;
+                })->values()->toArray();
 
                 // Auto-select all mandatory fees
                 $this->selectedFeeIds = collect($this->availableFees)
@@ -153,7 +165,7 @@ class StudentBillingManager extends Component
     public function closeBatchBillsModal()
     {
         $this->showBatchBillsModal = false;
-        $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId', 'batchAvailableFees', 'batchSelectedFeeIds']);
+        $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId', 'batchCohortId', 'batchAvailableFees', 'batchSelectedFeeIds']);
         $this->resetValidation();
     }
 
@@ -239,13 +251,18 @@ class StudentBillingManager extends Component
 
         try {
             $billingService = new StudentBillingService;
-            $students = Student::where('college_class_id', $this->batchClassId)
-                ->get();
+            $studentsQuery = Student::where('college_class_id', $this->batchClassId);
+            if (! empty($this->batchCohortId)) {
+                $studentsQuery->where('cohort_id', $this->batchCohortId);
+            }
+            $students = $studentsQuery->get();
 
             if ($students->isEmpty()) {
-
-                session()->flash('warning', 'No active students found in the selected program!');
-                $this->dispatch('notify', ['type' => 'warning', 'message' => 'No active students found in the selected program!']);
+                $scope = ! empty($this->batchCohortId)
+                    ? 'in the selected program and batch (cohort)'
+                    : 'in the selected program';
+                session()->flash('warning', "No active students found {$scope}.");
+                $this->dispatch('notify', ['type' => 'warning', 'message' => "No active students found {$scope}."]);
 
                 return;
             }

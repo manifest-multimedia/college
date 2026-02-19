@@ -28,6 +28,9 @@ class FeeStructureManager extends Component
 
     public $is_active = true;
 
+    /** Applicable to: all, male, female */
+    public $applicable_gender = 'all';
+
     public $editingFeeStructureId = null;
 
     public $feeStructureIdToDelete = null;
@@ -48,6 +51,7 @@ class FeeStructureManager extends Component
         'amount' => 'required|numeric|min:0',
         'is_mandatory' => 'boolean',
         'is_active' => 'boolean',
+        'applicable_gender' => 'required|in:all,male,female',
     ];
 
     public function render()
@@ -107,11 +111,12 @@ class FeeStructureManager extends Component
 
         $this->validate();
 
-        // Check for duplicate fee structure
+        // Check for duplicate fee structure (same type, class, year, semester, and gender targeting)
         $existingStructure = FeeStructure::where('fee_type_id', $this->fee_type_id)
             ->where('college_class_id', $this->college_class_id)
             ->where('academic_year_id', $this->academic_year_id)
             ->where('semester_id', $this->semester_id)
+            ->where('applicable_gender', $this->applicable_gender)
             ->first();
 
         if ($existingStructure) {
@@ -128,6 +133,7 @@ class FeeStructureManager extends Component
             'amount' => $this->amount,
             'is_mandatory' => $this->is_mandatory,
             'is_active' => $this->is_active,
+            'applicable_gender' => $this->applicable_gender,
         ]);
 
         $this->resetInputFields();
@@ -145,6 +151,7 @@ class FeeStructureManager extends Component
         $this->amount = $feeStructure->amount;
         $this->is_mandatory = $feeStructure->is_mandatory;
         $this->is_active = $feeStructure->is_active;
+        $this->applicable_gender = $feeStructure->applicable_gender ?? 'all';
     }
 
     public function updateFeeStructure()
@@ -156,6 +163,7 @@ class FeeStructureManager extends Component
             ->where('college_class_id', $this->college_class_id)
             ->where('academic_year_id', $this->academic_year_id)
             ->where('semester_id', $this->semester_id)
+            ->where('applicable_gender', $this->applicable_gender)
             ->where('id', '!=', $this->editingFeeStructureId)
             ->first();
 
@@ -174,6 +182,7 @@ class FeeStructureManager extends Component
             'amount' => $this->amount,
             'is_mandatory' => $this->is_mandatory,
             'is_active' => $this->is_active,
+            'applicable_gender' => $this->applicable_gender,
         ]);
 
         $this->resetInputFields();
@@ -190,15 +199,17 @@ class FeeStructureManager extends Component
     {
         $feeStructure = FeeStructure::findOrFail($this->feeStructureIdToDelete);
 
-        // Check if fee structure has any student billings
-        if ($feeStructure->studentBillings()->count() > 0) {
-            session()->flash('error', 'Fee structure cannot be deleted because it is associated with student billings.');
+        // Check if fee structure has any bill items
+        if ($feeStructure->billItems()->count() > 0) {
+            session()->flash('error', 'Fee structure cannot be deleted because it is associated with student bill items.');
 
             return;
         }
 
         $feeStructure->delete();
+        $this->feeStructureIdToDelete = null;
         session()->flash('message', 'Fee structure deleted successfully.');
+        $this->dispatch('close-delete-modal');
     }
 
     public function resetInputFields()
@@ -210,6 +221,7 @@ class FeeStructureManager extends Component
         $this->amount = null;
         $this->is_mandatory = true;
         $this->is_active = true;
+        $this->applicable_gender = 'all';
         $this->editingFeeStructureId = null;
         $this->resetErrorBag();
     }
