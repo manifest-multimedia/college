@@ -17,7 +17,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Filters and Search -->
         <div class="row mb-4">
             <div class="col-md-12">
@@ -64,7 +64,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="row">
             <!-- Students List -->
             <div class="col-md-5">
@@ -109,7 +109,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Student Bill Details -->
             <div class="col-md-7">
                 <div class="card">
@@ -170,9 +170,9 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <hr>
-                            
+
                             <!-- Payment History -->
                             <h6 class="mt-4">Payment History</h6>
                             @if($loadedBill->payments->isEmpty())
@@ -217,7 +217,7 @@
                         @endif
                     </div>
                 </div>
-                
+
                 <!-- Recent Payments -->
                 <div class="card mt-4">
                     <div class="card-header">
@@ -263,7 +263,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Payment Form Modal -->
     <div class="modal fade" id="paymentFormModal" tabindex="-1" wire:ignore.self>
         <div class="modal-dialog">
@@ -285,18 +285,18 @@
                             <div class="mb-3">
                                 <label for="paymentAmount" class="form-label">Payment Amount</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" step="0.01" class="form-control @error('paymentAmount') is-invalid @enderror" 
+                                    <span class="input-group-text">GH₵</span>
+                                    <input type="number" step="0.01" class="form-control @error('paymentAmount') is-invalid @enderror"
                                         id="paymentAmount" wire:model="paymentAmount">
                                 </div>
                                 @error('paymentAmount')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="paymentMethod" class="form-label">Payment Method</label>
-                                <select class="form-select @error('paymentMethod') is-invalid @enderror" 
+                                <select class="form-select @error('paymentMethod') is-invalid @enderror"
                                     id="paymentMethod" wire:model="paymentMethod">
                                     @foreach($paymentMethods as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
@@ -306,29 +306,29 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="referenceNumber" class="form-label">Reference Number</label>
-                                <input type="text" class="form-control @error('referenceNumber') is-invalid @enderror" 
-                                    id="referenceNumber" wire:model="referenceNumber" 
+                                <input type="text" class="form-control @error('referenceNumber') is-invalid @enderror"
+                                    id="referenceNumber" wire:model="referenceNumber"
                                     placeholder="Bank transfer reference, cheque number, etc.">
                                 @error('referenceNumber')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="paymentDate" class="form-label">Payment Date</label>
-                                <input type="date" class="form-control @error('paymentDate') is-invalid @enderror" 
+                                <input type="date" class="form-control @error('paymentDate') is-invalid @enderror"
                                     id="paymentDate" wire:model="paymentDate">
                                 @error('paymentDate')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="note" class="form-label">Note</label>
-                                <textarea class="form-control @error('note') is-invalid @enderror" 
+                                <textarea class="form-control @error('note') is-invalid @enderror"
                                     id="note" wire:model="note" rows="2"></textarea>
                                 @error('note')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -346,7 +346,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Payment Details Modal -->
     <div class="modal fade" id="paymentDetailsModal" tabindex="-1" wire:ignore.self>
         <div class="modal-dialog">
@@ -362,56 +362,56 @@
                             <h6>Receipt #: {{ $this->selectedPayment->receipt_number }}</h6>
                             <p class="mb-0">Date: {{ $this->selectedPayment->payment_date->format('F d, Y') }}</p>
                         </div>
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Student:</strong></div>
                             <div class="col-sm-8">{{ $this->selectedPayment->student->first_name }} {{ $this->selectedPayment->student->last_name }}</div>
                         </div>
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Student ID:</strong></div>
                             <div class="col-sm-8">{{ $this->selectedPayment->student->student_id }}</div>
                         </div>
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Academic Year:</strong></div>
                             <div class="col-sm-8">{{ $this->selectedPayment->studentFeeBill->academicYear->name }}</div>
                         </div>
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Semester:</strong></div>
                             <div class="col-sm-8">{{ $this->selectedPayment->studentFeeBill->semester->name }}</div>
                         </div>
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Amount:</strong></div>
                             <div class="col-sm-8 fw-bold">GH₵ {{ number_format($this->selectedPayment->amount, 2) }}</div>
                         </div>
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Payment Method:</strong></div>
                             <div class="col-sm-8">{{ $this->selectedPayment->payment_method }}</div>
                         </div>
-                        
+
                         @if($this->selectedPayment->reference_number)
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Reference:</strong></div>
                                 <div class="col-sm-8">{{ $this->selectedPayment->reference_number }}</div>
                             </div>
                         @endif
-                        
+
                         @if($this->selectedPayment->note)
                             <div class="row mb-3">
                                 <div class="col-sm-4"><strong>Note:</strong></div>
                                 <div class="col-sm-8">{{ $this->selectedPayment->note }}</div>
                             </div>
                         @endif
-                        
+
                         <div class="row mb-3">
                             <div class="col-sm-4"><strong>Recorded By:</strong></div>
                             <div class="col-sm-8">{{ $this->selectedPayment->recordedBy->name }}</div>
                         </div>
-                        
+
                         <div class="text-center mt-4">
                             <p><em>Thank you for your payment!</em></p>
                         </div>
@@ -430,35 +430,35 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         document.addEventListener('livewire:initialized', () => {
             const paymentFormModal = new bootstrap.Modal(document.getElementById('paymentFormModal'));
             const paymentDetailsModal = new bootstrap.Modal(document.getElementById('paymentDetailsModal'));
-            
+
             @this.on('show-payment-form', () => {
                 paymentFormModal.show();
             });
-            
+
             @this.on('hide-payment-form', () => {
                 paymentFormModal.hide();
             });
-            
+
             @this.on('show-payment-details', () => {
                 paymentDetailsModal.show();
             });
-            
+
             @this.on('hide-payment-details', () => {
                 paymentDetailsModal.hide();
             });
-            
+
             Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
                 succeed(({ snapshot, effect }) => {
                     // Handle showing/hiding modals after component updates
                     if (@this.showPaymentForm) {
                         paymentFormModal.show();
                     }
-                    
+
                     if (@this.showPaymentDetails) {
                         paymentDetailsModal.show();
                     }
@@ -473,12 +473,12 @@
             body * {
                 visibility: hidden;
             }
-            
+
             #paymentDetailsModal,
             #paymentDetailsModal * {
                 visibility: visible;
             }
-            
+
             #paymentDetailsModal {
                 position: fixed;
                 left: 0;
@@ -489,23 +489,23 @@
                 padding: 20px;
                 background: white;
             }
-            
+
             #paymentDetailsModal .modal-dialog {
                 max-width: 100%;
                 margin: 0;
             }
-            
+
             #paymentDetailsModal .modal-content {
                 border: none;
                 box-shadow: none;
             }
-            
+
             /* Hide modal header buttons and footer */
             #paymentDetailsModal .modal-header .btn-close,
             #paymentDetailsModal .modal-footer {
                 display: none !important;
             }
-            
+
             /* Optimize receipt content for printing */
             #paymentDetailsModal .modal-body {
                 padding: 20px;
