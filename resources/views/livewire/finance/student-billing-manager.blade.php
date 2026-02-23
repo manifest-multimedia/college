@@ -210,14 +210,14 @@
 
                         <div class="alert alert-info">
                             <strong>Total Selected:</strong> 
-                            GH₵ {{ number_format(collect($availableFees)->whereIn('id', $selectedFeeIds)->sum('amount'), 2) }}
+                            GH₵ {{ number_format($newBillTotalSelected, 2) }}
                         </div>
                     @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" wire:click="closeNewBillModal">Cancel</button>
                     <button type="button" class="btn btn-primary" wire:click="createNewBill" 
-                        @if (empty($selectedFeeIds)) disabled @endif>Generate Bill</button>
+                        @if (empty($availableFees) || $newBillTotalSelected <= 0) disabled @endif>Generate Bill</button>
                 </div>
             </div>
         </div>
@@ -290,6 +290,13 @@
                     </div>
 
                     @if (!empty($batchAvailableFees))
+                        @php
+                            $batchFeesCol = collect($batchAvailableFees)->map(fn ($f) => ['id' => (int) ($f['id'] ?? 0), 'amount' => (float) ($f['amount'] ?? 0), 'is_mandatory' => $f['is_mandatory'] ?? false]);
+                            $batchMandatoryIds = $batchFeesCol->where('is_mandatory', true)->pluck('id')->values()->toArray();
+                            $batchUserIds = array_values(array_unique(array_map('intval', $batchSelectedFeeIds ?? [])));
+                            $batchEffectiveIds = array_values(array_unique(array_merge($batchMandatoryIds, $batchUserIds)));
+                            $batchTotalSelected = $batchFeesCol->whereIn('id', $batchEffectiveIds)->sum('amount');
+                        @endphp
                         <div class="mb-3">
                             <label class="form-label">Select Fees to Include</label>
                             <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
@@ -297,7 +304,7 @@
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" 
                                             value="{{ $fee['id'] }}" 
-                                            wire:model="batchSelectedFeeIds"
+                                            wire:model.live="batchSelectedFeeIds"
                                             id="batchFee{{ $fee['id'] }}"
                                             @if ($fee['is_mandatory']) disabled checked @endif>
                                         <label class="form-check-label d-flex justify-content-between w-100" for="batchFee{{ $fee['id'] }}">
@@ -316,13 +323,13 @@
                                 @endforeach
                             </div>
                             <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are auto-selected. Female/Male-only fees are applied only to students of that gender when bills are generated.
+                                <i class="fas fa-info-circle me-1"></i>Mandatory fees are auto-selected. Female/Male-only fees are applied only to students of that gender when bills are generated. @if(collect($batchAvailableFees)->where('is_mandatory', true)->isEmpty()) If none are mandatory, select at least one fee above to generate bills. @endif
                             </small>
                         </div>
 
                         <div class="alert alert-info">
                             <strong>Total Selected:</strong> 
-                            GH₵ {{ number_format(collect($batchAvailableFees)->whereIn('id', $batchSelectedFeeIds)->sum('amount'), 2) }}
+                            GH₵ {{ number_format($batchTotalSelected, 2) }}
                         </div>
                     @endif
                 </div>
@@ -330,7 +337,7 @@
                     <button type="button" class="btn btn-secondary"
                         wire:click="closeBatchBillsModal">Cancel</button>
                     <button type="button" class="btn btn-success" wire:click="generateBatchBills"
-                        @if (empty($batchSelectedFeeIds)) disabled @endif>Generate Bills</button>
+                        @if (empty($batchAvailableFees) || ($batchTotalSelected ?? 0) <= 0) disabled @endif>Generate Bills</button>
                 </div>
             </div>
         </div>

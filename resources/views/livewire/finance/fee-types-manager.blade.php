@@ -60,7 +60,7 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                <button wire:click="editFeeType({{ $feeType->id }})" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#feeTypeFormModal">
+                                                <button wire:click="editFeeType({{ $feeType->id }})" class="btn btn-info btn-sm">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                                 <button wire:click="confirmFeeTypeDeletion({{ $feeType->id }})" class="btn btn-danger btn-sm">
@@ -148,4 +148,37 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('livewire:init', function () {
+            Livewire.on('open-fee-type-form-modal', () => {
+                const modal = document.getElementById('feeTypeFormModal');
+                if (modal) {
+                    new bootstrap.Modal(modal).show();
+                }
+            });
+            Livewire.on('close-fee-type-form-modal', () => {
+                const modal = document.getElementById('feeTypeFormModal');
+                if (modal) {
+                    const instance = bootstrap.Modal.getInstance(modal);
+                    if (instance) instance.hide();
+                }
+            });
+            Livewire.on('show-delete-modal', () => {
+                const modal = document.getElementById('confirmDeleteModal');
+                if (modal) {
+                    new bootstrap.Modal(modal).show();
+                }
+            });
+            Livewire.on('close-delete-modal', () => {
+                const modal = document.getElementById('confirmDeleteModal');
+                if (modal) {
+                    const instance = bootstrap.Modal.getInstance(modal);
+                    if (instance) instance.hide();
+                }
+            });
+        });
+    </script>
+    @endpush
 </div>

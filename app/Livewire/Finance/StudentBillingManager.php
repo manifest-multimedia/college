@@ -59,6 +59,26 @@ class StudentBillingManager extends Component
 
     public $showBatchBillsModal = false;
 
+    /**
+     * Effective selected fee IDs = mandatory fees (always included, not submitted when checkboxes are disabled)
+     * + any optional fees the user checked. Works when there are zero mandatory fees (user selection only).
+     * Uses strict int comparison so IDs match after Livewire serialization (string vs int).
+     */
+    protected function getEffectiveFeeSelection(array $availableFees, array $selectedIds): array
+    {
+        $fees = collect($availableFees)->map(fn ($f) => [
+            'id' => (int) ($f['id'] ?? 0),
+            'amount' => (float) ($f['amount'] ?? 0),
+            'is_mandatory' => $f['is_mandatory'] ?? false,
+        ]);
+        $mandatoryIds = $fees->where('is_mandatory', true)->pluck('id')->values()->toArray();
+        $userIds = array_values(array_unique(array_map('intval', $selectedIds)));
+        $effectiveIds = array_values(array_unique(array_merge($mandatoryIds, $userIds)));
+        $total = $fees->whereIn('id', $effectiveIds)->sum('amount');
+
+        return ['ids' => $effectiveIds, 'total' => round($total, 2)];
+    }
+
     protected $rules = [
         'newBillStudentId' => 'required|exists:students,id',
         'newBillAcademicYearId' => 'required|exists:academic_years,id',
@@ -210,8 +230,9 @@ class StudentBillingManager extends Component
     {
         $this->validate();
 
-        // Validate that at least one fee is selected
-        if (empty($this->selectedFeeIds)) {
+        $effective = $this->getEffectiveFeeSelection($this->availableFees, $this->selectedFeeIds ?? []);
+
+        if (empty($effective['ids'])) {
             session()->flash('error', 'Please select at least one fee to include in the bill.');
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Please select at least one fee to include in the bill.']);
 
@@ -222,7 +243,7 @@ class StudentBillingManager extends Component
             $billingService = new StudentBillingService;
             $student = Student::findOrFail($this->newBillStudentId);
 
-            $bill = $billingService->generateBill($student, $this->newBillAcademicYearId, $this->newBillSemesterId, $this->selectedFeeIds);
+            $bill = $billingService->generateBill($student, $this->newBillAcademicYearId, $this->newBillSemesterId, $effective['ids']);
 
             $this->closeNewBillModal();
             session()->flash('success', 'Student bill created successfully!');
@@ -241,8 +262,9 @@ class StudentBillingManager extends Component
             'batchClassId' => 'required|exists:college_classes,id',
         ]);
 
-        // Validate that at least one fee is selected
-        if (empty($this->batchSelectedFeeIds)) {
+        $effective = $this->getEffectiveFeeSelection($this->batchAvailableFees, $this->batchSelectedFeeIds ?? []);
+
+        if (empty($effective['ids'])) {
             session()->flash('error', 'Please select at least one fee to include in the bills.');
             $this->dispatch('notify', ['type' => 'error', 'message' => 'Please select at least one fee to include in the bills.']);
 
@@ -269,7 +291,7 @@ class StudentBillingManager extends Component
 
             $billCount = 0;
             foreach ($students as $student) {
-                $billingService->generateBill($student, $this->batchAcademicYearId, $this->batchSemesterId, $this->batchSelectedFeeIds);
+                $billingService->generateBill($student, $this->batchAcademicYearId, $this->batchSemesterId, $effective['ids']);
                 $billCount++;
             }
 
@@ -317,6 +339,13 @@ class StudentBillingManager extends Component
             ->latest()
             ->paginate(10);
 
+        $newBillEffective = ! empty($this->availableFees)
+            ? $this->getEffectiveFeeSelection($this->availableFees, $this->selectedFeeIds ?? [])
+            : ['ids' => [], 'total' => 0];
+        $batchEffective = ! empty($this->batchAvailableFees)
+            ? $this->getEffectiveFeeSelection($this->batchAvailableFees, $this->batchSelectedFeeIds ?? [])
+            : ['ids' => [], 'total' => 0];
+
         return view('livewire.finance.student-billing-manager', [
             'bills' => $bills,
             'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
@@ -324,6 +353,8 @@ class StudentBillingManager extends Component
             'classes' => CollegeClass::orderBy('name')->get(),
             'cohorts' => Cohort::orderBy('name')->get(),
             'students' => Student::select('id', 'student_id', 'first_name', 'last_name', 'other_name')->orderBy('first_name')->get(),
+            'newBillTotalSelected' => $newBillEffective['total'],
+            'batchTotalSelected' => $batchEffective['total'],
         ]);
     }
 }

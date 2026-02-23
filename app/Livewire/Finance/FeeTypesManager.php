@@ -72,6 +72,7 @@ class FeeTypesManager extends Component
         ]);
 
         $this->resetInputFields();
+        $this->dispatch('close-fee-type-form-modal');
         session()->flash('message', 'Fee type created successfully.');
     }
 
@@ -83,6 +84,7 @@ class FeeTypesManager extends Component
         $this->code = $feeType->code;
         $this->description = $feeType->description;
         $this->is_active = $feeType->is_active;
+        $this->dispatch('open-fee-type-form-modal');
     }
 
     public function updateFeeType()
@@ -108,6 +110,7 @@ class FeeTypesManager extends Component
         ]);
 
         $this->resetInputFields();
+        $this->dispatch('close-fee-type-form-modal');
         session()->flash('message', 'Fee type updated successfully.');
     }
 
@@ -129,6 +132,8 @@ class FeeTypesManager extends Component
         }
 
         $feeType->delete();
+        $this->feeTypeIdToDelete = null;
+        $this->dispatch('close-delete-modal');
         session()->flash('message', 'Fee type deleted successfully.');
     }
 
