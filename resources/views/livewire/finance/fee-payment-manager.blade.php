@@ -153,7 +153,13 @@
                                     </div>
                                     <div>
                                         <span class="fs-6">Balance: </span>
-                                        <span class="fs-5 fw-bold text-danger">{{ number_format($loadedBill->balance, 2) }}</span>
+                                        @if($loadedBill->balance_display_type === 'credit')
+                                            <span class="fs-5 fw-bold text-success">(GH₵{{ number_format($loadedBill->balance_display_amount, 2) }})</span>
+                                        @elseif($loadedBill->balance_display_type === 'debit')
+                                            <span class="fs-5 fw-bold text-danger">GH₵{{ number_format($loadedBill->balance_display_amount, 2) }}</span>
+                                        @else
+                                            <span class="fs-5 fw-bold text-body">GH₵{{ number_format($loadedBill->balance_display_amount, 2) }}</span>
+                                        @endif
                                     </div>
                                     <div class="mt-2">
                                         <span class="fs-6">Payment Status: </span>
@@ -163,9 +169,9 @@
                                         @if($status === 'paid')
                                             <span class="badge bg-success fs-6">PAID (100%)</span>
                                         @elseif($status === 'partial')
-                                            <span class="badge bg-primary fs-6">PARTIAL ({{ number_format($loadedBill->payment_percentage, 1) }}%)</span>
+                                            <span class="badge bg-primary fs-6">PARTIAL ({{ number_format($loadedBill->display_payment_percentage, 1) }}%)</span>
                                         @else
-                                            <span class="badge bg-danger fs-6">UNPAID ({{ number_format($loadedBill->payment_percentage, 1) }}%)</span>
+                                            <span class="badge bg-danger fs-6">UNPAID ({{ number_format($loadedBill->display_payment_percentage, 1) }}%)</span>
                                         @endif
                                     </div>
                                 </div>
@@ -278,7 +284,15 @@
                             <p><strong>Student:</strong> {{ $loadedStudent->first_name }} {{ $loadedStudent->last_name }}</p>
                             <p><strong>Bill Amount:</strong> {{ number_format($loadedBill->total_amount, 2) }}</p>
                             <p><strong>Amount Paid:</strong> {{ number_format($loadedBill->total_paid, 2) }}</p>
-                            <p><strong>Balance:</strong> {{ number_format($loadedBill->balance, 2) }}</p>
+                            <p><strong>Balance:</strong>
+                                @if($loadedBill->balance_display_type === 'credit')
+                                    <span class="text-success fw-bold">(GH₵{{ number_format($loadedBill->balance_display_amount, 2) }})</span> credit
+                                @elseif($loadedBill->balance_display_type === 'debit')
+                                    GH₵{{ number_format($loadedBill->balance_display_amount, 2) }}
+                                @else
+                                    GH₵{{ number_format($loadedBill->balance_display_amount, 2) }}
+                                @endif
+                            </p>
                         </div>
                         <hr>
                         <form>
@@ -353,7 +367,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Payment Receipt</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" aria-label="Close" wire:click="closePaymentDetails"></button>
                 </div>
                 <div class="modal-body">
                     @if($this->selectedPayment)
@@ -412,6 +426,16 @@
                             <div class="col-sm-8">{{ $this->selectedPayment->recordedBy->name }}</div>
                         </div>
 
+                        @php
+                            $bill = $this->selectedPayment->studentFeeBill;
+                            $overpayment = max(0, (float) $bill->amount_paid - (float) $bill->total_amount);
+                        @endphp
+                        @if($overpayment > 0)
+                            <div class="alert alert-info mt-3 mb-0">
+                                <strong>Overpayment on this bill:</strong> GH₵ {{ number_format($overpayment, 2) }}. This amount is recorded on the current bill. Applying credit to future bills is not yet supported.
+                            </div>
+                        @endif
+
                         <div class="text-center mt-4">
                             <p><em>Thank you for your payment!</em></p>
                         </div>
@@ -422,7 +446,7 @@
                     @endif
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" wire:click="closePaymentDetails">Close</button>
                     <button type="button" class="btn btn-primary" onclick="window.print()">
                         <i class="fa fa-print"></i> Print Receipt
                     </button>
@@ -433,8 +457,10 @@
 
     <script>
         document.addEventListener('livewire:initialized', () => {
-            const paymentFormModal = new bootstrap.Modal(document.getElementById('paymentFormModal'));
-            const paymentDetailsModal = new bootstrap.Modal(document.getElementById('paymentDetailsModal'));
+            const paymentFormModalEl = document.getElementById('paymentFormModal');
+            const paymentDetailsModalEl = document.getElementById('paymentDetailsModal');
+            const paymentFormModal = new bootstrap.Modal(paymentFormModalEl);
+            const paymentDetailsModal = new bootstrap.Modal(paymentDetailsModalEl);
 
             @this.on('show-payment-form', () => {
                 paymentFormModal.show();
@@ -452,17 +478,13 @@
                 paymentDetailsModal.hide();
             });
 
-            Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
-                succeed(({ snapshot, effect }) => {
-                    // Handle showing/hiding modals after component updates
-                    if (@this.showPaymentForm) {
-                        paymentFormModal.show();
-                    }
+            // When receipt modal is closed by backdrop or Escape, sync Livewire state so it doesn't reopen on next update
+            paymentDetailsModalEl.addEventListener('hidden.bs.modal', () => {
+                @this.call('closePaymentDetails');
+            });
 
-                    if (@this.showPaymentDetails) {
-                        paymentDetailsModal.show();
-                    }
-                });
+            paymentFormModalEl.addEventListener('hidden.bs.modal', () => {
+                @this.call('closePaymentForm');
             });
         });
     </script>

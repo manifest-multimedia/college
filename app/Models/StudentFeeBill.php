@@ -97,6 +97,57 @@ class StudentFeeBill extends Model
     }
 
     /**
+     * Display payment percentage: cap at 100% so we never show "155%" etc.
+     * When overpaid, show 100% and use balance display for the credit (green, in brackets).
+     */
+    public function getDisplayPaymentPercentageAttribute(): float
+    {
+        $pct = (float) $this->payment_percentage;
+
+        return round(min(100.0, $pct), 1);
+    }
+
+    /**
+     * Overpayment amount (credit in favor of student). Zero if not overpaid.
+     */
+    public function getOverpaymentAmountAttribute(): float
+    {
+        return max(0, (float) $this->amount_paid - (float) $this->total_amount);
+    }
+
+    /**
+     * Balance display type for UI: 'credit' (overpaid), 'debit' (amount owed), or 'zero'.
+     */
+    public function getBalanceDisplayTypeAttribute(): string
+    {
+        $over = $this->overpayment_amount;
+        if ($over > 0.005) {
+            return 'credit';
+        }
+        $bal = (float) $this->balance;
+        if ($bal > 0.005) {
+            return 'debit';
+        }
+
+        return 'zero';
+    }
+
+    /**
+     * Amount to show for balance display: credit amount (positive), balance (positive), or 0.
+     */
+    public function getBalanceDisplayAmountAttribute(): float
+    {
+        if ($this->balance_display_type === 'credit') {
+            return $this->overpayment_amount;
+        }
+        if ($this->balance_display_type === 'debit') {
+            return (float) $this->balance;
+        }
+
+        return 0.0;
+    }
+
+    /**
      * Get simple payment status based on balance
      * Returns: 'paid', 'partial', or 'unpaid'
      */
@@ -131,16 +182,18 @@ class StudentFeeBill extends Model
     }
 
     /**
-     * Get HTML badge for payment status
+     * Get HTML badge for payment status.
+     * Paid is always shown as 100%; partial/unpaid show actual percentage (capped at 100 for display).
      */
     public function getStatusBadgeHtml(): string
     {
         $status = $this->getPaymentStatus();
+        $displayPct = $this->display_payment_percentage;
 
         return match ($status) {
             'paid' => '<span class="badge bg-success">PAID (100%)</span>',
-            'partial' => '<span class="badge bg-primary">PARTIAL ('.number_format($this->payment_percentage, 1).'%)</span>',
-            'unpaid' => '<span class="badge bg-danger">UNPAID ('.number_format($this->payment_percentage, 1).'%)</span>',
+            'partial' => '<span class="badge bg-primary">PARTIAL ('.number_format($displayPct, 1).'%)</span>',
+            'unpaid' => '<span class="badge bg-danger">UNPAID ('.number_format($displayPct, 1).'%)</span>',
             default => '<span class="badge bg-secondary">UNKNOWN</span>',
         };
     }

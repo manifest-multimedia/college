@@ -134,4 +134,63 @@ class StudentFeeBillPaymentStatusTest extends TestCase
         $this->assertStringContainsString('bg-danger', $unpaidBill->getStatusBadgeHtml());
         $this->assertStringContainsString('UNPAID', $unpaidBill->getStatusBadgeHtml());
     }
+
+    /**
+     * Display percentage is capped at 100% when overpaid
+     */
+    public function test_display_payment_percentage_capped_at_100(): void
+    {
+        $bill = new StudentFeeBill([
+            'total_amount' => 1000.00,
+            'amount_paid' => 1554.00,
+            'balance' => 0.00,
+            'payment_percentage' => 155.4,
+        ]);
+
+        $this->assertEquals(100.0, $bill->display_payment_percentage);
+    }
+
+    /**
+     * Overpayment amount is correct when paid more than total
+     */
+    public function test_overpayment_amount(): void
+    {
+        $bill = new StudentFeeBill([
+            'total_amount' => 1000.00,
+            'amount_paid' => 1200.00,
+            'balance' => 0.00,
+        ]);
+
+        $this->assertEquals(200.0, $bill->overpayment_amount);
+    }
+
+    /**
+     * Balance display type: credit when overpaid, debit when balance due, zero when exact
+     */
+    public function test_balance_display_type_and_amount(): void
+    {
+        $overpaid = new StudentFeeBill([
+            'total_amount' => 100.00,
+            'amount_paid' => 150.00,
+            'balance' => 0.00,
+        ]);
+        $this->assertEquals('credit', $overpaid->balance_display_type);
+        $this->assertEquals(50.0, $overpaid->balance_display_amount);
+
+        $underpaid = new StudentFeeBill([
+            'total_amount' => 100.00,
+            'amount_paid' => 40.00,
+            'balance' => 60.00,
+        ]);
+        $this->assertEquals('debit', $underpaid->balance_display_type);
+        $this->assertEquals(60.0, $underpaid->balance_display_amount);
+
+        $exact = new StudentFeeBill([
+            'total_amount' => 100.00,
+            'amount_paid' => 100.00,
+            'balance' => 0.00,
+        ]);
+        $this->assertEquals('zero', $exact->balance_display_type);
+        $this->assertEquals(0.0, $exact->balance_display_amount);
+    }
 }

@@ -89,11 +89,14 @@ class CourseRegistrationForm extends Component
             return;
         }
 
-        $paymentPercentage = $feeBill->payment_percentage;
+        $paymentPercentage = $feeBill->display_payment_percentage;
 
-        if ($paymentPercentage >= self::PAYMENT_THRESHOLD) {
+        if ($feeBill->payment_percentage >= self::PAYMENT_THRESHOLD) {
             $this->registrationAllowed = true;
-            $this->registrationMessage = 'You have paid '.number_format($paymentPercentage, 1).'% of your fees and are eligible for course registration.';
+            $creditPart = $feeBill->balance_display_type === 'credit'
+                ? ' Credit balance: (GH₵'.number_format($feeBill->balance_display_amount, 2).').'
+                : '';
+            $this->registrationMessage = 'You have paid '.number_format($paymentPercentage, 1).'% of your fees and are eligible for course registration.'.$creditPart;
             $this->registrationMessageType = 'success';
         } else {
             $this->registrationAllowed = false;

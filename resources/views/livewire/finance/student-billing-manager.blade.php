@@ -91,7 +91,15 @@
                                     <td>{{ $bill->semester->name }}</td>
                                     <td>GH₵ {{ number_format($bill->total_amount, 2) }}</td>
                                     <td>GH₵ {{ number_format($bill->amount_paid, 2) }}</td>
-                                    <td>GH₵ {{ number_format($bill->balance, 2) }}</td>
+                                    <td>
+                                        @if($bill->balance_display_type === 'credit')
+                                            <span class="text-success fw-bold">(GH₵{{ number_format($bill->balance_display_amount, 2) }})</span>
+                                        @elseif($bill->balance_display_type === 'debit')
+                                            <span class="text-danger fw-bold">GH₵{{ number_format($bill->balance_display_amount, 2) }}</span>
+                                        @else
+                                            <span class="text-body">GH₵{{ number_format($bill->balance_display_amount, 2) }}</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @php
                                             $status = $bill->getPaymentStatus();
@@ -100,9 +108,9 @@
                                             <span class="badge bg-success">Paid (100%)</span>
                                         @elseif($status === 'partial')
                                             <span class="badge bg-warning text-dark">Partially Paid
-                                                ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                                                ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                                         @else
-                                            <span class="badge bg-danger">Unpaid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                                            <span class="badge bg-danger">Unpaid ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                                         @endif
                                     </td>
                                     <td>

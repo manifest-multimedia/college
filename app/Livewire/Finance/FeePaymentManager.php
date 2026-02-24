@@ -138,10 +138,16 @@ class FeePaymentManager extends Component
             return;
         }
 
-        // Calculate remaining balance as default payment amount
+        // Calculate remaining balance as default payment amount (allow overpayment: do not cap)
         $this->paymentAmount = $this->loadedBill->balance;
         $this->showPaymentForm = true;
         $this->dispatch('show-payment-form');
+    }
+
+    public function closePaymentForm()
+    {
+        $this->showPaymentForm = false;
+        $this->dispatch('hide-payment-form');
     }
 
     public function recordPayment()
@@ -149,12 +155,8 @@ class FeePaymentManager extends Component
         $this->validate();
 
         try {
-            // Verify the payment doesn't exceed the balance
-            if ($this->paymentAmount > $this->loadedBill->balance) {
-                $this->addError('paymentAmount', 'Payment amount cannot exceed the remaining balance.');
-
-                return;
-            }
+            // Allow overpayment: payment can exceed current balance (excess is recorded; balance is capped at 0 on this bill).
+            // Applying excess as credit to future bills would require a separate student-credit/ledger feature.
 
             // Generate a receipt number
             $receiptNumber = 'FP'.date('Ymd').strtoupper(Str::random(5));
@@ -172,7 +174,7 @@ class FeePaymentManager extends Component
                 'payment_date' => Carbon::parse($this->paymentDate),
             ]);
 
-            // Update bill's total paid amount and payment percentage
+            // Update bill's total paid amount and payment percentage (balance is capped at 0; overpayment remains on this bill)
             $this->loadedBill->recalculatePaymentStatus();
 
             $this->showPaymentForm = false;
@@ -182,8 +184,12 @@ class FeePaymentManager extends Component
             // Reload the bill to reflect new payment
             $this->loadBill($this->studentFeeBillId);
 
-            // Show success message
-            session()->flash('message', 'Payment of '.number_format($this->paymentAmount, 2).' has been recorded successfully. Receipt #: '.$receiptNumber);
+            $overpayment = max(0, (float) $this->loadedBill->amount_paid - (float) $this->loadedBill->total_amount);
+            $message = 'Payment of GH₵ '.number_format($this->paymentAmount, 2).' has been recorded successfully. Receipt #: '.$receiptNumber;
+            if ($overpayment > 0) {
+                $message .= ' Overpayment of GH₵ '.number_format($overpayment, 2).' is on this bill; applying it to future bills is not yet supported.';
+            }
+            session()->flash('message', $message);
 
             // Select this payment to view the receipt
             $this->selectedPaymentId = $payment->id;

@@ -33,6 +33,11 @@ class StudentCourseRegistration extends Component
 
     public $paymentPercentage = 0;
 
+    /** Balance display: 'credit' | 'debit' | 'zero' */
+    public $balanceDisplayType = 'zero';
+
+    public $balanceDisplayAmount = 0.0;
+
     public Collection $existingRegistrations;
 
     // Payment threshold for course registration (60%)
@@ -82,11 +87,16 @@ class StudentCourseRegistration extends Component
             return;
         }
 
-        $this->paymentPercentage = $feeBill->payment_percentage ?? 0;
+        $this->paymentPercentage = $feeBill->display_payment_percentage;
+        $this->balanceDisplayType = $feeBill->balance_display_type;
+        $this->balanceDisplayAmount = $feeBill->balance_display_amount;
 
-        if ($this->paymentPercentage >= self::PAYMENT_THRESHOLD) {
+        if ($feeBill->payment_percentage >= self::PAYMENT_THRESHOLD) {
             $this->registrationAllowed = true;
-            $this->registrationMessage = 'You are eligible for course registration ('.number_format($this->paymentPercentage, 1).'% fees paid).';
+            $creditPart = $feeBill->balance_display_type === 'credit'
+                ? ' — credit (GH₵'.number_format($feeBill->balance_display_amount, 2).')'
+                : '';
+            $this->registrationMessage = 'You are eligible for course registration ('.number_format($this->paymentPercentage, 1).'% fees paid)'.$creditPart.'.';
             $this->registrationMessageType = 'success';
         } else {
             $this->registrationAllowed = false;

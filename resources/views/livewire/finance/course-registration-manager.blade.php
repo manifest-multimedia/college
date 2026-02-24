@@ -11,9 +11,9 @@
             </div>
         </div>
         <div class="card-body">
-            <!-- Student Selection and Semester Filters -->
+            <!-- Student Selection and Filters -->
             <div class="row mb-4">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="studentId">Student</label>
                         <select wire:model.live="studentId" class="form-control @error('studentId') is-invalid @enderror">
@@ -34,7 +34,7 @@
                         @enderror
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="academicYearId">Academic Year</label>
                         <select wire:model.live="academicYearId" class="form-control @error('academicYearId') is-invalid @enderror">
@@ -48,7 +48,7 @@
                         @enderror
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label for="semesterId">Semester</label>
                         <select wire:model.live="semesterId" class="form-control @error('semesterId') is-invalid @enderror">
@@ -58,6 +58,21 @@
                             @endforeach
                         </select>
                         @error('semesterId')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="yearId">Year of study</label>
+                        <select wire:model.live="yearId" class="form-control @error('yearId') is-invalid @enderror">
+                            <option value="">-- Select Year --</option>
+                            @foreach($years as $y)
+                                <option value="{{ $y->id }}">{{ $y->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="form-text text-muted">e.g. Year 1, Year 2 – only courses for this level are shown</small>
+                        @error('yearId')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -137,9 +152,13 @@
                                         <h5 class="card-title mb-0">Available Courses for Registration</h5>
                                     </div>
                                     <div class="card-body">
-                                        @if($availableCourses->isEmpty())
+                                        @if(empty($yearId))
                                             <div class="alert alert-info">
-                                                <i class="fas fa-info-circle"></i> No courses available for this student's program and semester.
+                                                <i class="fas fa-info-circle"></i> Select <strong>Year of study</strong> (e.g. Year 1, Year 2) above to see courses for that level.
+                                            </div>
+                                        @elseif($availableCourses->isEmpty())
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-info-circle"></i> No courses available for this program, semester and year of study.
                                             </div>
                                         @else
                                             <div class="table-responsive">
@@ -148,30 +167,28 @@
                                                         <tr>
                                                             <th width="5%">Select</th>
                                                             <th width="15%">Code</th>
-                                                            <th width="40%">Course Title</th>
+                                                            <th width="45%">Course Title</th>
                                                             <th width="10%">Credits</th>
-                                                            <th width="15%">Type</th>
-                                                            <th width="15%">Status</th>
+                                                            <th width="25%">Status</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @foreach($availableCourses as $course)
+                                                        @foreach($availableCourses as $subject)
                                                             <tr>
                                                                 <td class="text-center">
                                                                     <div class="form-check">
                                                                         <input type="checkbox" 
                                                                             wire:model.live="selectedCourses" 
-                                                                            value="{{ $course->id }}" 
+                                                                            value="{{ $subject->id }}" 
                                                                             class="form-check-input" 
-                                                                            id="course-{{ $course->id }}">
+                                                                            id="subject-{{ $subject->id }}">
                                                                     </div>
                                                                 </td>
-                                                                <td>{{ $course->code }}</td>
-                                                                <td>{{ $course->title }}</td>
-                                                                <td>{{ $course->credit_hours }}</td>
-                                                                <td>{{ $course->is_elective ? 'Elective' : 'Core' }}</td>
+                                                                <td>{{ $subject->course_code }}</td>
+                                                                <td>{{ $subject->name }}</td>
+                                                                <td>{{ $subject->credit_hours }}</td>
                                                                 <td>
-                                                                    @if(in_array($course->id, $selectedCourses))
+                                                                    @if(in_array($subject->id, $selectedCourses))
                                                                         <span class="badge bg-success">Selected</span>
                                                                     @else
                                                                         <span class="badge bg-secondary">Not Selected</span>

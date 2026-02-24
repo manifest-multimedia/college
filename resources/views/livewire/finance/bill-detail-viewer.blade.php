@@ -85,9 +85,9 @@
                                     @if($status === 'paid')
                                         <span class="badge bg-success">Paid (100%)</span>
                                     @elseif($status === 'partial')
-                                        <span class="badge bg-warning">Partially Paid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                                        <span class="badge bg-warning">Partially Paid ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                                     @else
-                                        <span class="badge bg-danger">Unpaid ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                                        <span class="badge bg-danger">Unpaid ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                                     @endif
                                 </td>
                             </tr>
@@ -132,8 +132,16 @@
                             </tr>
                             <tr>
                                 <td colspan="3" class="text-end">Balance:</td>
-                                <td class="text-end {{ $balance > 0 ? 'text-danger' : 'text-success' }}">
-                                    GH₵ {{ number_format($balance, 2) }}
+                                <td class="text-end
+                                    @if($bill->balance_display_type === 'credit') text-success
+                                    @elseif($bill->balance_display_type === 'debit') text-danger
+                                    @else text-body
+                                    @endif">
+                                    @if($bill->balance_display_type === 'credit')
+                                        (GH₵ {{ number_format($bill->balance_display_amount, 2) }})
+                                    @else
+                                        GH₵ {{ number_format($bill->balance_display_amount, 2) }}
+                                    @endif
                                 </td>
                             </tr>
                         </tfoot>

@@ -42,7 +42,7 @@
                             <h3 class="card-title fw-bold text-white">Enrolled Courses</h3>
                         </div>
                         <div class="card-body text-center">
-                            <div class="text-primary display-6 fw-bold">{{ $enrolledCourses }}</div>
+                            <h1 class="text-primary fw-bold">{{ $enrolledCourses }}</h1>
                             <div class="text-muted">This Semester</div>
                         </div>
                     </div>
@@ -54,7 +54,7 @@
                             <h3 class="card-title fw-bold text-white">Fee Payment</h3>
                         </div>
                         <div class="card-body text-center">
-                            <div class="text-success display-6 fw-bold">{{ number_format($paymentPercentage, 1) }}%</div>
+                            <h1 class="text-success fw-bold">{{ number_format($paymentPercentage, 1) }}%</h1>
                             <div class="text-muted">Current Semester</div>
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                             <h3 class="card-title fw-bold text-white">Exams Taken</h3>
                         </div>
                         <div class="card-body text-center">
-                            <div class="text-info display-6 fw-bold">{{ $examsTaken }}</div>
+                            <h1 class="text-info fw-bold">{{ $examsTaken }}</h1>
                             <div class="text-muted">This Semester</div>
                         </div>
                     </div>
@@ -78,8 +78,16 @@
                             <h3 class="card-title fw-bold text-white">Outstanding Balance</h3>
                         </div>
                         <div class="card-body text-center">
-                            <div class="text-warning display-6 fw-bold">GH₵{{ number_format($outstandingBalance, 2) }}</div>
-                            <div class="text-muted">Current Semester</div>
+                            @if(($balanceDisplayType ?? 'zero') === 'credit')
+                                <h1 class="fw-bold text-success">(GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }})</h1>
+                                <div class="text-muted small">Credit in your favor</div>
+                            @elseif(($balanceDisplayType ?? 'zero') === 'debit')
+                                <h1 class="fw-bold text-danger">GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }}</h1>
+                                <div class="text-muted">Current Semester</div>
+                            @else
+                                <h1 class="fw-bold text-body">GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }}</h1>
+                                <div class="text-muted">Current Semester</div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -98,7 +106,7 @@
                             @if($paymentPercentage >= 60)
                                 <div class="alert alert-success">
                                     <i class="fas fa-check-circle me-2"></i>
-                                    You are eligible for course registration ({{ number_format($paymentPercentage, 1) }}% fees paid)
+                                    You are eligible for course registration ({{ number_format($paymentPercentage, 1) }}% fees paid)@if(($balanceDisplayType ?? 'zero') === 'credit') — credit (GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }})@endif
                                 </div>
                                 <a href="{{ route('courseregistration') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>Register for Courses
@@ -140,8 +148,12 @@
                                 </div>
                             @endif
                             
-                            @if($outstandingBalance > 0)
-                                <p><strong>Outstanding Balance:</strong> GH₵{{ number_format($outstandingBalance, 2) }}</p>
+                            @if(($balanceDisplayType ?? 'zero') === 'debit')
+                                <p><strong>Outstanding Balance:</strong> <span class="text-danger fw-bold">GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }}</span></p>
+                            @elseif(($balanceDisplayType ?? 'zero') === 'credit')
+                                <p><strong>Credit balance:</strong> <span class="text-success fw-bold">(GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }})</span></p>
+                            @else
+                                <p><strong>Outstanding Balance:</strong> <span class="text-body">GH₵0.00</span></p>
                             @endif
                         </div>
                     </div>

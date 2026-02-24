@@ -33,6 +33,8 @@ class StudentDashboardController extends Controller
                     'paymentPercentage' => 0,
                     'examsTaken' => 0,
                     'outstandingBalance' => 0,
+                    'balanceDisplayType' => 'zero',
+                    'balanceDisplayAmount' => 0,
                     'registeredCourses' => collect(),
                 ]);
             }
@@ -62,9 +64,11 @@ class StudentDashboardController extends Controller
                 $enrolledCourses = $registeredCourses->count();
             }
 
-            // Get payment information
+            // Get payment information (display: cap % at 100; balance: credit in brackets green, debit red, zero dark)
             $paymentPercentage = 0;
             $outstandingBalance = 0;
+            $balanceDisplayType = 'zero'; // 'credit' | 'debit' | 'zero'
+            $balanceDisplayAmount = 0.0;
 
             if ($currentAcademicYear && $currentSemester) {
                 $feeBill = StudentFeeBill::where('student_id', $student->id)
@@ -73,8 +77,10 @@ class StudentDashboardController extends Controller
                     ->first();
 
                 if ($feeBill) {
-                    $paymentPercentage = $feeBill->payment_percentage ?? 0;
-                    $outstandingBalance = $feeBill->balance ?? 0;
+                    $paymentPercentage = $feeBill->display_payment_percentage;
+                    $balanceDisplayType = $feeBill->balance_display_type;
+                    $balanceDisplayAmount = $feeBill->balance_display_amount;
+                    $outstandingBalance = $feeBill->balance_display_type === 'debit' ? $feeBill->balance : 0;
                 }
             }
 
@@ -99,6 +105,8 @@ class StudentDashboardController extends Controller
                 'paymentPercentage' => $paymentPercentage,
                 'examsTaken' => $examsTaken,
                 'outstandingBalance' => $outstandingBalance,
+                'balanceDisplayType' => $balanceDisplayType,
+                'balanceDisplayAmount' => $balanceDisplayAmount,
                 'registeredCourses' => $registeredCourses,
             ]);
 
@@ -116,6 +124,8 @@ class StudentDashboardController extends Controller
                 'paymentPercentage' => 0,
                 'examsTaken' => 0,
                 'outstandingBalance' => 0,
+                'balanceDisplayType' => 'zero',
+                'balanceDisplayAmount' => 0,
                 'registeredCourses' => collect(),
             ]);
         }

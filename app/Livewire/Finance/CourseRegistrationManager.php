@@ -3,11 +3,12 @@
 namespace App\Livewire\Finance;
 
 use App\Models\AcademicYear;
-use App\Models\Course;
 use App\Models\CourseRegistration;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentFeeBill;
+use App\Models\Subject;
+use App\Models\Year;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -22,6 +23,9 @@ class CourseRegistrationManager extends Component
     public $academicYearId;
 
     public $semesterId;
+
+    /** Year of study (e.g. Year 1, Year 2) – filters available subjects to that level only */
+    public $yearId;
 
     public $selectedCourses = [];
 
@@ -40,6 +44,7 @@ class CourseRegistrationManager extends Component
         'studentId' => 'required|exists:students,id',
         'academicYearId' => 'required|exists:academic_years,id',
         'semesterId' => 'required|exists:semesters,id',
+        'yearId' => 'nullable|exists:years,id',
         'selectedCourses' => 'required|array|min:1',
     ];
 
@@ -79,6 +84,11 @@ class CourseRegistrationManager extends Component
     public function updatedSemesterId()
     {
         $this->loadStudent();
+    }
+
+    public function updatedYearId()
+    {
+        // Re-run so available courses refresh
     }
 
     protected function loadStudent()
@@ -133,7 +143,13 @@ class CourseRegistrationManager extends Component
             return;
         }
 
-        $this->validate();
+        $this->validate([
+            'studentId' => 'required|exists:students,id',
+            'academicYearId' => 'required|exists:academic_years,id',
+            'semesterId' => 'required|exists:semesters,id',
+            'yearId' => 'required|exists:years,id',
+            'selectedCourses' => 'required|array|min:1',
+        ]);
 
         try {
             DB::transaction(function () {
@@ -186,22 +202,16 @@ class CourseRegistrationManager extends Component
 
     public function getAvailableCoursesProperty()
     {
-        if (! $this->student) {
+        if (! $this->student || ! $this->yearId) {
             return collect();
         }
 
-        // Get courses applicable to this student's program and class
-        return Course::where('is_active', true)
-            ->where(function ($query) {
-                $query->where('program_id', $this->student->program_id)
-                    ->orWhereNull('program_id');
-            })
-            ->where(function ($query) {
-                $query->where('college_class_id', $this->student->college_class_id)
-                    ->orWhereNull('college_class_id');
-            })
+        // Subjects are scoped by program (college_class), semester, and year of study
+        return Subject::query()
             ->where('semester_id', $this->semesterId)
-            ->orderBy('title')
+            ->where('year_id', $this->yearId)
+            ->where('college_class_id', $this->student->college_class_id)
+            ->orderBy('name')
             ->get();
     }
 
@@ -215,6 +225,11 @@ class CourseRegistrationManager extends Component
         return Semester::all();
     }
 
+    public function getYearsProperty()
+    {
+        return Year::orderBy('name')->get();
+    }
+
     public function render()
     {
         return view('livewire.finance.course-registration-manager', [
@@ -222,6 +237,7 @@ class CourseRegistrationManager extends Component
             'registeredCourses' => $this->registeredCourses,
             'academicYears' => $this->academicYears,
             'semesters' => $this->semesters,
+            'years' => $this->years,
         ]);
     }
 }

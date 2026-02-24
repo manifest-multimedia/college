@@ -172,11 +172,19 @@
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Balance:</strong></td>
-                        <td class="text-end"><strong>GH₵ {{ number_format($bill->balance, 2) }}</strong></td>
+                        <td class="text-end">
+                            @if($bill->balance_display_type === 'credit')
+                                <strong class="text-success">(GH₵ {{ number_format($bill->balance_display_amount, 2) }})</strong>
+                            @elseif($bill->balance_display_type === 'debit')
+                                <strong class="text-danger">GH₵ {{ number_format($bill->balance_display_amount, 2) }}</strong>
+                            @else
+                                <strong class="text-body">GH₵ {{ number_format($bill->balance_display_amount, 2) }}</strong>
+                            @endif
+                        </td>
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Payment Percentage:</strong></td>
-                        <td class="text-end"><strong>{{ number_format($bill->payment_percentage, 2) }}%</strong></td>
+                        <td class="text-end"><strong>{{ number_format($bill->display_payment_percentage, 2) }}%</strong></td>
                     </tr>
                 </tfoot>
             </table>
@@ -189,9 +197,9 @@
                     @if($status === 'paid')
                         <span class="text-success">PAID IN FULL (100%)</span>
                     @elseif($status === 'partial')
-                        <span class="text-warning">PARTIALLY PAID ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                        <span class="text-warning">PARTIALLY PAID ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                     @else
-                        <span class="text-danger">UNPAID ({{ number_format($bill->payment_percentage, 1) }}%)</span>
+                        <span class="text-danger">UNPAID ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                     @endif
                 </p>
             </div>

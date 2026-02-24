@@ -66,11 +66,18 @@
                                         </h5>
                                         <div class="progress mb-2">
                                             <div class="progress-bar bg-{{ $paymentPercentage >= 60 ? 'success' : 'warning' }}" 
-                                                 style="width: {{ $paymentPercentage }}%">
+                                                 style="width: {{ min(100, $paymentPercentage) }}%">
                                                 {{ number_format($paymentPercentage, 1) }}%
                                             </div>
                                         </div>
                                         <small class="text-muted">Required: 60% minimum for course registration</small>
+                                        @if($balanceDisplayType === 'credit')
+                                            <p class="mb-0 mt-2 small"><strong>Balance:</strong> <span class="text-success fw-bold">(GH₵{{ number_format($balanceDisplayAmount, 2) }})</span> credit</p>
+                                        @elseif($balanceDisplayType === 'debit')
+                                            <p class="mb-0 mt-2 small"><strong>Balance:</strong> <span class="text-danger fw-bold">GH₵{{ number_format($balanceDisplayAmount, 2) }}</span> outstanding</p>
+                                        @else
+                                            <p class="mb-0 mt-2 small"><strong>Balance:</strong> <span class="text-body">GH₵0.00</span></p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
