@@ -58,12 +58,34 @@ class StudentAcademicProfileService
 
     protected function resolveStartAcademicYearForStudent(Student $student, ?AcademicYear $fallback): ?AcademicYear
     {
-        if ($student->academicYear) {
-            return $student->academicYear;
-        }
-
         if ($student->cohort instanceof Cohort) {
-            $academicYearName = $student->cohort->academic_year;
+            $cohort = $student->cohort;
+
+            // 1) Use academic_years.year column: cohort name (e.g. "Batch 2024") -> row where year = '2024' (same as Year Enrolled / level)
+            if (preg_match('/\d{4}/', $cohort->name ?? '', $matches)) {
+                $yearNumber = $matches[0];
+
+                // Prefer row whose year column equals batch year (e.g. 2024-2025 with year=2024)
+                $byYearColumn = AcademicYear::where('year', $yearNumber)
+                    ->orderBy('start_date')
+                    ->first();
+
+                if ($byYearColumn) {
+                    return $byYearColumn;
+                }
+
+                // Fallback: match by name containing the year
+                $byName = AcademicYear::where('name', 'like', '%'.$yearNumber.'%')
+                    ->orderBy('start_date')
+                    ->first();
+
+                if ($byName) {
+                    return $byName;
+                }
+            }
+
+            // 2) Fall back to explicit cohort.academic_year mapping if present
+            $academicYearName = $cohort->academic_year;
 
             if ($academicYearName) {
                 $match = AcademicYear::where('name', $academicYearName)
@@ -77,6 +99,12 @@ class StudentAcademicProfileService
             }
         }
 
+        // 3) Fall back to student's direct academic_year_id, if set
+        if ($student->academicYear) {
+            return $student->academicYear;
+        }
+
+        // 4) Final fallback: whatever was passed in (usually current year)
         return $fallback;
     }
 

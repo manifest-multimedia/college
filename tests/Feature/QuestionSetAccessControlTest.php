@@ -132,13 +132,7 @@ class QuestionSetAccessControlTest extends TestCase
         // Test lecturer 2 cannot access import for lecturer 1's question set
         $this->actingAs($lecturer2)
             ->post(route('question.sets.import.preview', $questionSet->id), [
-                'import_file' => new \Illuminate\Http\UploadedFile(
-                    tempnam(sys_get_temp_dir(), 'test'),
-                    'test.txt',
-                    'text/plain',
-                    null,
-                    true
-                ),
+                'import_file' => \Illuminate\Http\UploadedFile::fake()->create('test.csv', 1, 'text/csv'),
                 'format' => 'aiken',
             ])
             ->assertStatus(403)

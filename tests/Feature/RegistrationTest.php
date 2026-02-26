@@ -19,7 +19,9 @@ class RegistrationTest extends TestCase
 
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        // /register now redirects to staff.register route
+        $response->assertStatus(302);
+        $response->assertRedirect(route('staff.register', absolute: false));
     }
 
     public function test_registration_screen_cannot_be_rendered_if_support_is_disabled(): void
@@ -48,6 +50,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // After registration, app redirects to /dashboard
+        $response->assertRedirect('/dashboard');
     }
 }

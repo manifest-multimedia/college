@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\QuestionSet>
+ * @extends \Illuminate\Database\Eloquent\Factories.Factory<\App\Models\QuestionSet>
  */
 class QuestionSetFactory extends Factory
 {
@@ -22,11 +22,12 @@ class QuestionSetFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->sentence(3),
-            'description' => fake()->paragraph(),
+            'name' => $this->faker->sentence(3),
+            'description' => $this->faker->paragraph(),
             'course_id' => Subject::factory(),
-            'difficulty_level' => fake()->randomElement(['easy', 'medium', 'hard']),
+            'difficulty_level' => $this->faker->randomElement(['easy', 'medium', 'hard']),
             'created_by' => User::factory(),
         ];
     }
 }
+

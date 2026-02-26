@@ -16,17 +16,16 @@ class CollegeClassFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->words(2, true);
+        $name = $this->faker->words(3, true);
 
         return [
-            'name' => $name,
+            'name' => ucfirst($name),
             'short_name' => strtoupper(substr($name, 0, 3)),
-            'description' => fake()->sentence(),
-            'slug' => \Illuminate\Support\Str::slug($name),
+            'description' => 'Test program',
             'is_active' => true,
             'is_deleted' => false,
-            'created_by' => 'system',
-            'course_id' => null,
+            'created_by' => 'factory',
+            'slug' => \Illuminate\Support\Str::slug($name),
         ];
     }
 }

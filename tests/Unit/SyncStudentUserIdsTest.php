@@ -29,8 +29,8 @@ class SyncStudentUserIdsTest extends TestCase
             // Other required fields...
         ]);
 
-        // Run the command
-        $this->artisan('students:sync-user-ids')
+        // Run the command (force to skip interactive confirmation)
+        $this->artisan('students:sync-user-ids --force')
             ->expectsOutput('Sync completed!')
             ->assertExitCode(0);
 
@@ -57,8 +57,8 @@ class SyncStudentUserIdsTest extends TestCase
         // Make sure there's no user with this email yet
         $this->assertNull(User::where('email', 'new-student@example.com')->first());
 
-        // Run the command
-        $this->artisan('students:sync-user-ids')
+        // Run the command (force to skip interactive confirmation)
+        $this->artisan('students:sync-user-ids --force')
             ->expectsOutput('Sync completed!')
             ->assertExitCode(0);
 
@@ -115,8 +115,8 @@ class SyncStudentUserIdsTest extends TestCase
             // Other required fields...
         ]);
 
-        // Run the command
-        $this->artisan('students:sync-user-ids')
+        // Run the command (force to skip interactive confirmation)
+        $this->artisan('students:sync-user-ids --force')
             ->expectsOutput('Sync completed!')
             ->assertExitCode(0);
 
@@ -145,8 +145,8 @@ class SyncStudentUserIdsTest extends TestCase
             ]);
         }
 
-        // Run the command with batch size of 10
-        $this->artisan('students:sync-user-ids --batch=10')
+        // Run the command with batch size of 10 (force to skip interactive confirmation)
+        $this->artisan('students:sync-user-ids --batch=10 --force')
             ->expectsOutput('Sync completed!')
             ->assertExitCode(0);
 

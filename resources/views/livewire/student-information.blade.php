@@ -50,11 +50,17 @@
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Program</label>
-                                    <p class="form-control-plaintext">{{ $student->program ?? 'Not assigned' }}</p>
+                                    <p class="form-control-plaintext">{{ $student->collegeClass->name ?? 'Not assigned' }}</p>
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Level</label>
-                                    <p class="form-control-plaintext">{{ $student->level ?? 'Not assigned' }}</p>
+                                    <p class="form-control-plaintext">
+                                        @if(isset($academicProfile) && $academicProfile->yearOfStudy)
+                                            {{ $academicProfile->yearOfStudy->name }}
+                                        @else
+                                            Not assigned
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -102,7 +108,7 @@
                                     </span>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold">{{ $student->created_at->format('Y') }}</div>
+                                    <div class="fw-bold">{{ $yearEnrolled ?? '—' }}</div>
                                     <div class="text-muted fs-7">Year Enrolled</div>
                                 </div>
                             </div>

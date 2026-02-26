@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Subject extends Model
 {
+    use HasFactory;
     protected $fillable = ['course_code', 'name', 'semester_id', 'year_id', 'college_class_id', 'credit_hours'];
 
     protected $casts = [

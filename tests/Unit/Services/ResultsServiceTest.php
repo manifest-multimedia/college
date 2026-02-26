@@ -173,6 +173,8 @@ class ResultsServiceTest extends TestCase
             'course_id' => $subject->id,
             'questions_per_session' => 0,
             'duration' => 60,
+            'user_id' => $user->id,
+            'status' => 'upcoming',
         ]);
         $session = ExamSession::create([
             'exam_id' => $exam->id,
@@ -199,6 +201,8 @@ class ResultsServiceTest extends TestCase
             'course_id' => $subject->id,
             'questions_per_session' => 5,
             'duration' => 60,
+            'user_id' => $user->id,
+            'status' => 'upcoming',
         ]);
         $session = ExamSession::create([
             'exam_id' => $exam->id,
@@ -211,7 +215,6 @@ class ResultsServiceTest extends TestCase
             $question = Question::create([
                 'exam_id' => $exam->id,
                 'question_text' => "Question {$i}",
-                'correct_option' => 'option_one',
                 'mark' => 1,
             ]);
 
@@ -231,11 +234,24 @@ class ResultsServiceTest extends TestCase
 
             // Student got 3 out of 5 correct
             $isCorrect = $i <= 3;
+
+            if ($isCorrect) {
+                $selectedId = $correctOption->id;
+            } else {
+                // Persist an explicit wrong option so FK constraints are satisfied
+                $wrongOption = Option::create([
+                    'question_id' => $question->id,
+                    'option_text' => 'Extra Wrong Answer',
+                    'is_correct' => false,
+                ]);
+                $selectedId = $wrongOption->id;
+            }
+
             Response::create([
                 'exam_session_id' => $session->id,
                 'question_id' => $question->id,
-                'selected_option' => $isCorrect ? $correctOption->id : 999,
-                'option_id' => $isCorrect ? $correctOption->id : 999,
+                'selected_option' => $selectedId,
+                'option_id' => $selectedId,
                 'student_id' => $user->id,
             ]);
         }
@@ -261,6 +277,8 @@ class ResultsServiceTest extends TestCase
             'course_id' => $subject->id,
             'questions_per_session' => 3,
             'duration' => 60,
+            'user_id' => $user->id,
+            'status' => 'upcoming',
         ]);
         $session = ExamSession::create([
             'exam_id' => $exam->id,
@@ -272,7 +290,6 @@ class ResultsServiceTest extends TestCase
         $question1 = Question::create([
             'exam_id' => $exam->id,
             'question_text' => 'Question 1',
-            'correct_option' => 'option_one',
             'mark' => 2,
         ]);
         $correctOption1 = Option::create([
@@ -292,7 +309,6 @@ class ResultsServiceTest extends TestCase
         $question2 = Question::create([
             'exam_id' => $exam->id,
             'question_text' => 'Question 2',
-            'correct_option' => 'option_one',
             'mark' => 3,
         ]);
         Option::create([
@@ -300,11 +316,17 @@ class ResultsServiceTest extends TestCase
             'option_text' => 'Correct Answer 2',
             'is_correct' => true,
         ]);
+        // Explicit wrong option for FK safety
+        $wrongOption2 = Option::create([
+            'question_id' => $question2->id,
+            'option_text' => 'Wrong Answer 2',
+            'is_correct' => false,
+        ]);
         Response::create([
             'exam_session_id' => $session->id,
             'question_id' => $question2->id,
-            'selected_option' => 999,
-            'option_id' => 999,
+            'selected_option' => $wrongOption2->id,
+            'option_id' => $wrongOption2->id,
             'student_id' => $user->id,
         ]);
 
@@ -312,7 +334,6 @@ class ResultsServiceTest extends TestCase
         $question3 = Question::create([
             'exam_id' => $exam->id,
             'question_text' => 'Question 3',
-            'correct_option' => 'option_one',
             'mark' => 5,
         ]);
         $correctOption3 = Option::create([
@@ -349,6 +370,8 @@ class ResultsServiceTest extends TestCase
             'course_id' => $subject->id,
             'questions_per_session' => 3, // Only first 3 should count
             'duration' => 60,
+            'user_id' => $user->id,
+            'status' => 'upcoming',
         ]);
         $session = ExamSession::create([
             'exam_id' => $exam->id,
@@ -361,7 +384,6 @@ class ResultsServiceTest extends TestCase
             $question = Question::create([
                 'exam_id' => $exam->id,
                 'question_text' => "Question {$i}",
-                'correct_option' => 'option_one',
                 'mark' => 1,
             ]);
 
