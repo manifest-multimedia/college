@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\AcademicYear;
 use App\Models\CourseRegistration as StudentCourseRegistrationModel;
 use App\Models\Semester;
+use App\Services\StudentAcademicProfileService;
 use App\Models\Student;
 use App\Models\StudentFeeBill;
 use App\Models\Subject;
@@ -110,10 +111,18 @@ class StudentCourseRegistration extends Component
         if (! $this->student || ! $this->currentAcademicYear || ! $this->currentSemester) {
             return;
         }
+        $profileService = app(StudentAcademicProfileService::class);
 
-        // Load subjects based on student's class and current semester
-        $this->availableSubjects = Subject::where('semester_id', $this->currentSemester->id)
-            ->where('college_class_id', $this->student->college_class_id)
+        $profile = $profileService->getProfile($this->student);
+
+        $query = Subject::where('semester_id', $this->currentSemester->id)
+            ->where('college_class_id', $this->student->college_class_id);
+
+        if ($profile->yearOfStudy) {
+            $query->where('year_id', $profile->yearOfStudy->id);
+        }
+
+        $this->availableSubjects = $query
             ->orderBy('name')
             ->get();
     }
