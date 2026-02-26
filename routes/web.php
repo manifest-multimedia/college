@@ -458,6 +458,10 @@ Route::middleware([
             return view('finance.bill-details', ['billId' => $id]);
         })->name('finance.bill.view');
 
+        Route::get('/bill/edit/{billId}', function ($billId) {
+            return view('finance.bill-edit', ['billId' => $billId]);
+        })->name('finance.bill.edit');
+
         Route::get('/bill/print/{billId}', function ($billId) {
             return view('finance.bill-print', ['billId' => $billId]);
         })->name('bill.print');

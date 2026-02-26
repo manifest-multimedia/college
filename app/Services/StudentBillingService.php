@@ -164,4 +164,84 @@ class StudentBillingService
 
         return $bill;
     }
+
+    /**
+     * Update the fee items on an existing bill.
+     *
+     * This will:
+     * - Validate the selected fee structures for the student's class, year and semester
+     * - Replace all existing bill items with the new selection
+     * - Recalculate total_amount, balance, payment_percentage and status
+     *
+     * By design, bills that already have payments recorded cannot be edited
+     * to avoid creating inconsistent audit trails.
+     *
+     * @param  StudentFeeBill  $bill
+     * @param  array  $selectedFeeStructureIds
+     * @return StudentFeeBill
+     *
+     * @throws \Exception
+     */
+    public function updateBillItems(StudentFeeBill $bill, array $selectedFeeStructureIds): StudentFeeBill
+    {
+        return DB::transaction(function () use ($bill, $selectedFeeStructureIds) {
+            // Do not allow structural edits once payments exist
+            if ($bill->payments()->exists()) {
+                throw new \Exception('This bill already has recorded payments and cannot be modified. Reverse the payments and try again or create a new bill.');
+            }
+
+            $student = $bill->student()->firstOrFail();
+
+            if (empty($selectedFeeStructureIds)) {
+                throw new \Exception('Please select at least one fee to include on the bill.');
+            }
+
+            // Build base query for all applicable fee structures
+            $feeStructuresQuery = FeeStructure::where('college_class_id', $student->college_class_id)
+                ->where('academic_year_id', $bill->academic_year_id)
+                ->where('semester_id', $bill->semester_id)
+                ->where('is_active', true)
+                ->where(function ($q) use ($student) {
+                    $gender = trim($student->gender ?? '');
+
+                    $q->whereNull('applicable_gender')
+                        ->orWhere('applicable_gender', 'all')
+                        ->orWhereRaw('LOWER(applicable_gender) = LOWER(?)', [$gender]);
+                });
+
+            // Restrict to the explicitly selected fee structures
+            $ids = array_values(array_unique(array_map('intval', $selectedFeeStructureIds)));
+            $feeStructuresQuery->whereIn('id', $ids);
+
+            $feeStructures = $feeStructuresQuery->get();
+
+            if ($feeStructures->isEmpty()) {
+                throw new \Exception('The selected fees are not available for this student\'s program, academic year and semester.');
+            }
+
+            // Recalculate total amount from the selected fee structures
+            $totalAmount = $feeStructures->sum('amount');
+
+            // Replace existing bill items
+            $bill->billItems()->delete();
+            foreach ($feeStructures as $feeStructure) {
+                StudentFeeBillItem::create([
+                    'student_fee_bill_id' => $bill->id,
+                    'fee_type_id' => $feeStructure->fee_type_id,
+                    'fee_structure_id' => $feeStructure->id,
+                    'amount' => $feeStructure->amount,
+                ]);
+            }
+
+            // Update bill financials
+            $bill->total_amount = $totalAmount;
+            $bill->amount_paid = 0.00;
+            $bill->balance = $totalAmount;
+            $bill->payment_percentage = 0.00;
+            $bill->status = 'pending';
+            $bill->save();
+
+            return $bill->fresh(['student', 'academicYear', 'semester', 'billItems.feeType']);
+        });
+    }
 }

@@ -119,6 +119,10 @@
                                                 class="btn btn-sm btn-info">
                                                 <i class="fas fa-eye"></i>
                                             </button>
+                                            <!-- <a href="{{ route('finance.bill.edit', ['billId' => $bill->id]) }}"
+                                                class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a> -->
                                         </div>
                                     </td>
                                 </tr>
@@ -186,6 +190,17 @@
                     </div>
 
                     @if (!empty($availableFees))
+                        @php
+                            $newBillFeesCol = collect($availableFees)->map(fn ($f) => [
+                                'id' => (int) ($f['id'] ?? 0),
+                                'amount' => (float) ($f['amount'] ?? 0),
+                                'is_mandatory' => $f['is_mandatory'] ?? false,
+                            ]);
+                            $newBillMandatoryIds = $newBillFeesCol->where('is_mandatory', true)->pluck('id')->values()->toArray();
+                            $newBillUserIds = array_values(array_unique(array_map('intval', $selectedFeeIds ?? [])));
+                            $newBillEffectiveIds = array_values(array_unique(array_merge($newBillMandatoryIds, $newBillUserIds)));
+                            $newBillTotalSelected = $newBillFeesCol->whereIn('id', $newBillEffectiveIds)->sum('amount');
+                        @endphp
                         <div class="mb-3">
                             <label class="form-label">Select Fees to Include</label>
                             <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto;">
@@ -193,7 +208,7 @@
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" 
                                             value="{{ $fee['id'] }}" 
-                                            wire:model="selectedFeeIds"
+                                            wire:model.live="selectedFeeIds"
                                             id="fee{{ $fee['id'] }}"
                                             @if ($fee['is_mandatory']) disabled checked @endif>
                                         <label class="form-check-label d-flex justify-content-between w-100" for="fee{{ $fee['id'] }}">
@@ -225,7 +240,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" wire:click="closeNewBillModal">Cancel</button>
                     <button type="button" class="btn btn-primary" wire:click="createNewBill" 
-                        @if (empty($availableFees) || $newBillTotalSelected <= 0) disabled @endif>Generate Bill</button>
+                        @if (empty($availableFees) || ($newBillTotalSelected ?? 0) <= 0) disabled @endif>Generate Bill</button>
                 </div>
             </div>
         </div>

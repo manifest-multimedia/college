@@ -14,6 +14,9 @@
                     <button wire:click="recordPayment" class="btn btn-success btn-sm ms-2">
                         <i class="fas fa-money-bill-wave"></i> Record Payment
                     </button>
+                    <a href="{{ route('finance.bill.edit', ['billId' => $billId]) }}" class="btn btn-warning btn-sm ms-2">
+                        <i class="fas fa-edit"></i> Edit Bill
+                    </a>
                 </div>
                 @endif
             </div>
