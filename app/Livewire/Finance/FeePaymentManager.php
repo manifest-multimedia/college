@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\StudentFeeBill;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -51,6 +52,13 @@ class FeePaymentManager extends Component
     public $selectedPaymentId;
 
     public $showPaymentDetails = false;
+
+    // Reverse payment modal
+    public $paymentToReverseId = null;
+
+    public $reversalReason = '';
+
+    public $showReverseModal = false;
 
     // Track loaded student details
     public $loadedStudent = null;
@@ -215,6 +223,78 @@ class FeePaymentManager extends Component
         $this->dispatch('hide-payment-details');
     }
 
+    public function openReverseModal($paymentId)
+    {
+        $payment = FeePayment::find($paymentId);
+        if (! $payment || $payment->reversed_at) {
+            return;
+        }
+        if ($payment->student_fee_bill_id != $this->loadedBill?->id) {
+            session()->flash('error', 'This payment does not belong to the currently loaded bill.');
+
+            return;
+        }
+        $this->paymentToReverseId = $paymentId;
+        $this->reversalReason = '';
+        $this->showReverseModal = true;
+        $this->resetValidation();
+        $this->dispatch('show-reverse-modal');
+    }
+
+    public function closeReverseModal()
+    {
+        $this->showReverseModal = false;
+        $this->paymentToReverseId = null;
+        $this->reversalReason = '';
+        $this->resetValidation();
+        $this->dispatch('hide-reverse-modal');
+    }
+
+    public function reversePayment()
+    {
+        $this->validate([
+            'reversalReason' => 'required|string|min:3|max:500',
+        ], [
+            'reversalReason.required' => 'Please provide a reason for reversing this payment.',
+            'reversalReason.min' => 'Reason must be at least 3 characters.',
+        ]);
+
+        $payment = FeePayment::find($this->paymentToReverseId);
+        if (! $payment) {
+            session()->flash('error', 'Payment not found.');
+            $this->closeReverseModal();
+
+            return;
+        }
+        if ($payment->student_fee_bill_id != $this->loadedBill?->id) {
+            session()->flash('error', 'This payment does not belong to the currently loaded bill.');
+            $this->closeReverseModal();
+
+            return;
+        }
+        if ($payment->reversed_at) {
+            session()->flash('error', 'This payment has already been reversed.');
+            $this->closeReverseModal();
+
+            return;
+        }
+
+        try {
+            $payment->reversed_at = now();
+            $payment->reversed_by = Auth::id();
+            $payment->reversal_reason = trim($this->reversalReason);
+            $payment->save();
+
+            $this->loadedBill->recalculatePaymentStatus();
+            $this->loadBill($this->loadedBill->id);
+            $this->closeReverseModal();
+
+            session()->flash('message', 'Payment reversed. You can now record the correct payment.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error reversing payment: '.$e->getMessage());
+        }
+    }
+
     public function resetPaymentForm()
     {
         $this->paymentAmount = 0;
@@ -231,7 +311,7 @@ class FeePaymentManager extends Component
             return null;
         }
 
-        return FeePayment::with(['student', 'studentFeeBill', 'recordedBy'])
+        return FeePayment::with(['student', 'studentFeeBill', 'recordedBy', 'reversedBy'])
             ->findOrFail($this->selectedPaymentId);
     }
 
@@ -263,10 +343,12 @@ class FeePaymentManager extends Component
 
     public function getRecentPaymentsProperty()
     {
-        return FeePayment::with(['student', 'studentFeeBill'])
-            ->latest()
-            ->take(10)
-            ->get();
+        $query = FeePayment::with(['student', 'studentFeeBill']);
+        if (Schema::hasColumn('fee_payments', 'reversed_at')) {
+            $query->whereNull('reversed_at');
+        }
+
+        return $query->latest()->take(10)->get();
     }
 
     public function render()

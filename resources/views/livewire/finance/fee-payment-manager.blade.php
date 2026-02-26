@@ -12,7 +12,19 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <p class="card-text">Use this interface to record and manage student fee payments. Search for a student, select their bill, and record payments.</p>
+                        <p class="card-text">Use this interface to record and manage student fee payments. Search for a student, select their bill, and record payments. You can update the bill amount even after payments are recorded (balance in favor or arrears will update), and reverse any payment if recorded by mistake.</p>
+                        @if (session()->has('message'))
+                            <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+                                {{ session('message') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
+                        @if (session()->has('error'))
+                            <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -123,9 +135,14 @@
                                 @endif
                             </h5>
                             @if($loadedBill)
-                                <button class="btn btn-success" wire:click="openPaymentForm">
-                                    <i class="fa fa-plus-circle"></i> Record Payment
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('finance.bill.edit', ['billId' => $loadedBill->id]) }}" class="btn btn-warning btn-sm" title="Update bill (fee items and amount)">
+                                        <i class="fa fa-edit"></i> Edit Bill
+                                    </a>
+                                    <button class="btn btn-success" wire:click="openPaymentForm">
+                                        <i class="fa fa-plus-circle"></i> Record Payment
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -155,8 +172,10 @@
                                         <span class="fs-6">Balance: </span>
                                         @if($loadedBill->balance_display_type === 'credit')
                                             <span class="fs-5 fw-bold text-success">(GH₵{{ number_format($loadedBill->balance_display_amount, 2) }})</span>
+                                            <small class="text-muted">in favor of student</small>
                                         @elseif($loadedBill->balance_display_type === 'debit')
                                             <span class="fs-5 fw-bold text-danger">GH₵{{ number_format($loadedBill->balance_display_amount, 2) }}</span>
+                                            <small class="text-muted">arrears</small>
                                         @else
                                             <span class="fs-5 fw-bold text-body">GH₵{{ number_format($loadedBill->balance_display_amount, 2) }}</span>
                                         @endif
@@ -199,15 +218,25 @@
                                         </thead>
                                         <tbody>
                                             @foreach($loadedBill->payments as $payment)
-                                                <tr>
+                                                <tr class="{{ $payment->reversed_at ? 'table-secondary' : '' }}">
                                                     <td>{{ $payment->payment_date->format('M d, Y') }}</td>
-                                                    <td>{{ $payment->receipt_number }}</td>
+                                                    <td>
+                                                        {{ $payment->receipt_number }}
+                                                        @if($payment->reversed_at)
+                                                            <span class="badge bg-secondary ms-1">Reversed</span>
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $payment->payment_method }}</td>
                                                     <td class="text-end">{{ number_format($payment->amount, 2) }}</td>
                                                     <td>
                                                         <button class="btn btn-sm btn-info" wire:click="viewPayment({{ $payment->id }})">
                                                             <i class="fa fa-eye"></i> View
                                                         </button>
+                                                        @if(!$payment->reversed_at)
+                                                            <button class="btn btn-sm btn-danger" wire:click="openReverseModal({{ $payment->id }})">
+                                                                <i class="fa fa-undo"></i> Reverse
+                                                            </button>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -361,6 +390,36 @@
         </div>
     </div>
 
+    <!-- Reverse Payment Modal -->
+    <div class="modal fade" id="reversePaymentModal" tabindex="-1" wire:ignore.self>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fa fa-undo me-2"></i>Reverse Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">The bill balance will be updated and you can then record the correct payment. Please provide a reason for this reversal (it will be recorded on the receipt).</p>
+                    <div class="mb-3">
+                        <label for="reversalReason" class="form-label">Reason for reversal <span class="text-danger">*</span></label>
+                        <textarea class="form-control @error('reversalReason') is-invalid @enderror"
+                            id="reversalReason" wire:model="reversalReason" rows="3"
+                            placeholder="e.g. Wrong amount entered, duplicate entry, payment made by mistake..."></textarea>
+                        @error('reversalReason')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" wire:click="reversePayment">
+                        <i class="fa fa-undo"></i> Confirm Reverse
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Payment Details Modal -->
     <div class="modal fade" id="paymentDetailsModal" tabindex="-1" wire:ignore.self>
         <div class="modal-dialog">
@@ -372,6 +431,17 @@
                 <div class="modal-body">
                     @if($this->selectedPayment)
                         <div class="text-center mb-4 border-bottom pb-3">
+                            @if($this->selectedPayment->reversed_at)
+                                <div class="alert alert-danger mb-2">
+                                    <strong>This payment was reversed on {{ $this->selectedPayment->reversed_at->format('F d, Y') }}.</strong>
+                                    @if($this->selectedPayment->reversal_reason)
+                                        <div class="mt-2"><strong>Reason:</strong> {{ $this->selectedPayment->reversal_reason }}</div>
+                                    @endif
+                                    @if($this->selectedPayment->reversedBy)
+                                        <div class="mt-1 small">Reversed by: {{ $this->selectedPayment->reversedBy->name }}</div>
+                                    @endif
+                                </div>
+                            @endif
                             <h4>PAYMENT RECEIPT</h4>
                             <h6>Receipt #: {{ $this->selectedPayment->receipt_number }}</h6>
                             <p class="mb-0">Date: {{ $this->selectedPayment->payment_date->format('F d, Y') }}</p>
@@ -459,8 +529,10 @@
         document.addEventListener('livewire:initialized', () => {
             const paymentFormModalEl = document.getElementById('paymentFormModal');
             const paymentDetailsModalEl = document.getElementById('paymentDetailsModal');
+            const reversePaymentModalEl = document.getElementById('reversePaymentModal');
             const paymentFormModal = new bootstrap.Modal(paymentFormModalEl);
             const paymentDetailsModal = new bootstrap.Modal(paymentDetailsModalEl);
+            const reversePaymentModal = new bootstrap.Modal(reversePaymentModalEl);
 
             @this.on('show-payment-form', () => {
                 paymentFormModal.show();
@@ -468,6 +540,14 @@
 
             @this.on('hide-payment-form', () => {
                 paymentFormModal.hide();
+            });
+
+            @this.on('show-reverse-modal', () => {
+                reversePaymentModal.show();
+            });
+
+            @this.on('hide-reverse-modal', () => {
+                reversePaymentModal.hide();
             });
 
             @this.on('show-payment-details', () => {
@@ -478,13 +558,16 @@
                 paymentDetailsModal.hide();
             });
 
-            // When receipt modal is closed by backdrop or Escape, sync Livewire state so it doesn't reopen on next update
             paymentDetailsModalEl.addEventListener('hidden.bs.modal', () => {
                 @this.call('closePaymentDetails');
             });
 
             paymentFormModalEl.addEventListener('hidden.bs.modal', () => {
                 @this.call('closePaymentForm');
+            });
+
+            reversePaymentModalEl.addEventListener('hidden.bs.modal', () => {
+                @this.call('closeReverseModal');
             });
         });
     </script>

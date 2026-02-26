@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class StudentFeeBill extends Model
 {
@@ -211,8 +212,11 @@ class StudentFeeBill extends Model
      */
     public function recalculatePaymentStatus()
     {
-        // Calculate total amount paid from all confirmed payments
-        $totalPaid = $this->payments()->sum('amount');
+        $paymentsQuery = $this->payments();
+        if (Schema::hasColumn('fee_payments', 'reversed_at')) {
+            $paymentsQuery->whereNull('reversed_at');
+        }
+        $totalPaid = $paymentsQuery->sum('amount');
 
         // Update bill details
         $this->amount_paid = $totalPaid;

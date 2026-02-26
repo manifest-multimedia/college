@@ -39,10 +39,10 @@
                     <i class="fas fa-exclamation-triangle"></i> Bill not found or has been deleted.
                 </div>
             @else
-                @if (! $canEdit)
+                @if($bill->payments->isNotEmpty())
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        This bill already has payments recorded and its fee items cannot be modified. You may record additional payments or create a new bill if needed.
+                        This bill has payments recorded. Updating the bill will recalculate balance: if total paid exceeds the new amount, balance will show in the student's favor; otherwise arrears will show.
                     </div>
                 @endif
 
@@ -112,7 +112,6 @@
                                         wire:model.live="selectedFeeIds"
                                         id="editFee{{ $fee['id'] }}"
                                         @if ($fee['is_mandatory']) disabled checked @endif
-                                        @if (! $canEdit) disabled @endif
                                     >
                                     <label class="form-check-label d-flex justify-content-between w-100" for="editFee{{ $fee['id'] }}">
                                         <span>
@@ -157,7 +156,7 @@
                 type="button"
                 class="btn btn-primary"
                 wire:click="save"
-                @if (! $canEdit || empty($availableFees)) disabled @endif
+                @if (empty($availableFees)) disabled @endif
             >
                 <i class="fas fa-save"></i> Save Changes
             </button>

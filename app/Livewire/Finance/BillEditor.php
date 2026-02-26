@@ -56,7 +56,8 @@ class BillEditor extends Component
                 'payments',
             ])->findOrFail($this->billId);
 
-            $this->canEdit = $this->bill->payments->isEmpty();
+            // Admin can always edit the bill (even with payments); recalculate will update balance/credit/arrears
+            $this->canEdit = true;
 
             $this->loadAvailableFees();
 
@@ -129,12 +130,6 @@ class BillEditor extends Component
     {
         if (! $this->bill) {
             session()->flash('error', 'Bill not loaded.');
-
-            return;
-        }
-
-        if (! $this->canEdit) {
-            session()->flash('error', 'This bill already has payments recorded and cannot be edited.');
 
             return;
         }

@@ -9,8 +9,10 @@ use App\Models\FeeType;
 use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentFeeBill;
+use App\Models\StudentFeeBillItem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -285,7 +287,8 @@ class StudentFeeBillingManager extends Component
                 $bill->student_id = $student->id;
                 $bill->academic_year_id = $this->bulkBillingAcademicYear;
                 $bill->semester_id = $this->bulkBillingSemester;
-                $bill->bill_date = $this->bulkBillDate;
+                $bill->billing_date = Carbon::parse($this->bulkBillDate);
+                $bill->bill_reference = 'BILL-'.Str::upper(Str::random(8));
                 $bill->total_amount = $totalAmount;
                 $bill->amount_paid = 0;
                 $bill->balance = $totalAmount;
@@ -293,9 +296,12 @@ class StudentFeeBillingManager extends Component
                 $bill->status = 'pending';
                 $bill->save();
 
-                // Attach fee structures to the bill
+                // Create bill items for each fee structure
                 foreach ($feeStructures as $feeStructure) {
-                    $bill->feeStructures()->attach($feeStructure->id, [
+                    StudentFeeBillItem::create([
+                        'student_fee_bill_id' => $bill->id,
+                        'fee_type_id' => $feeStructure->fee_type_id,
+                        'fee_structure_id' => $feeStructure->id,
                         'amount' => $feeStructure->amount,
                     ]);
                 }

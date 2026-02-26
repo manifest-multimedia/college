@@ -171,10 +171,8 @@ class StudentBillingService
      * This will:
      * - Validate the selected fee structures for the student's class, year and semester
      * - Replace all existing bill items with the new selection
-     * - Recalculate total_amount, balance, payment_percentage and status
-     *
-     * By design, bills that already have payments recorded cannot be edited
-     * to avoid creating inconsistent audit trails.
+     * - Recalculate total_amount; if the bill has payments, recalculate balance/payment_percentage/status
+     *   (if paid > new total, balance shows in student's favor; if paid < new total, arrears show)
      *
      * @param  StudentFeeBill  $bill
      * @param  array  $selectedFeeStructureIds
@@ -185,11 +183,6 @@ class StudentBillingService
     public function updateBillItems(StudentFeeBill $bill, array $selectedFeeStructureIds): StudentFeeBill
     {
         return DB::transaction(function () use ($bill, $selectedFeeStructureIds) {
-            // Do not allow structural edits once payments exist
-            if ($bill->payments()->exists()) {
-                throw new \Exception('This bill already has recorded payments and cannot be modified. Reverse the payments and try again or create a new bill.');
-            }
-
             $student = $bill->student()->firstOrFail();
 
             if (empty($selectedFeeStructureIds)) {
@@ -233,13 +226,10 @@ class StudentBillingService
                 ]);
             }
 
-            // Update bill financials
+            // Update bill total; then recalculate payment status (handles existing payments: credit/arrears)
             $bill->total_amount = $totalAmount;
-            $bill->amount_paid = 0.00;
-            $bill->balance = $totalAmount;
-            $bill->payment_percentage = 0.00;
-            $bill->status = 'pending';
             $bill->save();
+            $bill->recalculatePaymentStatus();
 
             return $bill->fresh(['student', 'academicYear', 'semester', 'billItems.feeType']);
         });

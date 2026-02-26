@@ -19,11 +19,15 @@ class FeePayment extends Model
         'note',
         'recorded_by',
         'payment_date',
+        'reversed_at',
+        'reversed_by',
+        'reversal_reason',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'payment_date' => 'datetime',
+        'reversed_at' => 'datetime',
     ];
 
     /**
@@ -48,5 +52,29 @@ class FeePayment extends Model
     public function recordedBy()
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    /**
+     * Get the user who reversed this payment (if any)
+     */
+    public function reversedBy()
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    /**
+     * Scope to only include active (non-reversed) payments
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('reversed_at');
+    }
+
+    /**
+     * Whether this payment has been reversed
+     */
+    public function isReversed(): bool
+    {
+        return $this->reversed_at !== null;
     }
 }
