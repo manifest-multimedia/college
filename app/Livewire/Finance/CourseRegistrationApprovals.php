@@ -183,11 +183,16 @@ class CourseRegistrationApprovals extends Component
             $baseQuery->where('semester_id', $this->selectedSemester);
         }
 
+        $totalQuery = clone $baseQuery;
+        $pendingQuery = clone $baseQuery;
+        $approvedQuery = clone $baseQuery;
+        $rejectedQuery = clone $baseQuery;
+
         return [
-            'total' => $baseQuery->count(),
-            'pending' => $baseQuery->where('is_approved', false)->whereNull('rejected_at')->count(),
-            'approved' => $baseQuery->where('is_approved', true)->count(),
-            'rejected' => $baseQuery->where('is_approved', false)->whereNotNull('rejected_at')->count(),
+            'total' => $totalQuery->count(),
+            'pending' => $pendingQuery->where('is_approved', false)->whereNull('rejected_at')->count(),
+            'approved' => $approvedQuery->where('is_approved', true)->count(),
+            'rejected' => $rejectedQuery->where('is_approved', false)->whereNotNull('rejected_at')->count(),
         ];
     }
 
