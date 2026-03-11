@@ -10,7 +10,7 @@
                             <p class="card-text">Total Registrations</p>
                         </div>
                         <div>
-                            <i class="fas fa-list fa-2x"></i>
+                            <i class="text-white fas fa-list fa-2x"></i>
                         </div>
                     </div>
                 </div>
@@ -25,7 +25,7 @@
                             <p class="card-text">Pending Approval</p>
                         </div>
                         <div>
-                            <i class="fas fa-clock fa-2x"></i>
+                            <i class="text-white fas fa-clock fa-2x"></i>
                         </div>
                     </div>
                 </div>
@@ -40,7 +40,7 @@
                             <p class="card-text">Approved</p>
                         </div>
                         <div>
-                            <i class="fas fa-check-circle fa-2x"></i>
+                            <i class="text-white fas fa-check-circle fa-2x"></i>
                         </div>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                             <p class="card-text">Rejected</p>
                         </div>
                         <div>
-                            <i class="fas fa-times-circle fa-2x"></i>
+                            <i class="text-white fas fa-times-circle fa-2x"></i>
                         </div>
                     </div>
                 </div>
@@ -67,7 +67,7 @@
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="card-title mb-0">
-                <i class="fas fa-filter"></i> Filters & Search
+                <i class="text-white fas fa-filter"></i> Filters & Search
             </h5>
         </div>
         <div class="card-body">
@@ -120,11 +120,11 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
-                <i class="fas fa-book-open"></i> Course Registration Approvals
+                <i class="text-white fas fa-book-open"></i> Course Registration Approvals
             </h5>
             @if($stats['pending'] > 0)
                 <button type="button" class="btn btn-success btn-sm" onclick="bulkApproveSelected()">
-                    <i class="fas fa-check"></i> Bulk Approve Selected
+                    <i class="text-white fas fa-check"></i> Bulk Approve Selected
                 </button>
             @endif
         </div>
@@ -175,7 +175,7 @@
                                     <td>
                                         @if($registration->is_approved)
                                             <span class="badge badge-success">
-                                                <i class="fas fa-check"></i> Approved
+                                                <i class="text-white fas fa-check"></i> Approved
                                             </span>
                                             @if($registration->approved_at)
                                                 <small class="d-block text-muted">
@@ -184,7 +184,7 @@
                                             @endif
                                         @elseif($registration->rejected_at)
                                             <span class="badge badge-danger">
-                                                <i class="fas fa-times"></i> Rejected
+                                                <i class="text-white fas fa-times"></i> Rejected
                                             </span>
                                             <small class="d-block text-muted">
                                                 {{ $registration->rejected_at->format('M d, Y') }}
@@ -196,7 +196,7 @@
                                             @endif
                                         @else
                                             <span class="badge badge-warning">
-                                                <i class="fas fa-clock"></i> Pending
+                                                <i class="text-white fas fa-clock"></i> Pending
                                             </span>
                                         @endif
                                     </td>
@@ -207,12 +207,12 @@
                                                         wire:click="approveRegistration({{ $registration->id }})"
                                                         class="btn btn-success btn-sm"
                                                         wire:confirm="Are you sure you want to approve this registration?">
-                                                    <i class="fas fa-check"></i>
+                                                    <i class="text-white fas fa-check"></i>
                                                 </button>
                                                 <button type="button" 
                                                         class="btn btn-danger btn-sm"
                                                         onclick="showRejectModal({{ $registration->id }}, '{{ $registration->student->full_name }}', '{{ $registration->subject->name }}')">
-                                                    <i class="fas fa-times"></i>
+                                                    <i class="text-white fas fa-times"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -237,7 +237,7 @@
                 </div>
             @else
                 <div class="text-center py-4">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <i class="text-white fas fa-inbox fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No course registrations found</h5>
                     <p class="text-muted">Try adjusting your filters or search criteria.</p>
                 </div>
@@ -270,7 +270,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" onclick="confirmReject()">
-                        <i class="fas fa-times"></i> Reject Registration
+                        <i class="text-white fas fa-times"></i> Reject Registration
                     </button>
                 </div>
             </div>
