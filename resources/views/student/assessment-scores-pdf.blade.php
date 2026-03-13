@@ -302,6 +302,35 @@
             Passed: <strong>{{ $summary['passed_courses'] }}</strong> | 
             Failed: <strong>{{ $summary['failed_courses'] }}</strong>
         </div>
+        @if(!empty($summary['semester_remarks']))
+        <div style="margin-top: 12px; border-top: 1px solid #dee2e6; padding-top: 10px;">
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">Academic Progress by Semester</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 4px 8px; background-color: #343a40; color: white; border: 1px solid #dee2e6;">Semester</th>
+                        <th style="text-align: center; padding: 4px 8px; background-color: #343a40; color: white; border: 1px solid #dee2e6;">Progress Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($summary['semester_remarks'] as $semName => $remark)
+                    @php
+                        $remarkColor = match($remark) {
+                            'Pass', 'Promoted' => '#28a745',
+                            'Probation', 'Repeat' => '#856404',
+                            'Dismissed' => '#dc3545',
+                            default => '#333',
+                        };
+                    @endphp
+                    <tr>
+                        <td style="padding: 4px 8px; border: 1px solid #dee2e6;">{{ $semName }}</td>
+                        <td style="padding: 4px 8px; border: 1px solid #dee2e6; text-align: center; font-weight: bold; color: {{ $remarkColor }};">{{ $remark }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
     </div>
     
     <!-- Footer -->

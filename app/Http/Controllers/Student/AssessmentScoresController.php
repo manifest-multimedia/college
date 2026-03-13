@@ -59,7 +59,12 @@ class AssessmentScoresController extends Controller
             ->where('is_published', true)
             ->get();
 
-        $groupedBySemester = $allScores->groupBy('semester_id');
+        // Sort semesters by semester_id (chronological order) for running CGPA calculation
+        $groupedBySemester = $allScores->groupBy('semester_id')->sortKeys();
+
+        // Running totals for cumulative GPA up to each semester
+        $runningTotalCredits = 0;
+        $runningTotalGradePoints = 0;
 
         foreach ($groupedBySemester as $semesterId => $semesterScores) {
             $totalCredits = 0;
@@ -79,29 +84,30 @@ class AssessmentScoresController extends Controller
                 }
             }
 
-            //$semesterGPA = $totalCredits > 0 ? round($totalGradePoints / $totalCredits, 2) : 0;
-            $semesterGPA = $totalCredits > 0 ? $totalGradePoints / $totalCredits: 0;
+            $semesterGPA = $totalCredits > 0 ? $totalGradePoints / $totalCredits : 0;
 
+            // Update running totals for cumulative GPA up to this semester
+            $runningTotalCredits += $totalCredits;
+            $runningTotalGradePoints += $totalGradePoints;
+            $cumulativeGpaUpToSemester = $runningTotalCredits > 0
+                ? $runningTotalGradePoints / $runningTotalCredits
+                : 0;
+
+            $semesterName = $semesterScores->first()->semester->name ?? 'N/A';
             $summary[$semesterId] = [
-                'semester_name' => $semesterScores->first()->semester->name ?? 'N/A',
+                'semester_name' => $semesterName,
                 'total_credits' => $totalCredits,
                 'gpa' => $semesterGPA,
                 'passed_courses' => $passedCourses,
                 'failed_courses' => $failedCourses,
+                'progress_remark' => $this->getAcademicProgressRemark($cumulativeGpaUpToSemester, $semesterName),
             ];
         }
 
-        // Calculate CGPA
-        $overallTotalCredits = 0;
-        $overallTotalGradePoints = 0;
+        // Calculate overall CGPA (same as running total after all semesters)
+        $overallTotalCredits = $runningTotalCredits;
+        $overallTotalGradePoints = $runningTotalGradePoints;
 
-        foreach ($allScores as $score) {
-            $creditHours = $score->course->credit_hours ?? 3;
-            $overallTotalCredits += $creditHours;
-            $overallTotalGradePoints += ($score->grade_points * $creditHours);
-        }
-
-        //$cgpa = $overallTotalCredits > 0 ? round($overallTotalGradePoints / $overallTotalCredits, 2) : 0;
         $cgpa = $overallTotalCredits > 0 ? $overallTotalGradePoints / $overallTotalCredits : 0;
         $overallRemark = $this->getOverallRemark($cgpa);
 
@@ -163,6 +169,35 @@ class AssessmentScoresController extends Controller
             return 'Pass';
         } else {
             return 'Fail';
+        }
+    }
+
+    /**
+     * Get per-semester academic progress remark based on CGPA and semester position.
+     *
+     * First Semester rules (semester name contains "First"):
+     *   CGPA >= 1.50 → Pass
+     *   CGPA <  1.50 → Probation
+     *
+     * Second Semester rules (all other semesters):
+     *   CGPA <  1.00 → Dismissed
+     *   CGPA 1.00–1.49 → Repeat
+     *   CGPA >= 1.50 → Promoted
+     */
+    private function getAcademicProgressRemark(float $cgpa, string $semesterName): string
+    {
+        $isFirstSemester = stripos($semesterName, 'first') !== false;
+
+        if ($isFirstSemester) {
+            return $cgpa >= 1.50 ? 'Pass' : 'Probation';
+        }
+
+        if ($cgpa < 1.00) {
+            return 'Dismissed';
+        } elseif ($cgpa < 1.50) {
+            return 'Repeat';
+        } else {
+            return 'Promoted';
         }
     }
 
@@ -233,12 +268,35 @@ class AssessmentScoresController extends Controller
         $cgpa = $totalCredits > 0 ? round($totalGradePoints / $totalCredits, 2) : 0;
         $overallRemark = $this->getOverallRemark($cgpa);
 
+        // Build per-semester progress remarks using running cumulative GPA
+        $semesterRemarks = [];
+        $runningCredits = 0;
+        $runningGradePoints = 0;
+        $allStudentScores = AssessmentScore::with(['course', 'semester'])
+            ->where('student_id', $user->student->id)
+            ->where('is_published', true)
+            ->get()
+            ->groupBy('semester_id')
+            ->sortKeys();
+
+        foreach ($allStudentScores as $semesterId => $semScores) {
+            foreach ($semScores as $score) {
+                $ch = $score->course->credit_hours ?? 3;
+                $runningCredits += $ch;
+                $runningGradePoints += ($score->grade_points * $ch);
+            }
+            $cumulativeGpa = $runningCredits > 0 ? $runningGradePoints / $runningCredits : 0;
+            $semName = $semScores->first()->semester->name ?? 'N/A';
+            $semesterRemarks[$semName] = $this->getAcademicProgressRemark($cumulativeGpa, $semName);
+        }
+
         $summary = [
             'total_credits' => $totalCredits,
             'cgpa' => $cgpa,
             'overall_remark' => $overallRemark,
             'passed_courses' => $passedCourses,
             'failed_courses' => $failedCourses,
+            'semester_remarks' => $semesterRemarks,
         ];
 
         $student = $user->student;

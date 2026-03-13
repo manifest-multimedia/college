@@ -281,6 +281,9 @@
                                         <div class="small text-muted">
                                             Passed: ${sem.passed_courses} | Failed: ${sem.failed_courses}
                                         </div>
+                                        <div class="mt-1">
+                                            <span class="badge ${getProgressRemarkBadgeClass(sem.progress_remark)}">${sem.progress_remark}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -335,6 +338,17 @@
                     'Fail': '<span class="badge bg-danger">Fail</span>'
                 };
                 return badges[status] || '<span class="badge bg-secondary">N/A</span>';
+            }
+
+            function getProgressRemarkBadgeClass(remark) {
+                const classes = {
+                    'Pass': 'bg-success',
+                    'Promoted': 'bg-success',
+                    'Probation': 'bg-warning text-dark',
+                    'Repeat': 'bg-warning text-dark',
+                    'Dismissed': 'bg-danger',
+                };
+                return classes[remark] || 'bg-secondary';
             }
 
             function exportToPDF() {
