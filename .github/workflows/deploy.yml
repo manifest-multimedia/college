@@ -34,7 +34,9 @@ jobs:
           ssh-keyscan -H 62.77.158.206 >> ~/.ssh/known_hosts
 
       - name: Write deploy.php from secret
-        run: echo "${{ secrets.DEPLOY_PHP_COLLEGE }}" > deploy.php
+        env:
+          DEPLOY_PHP: ${{ secrets.DEPLOY_PHP_COLLEGE }}
+        run: python3 -c "import os; open('deploy.php','w').write(os.environ['DEPLOY_PHP'])"
 
       - name: Deploy to all institutions
         env:
