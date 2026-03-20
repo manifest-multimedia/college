@@ -202,8 +202,8 @@ class ExamPreview extends Component
             'canStillSubmit' => $this->canStillSubmit,
             'extraTimeMinutes' => $this->extraTimeMinutes,
             'remainingTime' => $this->remainingTime,
-            'flaggedQuestions' => [], // Empty array for preview mode (no flagged questions in preview)
+            'flaggedQuestions' => [],
             'isPreview' => $isPreview,
-        ])->layout('components.dashboard.default');
+        ]);
     }
 }
