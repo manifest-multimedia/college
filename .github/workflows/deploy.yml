@@ -2,71 +2,44 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [master]
-
-# Require manual approval before deploying
-environment: production
+    branches:
+      - master
 
 jobs:
   deploy:
-    name: Deploy to all institutions
+    name: Deploy to MHTIA + PNMTC
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-      # ── 1. Checkout code ─────────────────────────────────────────────
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # ── 2. Setup PHP ─────────────────────────────────────────────────
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           tools: composer:v2
 
-      # ── 3. Install Composer dependencies (including Deployer) ────────
       - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+        run: composer install --prefer-dist --optimize-autoloader --no-interaction
 
-      # ── 4. Setup SSH ─────────────────────────────────────────────────
-      - name: Setup SSH key and known hosts
+      - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/college_deploy_key
-          chmod 600 ~/.ssh/college_deploy_key
+          echo "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 69.197.187.20 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 62.77.158.206 >> ~/.ssh/known_hosts
 
-          # Add known hosts for both servers
-          ssh-keyscan -t rsa,ed25519 69.197.187.20 >> ~/.ssh/known_hosts 2>/dev/null
-          ssh-keyscan -t rsa,ed25519 62.77.158.206 >> ~/.ssh/known_hosts 2>/dev/null
-          chmod 644 ~/.ssh/known_hosts
-
-          # Configure SSH to use deploy key for both servers
-          cat >> ~/.ssh/config << 'EOF'
-          Host 69.197.187.20
-            IdentityFile ~/.ssh/college_deploy_key
-            StrictHostKeyChecking yes
-            User administrator
-
-          Host 62.77.158.206
-            IdentityFile ~/.ssh/college_deploy_key
-            StrictHostKeyChecking yes
-            User pnmtc
-          EOF
-          chmod 600 ~/.ssh/config
-
-      # ── 5. Deploy to MHTIA ───────────────────────────────────────────
-      - name: Deploy to MHTIA (portal.mhtia.edu.gh)
-        run: vendor/bin/dep deploy mhtia --no-interaction -vvv
-        continue-on-error: false
-
-      # ── 6. Deploy to PNMTC ───────────────────────────────────────────
-      - name: Deploy to PNMTC (college.pnmtc.edu.gh)
-        run: vendor/bin/dep deploy pnmtc --no-interaction -vvv
-        continue-on-error: false
-
-      # ── 7. Notify on failure ─────────────────────────────────────────
-      - name: Notify on failure
-        if: failure()
+      - name: Deploy to all institutions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN_COLLEGE }}
         run: |
-          echo "::error::Deployment failed. Check logs above. Run 'dep rollback <host>' to revert."
+          # Inject token into repo URL so servers can pull private repo
+          sed -i "s|https://github.com/manifest-multimedia/college.git|https://x-access-token:${GITHUB_TOKEN}@github.com/manifest-multimedia/college.git|" deploy.php
+          php vendor/bin/dep deploy:unlock mhtia --no-interaction || true
+          php vendor/bin/dep deploy:unlock pnmtc --no-interaction || true
+          php vendor/bin/dep deploy mhtia --no-interaction -vvv
+          php vendor/bin/dep deploy pnmtc --no-interaction -vvv
