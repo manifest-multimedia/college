@@ -22,4 +22,5 @@ yarn-error.log
 /.zed
 deploy-johnson.php
 deployOld.php
+deploy.php
 deployGabe.php
