@@ -289,118 +289,8 @@
         </div>
     </div>
 
-    <!-- New timer scripts and styles -->
-    <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">
-    <script src="{{ asset('js/services/ExamTimerService.js') }}"></script>
-
-    @include('components.partials.styles.exam-styles')
-    @include('components.partials.styles.scrollbar-styles')
-    @include('components.partials.exam-security')
-
-    <style>
-        /* Tracker States */
-        .tracker-item {
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .tracker-item:hover {
-            transform: scale(1.1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Answered - Green */
-        .tracker-item.answered {
-            background-color: #28a745;
-            color: white;
-            border: 2px solid #1e7e34;
-        }
-
-        /* Unanswered - Light Gray */
-        .tracker-item.unanswered {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            border: 2px solid #dee2e6;
-        }
-
-        /* Flagged + Answered - Yellow/Gold Gradient */
-        .tracker-item.flagged-answered {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: #78350f;
-            border: 2px solid #d97706;
-            font-weight: 700;
-        }
-
-        /* Flagged + Unanswered - Light Yellow */
-        .tracker-item.flagged-unanswered {
-            background-color: #fef3c7;
-            color: #92400e;
-            border: 2px solid #fbbf24;
-            font-weight: 700;
-        }
-
-        /* Flag Button Styles */
-        .flag-button {
-            transition: all 0.2s ease;
-        }
-
-        .flag-button.active {
-            background-color: #fbbf24;
-            border-color: #f59e0b;
-            color: #78350f;
-        }
-
-        .flag-button:hover:not(.active) {
-            background-color: #fef3c7;
-            border-color: #fbbf24;
-        }
-
-        .flag-button.active:hover {
-            background-color: #f59e0b;
-            border-color: #d97706;
-        }
-
-        /* Clear Button Styles */
-        .clear-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .clear-button:not(:disabled):hover {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
-        /* Modal Styles */
-        .bg-gradient-to-r {
-            background: linear-gradient(to right, #eff6ff, #eef2ff);
-        }
-    </style>
-
-    @if ($examExpired && !$canStillSubmit)
-        <style>
-            .form-check-label.disabled {
-                color: #6c757d;
-                cursor: not-allowed;
-            }
-
-            .question {
-                opacity: 0.9;
-            }
-
-            .tracker-item.answered {
-                opacity: 0.8;
-            }
-        </style>
-    @elseif ($examExpired && $canStillSubmit)
-        <style>
-            .question {
-                border-left: 3px solid #ffc107;
-            }
-        </style>
-    @endif
-
+@push('scripts')
+   <script src="{{ asset('js/services/ExamTimerService.js') }}"></script>
     <script>
         let questionToClearV1 = null;
         
@@ -670,7 +560,120 @@
         });
         @endif
     </script>
+    @endpush
+@push('styles')
 
+    @include('components.partials.styles.exam-styles')
+    @include('components.partials.styles.scrollbar-styles')
+    @include('components.partials.exam-security')
+
+    <!-- New timer scripts and styles -->
+    <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">
+ 
+
+    <style>
+        /* Tracker States */
+        .tracker-item {
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tracker-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Answered - Green */
+        .tracker-item.answered {
+            background-color: #28a745;
+            color: white;
+            border: 2px solid #1e7e34;
+        }
+
+        /* Unanswered - Light Gray */
+        .tracker-item.unanswered {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 2px solid #dee2e6;
+        }
+
+        /* Flagged + Answered - Yellow/Gold Gradient */
+        .tracker-item.flagged-answered {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+            border: 2px solid #d97706;
+            font-weight: 700;
+        }
+
+        /* Flagged + Unanswered - Light Yellow */
+        .tracker-item.flagged-unanswered {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 2px solid #fbbf24;
+            font-weight: 700;
+        }
+
+        /* Flag Button Styles */
+        .flag-button {
+            transition: all 0.2s ease;
+        }
+
+        .flag-button.active {
+            background-color: #fbbf24;
+            border-color: #f59e0b;
+            color: #78350f;
+        }
+
+        .flag-button:hover:not(.active) {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+        }
+
+        .flag-button.active:hover {
+            background-color: #f59e0b;
+            border-color: #d97706;
+        }
+
+        /* Clear Button Styles */
+        .clear-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .clear-button:not(:disabled):hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
+        /* Modal Styles */
+        .bg-gradient-to-r {
+            background: linear-gradient(to right, #eff6ff, #eef2ff);
+        }
+    </style>
+
+    @if ($examExpired && !$canStillSubmit)
+        <style>
+            .form-check-label.disabled {
+                color: #6c757d;
+                cursor: not-allowed;
+            }
+
+            .question {
+                opacity: 0.9;
+            }
+
+            .tracker-item.answered {
+                opacity: 0.8;
+            }
+        </style>
+    @elseif ($examExpired && $canStillSubmit)
+        <style>
+            .question {
+                border-left: 3px solid #ffc107;
+            }
+        </style>
+    @endif
     <style>
         .question{
             min-width:720px !important;
@@ -751,4 +754,5 @@
             }
         }
     </style>
+    @endpush
 </div> <!-- Root Container -->

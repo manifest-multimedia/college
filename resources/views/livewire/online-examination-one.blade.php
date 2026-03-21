@@ -196,13 +196,11 @@
         </div>
     </div>
 
+    @push('styles')
+    
     @include('components.partials.styles.exam-styles')
     @include('components.partials.styles.scrollbar-styles')
     @include('components.partials.exam-security')
-
-    <!-- Timer scripts and styles -->
-    <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">
-    <script src="{{ asset('js/services/ExamTimerService.js') }}"></script>
 
     <style>
         .question{ min-width:720px !important; width:100% !important; }
@@ -215,6 +213,12 @@
             box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
         }
     </style>
+    <!-- Timer scripts and styles -->
+    <link href="{{ asset('css/exam-timer.css') }}" rel="stylesheet">
+   @endpush
+
+    @push('scripts')
+ <script src="{{ asset('js/services/ExamTimerService.js') }}"></script>
 
     <script>
         document.addEventListener('livewire:initialized', function() {
@@ -232,4 +236,5 @@
             }
         }
     </script>
+    @endpush
 </div>
