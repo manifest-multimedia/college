@@ -1,1 +1,11 @@
 [    1901ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://college.test/exams/fundamentals-of-nursing-mid-sem-exam/preview:0
+[  339606ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-down.svg:0
+[  339614ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-top.svg:0
+[  339624ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/js/main.js:0
+[  339681ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/avatar.png:0
+[  339713ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/images/pattern-light.png:0
+[  347158ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-down.svg:0
+[  347171ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-top.svg:0
+[  347182ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/js/main.js:0
+[  347294ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/avatar.png:0
+[  347295ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/images/pattern-light.png:0

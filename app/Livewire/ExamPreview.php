@@ -204,6 +204,8 @@ class ExamPreview extends Component
             'remainingTime' => $this->remainingTime,
             'flaggedQuestions' => [],
             'isPreview' => $isPreview,
+        ])->layout('components.frontend.exams',[
+            'title' => 'Exam Preview - '.$this->exam->course->name,
         ]);
     }
 }
