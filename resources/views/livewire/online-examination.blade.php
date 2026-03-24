@@ -164,7 +164,7 @@
                     @endif
                 </div>
 
-                <div id="questionsOverview" class="overflow-y-auto p-3 mb-2 flex-grow-1"
+                <div id="questionsOverview" class="overflow-y-auto p-3 mb-2 flex-grow-1">
                     <div class="flex-wrap gap-3 tracker-container d-flex justify-content-center">
                         @foreach ($questions as $index => $question)
                             @php

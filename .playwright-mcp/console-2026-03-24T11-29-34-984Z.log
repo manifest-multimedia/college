@@ -1,0 +1,5 @@
+[     756ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-down.svg:0
+[     759ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/js/main.js:0
+[     821ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-top.svg:0
+[     822ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/avatar.png:0
+[     852ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/images/pattern-light.png:0

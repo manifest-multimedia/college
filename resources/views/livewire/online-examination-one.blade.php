@@ -197,7 +197,7 @@
     </div>
 
     @push('styles')
-    
+
     @include('components.partials.styles.exam-styles')
     @include('components.partials.styles.scrollbar-styles')
     @include('components.partials.exam-security')
