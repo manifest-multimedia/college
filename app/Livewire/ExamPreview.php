@@ -16,6 +16,8 @@ class ExamPreview extends Component
 
     public array $responses = [];
 
+    public array $flaggedQuestions = [];
+
     public int $currentIndex = 0;
 
     public string $student_name = '';
@@ -101,9 +103,13 @@ class ExamPreview extends Component
             $this->questions = $examQuestions->map(function ($question) {
                 return [
                     'id' => $question->id,
-                    'question' => $question->question_text,
+                    'question_text' => $question->question_text,
                     'options' => $question->options()->get()->toArray(),
                     'marks' => $question->mark,
+                    'selected_answer' => $this->responses[$question->id] ?? null,
+                    'is_flagged' => in_array($question->id, $this->flaggedQuestions),
+                    'images' => [],
+                    'table_data' => null,
                 ];
             })->values()->toArray();
 
@@ -120,20 +126,110 @@ class ExamPreview extends Component
     public function storeResponse(int $questionId, int $optionId): void
     {
         $this->responses[$questionId] = $optionId;
+
+        foreach ($this->questions as $index => $question) {
+            if ($question['id'] === $questionId) {
+                $this->questions[$index]['selected_answer'] = $optionId;
+                break;
+            }
+        }
+
         $this->dispatch('responseUpdated');
     }
 
     public function toggleFlag(int $questionId): void
     {
-        // No-op for preview mode - flags are not persisted in preview
-        Log::info('ExamPreview: toggleFlag called (no-op in preview)', ['question_id' => $questionId]);
+        if (in_array($questionId, $this->flaggedQuestions)) {
+            $this->flaggedQuestions = array_values(array_filter(
+                $this->flaggedQuestions,
+                fn ($id) => $id !== $questionId
+            ));
+        } else {
+            $this->flaggedQuestions[] = $questionId;
+        }
+
+        foreach ($this->questions as $index => $question) {
+            if ($question['id'] === $questionId) {
+                $this->questions[$index]['is_flagged'] = in_array($questionId, $this->flaggedQuestions);
+                break;
+            }
+        }
+
+        Log::info('ExamPreview: toggleFlag updated in-memory state', [
+            'question_id' => $questionId,
+            'flagged_questions' => $this->flaggedQuestions,
+        ]);
     }
 
-    public function clearResponse(int $questionId): void
+    public function syncResponsesBatch($responses): array
     {
-        // Clear the response for this question
+        foreach ($responses as $questionId => $optionId) {
+            $this->responses[(int) $questionId] = (int) $optionId;
+
+            foreach ($this->questions as $index => $question) {
+                if ($question['id'] === (int) $questionId) {
+                    $this->questions[$index]['selected_answer'] = (int) $optionId;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'synced_count' => count($responses),
+            'last_synced_at' => now()->toIso8601String(),
+        ];
+    }
+
+    public function syncFlagsBatch($flags): array
+    {
+        foreach ($flags as $questionId => $action) {
+            $questionId = (int) $questionId;
+
+            if ($action === 'flag' && ! in_array($questionId, $this->flaggedQuestions)) {
+                $this->flaggedQuestions[] = $questionId;
+            }
+
+            if ($action === 'unflag') {
+                $this->flaggedQuestions = array_values(array_filter(
+                    $this->flaggedQuestions,
+                    fn ($id) => $id !== $questionId
+                ));
+            }
+
+            foreach ($this->questions as $index => $question) {
+                if ($question['id'] === $questionId) {
+                    $this->questions[$index]['is_flagged'] = in_array($questionId, $this->flaggedQuestions);
+                    break;
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'synced_count' => count($flags),
+            'flagged_questions' => $this->flaggedQuestions,
+        ];
+    }
+
+    public function clearResponse(int $questionId): array
+    {
         unset($this->responses[$questionId]);
+
+        foreach ($this->questions as $index => $question) {
+            if ($question['id'] === $questionId) {
+                $this->questions[$index]['selected_answer'] = null;
+                break;
+            }
+        }
+
         $this->dispatch('responseUpdated');
+
+        return [
+            'success' => true,
+            'message' => 'Response cleared successfully',
+            'was_synced' => false,
+        ];
     }
 
     public function nextQuestion(): void
@@ -182,8 +278,8 @@ class ExamPreview extends Component
     {
         // Use the exact same views as the real exam system
         $view = $this->theme === 'one-by-one'
-            ? 'livewire.online-examination-one'
-            : 'livewire.online-examination';
+            ? 'livewire.online-examination-v2'
+            : 'livewire.online-examination-v2';
 
         // Add preview indicator
         $isPreview = true;
@@ -195,6 +291,8 @@ class ExamPreview extends Component
             'currentIndex' => $this->currentIndex,
             'student_name' => $this->student_name,
             'student_index' => $this->student_index,
+            'student' => null,
+            'user' => $this->user,
             'theme' => $this->theme,
             'examSession' => $this->examSession,
             'examExpired' => $this->examExpired,
@@ -202,9 +300,16 @@ class ExamPreview extends Component
             'canStillSubmit' => $this->canStillSubmit,
             'extraTimeMinutes' => $this->extraTimeMinutes,
             'remainingTime' => $this->remainingTime,
-            'flaggedQuestions' => [],
+            'readOnlyMode' => false,
+            'readOnlyReason' => null,
+            'validationMessage' => '',
+            'adjustedCompletionTime' => $this->examSession->adjustedCompletionTime,
+            'answeredCount' => count(array_filter($this->responses)),
+            'totalQuestions' => count($this->questions),
+            'flaggedCount' => count($this->flaggedQuestions),
+            'flaggedQuestions' => $this->flaggedQuestions,
             'isPreview' => $isPreview,
-        ])->layout('components.frontend.exams',[
+        ])->layout('components.frontend.exams', [
             'title' => 'Exam Preview - '.$this->exam->course->name,
         ]);
     }
