@@ -1,10 +1,38 @@
 <div class="container my-5" x-data="examV2Manager()" x-init="initExam()">
+    @php
+        $isPreview = $isPreview ?? false;
+        $readOnlyMode = $readOnlyMode ?? false;
+        $readOnlyReason = $readOnlyReason ?? null;
+        $validationMessage = $validationMessage ?? '';
+        $flaggedQuestions = $flaggedQuestions ?? [];
+        $answeredCount = $answeredCount ?? count(array_filter($responses ?? []));
+
+        $displayStudentName = $student->full_name
+            ?? ($student_name ?? null)
+            ?? ($user->name ?? null)
+            ?? 'Preview Student';
+
+        $displayStudentId = $student->student_id
+            ?? ($student_index ?? null)
+            ?? 'PREVIEW';
+
+        $adjustedCompletionTime = $adjustedCompletionTime
+            ?? ($examSession->adjustedCompletionTime ?? null)
+            ?? now()->addMinutes((int) ($exam->duration ?? 0));
+    @endphp
     <div class="row">
         <!-- Main Exam Content -->
         <div class="mb-4 text-center">
             <h2>Course Title: {{ $exam->course->name }}</h2>
             Date of Exam: {{ $examSession->started_at }}
-            <p>Student Name: {{ $student->full_name ?? $user->name }} | Student ID : {{ $student->student_id }} </p>
+            <p>Student Name: {{ $displayStudentName }} | Student ID : {{ $displayStudentId }} </p>
+            @if ($isPreview)
+                <p class="mb-2">
+                    <span class="badge bg-warning text-dark px-3 py-2" style="font-size: 0.9rem;">
+                        <i class="bi bi-eye-fill me-1"></i> Preview Mode
+                    </span>
+                </p>
+            @endif
             <p>Proctor: AI Sensei </p>
 
             <div class="p-3 rounded border shadow-lg row bg-light">
@@ -74,7 +102,7 @@
                 <div class="p-4 shadow-lg card question-card position-relative exam-protected d-flex flex-column" style="flex: 1; display: flex; flex-direction: column;">
                     <!-- Watermark -->
                     <div class="watermark">
-                        {{ $student->full_name ?? $user->name }}
+                        {{ $displayStudentName }}
                     </div>
 
                     @if ($readOnlyMode)
@@ -97,7 +125,7 @@
                                 <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div style="font-size: 18px; font-weight: 600;">
-                                            <strong>Q{{ $index + 1 }}:</strong> {!! $question['question_text'] !!}
+                                            <strong>Q{{ $index + 1 }}:</strong> {!! $question['question_text'] ?? $question['question'] ?? '' !!}
                                         </div>
                                         @if (!$readOnlyMode)
                                             <div class="d-flex gap-2 ms-3 flex-shrink-0">
@@ -152,7 +180,7 @@
                                                         name="responses[{{ $question['id'] }}]"
                                                         value="{{ $option['id'] }}"
                                                         @change="handleAnswerChange({{ $question['id'] }}, {{ $option['id'] }})"
-                                                        @if ($question['selected_answer'] == $option['id']) checked @endif
+                                                        @if (($question['selected_answer'] ?? null) == $option['id']) checked @endif
                                                         @if ($readOnlyMode) disabled @endif>
                                                     <span style="font-size: 16px;">{{ $option['option_text'] }}</span>
                                                 </label>
@@ -520,7 +548,7 @@
         function examV2Manager() {
             return {
                 // State
-                responses: @js(collect($questions)->mapWithKeys(fn($q) => [$q['id'] => $q['selected_answer']])->toArray()),
+                responses: @js(collect($questions)->mapWithKeys(fn($q) => [$q['id'] => $q['selected_answer'] ?? null])->toArray()),
                 pendingSync: {},
                 flaggedQuestions: @js($flaggedQuestions ?? []),
                 pendingFlags: {}, // {questionId: 'flag' or 'unflag'}
