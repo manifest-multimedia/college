@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Imports\AssessmentScoresImport;
 use App\Models\AcademicYear;
 use App\Models\AssessmentScore;
+use App\Models\AssessmentScoreResit;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Semester;
@@ -55,6 +56,29 @@ class AssessmentScoresController extends Controller
             'currentCohort',
             'currentSemester',
             'defaultWeights'
+        ));
+    }
+
+    public function resitIndex()
+    {
+        $collegeClasses = CollegeClass::orderBy('name')->get();
+        $cohorts = Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
+        $semesters = Semester::orderBy('name')->get();
+        $academicYears = AcademicYear::query()
+            ->select('id', 'name')
+            ->orderBy('name', 'desc')
+            ->get();
+
+        $currentCohort = Cohort::where('is_active', true)->first();
+        $currentSemester = Semester::where('is_current', true)->first();
+
+        return view('admin.assessment-resit-scores', compact(
+            'collegeClasses',
+            'cohorts',
+            'semesters',
+            'academicYears',
+            'currentCohort',
+            'currentSemester'
         ));
     }
 
@@ -334,6 +358,191 @@ class AssessmentScoresController extends Controller
             'message' => $message,
             'saved_count' => $savedCount,
             'updated_count' => $updatedCount,
+        ]);
+    }
+
+    public function loadResitScoresheet(Request $request)
+    {
+        $validated = $request->validate([
+            'class_id' => 'required|exists:college_classes,id',
+            'course_id' => [
+                'required',
+                Rule::exists('subjects', 'id')->where(fn ($query) => $query->where('college_class_id', $request->class_id)),
+            ],
+            'cohort_id' => 'required|exists:cohorts,id',
+            'semester_id' => 'required|exists:semesters,id',
+            'academic_year_id' => 'nullable|exists:academic_years,id',
+            'per_page' => 'nullable|integer|min:5|max:200',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        $perPage = $validated['per_page'] ?? 15;
+        $page = $validated['page'] ?? 1;
+
+        $selectedAcademicYear = null;
+        if (! empty($validated['academic_year_id'])) {
+            $selectedAcademicYear = AcademicYear::find($validated['academic_year_id']);
+        }
+
+        if (! $selectedAcademicYear) {
+            $selectedAcademicYear = AcademicYear::getCurrent();
+        }
+
+        if (! $selectedAcademicYear) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No academic year selected or available. Please select an academic year or set one as current.',
+            ], 422);
+        }
+
+        $studentsQuery = Student::query()
+            ->where('college_class_id', $validated['class_id'])
+            ->where('cohort_id', $validated['cohort_id'])
+            ->orderBy('student_id');
+
+        $totalStudents = $studentsQuery->count();
+        $students = $studentsQuery->paginate($perPage, ['*'], 'page', $page);
+
+        if ($students->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found for the selected program and cohort.',
+            ], 404);
+        }
+
+        $studentScores = [];
+
+        foreach ($students as $student) {
+            $assessmentScore = AssessmentScore::with(['resits'])
+                ->where('course_id', $validated['course_id'])
+                ->where('student_id', $student->id)
+                ->where('cohort_id', $validated['cohort_id'])
+                ->where('semester_id', $validated['semester_id'])
+                ->where('academic_year_id', $selectedAcademicYear->id)
+                ->latest('updated_at')
+                ->first();
+
+            $resitAttempts = $assessmentScore?->resits->count() ?? 0;
+            $latestResit = $assessmentScore?->resits->last();
+
+            $studentScores[] = [
+                'student_id' => $student->id,
+                'student_number' => $student->student_id,
+                'student_name' => $student->name,
+                'assessment_score_id' => $assessmentScore?->id,
+                'main_exam_score' => $assessmentScore?->end_semester_score,
+                'current_effective_exam_score' => $assessmentScore?->effective_end_semester_score,
+                'assignment_weighted' => $assessmentScore?->assignment_weighted,
+                'mid_semester_weighted' => $assessmentScore?->mid_semester_weighted,
+                'end_semester_weight' => $assessmentScore?->end_semester_weight,
+                'resit_attempts_count' => $resitAttempts,
+                'last_resit_score' => $latestResit?->resit_score,
+                'total_score' => $assessmentScore?->total_score,
+                'grade_letter' => $assessmentScore?->grade_letter,
+                'has_base_score' => $assessmentScore !== null && $assessmentScore->end_semester_score !== null,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'students' => $studentScores,
+            'academic_year' => [
+                'id' => $selectedAcademicYear->id,
+                'name' => $selectedAcademicYear->name,
+            ],
+            'pagination' => [
+                'current_page' => $students->currentPage(),
+                'last_page' => $students->lastPage(),
+                'per_page' => $students->perPage(),
+                'total' => $totalStudents,
+                'from' => $students->firstItem(),
+                'to' => $students->lastItem(),
+            ],
+        ]);
+    }
+
+    public function saveResitScores(Request $request)
+    {
+        $validated = $request->validate([
+            'course_id' => 'required|exists:subjects,id',
+            'cohort_id' => 'required|exists:cohorts,id',
+            'semester_id' => 'required|exists:semesters,id',
+            'academic_year_id' => 'nullable|exists:academic_years,id',
+            'scores' => 'required|array',
+            'scores.*.student_id' => 'required|exists:students,id',
+            'scores.*.resit_score' => 'nullable|numeric|min:0|max:100',
+            'scores.*.remarks' => 'nullable|string|max:1000',
+        ]);
+
+        $selectedAcademicYear = null;
+        if (! empty($validated['academic_year_id'])) {
+            $selectedAcademicYear = AcademicYear::find($validated['academic_year_id']);
+        }
+
+        if (! $selectedAcademicYear) {
+            $selectedAcademicYear = AcademicYear::getCurrent();
+        }
+
+        if (! $selectedAcademicYear) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No academic year selected or available. Please select an academic year or set one as current.',
+            ], 422);
+        }
+
+        $createdCount = 0;
+        $skippedCount = 0;
+
+        DB::transaction(function () use ($validated, $selectedAcademicYear, &$createdCount, &$skippedCount) {
+            foreach ($validated['scores'] as $studentScore) {
+                if (! array_key_exists('resit_score', $studentScore) || $studentScore['resit_score'] === null || $studentScore['resit_score'] === '') {
+                    continue;
+                }
+
+                $assessmentScore = AssessmentScore::with('resits')
+                    ->where('course_id', $validated['course_id'])
+                    ->where('student_id', $studentScore['student_id'])
+                    ->where('cohort_id', $validated['cohort_id'])
+                    ->where('semester_id', $validated['semester_id'])
+                    ->where('academic_year_id', $selectedAcademicYear->id)
+                    ->latest('updated_at')
+                    ->first();
+
+                if (! $assessmentScore || $assessmentScore->end_semester_score === null) {
+                    $skippedCount++;
+
+                    continue;
+                }
+
+                $previousExamScore = $assessmentScore->effective_end_semester_score;
+                $resitScore = round((float) $studentScore['resit_score'], 2);
+                $updatedAverage = round((($previousExamScore ?? 0) + $resitScore) / 2, 2);
+                $nextAttemptNumber = ($assessmentScore->resits()->max('attempt_number') ?? 0) + 1;
+
+                AssessmentScoreResit::create([
+                    'assessment_score_id' => $assessmentScore->id,
+                    'course_id' => $validated['course_id'],
+                    'student_id' => $studentScore['student_id'],
+                    'cohort_id' => $validated['cohort_id'],
+                    'semester_id' => $validated['semester_id'],
+                    'academic_year_id' => $selectedAcademicYear->id,
+                    'attempt_number' => $nextAttemptNumber,
+                    'previous_exam_score' => $previousExamScore,
+                    'resit_score' => $resitScore,
+                    'updated_average_score' => $updatedAverage,
+                    'remarks' => $studentScore['remarks'] ?? null,
+                    'recorded_by' => Auth::id(),
+                ]);
+
+                $createdCount++;
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => "Resit scores saved successfully. {$createdCount} resit attempt(s) recorded.",
+            'created_count' => $createdCount,
+            'skipped_count' => $skippedCount,
         ]);
     }
 

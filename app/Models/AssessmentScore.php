@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AssessmentScore extends Model
 {
@@ -41,6 +42,7 @@ class AssessmentScore extends Model
         'assignment_weighted',
         'mid_semester_weighted',
         'end_semester_weighted',
+        'effective_end_semester_score',
         'total_score',
         'grade_letter',
         'grade_points',
@@ -83,6 +85,11 @@ class AssessmentScore extends Model
     public function publishedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'published_by');
+    }
+
+    public function resits(): HasMany
+    {
+        return $this->hasMany(AssessmentScoreResit::class)->orderBy('attempt_number');
     }
 
     /**
@@ -137,9 +144,29 @@ class AssessmentScore extends Model
 
     public function getEndSemesterWeightedAttribute(): float
     {
-        return $this->end_semester_score
-            ? round(($this->end_semester_score * $this->end_semester_weight / 100), 2)
+        return $this->effective_end_semester_score !== null
+            ? round(($this->effective_end_semester_score * $this->end_semester_weight / 100), 2)
             : 0;
+    }
+
+    public function getEffectiveEndSemesterScoreAttribute(): ?float
+    {
+        $previousScore = $this->end_semester_score !== null ? (float) $this->end_semester_score : null;
+
+        if ($previousScore === null) {
+            return null;
+        }
+
+        $resits = $this->relationLoaded('resits')
+            ? $this->resits
+            : $this->resits()->get();
+
+        foreach ($resits as $resit) {
+            $resitScore = (float) $resit->resit_score;
+            $previousScore = round(($previousScore + $resitScore) / 2, 2);
+        }
+
+        return $previousScore;
     }
 
     public function getTotalScoreAttribute(): float

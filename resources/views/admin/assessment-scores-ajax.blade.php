@@ -6,8 +6,11 @@
 
         {{-- Filter Section --}}
         <div class="card mb-4">
-            <div class="card-header pb-0">
-                <h6 class="card-title">Assessment Score Management</h6>
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">Assessment Score Management</h6>
+                <a href="{{ route('admin.assessment-scores.resits.index') }}" class="btn btn-outline-warning btn-sm">
+                    <i class="fas fa-redo-alt me-1"></i>Resit Score Entry
+                </a>
             </div>
             <div class="card-body">
                 <div class="row g-3">

@@ -3,13 +3,14 @@
 namespace App\Exports;
 
 use App\Models\FeePayment;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
-class FeeCollectionExport implements FromQuery, WithHeadings, WithMapping, WithTitle
+class PaymentSummaryExport implements FromQuery, WithHeadings, WithMapping, WithTitle
 {
     use Exportable;
 
@@ -21,30 +22,34 @@ class FeeCollectionExport implements FromQuery, WithHeadings, WithMapping, WithT
 
     protected $cohortId;
 
-    protected $feeTypeId;
-
     protected $startDate;
 
     protected $endDate;
 
-    public function __construct($academicYearId, $semesterId, $collegeClassId = null, $cohortId = null, $feeTypeId = null, $startDate = null, $endDate = null)
-    {
+    public function __construct(
+        $academicYearId,
+        $semesterId,
+        $collegeClassId = null,
+        $cohortId = null,
+        $startDate = null,
+        $endDate = null
+    ) {
         $this->academicYearId = $academicYearId;
         $this->semesterId = $semesterId;
         $this->collegeClassId = $collegeClassId;
         $this->cohortId = $cohortId;
-        $this->feeTypeId = $feeTypeId;
         $this->startDate = $startDate ?? now()->subMonth()->format('Y-m-d');
         $this->endDate = $endDate ?? now()->format('Y-m-d');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
     public function query()
     {
         return FeePayment::query()
-            ->with(['student', 'studentFeeBill.feeType', 'recordedBy'])
+            ->select(
+                DB::raw('DATE(payment_date) as payment_date'),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('COUNT(*) as payment_count')
+            )
             ->when($this->academicYearId, function ($query) {
                 $query->whereHas('studentFeeBill', function ($q) {
                     $q->where('academic_year_id', $this->academicYearId);
@@ -65,31 +70,17 @@ class FeeCollectionExport implements FromQuery, WithHeadings, WithMapping, WithT
                     $q->where('cohort_id', $this->cohortId);
                 });
             })
-            ->when($this->feeTypeId, function ($query) {
-                $query->whereHas('studentFeeBill.billItems', function ($q) {
-                    $q->where('fee_type_id', $this->feeTypeId);
-                });
-            })
             ->whereBetween('payment_date', [$this->startDate, $this->endDate])
+            ->groupBy(DB::raw('DATE(payment_date)'))
             ->orderBy('payment_date', 'desc');
     }
 
-    /**
-     * @var FeePayment
-     */
-    public function map($payment): array
+    public function map($summary): array
     {
         return [
-            $payment->payment_date->format('Y-m-d'),
-            $payment->receipt_number,
-            $payment->student->student_id,
-            $payment->student->first_name.' '.$payment->student->last_name,
-            $payment->studentFeeBill->academicYear->name ?? '',
-            $payment->studentFeeBill->semester->name ?? '',
-            $payment->payment_method,
-            $payment->reference_number,
-            $payment->amount,
-            $payment->recordedBy->name ?? 'System',
+            $summary->payment_date,
+            (int) $summary->payment_count,
+            (float) $summary->total_amount,
         ];
     }
 
@@ -97,20 +88,13 @@ class FeeCollectionExport implements FromQuery, WithHeadings, WithMapping, WithT
     {
         return [
             'Date',
-            'Receipt Number',
-            'Student ID',
-            'Student Name',
-            'Academic Year',
-            'Semester',
-            'Payment Method',
-            'Reference',
-            'Amount',
-            'Recorded By',
+            'Number of Payments',
+            'Total Amount',
         ];
     }
 
     public function title(): string
     {
-        return 'Fee Collections';
+        return 'Payment Summary';
     }
 }

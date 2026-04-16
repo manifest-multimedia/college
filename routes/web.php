@@ -242,6 +242,9 @@ Route::middleware([
         Route::post('/assessment-scores/import-excel', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'importExcel'])->name('assessment-scores.import-excel');
         Route::post('/assessment-scores/confirm-import', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'confirmImport'])->name('assessment-scores.confirm-import');
         Route::post('/assessment-scores/export-excel', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'exportExcel'])->name('assessment-scores.export-excel');
+        Route::get('/assessment-scores/resits', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'resitIndex'])->name('assessment-scores.resits.index');
+        Route::post('/assessment-scores/resits/load-scoresheet', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'loadResitScoresheet'])->name('assessment-scores.resits.load-scoresheet');
+        Route::post('/assessment-scores/resits/save-scores', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'saveResitScores'])->name('assessment-scores.resits.save-scores');
 
         // Get courses by class
         Route::get('/courses/by-class', [App\Http\Controllers\Admin\AssessmentScoresController::class, 'getCoursesByClass'])->name('courses.by-class');

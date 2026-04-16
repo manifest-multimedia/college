@@ -19,11 +19,14 @@ class OutstandingFeesExport implements FromQuery, WithHeadings, WithMapping, Wit
 
     protected $collegeClassId;
 
-    public function __construct($academicYearId, $semesterId, $collegeClassId = null)
+    protected $cohortId;
+
+    public function __construct($academicYearId, $semesterId, $collegeClassId = null, $cohortId = null)
     {
         $this->academicYearId = $academicYearId;
         $this->semesterId = $semesterId;
         $this->collegeClassId = $collegeClassId;
+        $this->cohortId = $cohortId;
     }
 
     /**
@@ -38,6 +41,11 @@ class OutstandingFeesExport implements FromQuery, WithHeadings, WithMapping, Wit
             ->when($this->collegeClassId, function ($query) {
                 $query->whereHas('student', function ($q) {
                     $q->where('college_class_id', $this->collegeClassId);
+                });
+            })
+            ->when($this->cohortId, function ($query) {
+                $query->whereHas('student', function ($q) {
+                    $q->where('cohort_id', $this->cohortId);
                 });
             })
             ->where('balance', '>', 0)

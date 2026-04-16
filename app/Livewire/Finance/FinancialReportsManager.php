@@ -4,7 +4,9 @@ namespace App\Livewire\Finance;
 
 use App\Exports\FeeCollectionExport;
 use App\Exports\OutstandingFeesExport;
+use App\Exports\PaymentSummaryExport;
 use App\Models\AcademicYear;
+use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\FeePayment;
 use App\Models\FeeType;
@@ -28,6 +30,8 @@ class FinancialReportsManager extends Component
     public $semesterId;
 
     public $collegeClassId;
+
+    public $cohortId;
 
     public $feeTypeId;
 
@@ -58,34 +62,47 @@ class FinancialReportsManager extends Component
 
     public function generateReport()
     {
-        $this->validate([
+        $rules = [
             'reportType' => 'required|in:fee_collection,outstanding_fees,payment_summary',
             'academicYearId' => 'required|exists:academic_years,id',
             'semesterId' => 'required|exists:semesters,id',
-            'startDate' => 'required|date',
-            'endDate' => 'required|date|after_or_equal:startDate',
             'exportFormat' => 'required|in:excel,pdf',
-        ]);
+            'cohortId' => 'nullable|exists:cohorts,id',
+        ];
+
+        if ($this->reportType !== 'outstanding_fees') {
+            $rules['startDate'] = 'required|date';
+            $rules['endDate'] = 'required|date|after_or_equal:startDate';
+        }
+
+        $this->validate($rules);
 
         $this->processing = true;
 
         try {
             switch ($this->reportType) {
                 case 'fee_collection':
-                    $this->generateFeeCollectionReport();
+                    $response = $this->generateFeeCollectionReport();
                     break;
                 case 'outstanding_fees':
-                    $this->generateOutstandingFeesReport();
+                    $response = $this->generateOutstandingFeesReport();
                     break;
                 case 'payment_summary':
-                    $this->generatePaymentSummaryReport();
+                    $response = $this->generatePaymentSummaryReport();
+                    break;
+                default:
+                    $response = null;
                     break;
             }
 
             $this->processing = false;
+
+            return $response;
         } catch (\Exception $e) {
             $this->processing = false;
             session()->flash('error', 'Error generating report: '.$e->getMessage());
+
+            return null;
         }
     }
 
@@ -99,6 +116,7 @@ class FinancialReportsManager extends Component
                     $this->academicYearId,
                     $this->semesterId,
                     $this->collegeClassId,
+                    $this->cohortId,
                     $this->feeTypeId,
                     $this->startDate,
                     $this->endDate
@@ -112,6 +130,7 @@ class FinancialReportsManager extends Component
                     $this->academicYearId,
                     $this->semesterId,
                     $this->collegeClassId,
+                    $this->cohortId,
                     $this->feeTypeId,
                     $this->startDate,
                     $this->endDate
@@ -131,7 +150,8 @@ class FinancialReportsManager extends Component
                 new OutstandingFeesExport(
                     $this->academicYearId,
                     $this->semesterId,
-                    $this->collegeClassId
+                    $this->collegeClassId,
+                    $this->cohortId
                 ),
                 $filename.'.xlsx'
             );
@@ -141,7 +161,8 @@ class FinancialReportsManager extends Component
                 new OutstandingFeesExport(
                     $this->academicYearId,
                     $this->semesterId,
-                    $this->collegeClassId
+                    $this->collegeClassId,
+                    $this->cohortId
                 ),
                 $filename.'.pdf',
                 \Maatwebsite\Excel\Excel::DOMPDF
@@ -151,8 +172,34 @@ class FinancialReportsManager extends Component
 
     private function generatePaymentSummaryReport()
     {
-        // For now, we'll show a preview of the report in the UI
-        session()->flash('message', 'Payment summary report preview loaded. Click Export to download.');
+        $filename = 'payment_summary_'.Carbon::now()->format('YmdHis');
+
+        if ($this->exportFormat == 'excel') {
+            return Excel::download(
+                new PaymentSummaryExport(
+                    $this->academicYearId,
+                    $this->semesterId,
+                    $this->collegeClassId,
+                    $this->cohortId,
+                    $this->startDate,
+                    $this->endDate
+                ),
+                $filename.'.xlsx'
+            );
+        }
+
+        return Excel::download(
+            new PaymentSummaryExport(
+                $this->academicYearId,
+                $this->semesterId,
+                $this->collegeClassId,
+                $this->cohortId,
+                $this->startDate,
+                $this->endDate
+            ),
+            $filename.'.pdf',
+            \Maatwebsite\Excel\Excel::DOMPDF
+        );
 
     }
 
@@ -175,6 +222,11 @@ class FinancialReportsManager extends Component
                     $q->where('college_class_id', $this->collegeClassId);
                 });
             })
+            ->when($this->cohortId, function ($query) {
+                $query->whereHas('student', function ($q) {
+                    $q->where('cohort_id', $this->cohortId);
+                });
+            })
             ->when($this->feeTypeId, function ($query) {
                 $query->whereHas('studentFeeBill.billItems', function ($q) {
                     $q->where('fee_type_id', $this->feeTypeId);
@@ -194,6 +246,11 @@ class FinancialReportsManager extends Component
             ->when($this->collegeClassId, function ($query) {
                 $query->whereHas('student', function ($q) {
                     $q->where('college_class_id', $this->collegeClassId);
+                });
+            })
+            ->when($this->cohortId, function ($query) {
+                $query->whereHas('student', function ($q) {
+                    $q->where('cohort_id', $this->cohortId);
                 });
             })
             ->where('balance', '>', 0)
@@ -219,6 +276,16 @@ class FinancialReportsManager extends Component
                     $q->where('semester_id', $this->semesterId);
                 });
             })
+            ->when($this->collegeClassId, function ($query) {
+                $query->whereHas('student', function ($q) {
+                    $q->where('college_class_id', $this->collegeClassId);
+                });
+            })
+            ->when($this->cohortId, function ($query) {
+                $query->whereHas('student', function ($q) {
+                    $q->where('cohort_id', $this->cohortId);
+                });
+            })
             ->whereBetween('payment_date', [$this->startDate, $this->endDate])
             ->groupBy(DB::raw('DATE(payment_date)'))
             ->orderBy('payment_date', 'desc')
@@ -238,6 +305,11 @@ class FinancialReportsManager extends Component
     public function getCollegeClassesProperty()
     {
         return CollegeClass::orderBy('name')->get();
+    }
+
+    public function getCohortsProperty()
+    {
+        return Cohort::orderBy('name', 'desc')->get();
     }
 
     public function getFeeTypesProperty()
@@ -266,6 +338,7 @@ class FinancialReportsManager extends Component
             'academicYears' => $this->academicYears,
             'semesters' => $this->semesters,
             'collegeClasses' => $this->collegeClasses,
+            'cohorts' => $this->cohorts,
             'feeTypes' => $this->feeTypes,
         ])->layout('components.dashboard.default');
     }

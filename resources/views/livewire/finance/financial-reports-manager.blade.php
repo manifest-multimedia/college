@@ -68,6 +68,16 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <div class="col-md-4">
+                            <label for="cohortId" class="form-label">Cohort</label>
+                            <select id="cohortId" class="form-select" wire:model.live="cohortId">
+                                <option value="">All Cohorts</option>
+                                @foreach($cohorts as $cohort)
+                                    <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         
                         @if($reportType === 'fee_collection')
                         <div class="col-md-4">
