@@ -9,6 +9,7 @@ use App\Models\ElectionVote;
 use App\Models\ElectionVotingSession;
 use App\Models\Student;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PublicElectionPerformanceController extends Controller
@@ -123,10 +124,16 @@ class PublicElectionPerformanceController extends Controller
 
     protected function buildCandidateSummary(ElectionCandidate $candidate): array
     {
+        $photoUrl = $candidate->photo_url;
+
+        if (! empty($candidate->image_path) && Storage::disk('public')->exists($candidate->image_path)) {
+            $photoUrl = Storage::url($candidate->image_path);
+        }
+
         return [
             'id' => $candidate->id,
             'name' => $candidate->name,
-            'photo_url' => $candidate->photo_url,
+            'photo_url' => $photoUrl,
         ];
     }
 

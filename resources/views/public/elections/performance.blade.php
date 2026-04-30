@@ -58,9 +58,27 @@
             </div>
         </div>
 
-        <div id="positionsContainer" class="d-flex flex-column gap-3">
-            <div class="card">
-                <div class="card-body text-center text-muted">Loading live performance...</div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">Live Position Leaderboard</h5>
+                    <small class="text-muted">Auto-slides every 6 seconds</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button id="prevSlide" type="button" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="slideCounter" class="small text-muted">1 / 1</span>
+                    <button id="nextSlide" type="button" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="positionsContainer" class="mb-3">
+                    <div class="text-center text-muted py-4">Loading live performance...</div>
+                </div>
+                <div id="slideIndicators" class="d-flex justify-content-center gap-2"></div>
             </div>
         </div>
     </div>
@@ -76,12 +94,20 @@
             const statusEl = document.getElementById('electionStatus');
             const lastUpdatedEl = document.getElementById('lastUpdated');
             const positionsContainer = document.getElementById('positionsContainer');
+            const slideIndicators = document.getElementById('slideIndicators');
+            const slideCounter = document.getElementById('slideCounter');
+            const prevSlideButton = document.getElementById('prevSlide');
+            const nextSlideButton = document.getElementById('nextSlide');
             const refreshButton = document.getElementById('refreshButton');
 
             const summaryPositions = document.getElementById('summaryPositions');
             const summaryVotes = document.getElementById('summaryVotes');
             const summaryVoters = document.getElementById('summaryVoters');
             const summaryTurnout = document.getElementById('summaryTurnout');
+
+            let slideshowIndex = 0;
+            let slideshowTimer = null;
+            let positionsCache = [];
 
             function escapeHtml(value) {
                 return String(value ?? '')
@@ -141,8 +167,8 @@
                     : '<span class="badge bg-danger">REJECTED</span>';
 
                 return `
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-light">
                             <div>
                                 <h5 class="mb-0">${escapeHtml(position.name)}</h5>
                                 <small class="text-muted">Single-candidate approval vote</small>
@@ -177,12 +203,15 @@
             }
 
             function renderMultiCandidatePosition(position) {
-                const candidateRows = (position.candidates || []).map((candidate) => `
+                const candidateRows = (position.candidates || []).map((candidate, index) => `
                     <div class="d-flex align-items-center justify-content-between gap-3 py-2 border-bottom">
                         <div class="d-flex align-items-center gap-3">
                             <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-circle" style="width:52px;height:52px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                             <div>
-                                <div class="fw-semibold">${escapeHtml(candidate.name)}</div>
+                                <div class="fw-semibold">
+                                    ${escapeHtml(candidate.name)}
+                                    ${index === 0 ? '<span class="badge bg-warning text-dark ms-1">LEADING</span>' : ''}
+                                </div>
                                 <div class="small text-muted">${candidate.votes} votes</div>
                             </div>
                         </div>
@@ -196,8 +225,8 @@
                 `).join('');
 
                 return `
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-light">
                             <div>
                                 <h5 class="mb-0">${escapeHtml(position.name)}</h5>
                                 <small class="text-muted">${position.total_votes} total votes</small>
@@ -210,23 +239,82 @@
                 `;
             }
 
-            function renderPositions(positions) {
-                if (!Array.isArray(positions) || positions.length === 0) {
-                    positionsContainer.innerHTML = `
-                        <div class="card">
-                            <div class="card-body text-center text-muted">No positions available for this election.</div>
-                        </div>
-                    `;
+            function renderSlide(position) {
+                if (position.type === 'single_candidate_yes_no') {
+                    positionsContainer.innerHTML = renderSingleCandidatePosition(position);
                     return;
                 }
 
-                positionsContainer.innerHTML = positions.map((position) => {
-                    if (position.type === 'single_candidate_yes_no') {
-                        return renderSingleCandidatePosition(position);
-                    }
+                positionsContainer.innerHTML = renderMultiCandidatePosition(position);
+            }
 
-                    return renderMultiCandidatePosition(position);
-                }).join('');
+            function renderIndicators(length) {
+                slideIndicators.innerHTML = Array.from({ length }, (_, index) => `
+                    <button
+                        type="button"
+                        class="btn btn-sm ${index === slideshowIndex ? 'btn-primary' : 'btn-outline-secondary'}"
+                        data-index="${index}"
+                    >${index + 1}</button>
+                `).join('');
+
+                slideIndicators.querySelectorAll('button').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        slideshowIndex = Number(button.dataset.index);
+                        updateSlideshow();
+                        restartSlideshowTimer();
+                    });
+                });
+            }
+
+            function updateSlideshow() {
+                if (!positionsCache.length) {
+                    positionsContainer.innerHTML = `
+                        <div class="text-center text-muted py-4">No positions available for this election.</div>
+                    `;
+                    slideIndicators.innerHTML = '';
+                    slideCounter.textContent = '0 / 0';
+                    return;
+                }
+
+                if (slideshowIndex >= positionsCache.length) {
+                    slideshowIndex = 0;
+                }
+
+                renderSlide(positionsCache[slideshowIndex]);
+                renderIndicators(positionsCache.length);
+                slideCounter.textContent = `${slideshowIndex + 1} / ${positionsCache.length}`;
+            }
+
+            function nextSlide() {
+                if (!positionsCache.length) {
+                    return;
+                }
+
+                slideshowIndex = (slideshowIndex + 1) % positionsCache.length;
+                updateSlideshow();
+            }
+
+            function prevSlide() {
+                if (!positionsCache.length) {
+                    return;
+                }
+
+                slideshowIndex = (slideshowIndex - 1 + positionsCache.length) % positionsCache.length;
+                updateSlideshow();
+            }
+
+            function restartSlideshowTimer() {
+                if (slideshowTimer) {
+                    clearInterval(slideshowTimer);
+                }
+
+                slideshowTimer = setInterval(nextSlide, 6000);
+            }
+
+            function renderPositions(positions) {
+                positionsCache = Array.isArray(positions) ? positions : [];
+                updateSlideshow();
+                restartSlideshowTimer();
             }
 
             async function loadPerformance() {
@@ -259,6 +347,14 @@
             }
 
             refreshButton.addEventListener('click', loadPerformance);
+            prevSlideButton.addEventListener('click', () => {
+                prevSlide();
+                restartSlideshowTimer();
+            });
+            nextSlideButton.addEventListener('click', () => {
+                nextSlide();
+                restartSlideshowTimer();
+            });
             loadPerformance();
             setInterval(loadPerformance, 10000);
         })();
