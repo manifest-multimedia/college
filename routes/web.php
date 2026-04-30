@@ -400,13 +400,6 @@ Route::middleware([
         })->name('elections.results.archive');
     });
 
-    // Student Voting Routes
-    Route::prefix('voting')->group(function () {
-        Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('election.verify');
-        // Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('election.vote');
-        Route::get('/{election}/expired', \App\Livewire\ElectionExpired::class)->name('election.expired');
-    });
-
     // Public Election Status Route (accessible to all authenticated users)
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/elections/active', \App\Livewire\ActiveElections::class)->name('elections.active');
@@ -767,6 +760,13 @@ Route::middleware([
         Route::delete('asset-settings/{assetSetting}', [App\Http\Controllers\AssetSettingController::class, 'destroy'])->name('asset-settings.destroy');
     });
 
+});
+
+// Student Voting Routes (public - no authentication required)
+Route::prefix('voting')->group(function () {
+    Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('election.verify');
+    // Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('election.vote');
+    Route::get('/{election}/expired', \App\Livewire\ElectionExpired::class)->name('election.expired');
 });
 
 /*

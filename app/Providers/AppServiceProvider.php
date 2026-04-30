@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Paginator::useBootstrapFive();
+
         // Register Role and Permission observers for AuthCentral sync
         \Spatie\Permission\Models\Role::observe(\App\Observers\RoleObserver::class);
         \Spatie\Permission\Models\Permission::observe(\App\Observers\PermissionObserver::class);
