@@ -18,7 +18,7 @@
                             <form wire:submit.prevent="verify" class="mb-4">
                                 <div class="mb-3">
                                     <label for="student_id" class="form-label">Student ID</label>
-                                    <input type="text" wire:model="student_id" class="form-control @error('student_id') is-invalid @enderror" id="student_id" placeholder="Enter your Student ID">
+                                    <input type="text" wire:model="student_id" class="form-control @error('student_id') is-invalid @enderror" id="student_id" placeholder="Enter your Student ID" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
                                     @error('student_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -44,7 +44,7 @@
                             <form wire:submit.prevent="verifySecurityQuestion" class="mb-4">
                                 <div class="mb-3">
                                     <label for="securityAnswer" class="form-label">Your Answer</label>
-                                    <input type="text" wire:model="securityAnswer" class="form-control @error('securityAnswer') is-invalid @enderror" id="securityAnswer" placeholder="Enter your answer">
+                                    <input type="text" wire:model="securityAnswer" class="form-control @error('securityAnswer') is-invalid @enderror" id="securityAnswer" placeholder="Enter your answer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
                                     @error('securityAnswer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

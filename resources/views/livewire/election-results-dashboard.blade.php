@@ -87,6 +87,9 @@
                             <a href="{{ route('elections') }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="fas fa-arrow-left"></i> Back to Elections
                             </a>
+                            <a href="{{ route('admin.election.voter-integrity', $election) }}" class="btn btn-outline-warning btn-sm ms-2">
+                                <i class="fas fa-user-shield"></i> Voter Integrity
+                            </a>
                         </div>
                     </div>
                     <div class="card-body">

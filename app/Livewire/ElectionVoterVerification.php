@@ -45,6 +45,8 @@ class ElectionVoterVerification extends Component
 
     public function verify()
     {
+        $this->student_id = trim((string) $this->student_id);
+
         Log::info('Starting student verification process', ['student_id' => $this->student_id, 'election_id' => $this->election->id]);
 
         $this->validate([
@@ -102,27 +104,54 @@ class ElectionVoterVerification extends Component
 
             if ($existingSession) {
                 if ($existingSession->vote_submitted) {
-                    Log::warning('Verification failed: Student already voted', [
-                        'student_id' => $this->student_id,
-                        'election_id' => $this->election->id,
-                        'session_id' => $existingSession->session_id,
-                    ]);
+                    $submittedVoteCount = \App\Models\ElectionVote::where('election_id', $this->election->id)
+                        ->where('student_id', $this->student_id)
+                        ->count();
 
-                    $this->errorMessage = 'You have already voted in this election.';
-                    $this->dispatch('verification-failed'); // Emit event for sound
+                    // If a submitted session exists without votes, treat it as stale/corrupted and recover.
+                    if ($submittedVoteCount === 0) {
+                        Log::warning('Recovered stale submitted session with no votes', [
+                            'student_id' => $this->student_id,
+                            'election_id' => $this->election->id,
+                            'session_id' => $existingSession->session_id,
+                        ]);
 
-                    ElectionAuditLog::log(
-                        $this->election,
-                        'student',
-                        $this->student_id,
-                        'duplicate_vote_attempt',
-                        'Student attempted to vote again',
-                        ['student_name' => $student->name ?? 'Unknown']
-                    );
+                        ElectionAuditLog::log(
+                            $this->election,
+                            'system',
+                            '0',
+                            'stale_session_recovered',
+                            'Stale submitted session removed because no vote records existed',
+                            [
+                                'student_id' => $this->student_id,
+                                'session_id' => $existingSession->session_id,
+                            ]
+                        );
 
-                    DB::commit();
+                        $existingSession->delete();
+                    } else {
+                        Log::warning('Verification failed: Student already voted', [
+                            'student_id' => $this->student_id,
+                            'election_id' => $this->election->id,
+                            'session_id' => $existingSession->session_id,
+                        ]);
 
-                    return;
+                        $this->errorMessage = 'You have already voted in this election.';
+                        $this->dispatch('verification-failed'); // Emit event for sound
+
+                        ElectionAuditLog::log(
+                            $this->election,
+                            'student',
+                            $this->student_id,
+                            'duplicate_vote_attempt',
+                            'Student attempted to vote again',
+                            ['student_name' => $student->name ?? 'Unknown']
+                        );
+
+                        DB::commit();
+
+                        return;
+                    }
                 }
 
                 if (! $existingSession->hasExpired() && $existingSession->isValid()) {
@@ -232,18 +261,8 @@ class ElectionVoterVerification extends Component
             // Security verification successful
             $this->createVotingSession();
         } else {
-
-            $this->createVotingSession();
-
-            // Log::warning('Security verification failed', [
-            //     'student_id' => $this->student_id,
-            //     'question_field' => $this->securityQuestionField,
-            //     'expected' => $normalizedExpected,
-            //     'provided' => $normalizedProvided,
-            // ]);
-
-            // $this->errorMessage = 'The information provided does not match our records. Please try again.';
-            // $this->dispatch('verification-failed'); // Emit event for sound
+            $this->errorMessage = 'The information provided does not match our records. Please try again.';
+            $this->dispatch('verification-failed'); // Emit event for sound
 
             // Log the failed verification
             ElectionAuditLog::log(

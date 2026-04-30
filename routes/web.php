@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ElectionVoterIntegrityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\PublicElectionPerformanceController;
@@ -395,6 +396,9 @@ Route::middleware([
         Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
         Route::get('/elections/{election}/candidates/{position}', \App\Livewire\ElectionCandidateManager::class)->name('election.candidates');
         Route::get('/elections/{election}/results', \App\Livewire\ElectionResultsDashboard::class)->name('election.results');
+        Route::get('/elections/{election}/voter-integrity', [ElectionVoterIntegrityController::class, 'index'])->name('admin.election.voter-integrity');
+        Route::post('/elections/{election}/voter-integrity/nullify', [ElectionVoterIntegrityController::class, 'nullifyVotes'])->name('admin.election.voter-integrity.nullify');
+        Route::post('/elections/{election}/voter-integrity/allow-revote', [ElectionVoterIntegrityController::class, 'allowRevote'])->name('admin.election.voter-integrity.allow-revote');
         // Election Results Archive
         Route::get('/elections/results-archive', function () {
             return view('elections.results-archive');
