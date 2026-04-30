@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @php
+        $publicLogo = config('branding.logo.app') ?: (config('branding.logo.primary') ?: '/images/college-logo.png');
+        $publicFavicon = config('branding.logo.favicon') ?: '/favicon.ico';
+    @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -8,7 +12,7 @@
     <title>{{ $title ?? 'College Elections' }} - Presbyterian Nursing and Midwifery Training College</title>
     
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('images/college-logo.png') }}" />
+    <link rel="shortcut icon" href="{{ asset($publicFavicon) }}" />
     
     <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
@@ -151,7 +155,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ route('public.elections.index') }}">
-                <img src="{{ asset('images/college-logo.png') }}" alt="College Logo" class="me-2">
+                <img src="{{ asset($publicLogo) }}" alt="{{ config('branding.institution.short_name', 'College') }} Logo" class="me-2" onerror="this.onerror=null;this.src='{{ asset('/images/college-logo.png') }}';">
                 <span>College Elections</span>
             </a>
             
