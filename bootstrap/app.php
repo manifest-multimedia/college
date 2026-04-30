@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckElectionIpBlacklist;
 use App\Http\Middleware\OfflineApiAuth;
 use App\Http\Middleware\SyncUserRoles;
 use App\Providers\CommunicationServiceProvider;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'auth.offline.api' => OfflineApiAuth::class,
+            'election.ip.blacklist' => CheckElectionIpBlacklist::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

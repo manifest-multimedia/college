@@ -15,6 +15,17 @@ use Illuminate\View\View;
 
 class ElectionVoterIntegrityController extends Controller
 {
+    public function selector(): View
+    {
+        $elections = Election::query()
+            ->orderByDesc('start_time')
+            ->get(['id', 'name', 'start_time', 'end_time', 'is_active']);
+
+        return view('admin.elections.voter-integrity-selector', [
+            'elections' => $elections,
+        ]);
+    }
+
     public function index(Request $request, Election $election): View
     {
         $studentId = trim((string) $request->string('student_id')->value());

@@ -943,7 +943,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @endhasrole
             @php
             $electionRoutes = [
-                'elections', 'elections.active', 'election.results'
+                'elections', 'elections.active', 'election.results', 'elections.results.archive', 'admin.election.voter-integrity.index', 'admin.election.voter-integrity', 'admin.elections.ip-blacklist.index'
             ];
             $isElectionActive = in_array(request()->route()->getName(), $electionRoutes);
         @endphp
@@ -994,6 +994,26 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Election Results</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.election.voter-integrity.index') || request()->routeIs('admin.election.voter-integrity') ? 'active' : '' }}" href="{{ route('admin.election.voter-integrity.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Voting Integrity</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.elections.ip-blacklist.index') ? 'active' : '' }}" href="{{ route('admin.elections.ip-blacklist.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">IP Blacklist</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
@@ -1049,6 +1069,26 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">Election Results</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.election.voter-integrity.index') || request()->routeIs('admin.election.voter-integrity') ? 'active' : '' }}" href="{{ route('admin.election.voter-integrity.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Voting Integrity</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.elections.ip-blacklist.index') ? 'active' : '' }}" href="{{ route('admin.elections.ip-blacklist.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">IP Blacklist</span>
                         </a>
                     </div>
                     <!--end:Menu item-->

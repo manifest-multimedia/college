@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ElectionIpBlacklistController;
 use App\Http\Controllers\Admin\ElectionVoterIntegrityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileUploadController;
@@ -396,9 +397,14 @@ Route::middleware([
         Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
         Route::get('/elections/{election}/candidates/{position}', \App\Livewire\ElectionCandidateManager::class)->name('election.candidates');
         Route::get('/elections/{election}/results', \App\Livewire\ElectionResultsDashboard::class)->name('election.results');
+        Route::get('/elections/voter-integrity', [ElectionVoterIntegrityController::class, 'selector'])->name('admin.election.voter-integrity.index');
         Route::get('/elections/{election}/voter-integrity', [ElectionVoterIntegrityController::class, 'index'])->name('admin.election.voter-integrity');
         Route::post('/elections/{election}/voter-integrity/nullify', [ElectionVoterIntegrityController::class, 'nullifyVotes'])->name('admin.election.voter-integrity.nullify');
         Route::post('/elections/{election}/voter-integrity/allow-revote', [ElectionVoterIntegrityController::class, 'allowRevote'])->name('admin.election.voter-integrity.allow-revote');
+        Route::get('/elections/ip-blacklist', [ElectionIpBlacklistController::class, 'index'])->name('admin.elections.ip-blacklist.index');
+        Route::post('/elections/ip-blacklist', [ElectionIpBlacklistController::class, 'store'])->name('admin.elections.ip-blacklist.store');
+        Route::post('/elections/ip-blacklist/{entry}/toggle', [ElectionIpBlacklistController::class, 'toggle'])->name('admin.elections.ip-blacklist.toggle');
+        Route::delete('/elections/ip-blacklist/{entry}', [ElectionIpBlacklistController::class, 'destroy'])->name('admin.elections.ip-blacklist.destroy');
         // Election Results Archive
         Route::get('/elections/results-archive', function () {
             return view('elections.results-archive');
@@ -768,7 +774,7 @@ Route::middleware([
 });
 
 // Student Voting Routes (public - no authentication required)
-Route::prefix('voting')->group(function () {
+Route::middleware('election.ip.blacklist')->prefix('voting')->group(function () {
     Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('election.verify');
     // Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('election.vote');
     Route::get('/{election}/expired', \App\Livewire\ElectionExpired::class)->name('election.expired');
@@ -795,8 +801,10 @@ Route::prefix('public/elections')->name('public.elections.')->group(function () 
     Route::get('/{election}/performance/data', [PublicElectionPerformanceController::class, 'data'])->name('performance.data');
 
     // Public verification and voting routes
-    Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('verify');
-    Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('vote');
+    Route::middleware('election.ip.blacklist')->group(function () {
+        Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('verify');
+        Route::get('/{election}/vote/{sessionId?}', \App\Livewire\ElectionVoting::class)->name('vote');
+    });
     Route::get('/{election}/thank-you/{sessionId?}', \App\Livewire\ElectionThankYou::class)->name('thank-you');
     Route::get('/{election}/thank-you/{sessionId?}', \App\Livewire\ElectionThankYou::class)->name('election.thank-you');
 

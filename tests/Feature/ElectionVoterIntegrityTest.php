@@ -19,6 +19,32 @@ class ElectionVoterIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_can_open_voter_integrity_selector_page(): void
+    {
+        $adminRole = Role::create(['name' => 'Administrator']);
+
+        $admin = User::factory()->create([
+            'role' => 'Administrator',
+        ]);
+        $admin->assignRole($adminRole);
+
+        $election = Election::create([
+            'name' => 'Selector Election',
+            'description' => 'Test election',
+            'start_time' => now()->subHour(),
+            'end_time' => now()->addHour(),
+            'is_active' => true,
+            'requires_verification' => true,
+            'voting_duration_minutes' => 30,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.election.voter-integrity.index'))
+            ->assertOk()
+            ->assertSee('Select Election for Voter Integrity')
+            ->assertSee($election->name);
+    }
+
     public function test_stale_submitted_session_without_votes_does_not_block_verification(): void
     {
         $election = Election::create([
