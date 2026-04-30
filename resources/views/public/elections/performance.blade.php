@@ -176,8 +176,8 @@
                                     <p class="text-muted mb-0">${position.total_votes} ballots recorded for this approval position.</p>
                                 </div>
                                 <div class="col-lg-4">
-                                    <div class="d-flex align-items-center gap-3 justify-content-lg-end">
-                                        <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm" style="width:120px;height:120px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 justify-content-lg-end">
+                                        <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm w-100" style="max-width: 240px; aspect-ratio: 750 / 338; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                                         <div>
                                             <div class="text-uppercase small text-muted">Candidate</div>
                                             <h4 class="mb-1">${escapeHtml(candidate.name)}</h4>
@@ -222,11 +222,11 @@
                 const challengerRows = (position.candidates || []).map((candidate, index) => `
                     <div class="col-12 col-xl-6">
                         <div class="border rounded-4 p-3 h-100 ${index === 0 ? 'border-primary bg-primary bg-opacity-10' : 'bg-white'}">
-                            <div class="d-flex align-items-center gap-3 mb-3">
-                                <div class="position-relative">
-                                    <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm" style="width:88px;height:88px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill ${index === 0 ? 'bg-warning text-dark' : 'bg-secondary'}">#${index + 1}</span>
-                                </div>
+                            <div class="position-relative mb-3">
+                                <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm w-100" style="aspect-ratio: 750 / 338; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                <span class="position-absolute top-0 end-0 m-3 badge rounded-pill ${index === 0 ? 'bg-warning text-dark' : 'bg-secondary'}">#${index + 1}</span>
+                            </div>
+                            <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
                                 <div class="flex-grow-1 min-w-0">
                                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                         <h4 class="mb-0">${escapeHtml(candidate.name)}</h4>
@@ -256,8 +256,8 @@
                                 </div>
                                 <div class="col-lg-4">
                                     ${leadingCandidate ? `
-                                        <div class="d-flex align-items-center gap-3 justify-content-lg-end">
-                                            <img src="${escapeHtml(leadingCandidate.photo_url)}" alt="${escapeHtml(leadingCandidate.name)}" class="rounded-4 shadow-sm" style="width:128px;height:128px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 justify-content-lg-end">
+                                            <img src="${escapeHtml(leadingCandidate.photo_url)}" alt="${escapeHtml(leadingCandidate.name)}" class="rounded-4 shadow-sm w-100" style="max-width: 280px; aspect-ratio: 750 / 338; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
                                             <div>
                                                 <div class="text-uppercase small text-muted">Current Leader</div>
                                                 <h4 class="mb-1">${escapeHtml(leadingCandidate.name)}</h4>

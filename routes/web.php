@@ -405,6 +405,9 @@ Route::middleware([
         Route::post('/elections/ip-blacklist', [ElectionIpBlacklistController::class, 'store'])->name('admin.elections.ip-blacklist.store');
         Route::post('/elections/ip-blacklist/{entry}/toggle', [ElectionIpBlacklistController::class, 'toggle'])->name('admin.elections.ip-blacklist.toggle');
         Route::delete('/elections/ip-blacklist/{entry}', [ElectionIpBlacklistController::class, 'destroy'])->name('admin.elections.ip-blacklist.destroy');
+        Route::post('/elections/ip-whitelist', [ElectionIpBlacklistController::class, 'storeWhitelist'])->name('admin.elections.ip-whitelist.store');
+        Route::post('/elections/ip-whitelist/{entry}/toggle', [ElectionIpBlacklistController::class, 'toggleWhitelist'])->name('admin.elections.ip-whitelist.toggle');
+        Route::delete('/elections/ip-whitelist/{entry}', [ElectionIpBlacklistController::class, 'destroyWhitelist'])->name('admin.elections.ip-whitelist.destroy');
         // Election Results Archive
         Route::get('/elections/results-archive', function () {
             return view('elections.results-archive');

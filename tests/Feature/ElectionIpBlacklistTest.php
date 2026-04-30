@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Election;
 use App\Models\ElectionIpBlacklist;
+use App\Models\ElectionIpWhitelist;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -76,6 +77,37 @@ class ElectionIpBlacklistTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_whitelisted_ip_can_access_even_if_also_blacklisted(): void
+    {
+        $election = Election::create([
+            'name' => 'Whitelist Priority Election',
+            'description' => 'Testing whitelist precedence',
+            'start_time' => now()->subHour(),
+            'end_time' => now()->addHour(),
+            'is_active' => true,
+            'requires_verification' => true,
+            'voting_duration_minutes' => 30,
+        ]);
+
+        ElectionIpBlacklist::query()->create([
+            'ip_address' => '198.51.100.24',
+            'reason' => 'Flagged IP',
+            'is_active' => true,
+        ]);
+
+        ElectionIpWhitelist::query()->create([
+            'ip_address' => '198.51.100.24',
+            'reason' => 'Approved device',
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withHeaders(['X-Real-IP' => '198.51.100.24'])
+            ->get(route('public.elections.verify', ['election' => $election->id]));
+
+        $response->assertOk();
+    }
+
     public function test_admin_can_add_toggle_and_remove_blacklist_entries(): void
     {
         $role = Role::create(['name' => 'Administrator']);
@@ -106,6 +138,40 @@ class ElectionIpBlacklistTest extends TestCase
             ->assertRedirect(route('admin.elections.ip-blacklist.index'));
 
         $this->assertDatabaseMissing('election_ip_blacklists', [
+            'id' => $entry->id,
+        ]);
+    }
+
+    public function test_admin_can_add_toggle_and_remove_whitelist_entries(): void
+    {
+        $role = Role::create(['name' => 'Administrator']);
+        $admin = User::factory()->create([
+            'role' => 'Administrator',
+        ]);
+        $admin->assignRole($role);
+
+        $this->actingAs($admin)
+            ->post(route('admin.elections.ip-whitelist.store'), [
+                'ip_address' => '203.0.113.18',
+                'reason' => 'Trusted kiosk',
+            ])
+            ->assertRedirect(route('admin.elections.ip-blacklist.index'));
+
+        $entry = ElectionIpWhitelist::where('ip_address', '203.0.113.18')->firstOrFail();
+
+        $this->assertTrue($entry->is_active);
+
+        $this->actingAs($admin)
+            ->post(route('admin.elections.ip-whitelist.toggle', $entry))
+            ->assertRedirect(route('admin.elections.ip-blacklist.index'));
+
+        $this->assertFalse($entry->fresh()->is_active);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.elections.ip-whitelist.destroy', $entry))
+            ->assertRedirect(route('admin.elections.ip-blacklist.index'));
+
+        $this->assertDatabaseMissing('election_ip_whitelists', [
             'id' => $entry->id,
         ]);
     }

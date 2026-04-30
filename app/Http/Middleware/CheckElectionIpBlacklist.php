@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Election;
 use App\Models\ElectionAuditLog;
 use App\Models\ElectionIpBlacklist;
+use App\Models\ElectionIpWhitelist;
 use Closure;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -23,6 +24,15 @@ class CheckElectionIpBlacklist
         $clientIp = $candidateIps[0] ?? (string) $request->ip();
 
         try {
+            $isWhitelisted = ElectionIpWhitelist::query()
+                ->whereIn('ip_address', $candidateIps)
+                ->where('is_active', true)
+                ->exists();
+
+            if ($isWhitelisted) {
+                return $next($request);
+            }
+
             $isBlocked = ElectionIpBlacklist::query()
                 ->whereIn('ip_address', $candidateIps)
                 ->where('is_active', true)
