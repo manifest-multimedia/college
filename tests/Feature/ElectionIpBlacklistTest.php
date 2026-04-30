@@ -32,6 +32,50 @@ class ElectionIpBlacklistTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_blacklisted_forwarded_ip_is_blocked_from_public_verify_route(): void
+    {
+        $election = Election::create([
+            'name' => 'Forwarded IP Block Test Election',
+            'description' => 'Testing blacklist middleware with proxy headers',
+            'start_time' => now()->subHour(),
+            'end_time' => now()->addHour(),
+            'is_active' => true,
+            'requires_verification' => true,
+            'voting_duration_minutes' => 30,
+        ]);
+
+        $response = $this
+            ->withHeaders(['X-Forwarded-For' => '172.69.112.177, 10.0.0.1'])
+            ->get(route('public.elections.verify', ['election' => $election->id]));
+
+        $response->assertForbidden();
+    }
+
+    public function test_blacklisted_ipv6_mapped_ipv4_is_blocked(): void
+    {
+        $election = Election::create([
+            'name' => 'IPv6 Mapped Block Test Election',
+            'description' => 'Testing blacklist middleware with IPv6 mapped IPv4',
+            'start_time' => now()->subHour(),
+            'end_time' => now()->addHour(),
+            'is_active' => true,
+            'requires_verification' => true,
+            'voting_duration_minutes' => 30,
+        ]);
+
+        ElectionIpBlacklist::query()->create([
+            'ip_address' => '192.0.2.55',
+            'reason' => 'Mapped IPv4 test',
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withHeaders(['X-Real-IP' => '::ffff:192.0.2.55'])
+            ->get(route('public.elections.verify', ['election' => $election->id]));
+
+        $response->assertForbidden();
+    }
+
     public function test_admin_can_add_toggle_and_remove_blacklist_entries(): void
     {
         $role = Role::create(['name' => 'Administrator']);

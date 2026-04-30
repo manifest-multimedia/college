@@ -77,7 +77,6 @@
                 <div id="positionsContainer" class="mb-3">
                     <div class="text-center text-muted py-4">Loading live performance...</div>
                 </div>
-                <div id="slideIndicators" class="d-flex justify-content-center gap-2"></div>
             </div>
         </div>
     </div>
@@ -93,7 +92,6 @@
             const statusEl = document.getElementById('electionStatus');
             const lastUpdatedEl = document.getElementById('lastUpdated');
             const positionsContainer = document.getElementById('positionsContainer');
-            const slideIndicators = document.getElementById('slideIndicators');
             const slideCounter = document.getElementById('slideCounter');
             const prevSlideButton = document.getElementById('prevSlide');
             const nextSlideButton = document.getElementById('nextSlide');
@@ -166,33 +164,51 @@
                     : '<span class="badge bg-danger">REJECTED</span>';
 
                 return `
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                            <div>
-                                <h5 class="mb-0">${escapeHtml(position.name)}</h5>
-                                <small class="text-muted">Single-candidate approval vote</small>
-                            </div>
-                            ${resultBadge}
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex align-items-center gap-3 mb-3">
-                                <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
-                                <div>
-                                    <h6 class="mb-0">${escapeHtml(candidate.name)}</h6>
-                                    <small class="text-muted">Total votes: ${position.total_votes}</small>
+                    <div class="card border-0 shadow-sm overflow-hidden">
+                        <div class="card-body p-4 p-lg-5 bg-light border-bottom">
+                            <div class="row align-items-center g-4">
+                                <div class="col-lg-8">
+                                    <div class="d-flex align-items-center gap-3 mb-3">
+                                        <span class="badge bg-dark">Single Candidate Vote</span>
+                                        ${resultBadge}
+                                    </div>
+                                    <h2 class="mb-2">${escapeHtml(position.name)}</h2>
+                                    <p class="text-muted mb-0">${position.total_votes} ballots recorded for this approval position.</p>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="d-flex align-items-center gap-3 justify-content-lg-end">
+                                        <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm" style="width:120px;height:120px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                        <div>
+                                            <div class="text-uppercase small text-muted">Candidate</div>
+                                            <h4 class="mb-1">${escapeHtml(candidate.name)}</h4>
+                                            <div class="text-muted">Approval outcome in real time</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row g-3">
+                        </div>
+                        <div class="card-body p-4 p-lg-5">
+                            <div class="row g-4">
                                 <div class="col-md-6">
-                                    <div class="small text-muted mb-1">YES (${position.yes_votes})</div>
-                                    <div class="progress" style="height: 22px;">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width:${position.yes_percent}%">${position.yes_percent}%</div>
+                                    <div class="border rounded-4 p-4 h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-semibold text-success">YES</span>
+                                            <span class="fw-bold">${position.yes_votes} votes</span>
+                                        </div>
+                                        <div class="progress" style="height: 26px;">
+                                            <div class="progress-bar bg-success fw-semibold" role="progressbar" style="width:${position.yes_percent}%">${position.yes_percent}%</div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="small text-muted mb-1">NO (${position.no_votes})</div>
-                                    <div class="progress" style="height: 22px;">
-                                        <div class="progress-bar bg-danger" role="progressbar" style="width:${position.no_percent}%">${position.no_percent}%</div>
+                                    <div class="border rounded-4 p-4 h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-semibold text-danger">NO</span>
+                                            <span class="fw-bold">${position.no_votes} votes</span>
+                                        </div>
+                                        <div class="progress" style="height: 26px;">
+                                            <div class="progress-bar bg-danger fw-semibold" role="progressbar" style="width:${position.no_percent}%">${position.no_percent}%</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -202,37 +218,60 @@
             }
 
             function renderMultiCandidatePosition(position) {
-                const candidateRows = (position.candidates || []).map((candidate, index) => `
-                    <div class="d-flex align-items-center justify-content-between gap-3 py-2 border-bottom">
-                        <div class="d-flex align-items-center gap-3">
-                            <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-circle" style="width:52px;height:52px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
-                            <div>
-                                <div class="fw-semibold">
-                                    ${escapeHtml(candidate.name)}
-                                    ${index === 0 ? '<span class="badge bg-warning text-dark ms-1">LEADING</span>' : ''}
+                const leadingCandidate = (position.candidates || [])[0] ?? null;
+                const challengerRows = (position.candidates || []).map((candidate, index) => `
+                    <div class="col-12 col-xl-6">
+                        <div class="border rounded-4 p-3 h-100 ${index === 0 ? 'border-primary bg-primary bg-opacity-10' : 'bg-white'}">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="position-relative">
+                                    <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm" style="width:88px;height:88px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill ${index === 0 ? 'bg-warning text-dark' : 'bg-secondary'}">#${index + 1}</span>
                                 </div>
-                                <div class="small text-muted">${candidate.votes} votes</div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                        <h4 class="mb-0">${escapeHtml(candidate.name)}</h4>
+                                        ${index === 0 ? '<span class="badge bg-warning text-dark">LEADING</span>' : ''}
+                                    </div>
+                                    <div class="text-muted">${candidate.votes} votes</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fs-4 fw-bold text-primary">${candidate.vote_percent}%</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="text-end" style="min-width: 220px;">
-                            <div class="small text-muted mb-1">${candidate.vote_percent}%</div>
-                            <div class="progress" style="height: 14px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width:${candidate.vote_percent}%"></div>
+                            <div class="progress" style="height: 18px;">
+                                <div class="progress-bar ${index === 0 ? 'bg-primary' : 'bg-secondary'}" role="progressbar" style="width:${candidate.vote_percent}%"></div>
                             </div>
                         </div>
                     </div>
                 `).join('');
 
                 return `
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                            <div>
-                                <h5 class="mb-0">${escapeHtml(position.name)}</h5>
-                                <small class="text-muted">${position.total_votes} total votes</small>
+                    <div class="card border-0 shadow-sm overflow-hidden">
+                        <div class="card-body p-4 p-lg-5 bg-light border-bottom">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-lg-8">
+                                    <div class="text-uppercase small text-muted mb-2">Position</div>
+                                    <h2 class="mb-2">${escapeHtml(position.name)}</h2>
+                                    <p class="text-muted mb-0">${position.total_votes} total votes counted for this race.</p>
+                                </div>
+                                <div class="col-lg-4">
+                                    ${leadingCandidate ? `
+                                        <div class="d-flex align-items-center gap-3 justify-content-lg-end">
+                                            <img src="${escapeHtml(leadingCandidate.photo_url)}" alt="${escapeHtml(leadingCandidate.name)}" class="rounded-4 shadow-sm" style="width:128px;height:128px;object-fit:cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
+                                            <div>
+                                                <div class="text-uppercase small text-muted">Current Leader</div>
+                                                <h4 class="mb-1">${escapeHtml(leadingCandidate.name)}</h4>
+                                                <div class="fw-semibold text-primary">${leadingCandidate.vote_percent}%</div>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
                         </div>
-                        <div class="card-body py-2">
-                            ${candidateRows || '<div class="text-muted py-2">No active candidates.</div>'}
+                        <div class="card-body p-4 p-lg-5">
+                            <div class="row g-3">
+                                ${challengerRows || '<div class="text-muted py-2">No active candidates.</div>'}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -247,30 +286,11 @@
                 positionsContainer.innerHTML = renderMultiCandidatePosition(position);
             }
 
-            function renderIndicators(length) {
-                slideIndicators.innerHTML = Array.from({ length }, (_, index) => `
-                    <button
-                        type="button"
-                        class="btn btn-sm ${index === slideshowIndex ? 'btn-primary' : 'btn-outline-secondary'}"
-                        data-index="${index}"
-                    >${index + 1}</button>
-                `).join('');
-
-                slideIndicators.querySelectorAll('button').forEach((button) => {
-                    button.addEventListener('click', () => {
-                        slideshowIndex = Number(button.dataset.index);
-                        updateSlideshow();
-                        restartSlideshowTimer();
-                    });
-                });
-            }
-
             function updateSlideshow() {
                 if (!positionsCache.length) {
                     positionsContainer.innerHTML = `
                         <div class="text-center text-muted py-4">No positions available for this election.</div>
                     `;
-                    slideIndicators.innerHTML = '';
                     slideCounter.textContent = '0 / 0';
                     return;
                 }
@@ -280,7 +300,6 @@
                 }
 
                 renderSlide(positionsCache[slideshowIndex]);
-                renderIndicators(positionsCache.length);
                 slideCounter.textContent = `${slideshowIndex + 1} / ${positionsCache.length}`;
             }
 
