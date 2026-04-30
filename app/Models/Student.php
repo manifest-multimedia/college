@@ -56,9 +56,13 @@ class Student extends Model
                 }
 
                 foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd.m.Y'] as $format) {
-                    $date = Carbon::createFromFormat($format, $value);
-                    if ($date !== false && $date->format($format) === $value) {
-                        return $date;
+                    try {
+                        $date = Carbon::createFromFormat($format, $value);
+                        if ($date instanceof Carbon && $date->format($format) === $value) {
+                            return $date;
+                        }
+                    } catch (\Exception) {
+                        // Try next format
                     }
                 }
 
