@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\PublicElectionPerformanceController;
 use App\Http\Controllers\ReportGenerator;
 use App\Livewire\ExamEdit;
 use App\Models\Exam;
@@ -784,6 +785,10 @@ Route::prefix('public/elections')->name('public.elections.')->group(function () 
 
     // View single election details
     Route::get('/{election}', \App\Livewire\PublicElectionDetails::class)->name('show');
+
+    // Public real-time performance (AJAX powered)
+    Route::get('/{election}/performance', [PublicElectionPerformanceController::class, 'show'])->name('performance');
+    Route::get('/{election}/performance/data', [PublicElectionPerformanceController::class, 'data'])->name('performance.data');
 
     // Public verification and voting routes
     Route::get('/{election}/verify', \App\Livewire\ElectionVoterVerification::class)->name('verify');

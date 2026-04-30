@@ -113,6 +113,11 @@
                     <button wire:click="startVoting" class="btn btn-lg btn-primary">
                         <i class="fas fa-vote-yea me-2"></i> Start Voting Now
                     </button>
+                    <div class="mt-3">
+                        <a href="{{ route('public.elections.performance', $election) }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-line me-2"></i> View Live Performance
+                        </a>
+                    </div>
                     <p class="text-muted mt-2">
                         <small>You will be asked to verify your Student ID before voting</small>
                     </p>
@@ -122,6 +127,11 @@
                     <button disabled class="btn btn-lg btn-secondary">
                         <i class="fas fa-clock me-2"></i> Voting Not Yet Available
                     </button>
+                    <div class="mt-3">
+                        <a href="{{ route('public.elections.performance', $election) }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-line me-2"></i> View Performance Page
+                        </a>
+                    </div>
                     <p class="text-muted mt-2">
                         <small>This election will start on {{ $election->start_time->format('M j, Y g:i A') }}</small>
                     </p>
@@ -131,6 +141,11 @@
                     <button disabled class="btn btn-lg btn-danger">
                         <i class="fas fa-lock me-2"></i> Voting Closed
                     </button>
+                    <div class="mt-3">
+                        <a href="{{ route('public.elections.performance', $election) }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-line me-2"></i> View Final Performance
+                        </a>
+                    </div>
                     <p class="text-muted mt-2">
                         <small>This election ended on {{ $election->end_time->format('M j, Y g:i A') }}</small>
                     </p>
