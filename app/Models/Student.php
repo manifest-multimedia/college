@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -43,9 +45,31 @@ class Student extends Model
      *
      * @var array
      */
-    protected $casts = [
-        'date_of_birth' => 'datetime',
-    ];
+    protected $casts = [];
+
+    protected function dateOfBirth(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?Carbon {
+                if ($value === null || $value === '') {
+                    return null;
+                }
+
+                foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'm/d/Y', 'Y/m/d', 'd.m.Y'] as $format) {
+                    $date = Carbon::createFromFormat($format, $value);
+                    if ($date !== false && $date->format($format) === $value) {
+                        return $date;
+                    }
+                }
+
+                try {
+                    return Carbon::parse($value);
+                } catch (\Exception) {
+                    return null;
+                }
+            },
+        );
+    }
 
     // Get attribute name
     public function getNameAttribute()

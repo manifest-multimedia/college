@@ -2,20 +2,10 @@
     <div class="container py-4" id="performanceApp" data-url="{{ route('public.elections.performance.data', $election) }}">
         <div class="card mb-4">
             <div class="card-body">
-                <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
-                    <div>
-                        <h2 class="mb-1">{{ $election->name }}</h2>
-                        <p class="text-muted mb-2">Real-time candidate and position performance</p>
-                        <span id="electionStatus" class="badge bg-secondary">Loading status...</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <a href="{{ route('public.elections.show', $election) }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Election
-                        </a>
-                        <button id="refreshButton" class="btn btn-primary" type="button">
-                            <i class="fas fa-sync-alt me-1"></i> Refresh Now
-                        </button>
-                    </div>
+                <div>
+                    <h2 class="mb-1">{{ $election->name }}</h2>
+                    <p class="text-muted mb-2">Real-time candidate and position performance</p>
+                    <span id="electionStatus" class="badge bg-secondary">Loading status...</span>
                 </div>
                 <p class="text-muted mt-3 mb-0">
                     Last updated: <span id="lastUpdated">-</span>
@@ -95,7 +85,6 @@
             const slideCounter = document.getElementById('slideCounter');
             const prevSlideButton = document.getElementById('prevSlide');
             const nextSlideButton = document.getElementById('nextSlide');
-            const refreshButton = document.getElementById('refreshButton');
 
             const summaryPositions = document.getElementById('summaryPositions');
             const summaryVotes = document.getElementById('summaryVotes');
@@ -224,7 +213,7 @@
                         <div class="border rounded-4 p-3 h-100 ${index === 0 ? 'border-primary bg-primary bg-opacity-10' : 'bg-white'}">
                             <div class="position-relative mb-3">
                                 <img src="${escapeHtml(candidate.photo_url)}" alt="${escapeHtml(candidate.name)}" class="rounded-4 shadow-sm w-100" style="aspect-ratio: 750 / 338; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';">
-                                <span class="position-absolute top-0 end-0 m-3 badge rounded-pill ${index === 0 ? 'bg-warning text-dark' : 'bg-secondary'}">#${index + 1}</span>
+                                <span class="position-absolute top-0 start-0 m-3 badge rounded-pill ${index === 0 ? 'bg-warning text-dark' : 'bg-secondary'}">#${index + 1}</span>
                             </div>
                             <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
                                 <div class="flex-grow-1 min-w-0">
@@ -337,7 +326,6 @@
 
             async function loadPerformance() {
                 try {
-                    refreshButton.disabled = true;
                     const response = await fetch(dataUrl, {
                         headers: {
                             'Accept': 'application/json',
@@ -359,12 +347,8 @@
                             </div>
                         </div>
                     `;
-                } finally {
-                    refreshButton.disabled = false;
                 }
             }
-
-            refreshButton.addEventListener('click', loadPerformance);
             prevSlideButton.addEventListener('click', () => {
                 prevSlide();
                 restartSlideshowTimer();
