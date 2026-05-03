@@ -322,7 +322,17 @@
                 // Modal hidden event - no-op (closing is handled by wire:click on close/cancel buttons)
                 
                 // Handle modal state changes triggered by Livewire
-                Livewire.on('user-management:modal-state-changed', (state) => {
+                Livewire.on('user-management:modal-state-changed', (...args) => {
+                    const normalizeState = (value) => {
+                        if (Array.isArray(value) && value.length > 0) {
+                            return normalizeState(value[0]);
+                        }
+
+                        return value && typeof value === 'object' ? value : {};
+                    };
+
+                    const state = normalizeState(args);
+
                     if (state.isOpen && !userFormModalEl.classList.contains('show')) {
                         // Only show if not already shown
                         setTimeout(() => userFormModal.show(), 100);
