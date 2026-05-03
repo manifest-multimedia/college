@@ -302,25 +302,15 @@
             // Wait for Livewire to be fully initialized
             document.addEventListener('livewire:initialized', () => {
                 // Handle userDataLoaded event - show modal when data is ready
-                Livewire.on('userDataLoaded', () => {
+                Livewire.on('user-management:data-loaded', () => {
                     console.log('User data loaded event received');
                     setTimeout(() => {
                         userFormModal.show();
                     }, 100);
                 });
                 
-                // Create button click handler
-                const createButton = document.querySelector('button[wire\\:click="openModal"]');
-                if (createButton) {
-                    createButton.addEventListener('click', () => {
-                        setTimeout(() => {
-                            userFormModal.show();
-                        }, 100);
-                    });
-                }
-                
                 // Close modal event handler
-                Livewire.on('closeModal', () => {
+                Livewire.on('user-management:close-modal', () => {
                     userFormModal.hide();
                 });
                 
@@ -332,7 +322,7 @@
                 // Modal hidden event - no-op (closing is handled by wire:click on close/cancel buttons)
                 
                 // Handle modal state changes triggered by Livewire
-                Livewire.on('userModalStateChanged', (state) => {
+                Livewire.on('user-management:modal-state-changed', (state) => {
                     if (state.isOpen && !userFormModalEl.classList.contains('show')) {
                         // Only show if not already shown
                         setTimeout(() => userFormModal.show(), 100);
