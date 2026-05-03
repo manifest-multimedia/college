@@ -125,7 +125,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ $editMode ? 'Edit User' : 'Add New User' }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" wire:click="closeModal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="userForm">
@@ -249,8 +249,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" wire:click="saveUser">
+                    <button type="button" class="btn btn-light" wire:click="closeModal">Cancel</button>
                         <span wire:loading.remove wire:target="saveUser">Save</span>
                         <span wire:loading wire:target="saveUser">Saving...</span>
                     </button>
@@ -330,10 +329,7 @@
                     deleteConfirmationModal.show();
                 });
                 
-                // Modal hidden event - reset component state
-                userFormModalEl.addEventListener('hidden.bs.modal', () => {
-                    Livewire.dispatch('closeModalAction');
-                });
+                // Modal hidden event - no-op (closing is handled by wire:click on close/cancel buttons)
                 
                 // Handle modal state changes triggered by Livewire
                 Livewire.on('userModalStateChanged', (state) => {

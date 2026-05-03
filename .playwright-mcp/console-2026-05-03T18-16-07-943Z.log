@@ -1,0 +1,3 @@
+[   40814ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://portal.mhtia.edu.gh/settings/user:0
+[   59533ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0
+[   59533ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0

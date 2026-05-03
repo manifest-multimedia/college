@@ -1,0 +1,7 @@
+[    2677ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://college.test/_boost/browser-logs @ http://college.test/settings/users:61
+[    3173ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://college.test/settings/users:0
+[    3173ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://college.test/settings/users:0
+[    9435ms] [LOG] Modal shown, roles selected: Proxy(Array) @ http://college.test/settings/users:120
+[    9449ms] [LOG] Modal shown, permissions selected: Proxy(Array) @ http://college.test/settings/users:120
+[   18717ms] [LOG] Modal shown, roles selected: Proxy(Array) @ http://college.test/settings/users:120
+[   18719ms] [LOG] Modal shown, permissions selected: Proxy(Array) @ http://college.test/settings/users:120

@@ -1,0 +1,7 @@
+[     866ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://college.test/_boost/browser-logs @ http://college.test/login:178
+[     959ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-down.svg:0
+[     970ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/quote-top.svg:0
+[    1205ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/flex-assets/images/sign-in/avatar.png:0
+[    1249ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/images/pattern-light.png:0
+[    1251ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://college.test/js/main.js:0
+[   37738ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://college.test/_boost/browser-logs @ http://college.test/portal:61

@@ -1,0 +1,92 @@
+- generic [ref=e1]:
+  - generic [ref=e5]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - heading "Laravel" [level=1] [ref=e9]
+        - heading "Choose your preferred login method" [level=2] [ref=e10]
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - link "Sign In with AuthCentral" [ref=e14] [cursor=pointer]:
+            - /url: https://auth.pnmtc.edu.gh/login?redirect_url=http%3A%2F%2Fcollege.test%2Fauth%2Fcallback
+            - text: Sign In with AuthCentral
+          - paragraph [ref=e15]: Single Sign-On (SSO) - Quick & Secure
+        - generic [ref=e16]:
+          - text: OR
+          - separator [ref=e17]
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: Email Address
+            - textbox "Email Address" [active] [ref=e21]
+          - generic [ref=e22]:
+            - generic [ref=e23]: Password
+            - generic [ref=e24]:
+              - textbox "Password" [ref=e25]
+              - button [ref=e26] [cursor=pointer]
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - checkbox "Remember me" [ref=e29]
+              - generic [ref=e30]: Remember me
+            - link "Forgot password?" [ref=e31] [cursor=pointer]:
+              - /url: http://college.test/forgot-password
+          - button "Sign In with Email" [ref=e33] [cursor=pointer]: Sign In with Email
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: Don't have an account?
+          - generic [ref=e36]:
+            - link "Staff Registration" [ref=e37] [cursor=pointer]:
+              - /url: https://auth.pnmtc.edu.gh/sign-up
+            - link "Student Registration" [ref=e38] [cursor=pointer]:
+              - /url: https://auth.pnmtc.edu.gh/student/register
+        - link " Support" [ref=e41] [cursor=pointer]:
+          - /url: mailto:support@college.edu
+          - generic [ref=e42]: 
+          - text: Support
+    - generic [ref=e44]:
+      - generic [ref=e45]: TESTIMONIALS
+      - heading "I have worked with Manifest Digital for 2+ years and I like how they work with speed. Their works are neat with beautiful interfaces. Thanks for making Yve Digital & Get The Artiste platforms what they are." [level=2] [ref=e47]
+      - heading "Kwame Baah, CEO & Founder at Yve Digital (GH)" [level=3] [ref=e48]
+      - generic [ref=e49]:
+        - link [ref=e51] [cursor=pointer]:
+          - /url: "#"
+        - link [ref=e53] [cursor=pointer]:
+          - /url: "#"
+        - link [ref=e55] [cursor=pointer]:
+          - /url: "#"
+  - generic [ref=e56]:
+    - generic [ref=e58]:
+      - generic [ref=e60]:
+        - generic [ref=e61] [cursor=pointer]:
+          - text: 
+          - generic: Request
+        - text: 
+        - generic [ref=e62] [cursor=pointer]:
+          - text: 
+          - generic: Timeline
+        - text: 
+        - generic [ref=e63] [cursor=pointer]:
+          - text: 
+          - generic: Views
+          - generic [ref=e64]: "3"
+        - generic [ref=e65] [cursor=pointer]:
+          - text: 
+          - generic: Queries
+          - generic [ref=e66]: "1"
+        - text:    
+      - generic [ref=e67]:
+        - generic [ref=e70] [cursor=pointer]:
+          - generic: 
+        - generic [ref=e72] [cursor=pointer]:
+          - generic: 
+        - generic [ref=e73] [cursor=pointer]:
+          - generic: 
+          - generic: 94.32ms
+        - generic [ref=e74]:
+          - generic: 
+          - generic: 4MB
+        - generic [ref=e75]:
+          - generic: 
+          - generic: 12.x
+        - generic [ref=e76] [cursor=pointer]:
+          - generic: 
+          - generic: GET login
+    - text:                        
+  - text: 
