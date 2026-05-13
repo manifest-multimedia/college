@@ -96,9 +96,9 @@
             </div>
         </div>
 
-        <div class="row" style="min-height: calc(100vh - 400px); height: calc(100vh - 400px);">
+        <div class="row" style="min-height: calc(100vh - 200px); height: calc(100vh - 200px);">
             <!-- Main Exam Content -->
-            <div class="col-md-9 d-flex flex-column" style="height: 100%; min-height: 0;">
+            <div class="col-md-9 d-flex flex-column" style="height: 100vh; min-height: 0;">
                 <div class="p-4 shadow-lg card question-card position-relative exam-protected d-flex flex-column" style="flex: 1 1 auto; min-height: 0; height: 100%;">
                     <!-- Watermark -->
                     <div class="watermark">
@@ -213,7 +213,8 @@
             </div>
 
             <!-- Sidebar - Question Navigator (Offline UI Style) -->
-            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" style="padding: 0; border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; height: auto;">
+            <div class="shadow-lg col-md-3 sidebar d-flex flex-column" 
+            style="padding: 0; border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 200px);">
                 <!-- Header Section -->
                 <div class="p-3 text-white" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
                     <h5 class="mb-0 fw-bold">Questions Overview</h5>
@@ -402,6 +403,7 @@
                 </div>
             </div>
         </div>
+        
     </div>
 
     @include('components.partials.styles.exam-styles')
@@ -1028,8 +1030,8 @@
             }
         }
     </script>
-    <div class="footer text-center py-2 mt-4 border-top">
-
+    
+    <!-- <div class="footer text-center py-2 mt-4 border-top display:flex; justify-content:center; align-items:center;" style="gap: 0.5rem; height:60vh; display:block;">
         <small class"small"> Online Examination System V2 </small>
-    </div>
+    </div>     -->
 </div>

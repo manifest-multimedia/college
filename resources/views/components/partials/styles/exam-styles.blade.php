@@ -1,39 +1,34 @@
 <style>
 
 /* Add rounded bounding box around each question */
-.rounded-border {
-border: 1px solid #ddd;
-border-radius: 10px;
-background-color: #f8f9fa;
-padding: 15px;
-}
-.question-card {
-  position: relative;
-}
-      .question-card {
-            max-width: 800px;
-            margin: auto;
-        }
-        .scrollable-questions {
-            max-height: 70vh;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        .question-container {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
+    .rounded-border {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    }
+    .question-card {
+    position: relative;
+    }
+    .question-card {
+        max-width: 800px;
+        margin: auto;
+    }
+    .scrollable-questions {
+        max-height: 100vh;
+        overflow-y: auto;
+        padding: 10px;
+    }
+    .question-container {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
     .tracker-container {
     max-width: 100%; /* Ensure it doesn't exceed the container width */
 }
-/* .tracker-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
-        } */
+
 
 .tracker-item {
     font-size: 14px;
