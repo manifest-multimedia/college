@@ -1,0 +1,230 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - button "" [ref=e5] [cursor=pointer]:
+        - generic [ref=e6]: 
+      - generic [ref=e9]:
+        - generic [ref=e11]: Navigation
+        - link "    Dashboard" [ref=e13] [cursor=pointer]:
+          - /url: https://portal.mhtia.edu.gh/portal
+          - generic [ref=e15]:
+            - generic [ref=e16]: 
+            - generic: 
+            - generic: 
+            - generic: 
+          - generic [ref=e17]: Dashboard
+        - link "  Students" [ref=e19] [cursor=pointer]:
+          - /url: https://portal.mhtia.edu.gh/students
+          - generic [ref=e21]:
+            - generic [ref=e22]: 
+            - generic: 
+          - generic [ref=e23]: Students
+        - generic "Communication" [ref=e25] [cursor=pointer]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e29]: Communication
+        - generic "Memo Management" [ref=e32] [cursor=pointer]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: 
+            - generic: 
+          - generic [ref=e36]: Memo Management
+        - generic "Academic Module" [ref=e39] [cursor=pointer]:
+          - generic [ref=e41]:
+            - generic [ref=e42]: 
+            - generic: 
+          - generic [ref=e43]: Academic Module
+        - generic [ref=e45]:
+          - generic "Asset Management" [ref=e46] [cursor=pointer]:
+            - generic [ref=e48]:
+              - generic [ref=e49]: 
+              - generic: 
+              - generic: 
+              - generic: 
+            - generic [ref=e50]: Asset Management
+          - text:              
+        - generic "Exam Center" [ref=e53] [cursor=pointer]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e57]: Exam Center
+        - generic "Finance Module" [ref=e60] [cursor=pointer]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e64]: Finance Module
+        - generic "Course Registration" [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: 
+            - generic: 
+          - generic [ref=e71]: Course Registration
+        - generic "Election System" [ref=e74] [cursor=pointer]:
+          - generic [ref=e76]:
+            - generic [ref=e77]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e78]: Election System
+        - generic "Support Center" [ref=e81] [cursor=pointer]:
+          - generic [ref=e83]:
+            - generic [ref=e84]: 
+            - generic: 
+          - generic [ref=e85]: Support Center
+        - link "    Office Management" [ref=e88] [cursor=pointer]:
+          - /url: https://portal.mhtia.edu.gh/offices
+          - generic [ref=e90]:
+            - generic [ref=e91]: 
+            - generic: 
+            - generic: 
+            - generic: 
+          - generic [ref=e92]: Office Management
+        - generic "System Settings" [ref=e94] [cursor=pointer]:
+          - generic [ref=e96]:
+            - generic [ref=e97]: 
+            - generic: 
+          - generic [ref=e98]: System Settings
+        - link "  Staff Mail" [ref=e101] [cursor=pointer]:
+          - /url: https://mail.hostinger.com/
+          - generic [ref=e103]:
+            - generic [ref=e104]: 
+            - generic: 
+          - generic [ref=e105]: Staff Mail
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - img "photo" [ref=e110]
+          - generic [ref=e111]:
+            - link "Johnson Sebire" [ref=e112] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e113]: System
+        - generic [ref=e116] [cursor=pointer]:
+          - generic [ref=e117]: 
+          - generic: 
+    - generic [ref=e118]:
+      - generic [ref=e120]:
+        - generic [ref=e121]:
+          - text:  
+          - link "Logo" [ref=e122] [cursor=pointer]:
+            - /url: https://portal.mhtia.edu.gh
+            - img "Logo" [ref=e123]
+        - generic [ref=e124]:
+          - generic [ref=e126]:  
+          - generic [ref=e127]:
+            - link "  " [ref=e128] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e129]:
+                - generic [ref=e130]: 
+                - generic: 
+                - generic: 
+            - text:  
+          - link " " [ref=e132] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e133]:
+              - generic [ref=e134]: 
+              - generic: 
+          - generic [ref=e135]:
+            - link "         " [ref=e136] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e137]:
+                - generic [ref=e138]: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+              - text:  
+            - text:                
+      - generic [ref=e139]:
+        - generic [ref=e142]:
+          - heading "Welcome back, Johnson Sebire" [level=1] [ref=e143]
+          - list [ref=e144]:
+            - listitem [ref=e145]:
+              - link "Dashboard" [ref=e146] [cursor=pointer]:
+                - /url: https://portal.mhtia.edu.gh/portal
+            - listitem [ref=e147]
+            - listitem [ref=e149]: User Dashboard
+        - generic [ref=e151]:
+          - generic [ref=e154]:
+            - generic [ref=e155]: Welcome to your dashboard!
+            - generic [ref=e156]:
+              - text: Dear Johnson Sebire,
+              - text: We are excited to announce a more user-friendly experience! Your favorite apps and tools are now just a click away. Use the icons below or the sidebar to effortlessly access what you need.
+              - text: Start exploring now!
+          - generic [ref=e157]:
+            - generic [ref=e161]:
+              - generic [ref=e164]: 
+              - generic [ref=e165]:
+                - heading "Total Users" [level=4] [ref=e166]
+                - generic [ref=e167]: "1165"
+            - generic [ref=e171]:
+              - generic [ref=e174]: 
+              - generic [ref=e175]:
+                - heading "Active Staff" [level=4] [ref=e176]
+                - generic [ref=e177]: "40"
+            - generic [ref=e181]:
+              - generic [ref=e184]: 
+              - generic [ref=e185]:
+                - heading "Total Students" [level=4] [ref=e186]
+                - generic [ref=e187]: "1100"
+            - generic [ref=e191]:
+              - generic [ref=e194]: 
+              - generic [ref=e195]:
+                - heading "Active Programs" [level=4] [ref=e196]
+                - generic [ref=e197]: "3"
+          - generic [ref=e198]:
+            - generic [ref=e200]:
+              - link "  Exam Center Take Exams, Assignments and Quizes" [ref=e202] [cursor=pointer]:
+                - /url: https://portal.mhtia.edu.gh/exam-center
+                - generic [ref=e203]:
+                  - generic [ref=e205]:
+                    - generic [ref=e206]: 
+                    - generic: 
+                  - generic [ref=e207]: Exam Center
+                  - generic [ref=e208]: Take Exams, Assignments and Quizes
+              - link "  Question Bank Browse and Review Question Sets" [ref=e210] [cursor=pointer]:
+                - /url: https://portal.mhtia.edu.gh/question-bank
+                - generic [ref=e211]:
+                  - generic [ref=e213]:
+                    - generic [ref=e214]: 
+                    - generic: 
+                  - generic [ref=e215]: Question Bank
+                  - generic [ref=e216]: Browse and Review Question Sets
+              - link "   Staff Mail Access Corporate Email Services" [ref=e218] [cursor=pointer]:
+                - /url: https://portal.mhtia.edu.gh/staffmail
+                - generic [ref=e219]:
+                  - generic [ref=e221]:
+                    - generic [ref=e222]: 
+                    - generic: 
+                    - generic: 
+                  - generic [ref=e223]: Staff Mail
+                  - generic [ref=e224]: Access Corporate Email Services
+              - link "  Support Center Access Technical Support" [ref=e226] [cursor=pointer]:
+                - /url: https://portal.mhtia.edu.gh/support-center
+                - generic [ref=e227]:
+                  - generic [ref=e229]:
+                    - generic [ref=e230]: 
+                    - generic: 
+                  - generic [ref=e231]: Support Center
+                  - generic [ref=e232]: Access Technical Support
+            - generic [ref=e235]:
+              - heading "Need help? Contact Support" [level=1] [ref=e237]:
+                - text: Need help?
+                - paragraph [ref=e238]: Contact Support
+              - generic [ref=e240]:
+                - link "Request Support" [ref=e241] [cursor=pointer]:
+                  - /url: javascript:void(0);
+                - link "Feature Request" [ref=e242] [cursor=pointer]:
+                  - /url: javascript:void(0);
+      - generic [ref=e245]:
+        - text: 2026 ©
+        - link "Manifest Digital" [ref=e246] [cursor=pointer]:
+          - /url: https://manifestghana.com
+  - generic:   * *
+  - generic:   *
+  - text:  
+  - img

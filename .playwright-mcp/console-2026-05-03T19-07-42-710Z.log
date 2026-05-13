@@ -1,0 +1,8 @@
+[    2826ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0
+[    2829ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0
+[   21151ms] [LOG] Modal shown, roles selected: Proxy(Array) @ https://portal.mhtia.edu.gh/settings/users:4117
+[   21159ms] [LOG] Modal shown, permissions selected: Proxy(Array) @ https://portal.mhtia.edu.gh/settings/users:4118
+[ 2371862ms] [ERROR] Failed to load resource: the server responded with a status of 419 () @ https://portal.mhtia.edu.gh/regular-login:0
+[ 2413536ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2 @ https://portal.mhtia.edu.gh/dashboard/assets/plugins/global/plugins.bundle.js:96
+[ 2413837ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0
+[ 2413840ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0

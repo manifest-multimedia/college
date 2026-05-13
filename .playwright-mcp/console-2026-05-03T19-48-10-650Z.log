@@ -1,0 +1,8 @@
+[   12179ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://college.pnmtc.edu.gh/flex-assets/images/sign-in/quote-top.svg:0
+[   12726ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://college.pnmtc.edu.gh/flex-assets/images/sign-in/quote-down.svg:0
+[   12728ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://college.pnmtc.edu.gh/flex-assets/images/sign-in/avatar.png:0
+[   12800ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://college.pnmtc.edu.gh/js/main.js:0
+[   13137ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://college.pnmtc.edu.gh/images/pattern-light.png:0
+[   33429ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2 @ https://college.pnmtc.edu.gh/portal:0
+[   42393ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://college.pnmtc.edu.gh/settings/users:0
+[   42393ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://college.pnmtc.edu.gh/settings/users:0

@@ -96,10 +96,10 @@
             </div>
         </div>
 
-        <div class="row" style="min-height: calc(100vh - 400px);">
+        <div class="row" style="min-height: calc(100vh - 400px); height: calc(100vh - 400px);">
             <!-- Main Exam Content -->
-            <div class="col-md-9 d-flex flex-column" style="display: flex; flex-direction: column;">
-                <div class="p-4 shadow-lg card question-card position-relative exam-protected d-flex flex-column" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="col-md-9 d-flex flex-column" style="height: 100%; min-height: 0;">
+                <div class="p-4 shadow-lg card question-card position-relative exam-protected d-flex flex-column" style="flex: 1 1 auto; min-height: 0; height: 100%;">
                     <!-- Watermark -->
                     <div class="watermark">
                         {{ $displayStudentName }}
@@ -119,8 +119,8 @@
                         @endif
                     @endif
 
-                    <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
-                        <div class="questions-container" style="min-height: 100%; height: auto;">
+                    <div class="scrollable-questions flex-grow-1 scrollbar-container" id="questionsContainer" style="flex: 1 1 auto; min-height: 100%; height: 100%; display: flex; flex-direction: column; overflow-y: auto;                    ">
+                        <div class="questions-container" style="flex: 1 1 auto; min-height: 0;">
                             @foreach ($questions as $index => $question)
                                 <div class="p-3 mb-4 question rounded-border" id="question-{{ $index + 1 }}">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -194,18 +194,20 @@
                 </div>
 
                 <!-- Submit Button -->
-                <div class="mt-4 d-flex justify-content-center">
+                <div class="mt-4 d-flex justify-content-center align-items-center;" style="width:100%">
                     @if ($readOnlyMode)
                         <a href="{{ route('take-exam') }}" class="btn btn-secondary w-100">
                             <i class="bi bi-box-arrow-left me-2"></i> Return to Exam Login
                         </a>
                     @else
-                        <button class="btn w-100 text-white fw-bold" 
+                    <div class="d-flex justify-content-center align-items-center w-50">
+                        <button class="btn w-100 text-white fw-bold "  
                                 style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 0.75rem 1.5rem; font-size: 1rem;"
                                 onclick="showV2SubmitConfirmation()" 
                                 id="submitBtn">
                             <i class="bi bi-check-circle me-2"></i> Submit Exam
                         </button>
+</div>
                     @endif
                 </div>
             </div>
@@ -526,16 +528,24 @@
             --bs-info: #eef2ff;
         }
 
+        .question-card {
+            overflow: hidden;
+        }
+
         .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 4rem;
+            font-size: clamp(1.75rem, 3vw, 4rem);
+            max-width: 90%;
             color: rgba(0, 0, 0, 0.05);
             pointer-events: none;
             z-index: 10;
             white-space: nowrap;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Progress bar animation */
@@ -1018,4 +1028,8 @@
             }
         }
     </script>
+    <div class="footer text-center py-2 mt-4 border-top">
+
+        <small class"small"> Online Examination System V2 </small>
+    </div>
 </div>

@@ -1,0 +1,3 @@
+[    2265ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0
+[    2266ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ https://portal.mhtia.edu.gh/settings/users:0
+[   60107ms] [ERROR] Failed to load resource: the server responded with a status of 419 () @ https://portal.mhtia.edu.gh/regular-login:0

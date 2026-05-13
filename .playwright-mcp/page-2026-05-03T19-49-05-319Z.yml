@@ -1,0 +1,378 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - button "" [ref=e5] [cursor=pointer]:
+        - generic [ref=e6]: 
+      - generic [ref=e9]:
+        - generic [ref=e11]: Navigation
+        - link "    Dashboard" [ref=e13] [cursor=pointer]:
+          - /url: https://portal.mhtia.edu.gh/portal
+          - generic [ref=e15]:
+            - generic [ref=e16]: 
+            - generic: 
+            - generic: 
+            - generic: 
+          - generic [ref=e17]: Dashboard
+        - link "  Students" [ref=e19] [cursor=pointer]:
+          - /url: https://portal.mhtia.edu.gh/students
+          - generic [ref=e21]:
+            - generic [ref=e22]: 
+            - generic: 
+          - generic [ref=e23]: Students
+        - generic "Communication" [ref=e25] [cursor=pointer]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e29]: Communication
+        - generic "Memo Management" [ref=e32] [cursor=pointer]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: 
+            - generic: 
+          - generic [ref=e36]: Memo Management
+        - generic "Academic Module" [ref=e39] [cursor=pointer]:
+          - generic [ref=e41]:
+            - generic [ref=e42]: 
+            - generic: 
+          - generic [ref=e43]: Academic Module
+        - generic [ref=e45]:
+          - generic "Asset Management" [ref=e46] [cursor=pointer]:
+            - generic [ref=e48]:
+              - generic [ref=e49]: 
+              - generic: 
+              - generic: 
+              - generic: 
+            - generic [ref=e50]: Asset Management
+          - text:              
+        - generic "Exam Center" [ref=e53] [cursor=pointer]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e57]: Exam Center
+        - generic "Finance Module" [ref=e60] [cursor=pointer]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e64]: Finance Module
+        - generic "Course Registration" [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: 
+            - generic: 
+          - generic [ref=e71]: Course Registration
+        - generic "Election System" [ref=e74] [cursor=pointer]:
+          - generic [ref=e76]:
+            - generic [ref=e77]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e78]: Election System
+        - generic "Support Center" [ref=e81] [cursor=pointer]:
+          - generic [ref=e83]:
+            - generic [ref=e84]: 
+            - generic: 
+          - generic [ref=e85]: Support Center
+        - link "    Office Management" [ref=e88] [cursor=pointer]:
+          - /url: https://portal.mhtia.edu.gh/offices
+          - generic [ref=e90]:
+            - generic [ref=e91]: 
+            - generic: 
+            - generic: 
+            - generic: 
+          - generic [ref=e92]: Office Management
+        - generic [ref=e93]:
+          - generic "System Settings" [ref=e94] [cursor=pointer]:
+            - generic [ref=e96]:
+              - generic [ref=e97]: 
+              - generic: 
+            - generic [ref=e98]: System Settings
+          - generic [ref=e100]:
+            - link "General Settings" [ref=e102] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/general
+              - generic [ref=e105]: General Settings
+            - link "User Management" [ref=e107] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/users
+              - generic [ref=e110]: User Management
+            - link "Roles & Permissions" [ref=e112] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/roles
+              - generic [ref=e115]: Roles & Permissions
+            - link "Permissions Management" [ref=e117] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/permissions
+              - generic [ref=e120]: Permissions Management
+            - link "Backup & Restore" [ref=e122] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/backup
+              - generic [ref=e125]: Backup & Restore
+            - link "Branding" [ref=e127] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/admin/branding
+              - generic [ref=e130]: Branding
+            - link "Department Management" [ref=e132] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/departments
+              - generic [ref=e135]: Department Management
+            - link "User Departments" [ref=e137] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/user-departments
+              - generic [ref=e140]: User Departments
+            - link "Assessment Settings" [ref=e142] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/assessment-settings
+              - generic [ref=e145]: Assessment Settings
+            - link "API Settings" [ref=e147] [cursor=pointer]:
+              - /url: https://portal.mhtia.edu.gh/settings/api-settings
+              - generic [ref=e150]: API Settings
+        - link "  Staff Mail" [ref=e152] [cursor=pointer]:
+          - /url: https://mail.hostinger.com/
+          - generic [ref=e154]:
+            - generic [ref=e155]: 
+            - generic: 
+          - generic [ref=e156]: Staff Mail
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - img "photo" [ref=e161]
+          - generic [ref=e162]:
+            - link "Johnson Sebire" [ref=e163] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e164]: System
+        - generic [ref=e167] [cursor=pointer]:
+          - generic [ref=e168]: 
+          - generic: 
+    - generic [ref=e169]:
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - text:  
+          - link "Logo" [ref=e173] [cursor=pointer]:
+            - /url: https://portal.mhtia.edu.gh
+            - img "Logo" [ref=e174]
+        - generic [ref=e175]:
+          - generic [ref=e177]:  
+          - generic [ref=e178]:
+            - link "  " [ref=e179] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e180]:
+                - generic [ref=e181]: 
+                - generic: 
+                - generic: 
+            - text:  
+          - link " " [ref=e183] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e184]:
+              - generic [ref=e185]: 
+              - generic: 
+          - generic [ref=e186]:
+            - link "         " [ref=e187] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e188]:
+                - generic [ref=e189]: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+              - text:  
+            - text:                
+      - generic [ref=e190]:
+        - generic [ref=e193]:
+          - heading "Welcome back, Johnson Sebire" [level=1] [ref=e194]
+          - list [ref=e195]:
+            - listitem [ref=e196]:
+              - link "Dashboard" [ref=e197] [cursor=pointer]:
+                - /url: https://portal.mhtia.edu.gh/portal
+            - listitem [ref=e198]
+            - listitem [ref=e200]: User Department Assignment
+        - generic [ref=e206]:
+          - generic [ref=e208]:
+            - generic [ref=e209]:
+              - generic [ref=e211]: 
+              - textbox "Search users..." [ref=e212]
+            - combobox [ref=e214]:
+              - option "All Departments" [selected]
+              - option "ACADEMIC BOARD"
+              - option "ACCOUNTS DEPARTMENT"
+              - option "HOSPITALITY DEPARTMENT"
+              - option "INFORMATION TECHNOLOGY DEPARTMENT"
+              - option "MIDWIFERY DEPARTMENT"
+              - option "NURSING DEPARTMENT"
+              - option "PROCUREMENT AND STORES DEPARTMENT"
+              - option "SECURITY DEPARTMENT"
+              - option "TRANSPORT DEPARTMENT"
+          - generic [ref=e215]:
+            - heading "User Department Assignments" [level=3] [ref=e218]
+            - generic [ref=e219]:
+              - table [ref=e221]:
+                - rowgroup [ref=e222]:
+                  - row "Name  Email Departments Department Head Actions" [ref=e223]:
+                    - columnheader "Name " [ref=e224] [cursor=pointer]:
+                      - text: Name
+                      - generic [ref=e225]: 
+                    - columnheader "Email" [ref=e226] [cursor=pointer]
+                    - columnheader "Departments" [ref=e227]
+                    - columnheader "Department Head" [ref=e228]
+                    - columnheader "Actions" [ref=e229]
+                - rowgroup [ref=e230]:
+                  - row "A AARON MISSAH DEI owurakwameasc11@gmail.com No departments assigned  Assign" [ref=e231]:
+                    - cell "A AARON MISSAH DEI" [ref=e232]:
+                      - generic [ref=e233]:
+                        - generic [ref=e235]: A
+                        - generic [ref=e237]: AARON MISSAH DEI
+                    - cell "owurakwameasc11@gmail.com" [ref=e238]
+                    - cell "No departments assigned" [ref=e239]
+                    - cell [ref=e240]
+                    - cell " Assign" [ref=e241]:
+                      - button " Assign" [ref=e242] [cursor=pointer]:
+                        - generic [ref=e243]: 
+                        - text: Assign
+                  - row "A ABENA AMPOFO OPOKU abenaampofoopoku@mhtia.edu.gh NURSING DEPARTMENT ACADEMIC BOARD ACADEMIC BOARD  Assign" [ref=e244]:
+                    - cell "A ABENA AMPOFO OPOKU" [ref=e245]:
+                      - generic [ref=e246]:
+                        - generic [ref=e248]: A
+                        - generic [ref=e250]: ABENA AMPOFO OPOKU
+                    - cell "abenaampofoopoku@mhtia.edu.gh" [ref=e251]
+                    - cell "NURSING DEPARTMENT ACADEMIC BOARD" [ref=e252]:
+                      - generic [ref=e253]: NURSING DEPARTMENT
+                      - generic [ref=e254]: ACADEMIC BOARD
+                    - cell "ACADEMIC BOARD" [ref=e255]:
+                      - generic [ref=e256]: ACADEMIC BOARD
+                    - cell " Assign" [ref=e257]:
+                      - button " Assign" [ref=e258] [cursor=pointer]:
+                        - generic [ref=e259]: 
+                        - text: Assign
+                  - row "A ABIBA ABUBAKARI nyamedordeborah7@gmail.com No departments assigned  Assign" [ref=e260]:
+                    - cell "A ABIBA ABUBAKARI" [ref=e261]:
+                      - generic [ref=e262]:
+                        - generic [ref=e264]: A
+                        - generic [ref=e266]: ABIBA ABUBAKARI
+                    - cell "nyamedordeborah7@gmail.com" [ref=e267]
+                    - cell "No departments assigned" [ref=e268]
+                    - cell [ref=e269]
+                    - cell " Assign" [ref=e270]:
+                      - button " Assign" [ref=e271] [cursor=pointer]:
+                        - generic [ref=e272]: 
+                        - text: Assign
+                  - row "A ABIBATU ABUBAKARI abibatuabubakari26@gmail.com No departments assigned  Assign" [ref=e273]:
+                    - cell "A ABIBATU ABUBAKARI" [ref=e274]:
+                      - generic [ref=e275]:
+                        - generic [ref=e277]: A
+                        - generic [ref=e279]: ABIBATU ABUBAKARI
+                    - cell "abibatuabubakari26@gmail.com" [ref=e280]
+                    - cell "No departments assigned" [ref=e281]
+                    - cell [ref=e282]
+                    - cell " Assign" [ref=e283]:
+                      - button " Assign" [ref=e284] [cursor=pointer]:
+                        - generic [ref=e285]: 
+                        - text: Assign
+                  - row "A ABIGAIL ADDICO abigailawuley490@gmail.com No departments assigned  Assign" [ref=e286]:
+                    - cell "A ABIGAIL ADDICO" [ref=e287]:
+                      - generic [ref=e288]:
+                        - generic [ref=e290]: A
+                        - generic [ref=e292]: ABIGAIL ADDICO
+                    - cell "abigailawuley490@gmail.com" [ref=e293]
+                    - cell "No departments assigned" [ref=e294]
+                    - cell [ref=e295]
+                    - cell " Assign" [ref=e296]:
+                      - button " Assign" [ref=e297] [cursor=pointer]:
+                        - generic [ref=e298]: 
+                        - text: Assign
+                  - row "A ABIGAIL AGYEI abigailagyei1606@gmail.com No departments assigned  Assign" [ref=e299]:
+                    - cell "A ABIGAIL AGYEI" [ref=e300]:
+                      - generic [ref=e301]:
+                        - generic [ref=e303]: A
+                        - generic [ref=e305]: ABIGAIL AGYEI
+                    - cell "abigailagyei1606@gmail.com" [ref=e306]
+                    - cell "No departments assigned" [ref=e307]
+                    - cell [ref=e308]
+                    - cell " Assign" [ref=e309]:
+                      - button " Assign" [ref=e310] [cursor=pointer]:
+                        - generic [ref=e311]: 
+                        - text: Assign
+                  - row "A ABIGAIL AMPONG FOSU abigailfosuampongmhtirgn8@gmail.com No departments assigned  Assign" [ref=e312]:
+                    - cell "A ABIGAIL AMPONG FOSU" [ref=e313]:
+                      - generic [ref=e314]:
+                        - generic [ref=e316]: A
+                        - generic [ref=e318]: ABIGAIL AMPONG FOSU
+                    - cell "abigailfosuampongmhtirgn8@gmail.com" [ref=e319]
+                    - cell "No departments assigned" [ref=e320]
+                    - cell [ref=e321]
+                    - cell " Assign" [ref=e322]:
+                      - button " Assign" [ref=e323] [cursor=pointer]:
+                        - generic [ref=e324]: 
+                        - text: Assign
+                  - row "A ABIGAIL ANARFI Abigailanarfi157@gmail.com No departments assigned  Assign" [ref=e325]:
+                    - cell "A ABIGAIL ANARFI" [ref=e326]:
+                      - generic [ref=e327]:
+                        - generic [ref=e329]: A
+                        - generic [ref=e331]: ABIGAIL ANARFI
+                    - cell "Abigailanarfi157@gmail.com" [ref=e332]
+                    - cell "No departments assigned" [ref=e333]
+                    - cell [ref=e334]
+                    - cell " Assign" [ref=e335]:
+                      - button " Assign" [ref=e336] [cursor=pointer]:
+                        - generic [ref=e337]: 
+                        - text: Assign
+                  - row "A ABIGAIL ANSOMAA abigailansomaamhtirgn8@gmail.com No departments assigned  Assign" [ref=e338]:
+                    - cell "A ABIGAIL ANSOMAA" [ref=e339]:
+                      - generic [ref=e340]:
+                        - generic [ref=e342]: A
+                        - generic [ref=e344]: ABIGAIL ANSOMAA
+                    - cell "abigailansomaamhtirgn8@gmail.com" [ref=e345]
+                    - cell "No departments assigned" [ref=e346]
+                    - cell [ref=e347]
+                    - cell " Assign" [ref=e348]:
+                      - button " Assign" [ref=e349] [cursor=pointer]:
+                        - generic [ref=e350]: 
+                        - text: Assign
+                  - row "A ABIGAIL APPIAH Appiahabigailmhtirgn8@gmail.com No departments assigned  Assign" [ref=e351]:
+                    - cell "A ABIGAIL APPIAH" [ref=e352]:
+                      - generic [ref=e353]:
+                        - generic [ref=e355]: A
+                        - generic [ref=e357]: ABIGAIL APPIAH
+                    - cell "Appiahabigailmhtirgn8@gmail.com" [ref=e358]
+                    - cell "No departments assigned" [ref=e359]
+                    - cell [ref=e360]
+                    - cell " Assign" [ref=e361]:
+                      - button " Assign" [ref=e362] [cursor=pointer]:
+                        - generic [ref=e363]: 
+                        - text: Assign
+              - navigation [ref=e366]:
+                - generic [ref=e367]:
+                  - paragraph [ref=e369]: Showing 1 to 10 of 1165 results
+                  - list [ref=e371]:
+                    - listitem "« Previous" [ref=e372]:
+                      - generic: ‹
+                    - listitem [ref=e373]:
+                      - generic [ref=e374]: "1"
+                    - listitem [ref=e375]:
+                      - button "2" [ref=e376] [cursor=pointer]
+                    - listitem [ref=e377]:
+                      - button "3" [ref=e378] [cursor=pointer]
+                    - listitem [ref=e379]:
+                      - button "4" [ref=e380] [cursor=pointer]
+                    - listitem [ref=e381]:
+                      - button "5" [ref=e382] [cursor=pointer]
+                    - listitem [ref=e383]:
+                      - button "6" [ref=e384] [cursor=pointer]
+                    - listitem [ref=e385]:
+                      - button "7" [ref=e386] [cursor=pointer]
+                    - listitem [ref=e387]:
+                      - button "8" [ref=e388] [cursor=pointer]
+                    - listitem [ref=e389]:
+                      - button "9" [ref=e390] [cursor=pointer]
+                    - listitem [ref=e391]:
+                      - button "10" [ref=e392] [cursor=pointer]
+                    - listitem [ref=e393]:
+                      - generic: ...
+                    - listitem [ref=e394]:
+                      - button "116" [ref=e395] [cursor=pointer]
+                    - listitem [ref=e396]:
+                      - button "117" [ref=e397] [cursor=pointer]
+                    - listitem [ref=e398]:
+                      - button "Next »" [ref=e399] [cursor=pointer]: ›
+          - text: 
+      - generic [ref=e402]:
+        - text: 2026 ©
+        - link "Manifest Digital" [ref=e403] [cursor=pointer]:
+          - /url: https://manifestghana.com
+  - generic:   * *
+  - generic:   *
+  - text:  
+  - img

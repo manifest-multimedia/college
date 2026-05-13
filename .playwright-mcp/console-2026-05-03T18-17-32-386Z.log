@@ -7,3 +7,9 @@
 [  177961ms] [LOG] Modal shown, permissions selected: Proxy(Array) @ https://portal.mhtia.edu.gh/settings/users:4122
 [  226211ms] [LOG] Modal shown, roles selected: Proxy(Array) @ https://portal.mhtia.edu.gh/settings/users:4121
 [  226211ms] [LOG] Modal shown, permissions selected: Proxy(Array) @ https://portal.mhtia.edu.gh/settings/users:4122
+[ 2163234ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://college.test/_boost/browser-logs @ http://college.test/settings/users:61
+[ 2163483ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2 @ http://college.test/settings/users:1344
+[ 2165287ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://college.test/settings/users:0
+[ 2165292ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://college.test/settings/users:0
+[ 5561962ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost/settings/users:0
+[ 5562411ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost/favicon.ico:0

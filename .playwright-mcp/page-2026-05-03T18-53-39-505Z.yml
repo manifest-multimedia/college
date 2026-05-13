@@ -1,0 +1,497 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - button "" [ref=e5] [cursor=pointer]:
+        - generic [ref=e6]: 
+      - generic [ref=e9]:
+        - generic [ref=e11]: Navigation
+        - link "    Dashboard" [ref=e13] [cursor=pointer]:
+          - /url: http://college.test/portal
+          - generic [ref=e15]:
+            - generic [ref=e16]: 
+            - generic: 
+            - generic: 
+            - generic: 
+          - generic [ref=e17]: Dashboard
+        - link "  Students" [ref=e19] [cursor=pointer]:
+          - /url: http://college.test/students
+          - generic [ref=e21]:
+            - generic [ref=e22]: 
+            - generic: 
+          - generic [ref=e23]: Students
+        - generic "Communication" [ref=e25] [cursor=pointer]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e29]: Communication
+        - generic "Memo Management" [ref=e32] [cursor=pointer]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: 
+            - generic: 
+          - generic [ref=e36]: Memo Management
+        - generic "Academic Module" [ref=e39] [cursor=pointer]:
+          - generic [ref=e41]:
+            - generic [ref=e42]: 
+            - generic: 
+          - generic [ref=e43]: Academic Module
+        - generic [ref=e45]:
+          - generic "Asset Management" [ref=e46] [cursor=pointer]:
+            - generic [ref=e48]:
+              - generic [ref=e49]: 
+              - generic: 
+              - generic: 
+              - generic: 
+            - generic [ref=e50]: Asset Management
+          - text:              
+        - generic "Exam Center" [ref=e53] [cursor=pointer]:
+          - generic [ref=e55]:
+            - generic [ref=e56]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e57]: Exam Center
+        - generic "Finance Module" [ref=e60] [cursor=pointer]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e64]: Finance Module
+        - generic "Course Registration" [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: 
+            - generic: 
+          - generic [ref=e71]: Course Registration
+        - generic "Election System" [ref=e74] [cursor=pointer]:
+          - generic [ref=e76]:
+            - generic [ref=e77]: 
+            - generic: 
+            - generic: 
+          - generic [ref=e78]: Election System
+        - generic "Support Center" [ref=e81] [cursor=pointer]:
+          - generic [ref=e83]:
+            - generic [ref=e84]: 
+            - generic: 
+          - generic [ref=e85]: Support Center
+        - link "    Office Management" [ref=e88] [cursor=pointer]:
+          - /url: http://college.test/offices
+          - generic [ref=e90]:
+            - generic [ref=e91]: 
+            - generic: 
+            - generic: 
+            - generic: 
+          - generic [ref=e92]: Office Management
+        - generic [ref=e93]:
+          - generic "System Settings" [ref=e94] [cursor=pointer]:
+            - generic [ref=e96]:
+              - generic [ref=e97]: 
+              - generic: 
+            - generic [ref=e98]: System Settings
+          - generic [ref=e100]:
+            - link "General Settings" [ref=e102] [cursor=pointer]:
+              - /url: http://college.test/settings/general
+              - generic [ref=e105]: General Settings
+            - link "User Management" [ref=e107] [cursor=pointer]:
+              - /url: http://college.test/settings/users
+              - generic [ref=e110]: User Management
+            - link "Roles & Permissions" [ref=e112] [cursor=pointer]:
+              - /url: http://college.test/settings/roles
+              - generic [ref=e115]: Roles & Permissions
+            - link "Permissions Management" [ref=e117] [cursor=pointer]:
+              - /url: http://college.test/settings/permissions
+              - generic [ref=e120]: Permissions Management
+            - link "Backup & Restore" [ref=e122] [cursor=pointer]:
+              - /url: http://college.test/settings/backup
+              - generic [ref=e125]: Backup & Restore
+            - link "Branding" [ref=e127] [cursor=pointer]:
+              - /url: http://college.test/admin/branding
+              - generic [ref=e130]: Branding
+            - link "Department Management" [ref=e132] [cursor=pointer]:
+              - /url: http://college.test/settings/departments
+              - generic [ref=e135]: Department Management
+            - link "User Departments" [ref=e137] [cursor=pointer]:
+              - /url: http://college.test/settings/user-departments
+              - generic [ref=e140]: User Departments
+            - link "Assessment Settings" [ref=e142] [cursor=pointer]:
+              - /url: http://college.test/settings/assessment-settings
+              - generic [ref=e145]: Assessment Settings
+            - link "API Settings" [ref=e147] [cursor=pointer]:
+              - /url: http://college.test/settings/api-settings
+              - generic [ref=e150]: API Settings
+        - link "  Staff Mail" [ref=e152] [cursor=pointer]:
+          - /url: https://mail.google.com
+          - generic [ref=e154]:
+            - generic [ref=e155]: 
+            - generic: 
+          - generic [ref=e156]: Staff Mail
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - img "photo" [ref=e161]
+          - generic [ref=e162]:
+            - link "Johnson Sebire" [ref=e163] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e164]: System
+        - generic [ref=e167] [cursor=pointer]:
+          - generic [ref=e168]: 
+          - generic: 
+    - generic [ref=e169]:
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - text:  
+          - link "Logo" [ref=e173] [cursor=pointer]:
+            - /url: http://college.test
+            - img "Logo" [ref=e174]
+        - generic [ref=e175]:
+          - generic [ref=e177]:  
+          - generic [ref=e178]:
+            - link "  " [ref=e179] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e180]:
+                - generic [ref=e181]: 
+                - generic: 
+                - generic: 
+            - text:  
+          - link " " [ref=e183] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=e184]:
+              - generic [ref=e185]: 
+              - generic: 
+          - generic [ref=e186]:
+            - link "         " [ref=e187] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e188]:
+                - generic [ref=e189]: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+                - generic: 
+              - text:  
+            - text:                
+      - generic [ref=e190]:
+        - generic [ref=e193]:
+          - heading "Welcome back, Johnson Sebire" [level=1] [ref=e194]
+          - list [ref=e195]:
+            - listitem [ref=e196]:
+              - link "Dashboard" [ref=e197] [cursor=pointer]:
+                - /url: http://college.test/portal
+            - listitem [ref=e198]
+            - listitem [ref=e200]: User Management
+        - generic [ref=e204]:
+          - heading " User Management" [level=3] [ref=e207]:
+            - generic [ref=e208]: 
+            - text: User Management
+          - generic [ref=e210]:
+            - generic [ref=e211]:
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - generic [ref=e215]: 
+                  - textbox "Search users..." [ref=e216]
+                - combobox [ref=e218]:
+                  - option "All Roles" [selected]
+                  - option "Auditor"
+                  - option "System"
+                  - option "Super Admin"
+                  - option "Administrator"
+                  - option "Finance Manager"
+                  - option "Lecturer"
+                  - option "Student"
+                  - option "Parent"
+                  - option "Academic Officer"
+                  - option "Procurement Officer"
+                  - option "Store Manager"
+                  - option "Librarian"
+                  - option "IT Manager"
+                  - option "Staff"
+                  - option "Security Officer"
+                  - option "Admin"
+              - button " Add User" [ref=e220] [cursor=pointer]:
+                - generic [ref=e221]: 
+                - text: Add User
+            - table [ref=e223]:
+              - rowgroup [ref=e224]:
+                - row "Name  Email Phone Role(s) Direct Permissions Actions" [ref=e225]:
+                  - columnheader "Name " [ref=e226] [cursor=pointer]:
+                    - text: Name
+                    - generic [ref=e227]: 
+                  - columnheader "Email" [ref=e228] [cursor=pointer]
+                  - columnheader "Phone" [ref=e229]
+                  - columnheader "Role(s)" [ref=e230]
+                  - columnheader "Direct Permissions" [ref=e231]
+                  - columnheader "Actions" [ref=e232]
+              - rowgroup [ref=e233]:
+                - row "A Abena Gyamfi abena.gyamfi36@student.college.test N/A Student 0 direct permissions   " [ref=e234]:
+                  - cell "A Abena Gyamfi" [ref=e235]:
+                    - generic [ref=e236]:
+                      - generic [ref=e238]: A
+                      - generic [ref=e240]: Abena Gyamfi
+                  - cell "abena.gyamfi36@student.college.test" [ref=e241]
+                  - cell "N/A" [ref=e242]
+                  - cell "Student" [ref=e243]:
+                    - generic [ref=e244]: Student
+                  - cell "0 direct permissions" [ref=e245]:
+                    - generic [ref=e246]: 0 direct permissions
+                  - cell "  " [ref=e247]:
+                    - generic [ref=e248]:
+                      - button "" [ref=e249] [cursor=pointer]:
+                        - generic [ref=e250]: 
+                      - button "" [ref=e251] [cursor=pointer]:
+                        - generic [ref=e252]: 
+                      - button "" [ref=e254] [cursor=pointer]:
+                        - generic [ref=e255]: 
+                - row "A Abena Sarpong abena.sarpong24@student.college.test N/A Student 0 direct permissions   " [ref=e256]:
+                  - cell "A Abena Sarpong" [ref=e257]:
+                    - generic [ref=e258]:
+                      - generic [ref=e260]: A
+                      - generic [ref=e262]: Abena Sarpong
+                  - cell "abena.sarpong24@student.college.test" [ref=e263]
+                  - cell "N/A" [ref=e264]
+                  - cell "Student" [ref=e265]:
+                    - generic [ref=e266]: Student
+                  - cell "0 direct permissions" [ref=e267]:
+                    - generic [ref=e268]: 0 direct permissions
+                  - cell "  " [ref=e269]:
+                    - generic [ref=e270]:
+                      - button "" [ref=e271] [cursor=pointer]:
+                        - generic [ref=e272]: 
+                      - button "" [ref=e273] [cursor=pointer]:
+                        - generic [ref=e274]: 
+                      - button "" [ref=e276] [cursor=pointer]:
+                        - generic [ref=e277]: 
+                - row "A Adjoa Ansah adjoa.ansah18@student.college.test N/A Student 0 direct permissions   " [ref=e278]:
+                  - cell "A Adjoa Ansah" [ref=e279]:
+                    - generic [ref=e280]:
+                      - generic [ref=e282]: A
+                      - generic [ref=e284]: Adjoa Ansah
+                  - cell "adjoa.ansah18@student.college.test" [ref=e285]
+                  - cell "N/A" [ref=e286]
+                  - cell "Student" [ref=e287]:
+                    - generic [ref=e288]: Student
+                  - cell "0 direct permissions" [ref=e289]:
+                    - generic [ref=e290]: 0 direct permissions
+                  - cell "  " [ref=e291]:
+                    - generic [ref=e292]:
+                      - button "" [ref=e293] [cursor=pointer]:
+                        - generic [ref=e294]: 
+                      - button "" [ref=e295] [cursor=pointer]:
+                        - generic [ref=e296]: 
+                      - button "" [ref=e298] [cursor=pointer]:
+                        - generic [ref=e299]: 
+                - row "A Adwoa Baah adwoa.baah35@student.college.test N/A Student 0 direct permissions   " [ref=e300]:
+                  - cell "A Adwoa Baah" [ref=e301]:
+                    - generic [ref=e302]:
+                      - generic [ref=e304]: A
+                      - generic [ref=e306]: Adwoa Baah
+                  - cell "adwoa.baah35@student.college.test" [ref=e307]
+                  - cell "N/A" [ref=e308]
+                  - cell "Student" [ref=e309]:
+                    - generic [ref=e310]: Student
+                  - cell "0 direct permissions" [ref=e311]:
+                    - generic [ref=e312]: 0 direct permissions
+                  - cell "  " [ref=e313]:
+                    - generic [ref=e314]:
+                      - button "" [ref=e315] [cursor=pointer]:
+                        - generic [ref=e316]: 
+                      - button "" [ref=e317] [cursor=pointer]:
+                        - generic [ref=e318]: 
+                      - button "" [ref=e320] [cursor=pointer]:
+                        - generic [ref=e321]: 
+                - row "A Afua Adjei afua.adjei2@student.college.test N/A Student 0 direct permissions   " [ref=e322]:
+                  - cell "A Afua Adjei" [ref=e323]:
+                    - generic [ref=e324]:
+                      - generic [ref=e326]: A
+                      - generic [ref=e328]: Afua Adjei
+                  - cell "afua.adjei2@student.college.test" [ref=e329]
+                  - cell "N/A" [ref=e330]
+                  - cell "Student" [ref=e331]:
+                    - generic [ref=e332]: Student
+                  - cell "0 direct permissions" [ref=e333]:
+                    - generic [ref=e334]: 0 direct permissions
+                  - cell "  " [ref=e335]:
+                    - generic [ref=e336]:
+                      - button "" [ref=e337] [cursor=pointer]:
+                        - generic [ref=e338]: 
+                      - button "" [ref=e339] [cursor=pointer]:
+                        - generic [ref=e340]: 
+                      - button "" [ref=e342] [cursor=pointer]:
+                        - generic [ref=e343]: 
+                - row "A Afua Gyamfi afua.gyamfi6@student.college.test N/A Student 0 direct permissions   " [ref=e344]:
+                  - cell "A Afua Gyamfi" [ref=e345]:
+                    - generic [ref=e346]:
+                      - generic [ref=e348]: A
+                      - generic [ref=e350]: Afua Gyamfi
+                  - cell "afua.gyamfi6@student.college.test" [ref=e351]
+                  - cell "N/A" [ref=e352]
+                  - cell "Student" [ref=e353]:
+                    - generic [ref=e354]: Student
+                  - cell "0 direct permissions" [ref=e355]:
+                    - generic [ref=e356]: 0 direct permissions
+                  - cell "  " [ref=e357]:
+                    - generic [ref=e358]:
+                      - button "" [ref=e359] [cursor=pointer]:
+                        - generic [ref=e360]: 
+                      - button "" [ref=e361] [cursor=pointer]:
+                        - generic [ref=e362]: 
+                      - button "" [ref=e364] [cursor=pointer]:
+                        - generic [ref=e365]: 
+                - row "A Afua Yeboah afua.yeboah39@student.college.test N/A Student 0 direct permissions   " [ref=e366]:
+                  - cell "A Afua Yeboah" [ref=e367]:
+                    - generic [ref=e368]:
+                      - generic [ref=e370]: A
+                      - generic [ref=e372]: Afua Yeboah
+                  - cell "afua.yeboah39@student.college.test" [ref=e373]
+                  - cell "N/A" [ref=e374]
+                  - cell "Student" [ref=e375]:
+                    - generic [ref=e376]: Student
+                  - cell "0 direct permissions" [ref=e377]:
+                    - generic [ref=e378]: 0 direct permissions
+                  - cell "  " [ref=e379]:
+                    - generic [ref=e380]:
+                      - button "" [ref=e381] [cursor=pointer]:
+                        - generic [ref=e382]: 
+                      - button "" [ref=e383] [cursor=pointer]:
+                        - generic [ref=e384]: 
+                      - button "" [ref=e386] [cursor=pointer]:
+                        - generic [ref=e387]: 
+                - row "A Akosua Donkor akosua.donkor29@student.college.test N/A Student 0 direct permissions   " [ref=e388]:
+                  - cell "A Akosua Donkor" [ref=e389]:
+                    - generic [ref=e390]:
+                      - generic [ref=e392]: A
+                      - generic [ref=e394]: Akosua Donkor
+                  - cell "akosua.donkor29@student.college.test" [ref=e395]
+                  - cell "N/A" [ref=e396]
+                  - cell "Student" [ref=e397]:
+                    - generic [ref=e398]: Student
+                  - cell "0 direct permissions" [ref=e399]:
+                    - generic [ref=e400]: 0 direct permissions
+                  - cell "  " [ref=e401]:
+                    - generic [ref=e402]:
+                      - button "" [ref=e403] [cursor=pointer]:
+                        - generic [ref=e404]: 
+                      - button "" [ref=e405] [cursor=pointer]:
+                        - generic [ref=e406]: 
+                      - button "" [ref=e408] [cursor=pointer]:
+                        - generic [ref=e409]: 
+                - row "A Akwasi Boateng akwasi.boateng40@student.college.test N/A Student 0 direct permissions   " [ref=e410]:
+                  - cell "A Akwasi Boateng" [ref=e411]:
+                    - generic [ref=e412]:
+                      - generic [ref=e414]: A
+                      - generic [ref=e416]: Akwasi Boateng
+                  - cell "akwasi.boateng40@student.college.test" [ref=e417]
+                  - cell "N/A" [ref=e418]
+                  - cell "Student" [ref=e419]:
+                    - generic [ref=e420]: Student
+                  - cell "0 direct permissions" [ref=e421]:
+                    - generic [ref=e422]: 0 direct permissions
+                  - cell "  " [ref=e423]:
+                    - generic [ref=e424]:
+                      - button "" [ref=e425] [cursor=pointer]:
+                        - generic [ref=e426]: 
+                      - button "" [ref=e427] [cursor=pointer]:
+                        - generic [ref=e428]: 
+                      - button "" [ref=e430] [cursor=pointer]:
+                        - generic [ref=e431]: 
+                - row "A Ama Boateng ama.boateng5@student.college.test N/A Student 0 direct permissions   " [ref=e432]:
+                  - cell "A Ama Boateng" [ref=e433]:
+                    - generic [ref=e434]:
+                      - generic [ref=e436]: A
+                      - generic [ref=e438]: Ama Boateng
+                  - cell "ama.boateng5@student.college.test" [ref=e439]
+                  - cell "N/A" [ref=e440]
+                  - cell "Student" [ref=e441]:
+                    - generic [ref=e442]: Student
+                  - cell "0 direct permissions" [ref=e443]:
+                    - generic [ref=e444]: 0 direct permissions
+                  - cell "  " [ref=e445]:
+                    - generic [ref=e446]:
+                      - button "" [ref=e447] [cursor=pointer]:
+                        - generic [ref=e448]: 
+                      - button "" [ref=e449] [cursor=pointer]:
+                        - generic [ref=e450]: 
+                      - button "" [ref=e452] [cursor=pointer]:
+                        - generic [ref=e453]: 
+            - navigation [ref=e456]:
+              - generic [ref=e457]:
+                - paragraph [ref=e459]: Showing 1 to 10 of 54 results
+                - list [ref=e461]:
+                  - listitem "« Previous" [ref=e462]:
+                    - generic: ‹
+                  - listitem [ref=e463]:
+                    - generic [ref=e464]: "1"
+                  - listitem [ref=e465]:
+                    - button "2" [ref=e466] [cursor=pointer]
+                  - listitem [ref=e467]:
+                    - button "3" [ref=e468] [cursor=pointer]
+                  - listitem [ref=e469]:
+                    - button "4" [ref=e470] [cursor=pointer]
+                  - listitem [ref=e471]:
+                    - button "5" [ref=e472] [cursor=pointer]
+                  - listitem [ref=e473]:
+                    - button "6" [ref=e474] [cursor=pointer]
+                  - listitem [ref=e475]:
+                    - button "Next »" [ref=e476] [cursor=pointer]: ›
+      - generic [ref=e479]:
+        - text: 2026 ©
+        - link "Manifest Digital" [ref=e480] [cursor=pointer]:
+          - /url: https://manifestghana.com
+  - generic:   * *
+  - generic:   *
+  - text:  
+  - generic [ref=e481]:
+    - generic [ref=e483]:
+      - generic [ref=e485]:
+        - generic [ref=e486] [cursor=pointer]:
+          - text: 
+          - generic: Request
+        - generic [ref=e487] [cursor=pointer]:
+          - text: 
+          - generic: Messages
+          - generic [ref=e488]: "4"
+        - generic [ref=e489] [cursor=pointer]:
+          - text: 
+          - generic: Timeline
+        - text: 
+        - generic [ref=e490] [cursor=pointer]:
+          - text: 
+          - generic: Views
+          - generic [ref=e491]: "11"
+        - generic [ref=e492] [cursor=pointer]:
+          - text: 
+          - generic: Queries
+          - generic [ref=e493]: "30"
+        - generic [ref=e494] [cursor=pointer]:
+          - text: 
+          - generic: Models
+          - generic [ref=e495]: "94"
+        - generic [ref=e496] [cursor=pointer]:
+          - text: 
+          - generic: Livewire
+          - generic [ref=e497]: "3"
+        - text: 
+        - generic [ref=e498] [cursor=pointer]:
+          - text: 
+          - generic: Gate
+          - generic [ref=e499]: "3"
+      - generic [ref=e500]:
+        - generic [ref=e503] [cursor=pointer]:
+          - generic: 
+        - generic [ref=e505] [cursor=pointer]:
+          - generic: 
+        - generic [ref=e506] [cursor=pointer]:
+          - generic: 
+          - generic: 8.12s
+        - generic [ref=e507]:
+          - generic: 
+          - generic: 6MB
+        - generic [ref=e508]:
+          - generic: 
+          - generic: 12.x
+        - generic [ref=e509] [cursor=pointer]:
+          - generic: 
+          - generic: GET settings/users
+    - text:                                                                                                                                                                                                                                       
+  - text: 
+  - img

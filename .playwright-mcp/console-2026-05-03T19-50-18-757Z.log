@@ -1,0 +1,4 @@
+[    1388ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://college.test/_boost/browser-logs @ http://college.test/settings/users:61
+[    1702ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2 @ http://college.test/dashboard/assets/plugins/global/plugins.bundle.js:96
+[    2432ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://college.test/settings/users:0
+[    2432ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://college.test/settings/users:0
