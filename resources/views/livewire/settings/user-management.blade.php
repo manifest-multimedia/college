@@ -250,6 +250,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" wire:click="closeModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" wire:click="saveUser" wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="saveUser">Save</span>
                         <span wire:loading wire:target="saveUser">Saving...</span>
                     </button>
