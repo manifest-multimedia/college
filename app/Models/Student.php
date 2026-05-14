@@ -133,21 +133,49 @@ class Student extends Model
         return $this->morphMany(Contact::class, 'contactable');
     }
 
-    public function isEligibleForExam()
+    public function isEligibleForExam($exam = null)
     {
-        // Check FeeCollections if student_id is present and if is_eligble is true
-        $feeCollection = FeeCollection::where('student_id', $this->student_id)->first();
-        // dd($feeCollection->is_eligble);
-        if (! $feeCollection || ! $feeCollection->is_eligble) {
-            return false;
-        } else {
+        // 1. Check for manual override or explicit clearance in ExamClearance records
+        if ($exam) {
+            $clearance = $this->examClearances()
+                ->where(function ($query) use ($exam) {
+                    // Check by polymorphic relationship
+                    $query->where(function ($q) use ($exam) {
+                        $q->where('clearable_type', get_class($exam))
+                          ->where('clearable_id', $exam->id);
+                    });
 
+                    // Backward compatibility: check by academic year, semester, and exam type
+                    // This handles cases where the polymorphic relationship might not be set up but legacy fields are
+                    if (isset($exam->academic_year_id) && isset($exam->semester_id) && isset($exam->type_id)) {
+                        $query->orWhere(function ($q) use ($exam) {
+                            $q->where('academic_year_id', $exam->academic_year_id)
+                              ->where('semester_id', $exam->semester_id)
+                              ->where('exam_type_id', $exam->type_id);
+                        });
+                    }
+                })
+                ->where(function ($query) {
+                    $query->where('is_cleared', true)
+                          ->orWhere('is_manual_override', true);
+                })
+                ->first();
+
+            if ($clearance) {
+                return true;
+            }
+        }
+
+        // 2. Fallback to general fee-based eligibility
+        // Check FeeCollections if student_id (registration number) is present and if is_eligble is true
+        $feeCollection = FeeCollection::where('student_id', $this->student_id)->first();
+
+        if ($feeCollection && $feeCollection->is_eligble) {
             return true;
         }
 
-        // Add your eligibility criteria here
+        return false;
     }
-
     /**
      * Get the user associated with this student
      *
