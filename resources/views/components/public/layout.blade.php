@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{{ $title ?? 'College Elections' }} - Presbyterian Nursing and Midwifery Training College</title>
+    <title>{{ $title ?? 'College Elections' }} &mdash; {{ config('branding.institution.name', config('app.name')) }} </title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset($publicFavicon) }}" />
@@ -190,7 +190,7 @@
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
-            <p class="mb-0">&copy; {{ date('Y') }} Presbyterian Nursing and Midwifery Training College. All rights reserved.</p>
+            <p class="mb-0">&copy; {{ date('Y') }} {{ config('branding.institution.name', config('app.name')) }}. All rights reserved.</p>
         </div>
     </footer>
 
