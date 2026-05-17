@@ -170,12 +170,13 @@ class Student extends Model
         // Check FeeCollections if student_id (registration number) is present and if is_eligble is true
         $feeCollection = FeeCollection::where('student_id', $this->student_id)->first();
 
-        if ($feeCollection && $feeCollection->is_eligble) {
+        if (! $feeCollection || ! $feeCollection->is_eligble) {
+            return false;
+        } else {
             return true;
         }
-
-        return false;
     }
+
     /**
      * Get the user associated with this student
      *
