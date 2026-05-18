@@ -67,13 +67,15 @@ class ExamLogin extends Component
         }
 
        // Additional validation: Check if the student is eligible to take the exam
-
+       // TEMPORARILY DISABLED - allowing all students to login
+       /*
         if (!$student->isEligibleForExam($exam) && config('app.name') == 'MHTIA CIS') {
             session()->flash('error', "
             Dear " . $student->first_name . ",
             You are not eligible to take this exam. You have pending fees to clear. Please see the accounts Office for clearance.");
             return;
         }
+        */
 
         // Create or find User for Student
         try {
