@@ -157,6 +157,11 @@ class Exam extends Model
             if ($questionsToPick && $questionsToPick < $setQuestions->count()) {
                 // Pick random questions from this set
                 $setQuestions = $setQuestions->random($questionsToPick);
+
+                // If shuffle is off, restore original order after random pick
+                if (! $questionSet->pivot->shuffle_questions) {
+                    $setQuestions = $setQuestions->sortBy('id')->values();
+                }
             }
 
             // Shuffle if configured
@@ -167,10 +172,8 @@ class Exam extends Model
             $sessionQuestions = $sessionQuestions->merge($setQuestions);
         }
 
-        // Final shuffle if requested
-        if ($shuffle) {
-            $sessionQuestions = $sessionQuestions->shuffle();
-        }
+        // Shuffling is handled per question set above.
+        // No global shuffle here — it would override per-set shuffle_questions=false.
 
         // CRITICAL FIX: Respect questions_per_session limit to prevent excessive questions
         // This ensures students don't see more questions than configured
