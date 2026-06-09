@@ -216,7 +216,8 @@ class StudentFeeBill extends Model
         if (Schema::hasColumn('fee_payments', 'reversed_at')) {
             $paymentsQuery->whereNull('reversed_at');
         }
-        $totalPaid = $paymentsQuery->sum('amount');
+        $allPayments = $paymentsQuery->get();
+        $totalPaid = $allPayments->sum('amount');
 
         // Update bill details
         $this->amount_paid = $totalPaid;
@@ -241,6 +242,79 @@ class StudentFeeBill extends Model
             $this->status = 'pending';
         }
 
-        return $this->save();
+        $saved = $this->save();
+
+        // 2. Recalculate item-level payments
+        $items = $this->billItems()->get();
+        
+        // Map to keep track of accumulated paid amount for each item
+        $allocatedAmounts = [];
+        foreach ($items as $item) {
+            $allocatedAmounts[$item->id] = 0.00;
+        }
+
+        // Separate direct payments and general payments
+        $directPayments = [];
+        $generalPayments = [];
+        foreach ($allPayments as $payment) {
+            if ($payment->student_fee_bill_item_id && isset($allocatedAmounts[$payment->student_fee_bill_item_id])) {
+                $directPayments[] = $payment;
+            } else {
+                $generalPayments[] = $payment;
+            }
+        }
+
+        // Allocate direct payments first
+        foreach ($directPayments as $payment) {
+            $allocatedAmounts[$payment->student_fee_bill_item_id] += (float)$payment->amount;
+        }
+
+        // Allocate general payments sequentially
+        foreach ($generalPayments as $payment) {
+            $amountToAllocate = (float)$payment->amount;
+            
+            foreach ($items as $item) {
+                if ($amountToAllocate <= 0) {
+                    break;
+                }
+                
+                $itemTotal = (float)$item->amount;
+                $itemPaidFromDirect = $allocatedAmounts[$item->id];
+                $itemRemaining = max(0.00, $itemTotal - $itemPaidFromDirect);
+                
+                // How much does this item still need to be fully paid?
+                $itemStillNeeded = max(0.00, $itemRemaining - ($allocatedAmounts[$item->id] - $itemPaidFromDirect));
+                
+                if ($itemStillNeeded > 0) {
+                    $allocation = min($amountToAllocate, $itemStillNeeded);
+                    $allocatedAmounts[$item->id] += $allocation;
+                    $amountToAllocate -= $allocation;
+                }
+            }
+            
+            // If there's still leftover amount (overpayment), distribute it to the first item
+            if ($amountToAllocate > 0 && $items->isNotEmpty()) {
+                $allocatedAmounts[$items->first()->id] += $amountToAllocate;
+            }
+        }
+
+        // Update each item in the database
+        foreach ($items as $item) {
+            $paid = $allocatedAmounts[$item->id];
+            $item->amount_paid = $paid;
+            $item->balance = max(0.00, (float)$item->amount - $paid);
+            
+            if ($item->balance <= 0.01) {
+                $item->status = 'paid';
+            } elseif ($item->amount_paid > 0) {
+                $item->status = 'partially_paid';
+            } else {
+                $item->status = 'pending';
+            }
+            
+            $item->save();
+        }
+
+        return $saved;
     }
 }

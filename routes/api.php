@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ExamEntryTicketController;
 use App\Http\Controllers\Api\ExamTimerController;
 use App\Http\Controllers\Api\MemoController;
 use App\Http\Controllers\Api\OfflineExamController;
+use App\Http\Controllers\Api\PaymentGatewayController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('exam-entry-tickets/bulk-issue', [ExamEntryTicketController::class, 'bulkIssue']);
     Route::post('exam-entry-tickets/{id}/verify', [ExamEntryTicketController::class, 'verifyTicket']);
     Route::get('students/{studentId}/tickets', [ExamEntryTicketController::class, 'getStudentTickets']);
+
+    // Payment Gateway Routes (Version 1)
+    Route::prefix('v1/payments')->group(function () {
+        Route::get('/student', [PaymentGatewayController::class, 'getStudentDetails']);
+        Route::get('/bills/{id}', [PaymentGatewayController::class, 'getBillDetails']);
+        Route::post('/pay-item', [PaymentGatewayController::class, 'recordItemPayment']);
+    });
 });
 
 /*

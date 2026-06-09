@@ -11,11 +11,13 @@ class FeePayment extends Model
 
     protected $fillable = [
         'student_fee_bill_id',
+        'student_fee_bill_item_id',
         'student_id',
         'amount',
         'payment_method',
         'reference_number',
         'receipt_number',
+        'external_receipt',
         'note',
         'recorded_by',
         'payment_date',
@@ -36,6 +38,14 @@ class FeePayment extends Model
     public function studentFeeBill()
     {
         return $this->belongsTo(StudentFeeBill::class);
+    }
+
+    /**
+     * Get the specific student fee bill item this payment belongs to
+     */
+    public function studentFeeBillItem()
+    {
+        return $this->belongsTo(StudentFeeBillItem::class, 'student_fee_bill_item_id');
     }
 
     /**

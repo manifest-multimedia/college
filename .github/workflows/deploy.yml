@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to MHTIA + PNMTC
+    name: Deploy to College
     runs-on: ubuntu-latest
 
     steps:
