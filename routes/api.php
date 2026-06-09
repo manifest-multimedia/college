@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ExamTimerController;
 use App\Http\Controllers\Api\MemoController;
 use App\Http\Controllers\Api\OfflineExamController;
 use App\Http\Controllers\Api\PaymentGatewayController;
+use App\Http\Controllers\Api\PaymentCallbackController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -188,3 +189,11 @@ Route::prefix('offline-exam-delivery')->group(function () {
         Route::get('/session/{sessionId}/student/{studentId}', [OfflineExamSyncController::class, 'getSessionWithStudent']);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Payment Gateway Asynchronous Webhooks & Callbacks
+|--------------------------------------------------------------------------
+*/
+Route::post('/v1/payments/webhook/{provider}', [PaymentCallbackController::class, 'handleWebhook']);
+

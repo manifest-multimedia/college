@@ -229,13 +229,94 @@ Records a full or partial payment against a specific fee item. This updates the 
 
 ---
 
-## 3. Error Handling & Formats
+## 3. Asynchronous Webhooks & Callbacks
+
+External payment gateways can confirm payments asynchronously by sending event notifications (Webhooks) directly to the application server.
+
+- **Webhook URL**: `/api/v1/payments/webhook/{provider}`
+  - `{provider}` can be: `generic` (standard API format), `paystack` (Paystack format), or `flutterwave` (Flutterwave format).
+- **Method**: `POST`
+- **Security Check (HMAC Signature)**:
+  - If a `PAYMENT_WEBHOOK_SECRET` is configured on the server, all webhook requests must include a signature in the header: `X-Webhook-Signature`.
+  - The signature is calculated as the `HMAC-SHA256` hash of the raw HTTP request body, signed using the shared Webhook Secret Key.
+  - Integrations must verify this signature before trusting the payload content.
+
+### A. Generic Callback Format
+The generic webhook accepts the following payload structure:
+
+```json
+{
+  "event": "payment.success",
+  "data": {
+    "reference": "TXN-GENERIC-9923",
+    "amount": 500.00,
+    "status": "success",
+    "payment_method": "Mobile Money",
+    "external_receipt": "https://gateway.com/receipts/r-9923",
+    "metadata": {
+      "student_fee_bill_item_id": 24
+    }
+  }
+}
+```
+
+### B. Paystack Callback Format
+Paystack webhook events will be parsed automatically:
+
+```json
+{
+  "event": "charge.success",
+  "data": {
+    "reference": "TXN-PAYSTACK-333",
+    "amount": 50000,
+    "status": "success",
+    "channel": "card",
+    "receipt_url": "https://paystack.com/receipt/333",
+    "metadata": {
+      "student_fee_bill_item_id": 24
+    }
+  }
+}
+```
+
+### C. Flutterwave Callback Format
+Flutterwave webhook events will be parsed automatically:
+
+```json
+{
+  "event": "charge.completed",
+  "data": {
+    "tx_ref": "TXN-FLUTTER-444",
+    "amount": 500.00,
+    "status": "successful",
+    "payment_type": "mobilemoney",
+    "meta": {
+      "student_fee_bill_item_id": 24
+    }
+  }
+}
+```
+
+### Webhook Response Requirement
+To acknowledge successful reception of the webhook, your server must respond with a `200 OK` status and a success JSON body:
+
+```json
+{
+  "success": true,
+  "message": "Webhook callback processed successfully."
+}
+```
+If a `2xx` response is not returned, the payment gateway will assume the request failed and will continue to retry sending the webhook event.
+
+---
+
+## 4. Error Handling & Formats
 
 The API communicates errors using standard HTTP status codes and uniform JSON responses.
 
 ### Common HTTP Status Codes
 - `400 Bad Request`: Missing query parameters or malformed body.
-- `401 Unauthorized`: Missing or invalid Bearer API token.
+- `401 Unauthorized`: Missing or invalid Bearer API token or Webhook Signature.
 - `403 Forbidden`: Insufficient permissions or token access rights.
 - `404 Not Found`: Student, Bill, or Fee Item does not exist.
 - `422 Unprocessable Entity`: Data validation failed (e.g. duplicate reference, negative amount).
@@ -265,7 +346,7 @@ When request parameters fail validation:
 
 ---
 
-## 4. Code Sample (Node.js Integration)
+## 5. Code Sample (Node.js Integration)
 
 ```javascript
 const axios = require('axios');

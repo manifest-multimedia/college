@@ -292,4 +292,133 @@ class PaymentGatewayApiTest extends TestCase
         $this->assertEquals(250.00, (float)$this->bill->balance);
         $this->assertEquals('partially_paid', $this->bill->status);
     }
+
+    /**
+     * Test successful generic webhook callback processing with valid signature
+     */
+    public function test_generic_webhook_callback_processes_successfully_with_valid_signature(): void
+    {
+        $secret = 'test_webhook_secret_key';
+        putenv("PAYMENT_WEBHOOK_SECRET={$secret}");
+
+        $payload = [
+            'event' => 'payment.success',
+            'data' => [
+                'reference' => 'TXN-WEBHOOK-111',
+                'amount' => 200.00,
+                'status' => 'success',
+                'payment_method' => 'Mobile Money',
+                'external_receipt' => 'https://gateway.com/receipt/111',
+                'metadata' => [
+                    'student_fee_bill_item_id' => $this->itemA->id,
+                ],
+            ],
+        ];
+
+        $jsonPayload = json_encode($payload);
+        $signature = hash_hmac('sha256', $jsonPayload, $secret);
+
+        $response = $this->postJson('/api/v1/payments/webhook/generic', $payload, [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('transaction_reference', 'TXN-WEBHOOK-111');
+
+        $this->assertDatabaseHas('fee_payments', [
+            'reference_number' => 'TXN-WEBHOOK-111',
+            'student_fee_bill_item_id' => $this->itemA->id,
+            'amount' => 200.00,
+        ]);
+
+        $this->itemA->refresh();
+        $this->assertEquals(200.00, (float)$this->itemA->amount_paid);
+        $this->assertEquals(400.00, (float)$this->itemA->balance);
+        $this->assertEquals('partially_paid', $this->itemA->status);
+
+        // Reset env
+        putenv("PAYMENT_WEBHOOK_SECRET=");
+    }
+
+    /**
+     * Test generic webhook callback is rejected with invalid signature
+     */
+    public function test_generic_webhook_callback_is_rejected_with_invalid_signature(): void
+    {
+        $secret = 'test_webhook_secret_key';
+        putenv("PAYMENT_WEBHOOK_SECRET={$secret}");
+
+        $payload = [
+            'event' => 'payment.success',
+            'data' => [
+                'reference' => 'TXN-WEBHOOK-222',
+                'amount' => 100.00,
+                'status' => 'success',
+                'metadata' => [
+                    'student_fee_bill_item_id' => $this->itemA->id,
+                ],
+            ],
+        ];
+
+        $response = $this->postJson('/api/v1/payments/webhook/generic', $payload, [
+            'X-Webhook-Signature' => 'invalid_signature_string',
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseMissing('fee_payments', [
+            'reference_number' => 'TXN-WEBHOOK-222',
+        ]);
+
+        // Reset env
+        putenv("PAYMENT_WEBHOOK_SECRET=");
+    }
+
+    /**
+     * Test Paystack specific webhook processing
+     */
+    public function test_paystack_webhook_callback_processes_successfully(): void
+    {
+        $secret = 'paystack_secret';
+        putenv("PAYMENT_WEBHOOK_SECRET={$secret}");
+
+        $payload = [
+            'event' => 'charge.success',
+            'data' => [
+                'reference' => 'TXN-PAYSTACK-333',
+                'amount' => 15000, // 150.00 GHS in Paystack cents/pesewas
+                'status' => 'success',
+                'channel' => 'card',
+                'receipt_url' => 'https://paystack.com/receipt/333',
+                'metadata' => [
+                    'student_fee_bill_item_id' => $this->itemB->id,
+                ],
+            ],
+        ];
+
+        $jsonPayload = json_encode($payload);
+        $signature = hash_hmac('sha256', $jsonPayload, $secret);
+
+        $response = $this->postJson('/api/v1/payments/webhook/paystack', $payload, [
+            'X-Webhook-Signature' => $signature,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('fee_payments', [
+            'reference_number' => 'TXN-PAYSTACK-333',
+            'student_fee_bill_item_id' => $this->itemB->id,
+            'amount' => 150.00,
+        ]);
+
+        $this->itemB->refresh();
+        $this->assertEquals(150.00, (float)$this->itemB->amount_paid);
+        $this->assertEquals(250.00, (float)$this->itemB->balance);
+
+        // Reset env
+        putenv("PAYMENT_WEBHOOK_SECRET=");
+    }
 }
