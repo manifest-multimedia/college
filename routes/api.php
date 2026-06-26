@@ -49,6 +49,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/student', [PaymentGatewayController::class, 'getStudentDetails']);
         Route::get('/bills/{id}', [PaymentGatewayController::class, 'getBillDetails']);
         Route::post('/pay-item', [PaymentGatewayController::class, 'recordItemPayment']);
+        Route::post('/providers/credentials', [PaymentGatewayController::class, 'generateProviderCredentials']);
     });
 });
 

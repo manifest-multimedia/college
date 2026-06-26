@@ -421,4 +421,116 @@ class PaymentGatewayApiTest extends TestCase
         // Reset env
         putenv("PAYMENT_WEBHOOK_SECRET=");
     }
+
+    /**
+     * Test only Super Admin/System users can generate payment provider credentials
+     */
+    public function test_only_privileged_users_can_generate_provider_credentials(): void
+    {
+        // 1. Unauthenticated request
+        $this->postJson('/api/v1/payments/providers/credentials', [
+            'name' => 'Paystack',
+            'code' => 'paystack'
+        ])->assertStatus(401);
+
+        // 2. Authenticated as Student
+        $this->actingAs($this->studentUser);
+        $this->postJson('/api/v1/payments/providers/credentials', [
+            'name' => 'Paystack',
+            'code' => 'paystack'
+        ])->assertStatus(403);
+
+        // 3. Authenticated as Finance Manager (should also be unauthorized, only Super Admin / System)
+        $this->actingAs($this->financeUser);
+        $this->postJson('/api/v1/payments/providers/credentials', [
+            'name' => 'Paystack',
+            'code' => 'paystack'
+        ])->assertStatus(403);
+    }
+
+    /**
+     * Test successful generation of payment provider credentials by Super Admin
+     */
+    public function test_super_admin_can_generate_provider_credentials(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $response = $this->postJson('/api/v1/payments/providers/credentials', [
+            'name' => 'Paystack',
+            'code' => 'paystack'
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('provider.name', 'Paystack')
+            ->assertJsonPath('provider.code', 'paystack')
+            ->assertJsonPath('provider.status', 'active')
+            ->assertJsonStructure(['success', 'message', 'provider' => ['id', 'name', 'code', 'status'], 'api_secret']);
+
+        $this->assertDatabaseHas('payment_providers', [
+            'name' => 'Paystack',
+            'code' => 'paystack',
+            'status' => 'active',
+            'created_by' => $this->adminUser->id
+        ]);
+    }
+
+    /**
+     * Test generated token allows payment provider to fetch student details and record payments
+     */
+    public function test_generated_token_authenticates_and_authorizes_payment_provider(): void
+    {
+        // 1. Programmatically create the PaymentProvider and generate a Sanctum token
+        $provider = \App\Models\PaymentProvider::create([
+            'name' => 'Flutterwave',
+            'code' => 'flutterwave',
+            'status' => 'active',
+            'created_by' => $this->adminUser->id,
+        ]);
+
+        $tokenResult = $provider->createToken('API Token for ' . $provider->name);
+        $token = $tokenResult->plainTextToken;
+
+        // 2. Fetch Student Details using the generated Bearer Token
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson('/api/v1/payments/student?student_id=STU-TEST-99');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('student.name', 'Alice Smith');
+
+        // 3. Fetch Bill Details using the generated Bearer Token
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson("/api/v1/payments/bills/{$this->bill->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('bill.bill_reference', 'BILL-TEST-REF');
+
+        // 4. Record Item Payment using the generated Bearer Token
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->postJson('/api/v1/payments/pay-item', [
+            'student_fee_bill_item_id' => $this->itemA->id,
+            'amount' => 300.00,
+            'payment_method' => 'Mobile Money',
+            'reference_number' => 'REF-PROVIDER-103',
+            'external_receipt' => 'https://flutterwave.com/receipt/103',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('fee_item.amount_paid', 300)
+            ->assertJsonPath('fee_item.balance', 300);
+
+        // Assert database record exists and recorded_by is set to the creator of the provider (adminUser)
+        $this->assertDatabaseHas('fee_payments', [
+            'reference_number' => 'REF-PROVIDER-103',
+            'student_fee_bill_item_id' => $this->itemA->id,
+            'amount' => 300.00,
+            'recorded_by' => $this->adminUser->id,
+        ]);
+    }
 }

@@ -27,7 +27,7 @@ class PaymentGatewayController extends Controller
         $student = null;
 
         // 1. Determine target student
-        if ($user->hasRole('Student')) {
+        if ($user instanceof \App\Models\User && $user->hasRole('Student')) {
             $student = $user->student;
             if (!$student) {
                 return response()->json([
@@ -37,8 +37,9 @@ class PaymentGatewayController extends Controller
             }
         } else {
             // Check authorization for external providers / admins
-            $hasAccess = $user->hasRole(['System', 'Super Admin', 'Finance Manager', 'Administrator']) 
-                || $user->hasAnyPermission(['view finance', 'view students']);
+            $hasAccess = ($user instanceof \App\Models\PaymentProvider && $user->status === 'active')
+                || ($user instanceof \App\Models\User && ($user->hasRole(['System', 'Super Admin', 'Finance Manager', 'Administrator']) 
+                    || $user->hasAnyPermission(['view finance', 'view students'])));
 
             if (!$hasAccess) {
                 return response()->json([
@@ -138,7 +139,7 @@ class PaymentGatewayController extends Controller
         }
 
         // Authorize access
-        if ($user->hasRole('Student')) {
+        if ($user instanceof \App\Models\User && $user->hasRole('Student')) {
             $student = $user->student;
             if (!$student || $bill->student_id !== $student->id) {
                 return response()->json([
@@ -147,8 +148,9 @@ class PaymentGatewayController extends Controller
                 ], 403);
             }
         } else {
-            $hasAccess = $user->hasRole(['System', 'Super Admin', 'Finance Manager', 'Administrator']) 
-                || $user->hasAnyPermission(['view finance']);
+            $hasAccess = ($user instanceof \App\Models\PaymentProvider && $user->status === 'active')
+                || ($user instanceof \App\Models\User && ($user->hasRole(['System', 'Super Admin', 'Finance Manager', 'Administrator']) 
+                    || $user->hasAnyPermission(['view finance'])));
 
             if (!$hasAccess) {
                 return response()->json([
@@ -212,8 +214,9 @@ class PaymentGatewayController extends Controller
         $user = Auth::user();
 
         // 1. Authorize: external payment gateway or finance admins
-        $hasAccess = $user->hasRole(['System', 'Super Admin', 'Finance Manager']) 
-            || $user->hasAnyPermission(['process payments']);
+        $hasAccess = ($user instanceof \App\Models\PaymentProvider && $user->status === 'active')
+            || ($user instanceof \App\Models\User && ($user->hasRole(['System', 'Super Admin', 'Finance Manager']) 
+                || $user->hasAnyPermission(['process payments'])));
 
         if (!$hasAccess) {
             return response()->json([
@@ -259,7 +262,11 @@ class PaymentGatewayController extends Controller
                     'receipt_number' => $receiptNumber,
                     'external_receipt' => $request->external_receipt,
                     'note' => $request->note ?? 'API Payment Gateway Recording',
-                    'recorded_by' => $user->id,
+                    'recorded_by' => ($user instanceof \App\Models\PaymentProvider) 
+                        ? (($user->creator ?? \App\Models\User::whereHas('roles', function($q) {
+                            $q->whereIn('name', ['System', 'Super Admin']);
+                        })->first())?->id ?? 1)
+                        : $user->id,
                     'payment_date' => Carbon::now(),
                 ]);
 
@@ -315,6 +322,73 @@ class PaymentGatewayController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to record payment due to system error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate API credentials for a payment provider
+     * 
+     * POST /api/v1/payments/providers/credentials
+     */
+    public function generateProviderCredentials(Request $request)
+    {
+        $user = Auth::user();
+
+        // Only Super Admin and System users can generate API credentials
+        $hasAccess = $user instanceof \App\Models\User && $user->hasRole(['System', 'Super Admin']);
+
+        if (!$hasAccess) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to generate API credentials.',
+            ], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:payment_providers,code',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($request, $user) {
+                // Create or retrieve payment provider
+                $provider = \App\Models\PaymentProvider::create([
+                    'name' => $request->name,
+                    'code' => strtolower($request->code),
+                    'status' => 'active',
+                    'created_by' => $user->id,
+                ]);
+
+                // Generate Sanctum token
+                $tokenResult = $provider->createToken('API Token for ' . $provider->name);
+
+                Log::info("Generated API credentials for payment provider {$provider->name}", [
+                    'provider_id' => $provider->id,
+                    'generated_by' => $user->id,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'API credentials generated successfully.',
+                    'provider' => [
+                        'id' => $provider->id,
+                        'name' => $provider->name,
+                        'code' => $provider->code,
+                        'status' => $provider->status,
+                    ],
+                    'api_secret' => $tokenResult->plainTextToken,
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            Log::error('Failed to generate payment provider credentials', [
+                'error' => $e->getMessage(),
+                'name' => $request->name,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate credentials due to system error: ' . $e->getMessage(),
             ], 500);
         }
     }
