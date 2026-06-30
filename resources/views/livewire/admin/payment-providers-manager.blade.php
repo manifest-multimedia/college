@@ -141,7 +141,7 @@
                     <label class="form-label fw-bold">Your API Secret Key:</label>
                     <div class="input-group mb-3">
                         <input type="text" readonly value="{{ $newlyGeneratedKey }}" class="form-control font-monospace" id="newApiKey">
-                        <button type="button" class="btn btn-success" onclick="copyNewApiKey()">
+                        <button type="button" class="btn btn-success" onclick="let input = document.getElementById('newApiKey'); input.select(); navigator.clipboard.writeText(input.value).then(() => alert('API secret key copied to clipboard!'));">
                             <i class="fas fa-copy me-2"></i>Copy
                         </button>
                     </div>
@@ -155,14 +155,6 @@
         </div>
     </div>
 
-    <script>
-        function copyNewApiKey() {
-            const input = document.getElementById('newApiKey');
-            input.select();
-            navigator.clipboard.writeText(input.value).then(() => {
-                alert('API secret key copied to clipboard!');
-            });
-        }
-    </script>
+
     @endif
 </div>
