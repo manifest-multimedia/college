@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\PaymentProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class PaymentProvidersManager extends Component
@@ -35,6 +36,12 @@ class PaymentProvidersManager extends Component
         $this->showForm = !$this->showForm;
         $this->reset(['name', 'code']);
         $this->resetValidation();
+    }
+    
+    public function updatedName($value)
+    {
+        // Autogenerate the provider code when the name is typed
+        $this->code = Str::slug($value, '_');
     }
     
     public function generateCredentials()
@@ -98,6 +105,22 @@ class PaymentProvidersManager extends Component
         
         $this->loadProviders();
         session()->flash('success', 'Provider status updated.');
+    }
+    
+    public function deleteProvider($providerId)
+    {
+        $provider = PaymentProvider::findOrFail($providerId);
+        
+        if ($provider->status === 'inactive') {
+            // Delete associated API tokens
+            $provider->tokens()->delete();
+            $provider->delete();
+            
+            $this->loadProviders();
+            session()->flash('success', 'Provider deleted successfully.');
+        } else {
+            session()->flash('error', 'Cannot delete an active provider. Deactivate it first.');
+        }
     }
     
     public function render()

@@ -46,7 +46,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-bold required">Provider Name</label>
-                            <input type="text" wire:model="name" class="form-control @error('name') is-invalid @enderror" placeholder="e.g. Paystack">
+                            <input type="text" wire:model.live="name" class="form-control @error('name') is-invalid @enderror" placeholder="e.g. Paystack">
                             @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-6 mb-4">
@@ -103,6 +103,11 @@
                                     <button wire:click="toggleStatus({{ $provider->id }})" class="btn btn-sm btn-light-{{ $provider->status === 'active' ? 'danger' : 'success' }}">
                                         {{ $provider->status === 'active' ? 'Deactivate' : 'Activate' }}
                                     </button>
+                                    @if($provider->status === 'inactive')
+                                        <button wire:click="deleteProvider({{ $provider->id }})" wire:confirm="Are you sure you want to delete this payment provider? This action cannot be undone." class="btn btn-sm btn-danger ms-2">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
