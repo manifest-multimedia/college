@@ -773,6 +773,10 @@ Route::middleware([
         Route::patch('asset-settings/prefix', [App\Http\Controllers\AssetSettingController::class, 'updatePrefix'])->name('asset-settings.update-prefix');
         Route::delete('asset-settings/{assetSetting}', [App\Http\Controllers\AssetSettingController::class, 'destroy'])->name('asset-settings.destroy');
     });
+    // Payment Providers Management
+    Route::middleware(['role:System|Super Admin'])->group(function () {
+        Route::get('/admin/payment-providers', \App\Livewire\Admin\PaymentProvidersManager::class)->name('admin.payment-providers');
+    });
 
 });
 
