@@ -102,6 +102,8 @@ class PaymentProvidersManager extends Component
     
     public function render()
     {
-        return view('livewire.admin.payment-providers-manager');
+        return view('livewire.admin.payment-providers-manager')->layout('components.dashboard.default',[
+            'title' => 'Payment Providers',
+        ]);
     }
 }
