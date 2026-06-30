@@ -1182,7 +1182,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     'settings.general', 'settings.users', 'settings.roles', 
                     'settings.permissions', 'settings.backup', 'settings.departments',
                     'settings.user-departments', 'admin.branding.index', 'settings.api',
-                    'settings.assessment-settings'
+                    'settings.assessment-settings', 'admin.payment-providers'
                 ];
                 $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
             @endphp
@@ -1308,6 +1308,17 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                                 <span class="bullet bullet-dot"></span>
                             </span>
                             <span class="menu-title">API Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.payment-providers') ? 'active' : '' }}" href="{{ route('admin.payment-providers') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Payment Gateways</span>
                         </a>
                     </div>
                     <!--end:Menu item-->
