@@ -1,6 +1,6 @@
-# Payment Gateway API Documentation
+# PNMTC Dormaa Payment Gateway API Documentation
 
-**Base API URL (Live):** `https://portal.mhtia.edu.gh/api/v1`
+**Base API URL (Live):** `https://college.pnmtc.edu.gh/api/v1`
 
 This API allows authorized payment gateway providers and financial applications to query student billing information and record full or partial payments against individual fee items.
 
@@ -32,11 +32,11 @@ Retrieves the profile of a student and all their active fee bills (including ite
 - **Method**: `GET`
 - **Authentication**: Required (Bearer Token)
 - **Query Parameters**:
-  - `student_id` (Required, string): The student registration number (e.g., `MHIAFRGN220003`) or primary ID. Specifies the target student whose billing details are being retrieved.
+  - `student_id` (Required, string): The student registration number (e.g., `PNMTC/DA/RM/22/23/052`) or primary ID. Specifies the target student whose billing details are being retrieved.
 
 #### Example Request (cURL)
 ```bash
-curl -X GET "https://portal.mhtia.edu.gh/api/v1/payments/student?student_id=MHIAFRGN220003" \
+curl -X GET "https://college.pnmtc.edu.gh/api/v1/payments/student?student_id=PNMTC/DA/RM/22/23/052" \
      -H "Authorization: Bearer your_api_token_here" \
      -H "Accept: application/json"
 ```
@@ -47,7 +47,7 @@ curl -X GET "https://portal.mhtia.edu.gh/api/v1/payments/student?student_id=MHIA
   "success": true,
   "student": {
     "id": 15,
-    "student_id": "MHIAFRGN220003",
+    "student_id": "PNMTC/DA/RM/22/23/052",
     "name": "Alice Smith",
     "email": "alice.smith@college.edu",
     "mobile_number": "+233240000000",
@@ -105,7 +105,7 @@ Retrieves detailed information for a specific bill, including its itemized fee c
 
 #### Example Request (cURL)
 ```bash
-curl -X GET "https://portal.mhtia.edu.gh/api/v1/payments/bills/8" \
+curl -X GET "https://college.pnmtc.edu.gh/api/v1/payments/bills/8" \
      -H "Authorization: Bearer your_api_token_here" \
      -H "Accept: application/json"
 ```
@@ -119,7 +119,7 @@ curl -X GET "https://portal.mhtia.edu.gh/api/v1/payments/bills/8" \
     "bill_reference": "BILL-TEST-REF",
     "student": {
       "id": 15,
-      "student_id": "MHIAFRGN220003",
+      "student_id": "PNMTC/DA/RM/22/23/052",
       "name": "Alice Smith"
     },
     "academic_year": "2025-2026",
@@ -355,11 +355,11 @@ const axios = require('axios');
 
 async function processStudentPayment() {
   const token = 'YOUR_API_TOKEN';
-  const apiBase = 'https://portal.mhtia.edu.gh/api';
+  const apiBase = 'https://college.pnmtc.edu.gh/api';
 
   try {
     // 1. Fetch student bills & items
-    const studentInfo = await axios.get(`${apiBase}/v1/payments/student?student_id=MHIAFRGN220003`, {
+    const studentInfo = await axios.get(`${apiBase}/v1/payments/student?student_id=PNMTC/DA/RM/22/23/052`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
