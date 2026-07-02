@@ -362,8 +362,9 @@ class TranscriptService
             // Set paper size and orientation
             $pdf->setPaper('a4', 'portrait');
 
-            // Generate filename
-            $filename = 'transcript_'.$data['student']->student_id.'_'.now()->format('Y-m-d').'.pdf';
+            // Generate filename, replacing any slashes in student ID
+            $safeStudentId = str_replace(['/', '\\'], '_', $data['student']->student_id);
+            $filename = 'transcript_'.$safeStudentId.'_'.now()->format('Y-m-d').'.pdf';
 
             return response()->streamDownload(
                 fn () => print ($pdf->output()),
@@ -445,7 +446,8 @@ class TranscriptService
     public function generateExcel($data)
     {
         try {
-            $filename = 'transcript_'.$data['student']->student_id.'_'.now()->format('Y-m-d').'.xlsx';
+            $safeStudentId = str_replace(['/', '\\'], '_', $data['student']->student_id);
+            $filename = 'transcript_'.$safeStudentId.'_'.now()->format('Y-m-d').'.xlsx';
 
             return Excel::download(new TranscriptExport($data), $filename);
         } catch (\Exception $e) {
