@@ -105,7 +105,7 @@ class StudentDetails extends Component
             return 'Unknown Exam';
         }
 
-        return $exam->course ? $exam->course->name : 'No Course Name';
+        return ($exam->examType->name ?? 'Exam') . ' - ' . ($exam->course ? $exam->course->name : 'No Course Name');
     }
 
     public function deleteExamSession($sessionId)

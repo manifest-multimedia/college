@@ -42,6 +42,14 @@ class Exam extends Model
     }
 
     /**
+     * Get the exam type associated with the exam
+     */
+    public function examType()
+    {
+        return $this->belongsTo(ExamType::class, 'type_id');
+    }
+
+    /**
      * Get the academic year associated with the exam
      */
     public function academicYear()

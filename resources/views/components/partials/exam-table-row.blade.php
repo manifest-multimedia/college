@@ -8,7 +8,7 @@
                                 </div>
                                 <div class="d-flex justify-content-start flex-column">
                                     <div class="d-flex align-items-center">
-                                        <a href="{{ route('exams.show', $exam->slug ? $exam->slug : $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->course ? $exam->course->name : 'No Course Name' }}</a>
+                                        <a href="{{ route('exams.show', $exam->slug ? $exam->slug : $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->examType?->name ?? 'Exam' }} - {{ $exam->course ? $exam->course->name : 'No Course Name' }}</a>
                                         <span class="badge badge-light-primary ms-2">{{ $exam->total_questions_count ?? 0 }} questions</span>
                                     </div>
                                     <span class="text-muted fw-semibold d-block fs-7">

@@ -121,7 +121,7 @@ class ExamResultsModule extends Component
                     'date' => $session->created_at->format('Y-m-d'),
                     'student_id' => $session->student->student_id ?? 'N/A',
                     'student_name' => $session->student->user->name ?? 'N/A',
-                    'course' => $session->exam->course->name ?? 'N/A',
+                    'course' => ($session->exam->examType->name ?? 'Exam') . ' - ' . ($session->exam->course->name ?? 'N/A'),
                     'score' => $result['score'],
                     'answered' => $result['total_answered'].'/'.$questions_per_session,
                     'percentage' => $result['percentage'],
@@ -188,7 +188,8 @@ class ExamResultsModule extends Component
         // Properly sanitize class name to remove any invalid characters
         $sanitizedClassName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $collegeClass->name);
 
-        $filename = Str::slug($exam->course->name).'-'.$sanitizedClassName.'-results.xlsx';
+        $examTitle = $exam->examType ? $exam->examType->name . '-' : '';
+        $filename = Str::slug($examTitle . $exam->course->name).'-'.$sanitizedClassName.'-results.xlsx';
 
         return Excel::download(new ExamResultsExport($this->selected_exam_id, $this->selected_college_class_id), $filename);
     }

@@ -19,7 +19,7 @@
     <div class="card mb-5 mb-xl-10">
         <div class="card-header border-0 d-flex justify-content-between align-items-center">
             <div class="card-title m-0">
-                <h3 class="fw-bold m-0">{{ $exam->course ? $exam->course->name : 'Exam Details' }}</h3>
+                <h3 class="fw-bold m-0">{{ $exam->examType?->name ?? 'Exam' }} - {{ $exam->course ? $exam->course->name : 'Exam Details' }}</h3>
                 <span class="badge badge-light-{{ match($exam->status) {
                     'upcoming' => 'primary',
                     'active' => 'success',

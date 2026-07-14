@@ -24,7 +24,8 @@ class ExamResultsExportModule extends Component
         $this->validate(['selected_exam_id' => 'required|exists:exams,id']);
 
         $exam = Exam::find($this->selected_exam_id);
-        $filename = Str::slug($exam->course->name).'-results-'.now()->format('Y-m-d').'.xlsx';
+        $examTitle = $exam->examType ? $exam->examType->name . '-' : '';
+        $filename = Str::slug($examTitle . $exam->course->name).'-results-'.now()->format('Y-m-d').'.xlsx';
 
         return Excel::download(new ExamResultsExport($this->selected_exam_id), $filename);
     }
