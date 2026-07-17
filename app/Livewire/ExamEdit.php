@@ -16,6 +16,10 @@ class ExamEdit extends Component
 
     public $exam;
 
+    public $title;
+
+    public $description;
+
     public $duration;
 
     public $password;
@@ -44,6 +48,8 @@ class ExamEdit extends Component
     protected function rules()
     {
         return [
+            'title' => 'sometimes|nullable|string|max:255',
+            'description' => 'sometimes|nullable|string',
             'duration' => 'sometimes|integer|min:1',
             'password' => 'sometimes|string|min:4',
             'status' => 'sometimes|in:upcoming,active,completed',
@@ -66,6 +72,8 @@ class ExamEdit extends Component
         ]);
 
         // Initialize the properties
+        $this->title = $this->exam->title;
+        $this->description = $this->exam->description;
         $this->duration = $this->exam->duration;
         $this->password = $this->exam->password;
         $this->status = $this->exam->status;

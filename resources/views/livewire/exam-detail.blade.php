@@ -19,7 +19,7 @@
     <div class="card mb-5 mb-xl-10">
         <div class="card-header border-0 d-flex justify-content-between align-items-center">
             <div class="card-title m-0">
-                <h3 class="fw-bold m-0">{{ $exam->examType?->name ?? 'Exam' }} - {{ $exam->course ? $exam->course->name : 'Exam Details' }}</h3>
+                <h3 class="fw-bold m-0">{{ $exam->title ?? (($exam->examType?->name ?? 'Exam') . ' - ' . ($exam->course ? $exam->course->name : 'Exam Details')) }}</h3>
                 <span class="badge badge-light-{{ match($exam->status) {
                     'upcoming' => 'primary',
                     'active' => 'success',
@@ -55,6 +55,16 @@
             <div class="row mb-7">
                 <div class="col-lg-6">
                     <h5 class="mb-4">Basic Information</h5>
+                    
+                    @if($exam->title)
+                    <div class="row mb-3">
+                        <label class="col-lg-4 fw-semibold text-muted">Exam Title</label>
+                        <div class="col-lg-8">
+                            <span class="fw-bold fs-6 text-gray-800">{{ $exam->title }}</span>
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="row mb-3">
                         <label class="col-lg-4 fw-semibold text-muted">Course</label>
                         <div class="col-lg-8">

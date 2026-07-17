@@ -139,6 +139,8 @@ class ExamController extends Controller
 
             // Create the exam with correct database columns
             $exam = Exam::create([
+                'title' => $request->exam_title,
+                'description' => $request->exam_description,
                 'course_id' => $request->course_code,
                 'user_id' => $request->user_id ?: Auth::id(),
                 'type' => $request->exam_type,
