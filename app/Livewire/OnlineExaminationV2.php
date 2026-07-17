@@ -67,6 +67,17 @@ class OnlineExaminationV2 extends Component
     {
         $this->exam = Exam::where('password', $examPassword)->with('questions.options')->firstOrFail();
 
+        // Hard cut-off: prevent access outside of exam availability period
+        if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
+            session()->flash('error', 'The scheduled time for this examination has ended.');
+            return redirect()->route('take-exam');
+        }
+
+        if ($this->exam->start_date && now()->isBefore($this->exam->start_date)) {
+            session()->flash('error', 'This examination has not started yet.');
+            return redirect()->route('take-exam');
+        }
+
         // Get student using database ID (matches V1 behavior)
         $this->student = Student::find($student_id);
         if (! $this->student) {

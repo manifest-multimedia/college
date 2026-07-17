@@ -131,6 +131,11 @@ class ExamSession extends Model
 
         $calculatedEndTime = $this->started_at->copy()->addMinutes($totalDuration);
 
+        // Hard cut-off: if the exam has an absolute end_date, the session cannot exceed it.
+        if ($this->exam && $this->exam->end_date && $calculatedEndTime->greaterThan($this->exam->end_date)) {
+            $calculatedEndTime = Carbon::parse($this->exam->end_date);
+        }
+
         // For completed sessions that are in the past, return the actual completion time
         // This preserves historical data for completed exams
         if ($this->completed_at && $this->completed_at->isPast() && $this->auto_submitted) {

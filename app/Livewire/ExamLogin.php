@@ -66,6 +66,19 @@ class ExamLogin extends Component
             return;
         }
 
+        // Hard cut-off: prevent login outside of exam availability period
+        if ($exam->end_date && now()->isAfter($exam->end_date)) {
+            session()->flash('error', 'The scheduled time for this examination has ended.');
+
+            return;
+        }
+
+        if ($exam->start_date && now()->isBefore($exam->start_date)) {
+            session()->flash('error', 'This examination has not started yet.');
+
+            return;
+        }
+
        // Additional validation: Check if the student is eligible to take the exam
        // TEMPORARILY DISABLED - allowing all students to login
        /*

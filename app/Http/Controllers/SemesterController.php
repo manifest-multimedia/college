@@ -44,11 +44,13 @@ class SemesterController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:semesters,name',
             'description' => 'nullable|string',
             'academic_year_id' => 'required|exists:academic_years,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+        ], [
+            'name.unique' => 'A semester with this name already exists.',
         ]);
 
         // Check if the dates fall within the academic year dates
@@ -105,11 +107,13 @@ class SemesterController extends Controller
     public function update(Request $request, Semester $semester)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:semesters,name,' . $semester->id,
             'description' => 'nullable|string',
             'academic_year_id' => 'required|exists:academic_years,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+        ], [
+            'name.unique' => 'A semester with this name already exists.',
         ]);
 
         // Check if the dates fall within the academic year dates

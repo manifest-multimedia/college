@@ -93,6 +93,17 @@ class OnlineExamination extends Component
             abort(404, 'Exam not found');
         }
 
+        // Hard cut-off: prevent access outside of exam availability period
+        if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
+            session()->flash('error', 'The scheduled time for this examination has ended.');
+            return redirect()->route('take-exam');
+        }
+
+        if ($this->exam->start_date && now()->isBefore($this->exam->start_date)) {
+            session()->flash('error', 'This examination has not started yet.');
+            return redirect()->route('take-exam');
+        }
+
         // Initialize user and session
         $this->initializeExamSession();
 
