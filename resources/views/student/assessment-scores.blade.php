@@ -1,16 +1,14 @@
 <x-dashboard.default title="My Results">
     <div class="card shadow-sm">
-        <div class="card-header bg-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title mb-1">My Results</h5>
-                    <p class="text-muted mb-0 small">View your published assessment results</p>
-                </div>
-                <div>
-                    <button id="exportPdfBtn" class="btn btn-sm btn-outline-primary" style="display: none;">
-                        <i class="bi bi-file-pdf"></i> Export PDF
-                    </button>
-                </div>
+        <div class="card-header bg-white border-0 pt-6">
+            <div class="card-title align-items-start flex-column">
+                <h5 class="card-label fw-bold mb-1">My Results</h5>
+                <p class="text-muted mb-0 small">View your published assessment results</p>
+            </div>
+            <div class="card-toolbar">
+                <button id="exportPdfBtn" class="btn btn-sm btn-outline-primary" style="display: none;">
+                    <i class="bi bi-file-pdf"></i> Export PDF
+                </button>
             </div>
         </div>
         <div class="card-body">

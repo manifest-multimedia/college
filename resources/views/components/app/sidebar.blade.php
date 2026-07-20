@@ -740,6 +740,23 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
             {{-- @endcanany --}}
+
+            @hasanyrole(['Administrator', 'Super Admin', 'Academic Officer', 'System', 'Finance Manager'])
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a class="menu-link {{ request()->routeIs('reports.index') ? 'active' : '' }}" href="{{ route('reports.index') }}">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-pie-3 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Reports Module</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+            @endhasanyrole
             
             {{-- @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports']) --}}
             <!--begin:Menu item-->

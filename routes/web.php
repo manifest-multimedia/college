@@ -293,6 +293,7 @@ Route::middleware([
             ->name('students.destroy');
 
         Route::post('/generate/report', [ReportGenerator::class, 'generateReport'])->name('generate.report');
+        Route::get('/reports', \App\Livewire\Reports\ReportManager::class)->name('reports.index');
 
         // Settings Routes
         Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('settings')->group(function () {
@@ -424,7 +425,7 @@ Route::middleware([
     | Finance Management & Fee Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Officer|Finance Manager'])->prefix('finance')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Officer|Finance Manager|System'])->prefix('finance')->group(function () {
         Route::get('/billing', function () {
             return view('finance.billing');
         })->name('finance.billing');

@@ -93,6 +93,7 @@ class AssessmentScoresController extends Controller
                 ? $runningTotalGradePoints / $runningTotalCredits
                 : 0;
 
+            $performanceService = app(\App\Services\StudentPerformanceService::class);
             $semesterName = $semesterScores->first()->semester->name ?? 'N/A';
             $summary[$semesterId] = [
                 'semester_name' => $semesterName,
@@ -100,7 +101,7 @@ class AssessmentScoresController extends Controller
                 'gpa' => $semesterGPA,
                 'passed_courses' => $passedCourses,
                 'failed_courses' => $failedCourses,
-                'progress_remark' => $this->getAcademicProgressRemark($cumulativeGpaUpToSemester, $semesterName),
+                'progress_remark' => $performanceService->getAcademicProgressRemark($cumulativeGpaUpToSemester, $semesterName),
             ];
         }
 
@@ -109,7 +110,8 @@ class AssessmentScoresController extends Controller
         $overallTotalGradePoints = $runningTotalGradePoints;
 
         $cgpa = $overallTotalCredits > 0 ? $overallTotalGradePoints / $overallTotalCredits : 0;
-        $overallRemark = $this->getOverallRemark($cgpa);
+        $performanceService = app(\App\Services\StudentPerformanceService::class);
+        $overallRemark = $performanceService->getOverallRemark($cgpa);
 
         return response()->json([
             'success' => true,
@@ -155,51 +157,7 @@ class AssessmentScoresController extends Controller
         }
     }
 
-    private function getOverallRemark($cgpa): string
-    {
-        if ($cgpa >= 3.6) {
-            return 'First Class';
-        } elseif ($cgpa >= 3.0) {
-            return 'Second Class Upper';
-        } elseif ($cgpa >= 2.5) {
-            return 'Second Class Lower';
-        } elseif ($cgpa >= 2.0) {
-            return 'Third Class';
-        } elseif ($cgpa >= 1.5) {
-            return 'Pass';
-        } else {
-            return 'Fail';
-        }
-    }
 
-    /**
-     * Get per-semester academic progress remark based on CGPA and semester position.
-     *
-     * First Semester rules (semester name contains "First"):
-     *   CGPA >= 1.50 → Pass
-     *   CGPA <  1.50 → Probation
-     *
-     * Second Semester rules (all other semesters):
-     *   CGPA <  1.00 → Dismissed
-     *   CGPA 1.00–1.49 → Repeat
-     *   CGPA >= 1.50 → Promoted
-     */
-    private function getAcademicProgressRemark(float $cgpa, string $semesterName): string
-    {
-        $isFirstSemester = stripos($semesterName, 'first') !== false;
-
-        if ($isFirstSemester) {
-            return $cgpa >= 1.50 ? 'Pass' : 'Probation';
-        }
-
-        if ($cgpa < 1.00) {
-            return 'Dismissed';
-        } elseif ($cgpa < 1.50) {
-            return 'Repeat';
-        } else {
-            return 'Promoted';
-        }
-    }
 
     public function exportPdf(Request $request)
     {
@@ -266,7 +224,8 @@ class AssessmentScoresController extends Controller
         });
 
         $cgpa = $totalCredits > 0 ? round($totalGradePoints / $totalCredits, 2) : 0;
-        $overallRemark = $this->getOverallRemark($cgpa);
+        $performanceService = app(\App\Services\StudentPerformanceService::class);
+        $overallRemark = $performanceService->getOverallRemark($cgpa);
 
         // Build per-semester progress remarks using running cumulative GPA
         $semesterRemarks = [];
@@ -287,7 +246,7 @@ class AssessmentScoresController extends Controller
             }
             $cumulativeGpa = $runningCredits > 0 ? $runningGradePoints / $runningCredits : 0;
             $semName = $semScores->first()->semester->name ?? 'N/A';
-            $semesterRemarks[$semName] = $this->getAcademicProgressRemark($cumulativeGpa, $semName);
+            $semesterRemarks[$semName] = $performanceService->getAcademicProgressRemark($cumulativeGpa, $semName);
         }
 
         $summary = [
