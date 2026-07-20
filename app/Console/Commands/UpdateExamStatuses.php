@@ -74,8 +74,8 @@ class UpdateExamStatuses extends Command
                               $now->greaterThanOrEqualTo($exam->start_date) &&
                               (!$exam->end_date || $now->lessThan($exam->end_date));
 
-        // An exam is only "active" if it's within the time window AND has at least one active session
-        if ($isWithinTimeWindow && $exam->hasActiveSession()) {
+        // An exam is "active" if it's within the time window
+        if ($isWithinTimeWindow) {
             return 'active';
         }
 

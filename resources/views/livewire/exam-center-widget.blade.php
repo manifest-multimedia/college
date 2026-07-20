@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.60s>
         <div class="mt-20 mb-5 card mb-xl-10">
             <div class="border-0 card-header d-flex align-items-center justify-content-between">
                 <!-- Card Title (left aligned) -->
