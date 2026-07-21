@@ -66,7 +66,7 @@
 <body>
 
     <div class="header">
-        <h1>{{ config('app.name', 'College Management System') }}</h1>
+        <h1>{{ config('branding.institution.name', config('app.name', 'College Management System')) }}</h1>
         <p>{{ $report->getName() }}</p>
     </div>
 
@@ -130,7 +130,7 @@
     </table>
 
     <div class="footer">
-        Generated automatically by {{ config('app.name') }} Reports Module.
+        Generated automatically by {{ config('branding.institution.name', config('app.name')) }} Reports Module.
     </div>
 
 </body>

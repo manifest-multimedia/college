@@ -181,7 +181,7 @@
     <div class="watermark">OFFICIAL</div>
     
     <div class="header">
-        <div class="institution">{{ config('app.name', 'Educational Institution') }}</div>
+        <div class="institution">{{ config('branding.institution.name', config('app.name', 'Educational Institution')) }}</div>
         <h1>Official Academic Transcript</h1>
         <div class="subtitle">Confidential Document - Not Valid Without Official Seal</div>
     </div>
