@@ -88,12 +88,20 @@ class ReportManager extends Component
             $report->setFilters($this->filters);
         }
 
-        $pdf = Pdf::loadView('reports.export.pdf', [
+        $template = method_exists($report, 'getPdfTemplate') 
+            ? $report->getPdfTemplate() 
+            : 'reports.export.pdf';
+
+        $pdf = Pdf::loadView($template, [
             'report' => $report,
             'data' => $this->reportData,
             'columns' => $this->columns,
             'filters' => $this->filters,
         ]);
+
+        if (method_exists($report, 'getPdfOrientation')) {
+            $pdf->setPaper('A4', $report->getPdfOrientation());
+        }
 
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();

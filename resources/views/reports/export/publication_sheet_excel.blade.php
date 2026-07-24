@@ -74,12 +74,9 @@
             <td style="border: 1px solid #000000;">{{ $student['name'] }}</td>
             
             @foreach($report->reportSemesters as $yearLabel => $semesters)
-                @foreach($semesters as $semesterId => $semesterName)
-                    @php
-                        $gpa = isset($student['semester_gpas'][$semesterId]) ? $student['semester_gpas'][$semesterId]['gpa'] : '';
-                    @endphp
+                @foreach($semesters as $semesterKey => $semesterName)
                     <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">
-                        {{ $gpa }}
+                        {{ $student[$semesterKey] ?? '' }}
                     </td>
                 @endforeach
             @endforeach

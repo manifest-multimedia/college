@@ -13,8 +13,9 @@ use App\Models\AssessmentScore;
 class PublicationSheetReport extends BaseReport
 {
     protected $currentFilters = [];
+    public $reportProgram = null;
     public $reportSemesters = [];
-    public $reportProgram = 'N/A';
+    public $dbSemesterToKeyMapping = [];
 
     public function setFilters(array $filters)
     {
@@ -37,24 +38,50 @@ class PublicationSheetReport extends BaseReport
             $uniqueSemesters = $scores->pluck('semester')->unique('id')->sortBy('start_date');
             $academicYears = $uniqueSemesters->pluck('academicYear')->unique('id')->sortBy('start_date')->values();
             
-            $yearMapping = [];
-            $semesterStructure = [];
+            // Fixed 3-Year structure for UI/Excel
+            $this->reportSemesters = [
+                '1ST YEAR' => [
+                    'y1_s1' => 'FIRST SEM',
+                    'y1_s2' => 'SECOND SEM',
+                ],
+                '2ND YEAR' => [
+                    'y2_s1' => 'FIRST SEM',
+                    'y2_s2' => 'SECOND SEM',
+                ],
+                '3RD YEAR' => [
+                    'y3_s1' => 'FIRST SEM',
+                    'y3_s2' => 'SECOND SEM',
+                ],
+            ];
             
-            foreach ($academicYears as $index => $ay) {
-                $ordinal = ['1ST', '2ND', '3RD', '4TH', '5TH', '6TH'][$index] ?? ($index + 1) . 'TH';
-                $yearLabel = $ordinal . ' YEAR';
-                $yearMapping[$ay->id] = $yearLabel;
-                $semesterStructure[$yearLabel] = [];
+            // Map the actual DB semesters to the fixed structure keys (y1_s1, etc.)
+            $this->dbSemesterToKeyMapping = [];
+            foreach ($academicYears as $ayIndex => $ay) {
+                if ($ayIndex >= 3) break; // We only support up to 3 years in the fixed layout for now
+                $aySemesters = $uniqueSemesters->where('academic_year_id', $ay->id)->values();
+                foreach ($aySemesters as $semIndex => $sem) {
+                    if ($semIndex >= 2) break; // We only support up to 2 semesters per year
+                    $yearNum = $ayIndex + 1;
+                    $semNum = $semIndex + 1;
+                    $this->dbSemesterToKeyMapping[$sem->id] = "y{$yearNum}_s{$semNum}";
+                }
             }
-            
-            foreach ($uniqueSemesters as $sem) {
-                $yearLabel = $yearMapping[$sem->academic_year_id] ?? 'UNKNOWN YEAR';
-                $shortName = str_ireplace('semester', 'SEM', $sem->name);
-                $semesterStructure[$yearLabel][$sem->id] = strtoupper($shortName);
-            }
-            
-            $this->reportSemesters = $semesterStructure;
         }
+    }
+
+    public function getPdfTemplate(): string
+    {
+        return 'reports.export.publication_sheet_pdf';
+    }
+
+    public function getPdfOrientation(): string
+    {
+        return 'landscape';
+    }
+
+    public function getUiTemplate(): string
+    {
+        return 'reports.ui.publication_sheet_ui';
     }
     public function getName(): string
     {
@@ -99,9 +126,9 @@ class PublicationSheetReport extends BaseReport
         ];
 
         // dynamically fetch semesters based on current filters structure
-        foreach ($this->reportSemesters as $yearLabel => $semesters) {
-            foreach ($semesters as $semesterId => $semesterName) {
-                $columns['sem_' . $semesterId] = $yearLabel . ' - ' . $semesterName . ' (GPA)';
+        foreach ($this->reportSemesters ?? [] as $yearLabel => $semesters) {
+            foreach ($semesters as $semesterKey => $semesterName) {
+                $columns[$semesterKey] = $yearLabel . ' - ' . $semesterName . ' (GPA)';
             }
         }
 
@@ -210,7 +237,10 @@ class PublicationSheetReport extends BaseReport
         // Add dynamic keys for the UI table
         foreach ($data as &$studentRow) {
             foreach ($studentRow['semester_gpas'] as $semId => $semInfo) {
-                $studentRow['sem_' . $semId] = $semInfo['gpa'];
+                $mappedKey = $this->dbSemesterToKeyMapping[$semId] ?? null;
+                if ($mappedKey) {
+                    $studentRow[$mappedKey] = $semInfo['gpa'];
+                }
             }
         }
 

@@ -101,7 +101,15 @@
                     </div>
                     <div class="card-body">
                         @if(count($reportData) > 0)
-                            <div class="table-responsive">
+                            @if(method_exists($selectedReport, 'getUiTemplate') && view()->exists($selectedReport->getUiTemplate()))
+                                @include($selectedReport->getUiTemplate(), [
+                                    'report' => $selectedReport,
+                                    'data' => $reportData,
+                                    'columns' => $columns,
+                                    'filters' => $filters
+                                ])
+                            @else
+                                <div class="table-responsive">
                                 <table class="table align-middle table-row-dashed fs-6 gy-5">
                                     <thead>
                                         <tr class="text-start text-gray-400 fw-bold fs-7 text-uppercase gs-0">
@@ -121,6 +129,7 @@
                                     </tbody>
                                 </table>
                             </div>
+                            @endif
                         @else
                             <div class="alert alert-info">
                                 No data found for the selected filters.
