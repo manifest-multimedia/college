@@ -5,6 +5,8 @@ namespace App\Cases\Academics\Reports;
 use App\Models\Student;
 use App\Models\CollegeClass;
 use App\Models\Cohort;
+use App\Models\AcademicYear;
+use App\Models\Semester;
 use App\Reports\BaseReport;
 use App\Services\StudentPerformanceService;
 use Illuminate\Support\Collection;
