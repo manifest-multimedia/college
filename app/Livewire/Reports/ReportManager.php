@@ -84,6 +84,10 @@ class ReportManager extends Component
             return;
         }
 
+        if (method_exists($report, 'setFilters')) {
+            $report->setFilters($this->filters);
+        }
+
         $pdf = Pdf::loadView('reports.export.pdf', [
             'report' => $report,
             'data' => $this->reportData,
@@ -101,6 +105,10 @@ class ReportManager extends Component
         $report = $this->getSelectedReport();
         if (! $report || ! $this->reportData) {
             return;
+        }
+
+        if (method_exists($report, 'setFilters')) {
+            $report->setFilters($this->filters);
         }
 
         $template = method_exists($report, 'getExcelTemplate') 

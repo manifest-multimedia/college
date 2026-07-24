@@ -1,5 +1,9 @@
 @php
-    $colspan = 3 + count($report->reportSemesters ?? []) + 3; // 3 info cols + semesters + 3 summary cols
+    $totalSemesters = 0;
+    foreach($report->reportSemesters ?? [] as $semesters) {
+        $totalSemesters += count($semesters);
+    }
+    $colspan = 3 + $totalSemesters + 3; // 3 info cols + semesters + 3 summary cols
 @endphp
 <table>
     <thead>
@@ -22,8 +26,21 @@
         <th></th>
         <th></th>
         <th></th>
-        @foreach($report->reportSemesters as $semesterId => $semesterName)
-            <th style="font-weight: bold; text-align: center; background-color: #f5f5dc;">{{ strtoupper($semesterName) }}</th>
+        @foreach($report->reportSemesters as $yearLabel => $semesters)
+            <th colspan="{{ count($semesters) }}" style="font-weight: bold; text-align: center; background-color: #f5f5dc; border: 1px solid #000000;">{{ strtoupper($yearLabel) }}</th>
+        @endforeach
+        <th></th>
+        <th></th>
+        <th></th>
+    </tr>
+    <tr>
+        <th></th>
+        <th></th>
+        <th></th>
+        @foreach($report->reportSemesters as $yearLabel => $semesters)
+            @foreach($semesters as $semesterId => $semesterName)
+                <th style="font-weight: bold; text-align: center; background-color: #e8f4f8; border: 1px solid #000000;">{{ strtoupper($semesterName) }}</th>
+            @endforeach
         @endforeach
         <th></th>
         <th></th>
@@ -33,8 +50,10 @@
         <th style="font-weight: bold; border: 1px solid #000000; background-color: #e0e0e0;">SERIAL NO</th>
         <th style="font-weight: bold; border: 1px solid #000000; background-color: #e0e0e0;">INDEX NUMBER</th>
         <th style="font-weight: bold; border: 1px solid #000000; background-color: #e0e0e0;">NAME</th>
-        @foreach($report->reportSemesters as $semesterId => $semesterName)
-            <th style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #e0e0e0;">GPA</th>
+        @foreach($report->reportSemesters as $yearLabel => $semesters)
+            @foreach($semesters as $semesterId => $semesterName)
+                <th style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #e0e0e0;">GPA</th>
+            @endforeach
         @endforeach
         <th style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #ffd700;">CGPA</th>
         <th style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #ffd700;">CLASS DESIGNATION</th>
@@ -54,13 +73,15 @@
             <td style="border: 1px solid #000000;">{{ $student['index_number'] }}</td>
             <td style="border: 1px solid #000000;">{{ $student['name'] }}</td>
             
-            @foreach($report->reportSemesters as $semesterId => $semesterName)
-                @php
-                    $gpa = isset($student['semester_gpas'][$semesterId]) ? $student['semester_gpas'][$semesterId]['gpa'] : '';
-                @endphp
-                <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">
-                    {{ $gpa }}
-                </td>
+            @foreach($report->reportSemesters as $yearLabel => $semesters)
+                @foreach($semesters as $semesterId => $semesterName)
+                    @php
+                        $gpa = isset($student['semester_gpas'][$semesterId]) ? $student['semester_gpas'][$semesterId]['gpa'] : '';
+                    @endphp
+                    <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">
+                        {{ $gpa }}
+                    </td>
+                @endforeach
             @endforeach
             
             <td style="text-align: center; border: 1px solid #000000; font-weight: bold;">{{ $student['cgpa'] }}</td>

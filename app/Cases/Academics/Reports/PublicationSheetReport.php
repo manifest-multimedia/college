@@ -19,6 +19,42 @@ class PublicationSheetReport extends BaseReport
     public function setFilters(array $filters)
     {
         $this->currentFilters = $filters;
+
+        if (!empty($filters['college_class_id'])) {
+            $this->reportProgram = CollegeClass::find($filters['college_class_id'])->name ?? 'N/A';
+            
+            $query = Student::where('college_class_id', $filters['college_class_id']);
+            if (!empty($filters['cohort_id'])) {
+                $query->where('cohort_id', $filters['cohort_id']);
+            }
+            $studentIds = $query->pluck('id');
+            
+            $scores = AssessmentScore::with(['semester', 'academicYear'])
+                ->whereIn('student_id', $studentIds)
+                ->where('is_published', true)
+                ->get();
+                
+            $uniqueSemesters = $scores->pluck('semester')->unique('id')->sortBy('start_date');
+            $academicYears = $uniqueSemesters->pluck('academicYear')->unique('id')->sortBy('start_date')->values();
+            
+            $yearMapping = [];
+            $semesterStructure = [];
+            
+            foreach ($academicYears as $index => $ay) {
+                $ordinal = ['1ST', '2ND', '3RD', '4TH', '5TH', '6TH'][$index] ?? ($index + 1) . 'TH';
+                $yearLabel = $ordinal . ' YEAR';
+                $yearMapping[$ay->id] = $yearLabel;
+                $semesterStructure[$yearLabel] = [];
+            }
+            
+            foreach ($uniqueSemesters as $sem) {
+                $yearLabel = $yearMapping[$sem->academic_year_id] ?? 'UNKNOWN YEAR';
+                $shortName = str_ireplace('semester', 'SEM', $sem->name);
+                $semesterStructure[$yearLabel][$sem->id] = strtoupper($shortName);
+            }
+            
+            $this->reportSemesters = $semesterStructure;
+        }
     }
     public function getName(): string
     {
@@ -62,24 +98,10 @@ class PublicationSheetReport extends BaseReport
             'name' => 'Name',
         ];
 
-        // dynamically fetch semesters based on current filters
-        if (!empty($this->currentFilters['college_class_id'])) {
-            $query = Student::where('college_class_id', $this->currentFilters['college_class_id']);
-            if (!empty($this->currentFilters['cohort_id'])) {
-                $query->where('cohort_id', $this->currentFilters['cohort_id']);
-            }
-            $studentIds = $query->pluck('id');
-            
-            $semesters = AssessmentScore::with('semester')
-                ->whereIn('student_id', $studentIds)
-                ->where('is_published', true)
-                ->get()
-                ->groupBy('semester_id')
-                ->sortKeys();
-                
-            foreach ($semesters as $semesterId => $scores) {
-                $semesterName = $scores->first()->semester->name ?? 'Unknown';
-                $columns['sem_' . $semesterId] = $semesterName . ' (GPA)';
+        // dynamically fetch semesters based on current filters structure
+        foreach ($this->reportSemesters as $yearLabel => $semesters) {
+            foreach ($semesters as $semesterId => $semesterName) {
+                $columns['sem_' . $semesterId] = $yearLabel . ' - ' . $semesterName . ' (GPA)';
             }
         }
 
@@ -182,11 +204,8 @@ class PublicationSheetReport extends BaseReport
             ];
         }
         
-        // Pass the ordered semesters so the export can use them
-        $sortedSemesters = $allSemesters->sortKeys();
-        
-        $this->reportSemesters = $sortedSemesters->toArray();
-        $this->reportProgram = CollegeClass::find($filters['college_class_id'])->name ?? 'N/A';
+        // We no longer need to manually rebuild the semesters and program name here
+        // as they are already built in setFilters() when the report is initialized.
 
         // Add dynamic keys for the UI table
         foreach ($data as &$studentRow) {
