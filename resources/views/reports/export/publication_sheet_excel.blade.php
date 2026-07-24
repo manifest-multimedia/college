@@ -5,7 +5,7 @@
     <thead>
     <tr>
         <th colspan="{{ $colspan }}" style="text-align: center; font-weight: bold; font-size: 14px; background-color: #fdf5e6; color: #000080;">
-            {{ strtoupper(config('app.name', 'METHODIST HEALTH TRAINING INSTITUTE - AFOSU')) }}
+            {{ strtoupper(config('branding.institution.name', config('app.name', 'METHODIST HEALTH TRAINING INSTITUTE - AFOSU'))) }}
         </th>
     </tr>
     <tr>
