@@ -93,8 +93,8 @@
                                 </button>
                             @endif
                             @if(in_array('excel', $selectedReport->exportFormats()))
-                                <button class="btn btn-sm btn-light-success disabled">
-                                    <i class="fas fa-file-excel"></i> Export Excel (Coming Soon)
+                                <button wire:click="exportExcel" class="btn btn-sm btn-light-success" wire:loading.attr="disabled">
+                                    <i class="fas fa-file-excel"></i> Export Excel
                                 </button>
                             @endif
                         </div>

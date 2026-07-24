@@ -7,6 +7,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ReportExport;
 
 class ReportManager extends Component
 {
@@ -88,6 +90,25 @@ class ReportManager extends Component
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $report->getName().'.pdf');
+    }
+
+    public function exportExcel()
+    {
+        $report = $this->getSelectedReport();
+        if (! $report || ! $this->reportData) {
+            return;
+        }
+
+        $template = method_exists($report, 'getExcelTemplate') 
+            ? $report->getExcelTemplate() 
+            : 'reports.export.excel';
+
+        return Excel::download(new ReportExport($template, [
+            'report' => $report,
+            'data' => $this->reportData,
+            'columns' => $this->columns,
+            'filters' => $this->filters,
+        ]), $report->getName().'.xlsx');
     }
 
     public function render()
