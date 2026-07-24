@@ -22,7 +22,14 @@ class PublicationSheetReport extends BaseReport
         $this->currentFilters = $filters;
 
         if (!empty($filters['college_class_id'])) {
-            $this->reportProgram = CollegeClass::find($filters['college_class_id'])->name ?? 'N/A';
+            $cohort = null;
+            if (!empty($filters['cohort_id'])) {
+                $cohort = Cohort::find($filters['cohort_id']);
+            }
+            
+            $programName = CollegeClass::find($filters['college_class_id'])->name ?? 'N/A';
+            $cohortName = $cohort ? $cohort->name : '';
+            $this->reportProgram = $programName . ($cohortName ? " ({$cohortName})" : "");
             
             $query = Student::where('college_class_id', $filters['college_class_id']);
             if (!empty($filters['cohort_id'])) {
@@ -36,7 +43,39 @@ class PublicationSheetReport extends BaseReport
                 ->get();
                 
             $uniqueSemesters = $scores->pluck('semester')->unique('id')->sortBy('start_date');
-            $academicYears = $uniqueSemesters->pluck('academicYear')->unique('id')->sortBy('start_date')->values();
+            
+            // Fetch all global chronological timelines
+            $allAcademicYears = AcademicYear::orderBy('start_date')->get();
+            $allSemesters = Semester::orderBy('start_date')->get()->groupBy('academic_year_id');
+            
+            // Determine Starting Academic Year for the Cohort
+            $startingAyId = null;
+            if ($cohort && $cohort->start_date) {
+                $cohortStart = \Carbon\Carbon::parse($cohort->start_date);
+                // Find Academic Year that encapsulates the cohort start date, or is closest to it
+                $closestAy = $allAcademicYears->sortBy(function($ay) use ($cohortStart) {
+                    if (!$ay->start_date) return 9999999999;
+                    return abs(\Carbon\Carbon::parse($ay->start_date)->diffInDays($cohortStart));
+                })->first();
+                if ($closestAy) {
+                    $startingAyId = $closestAy->id;
+                }
+            }
+            
+            if (!$startingAyId) {
+                // Fallback to earliest grade's academic year
+                $academicYears = $uniqueSemesters->pluck('academicYear')->unique('id')->sortBy('start_date')->values();
+                $startingAyId = $academicYears->first()->id ?? null;
+            }
+            
+            $startingAyIndex = $allAcademicYears->search(fn($ay) => $ay->id == $startingAyId);
+            if ($startingAyIndex === false) $startingAyIndex = 0;
+            
+            $cohortYears = [
+                $allAcademicYears[$startingAyIndex]->id ?? -1,
+                $allAcademicYears[$startingAyIndex + 1]->id ?? -1,
+                $allAcademicYears[$startingAyIndex + 2]->id ?? -1,
+            ];
             
             // Fixed 3-Year structure for UI/Excel
             $this->reportSemesters = [
@@ -56,14 +95,16 @@ class PublicationSheetReport extends BaseReport
             
             // Map the actual DB semesters to the fixed structure keys (y1_s1, etc.)
             $this->dbSemesterToKeyMapping = [];
-            foreach ($academicYears as $ayIndex => $ay) {
-                if ($ayIndex >= 3) break; // We only support up to 3 years in the fixed layout for now
-                $aySemesters = $uniqueSemesters->where('academic_year_id', $ay->id)->values();
-                foreach ($aySemesters as $semIndex => $sem) {
-                    if ($semIndex >= 2) break; // We only support up to 2 semesters per year
-                    $yearNum = $ayIndex + 1;
-                    $semNum = $semIndex + 1;
-                    $this->dbSemesterToKeyMapping[$sem->id] = "y{$yearNum}_s{$semNum}";
+            foreach ($uniqueSemesters as $sem) {
+                $yearIndex = array_search($sem->academic_year_id, $cohortYears);
+                if ($yearIndex !== false) {
+                    $yearNum = $yearIndex + 1;
+                    $aySemesters = $allSemesters->get($sem->academic_year_id) ?? collect();
+                    $semIndex = $aySemesters->search(fn($s) => $s->id == $sem->id);
+                    if ($semIndex !== false && $semIndex < 2) {
+                        $semNum = $semIndex + 1;
+                        $this->dbSemesterToKeyMapping[$sem->id] = "y{$yearNum}_s{$semNum}";
+                    }
                 }
             }
         }
