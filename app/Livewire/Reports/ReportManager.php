@@ -69,6 +69,10 @@ class ReportManager extends Component
             $validatedData = Validator::make($this->filters, $rules)->validate();
         }
 
+        if (method_exists($report, 'setFilters')) {
+            $report->setFilters($this->filters);
+        }
+
         $this->columns = $report->getColumns();
         $this->reportData = $report->generateData($this->filters)->toArray();
     }

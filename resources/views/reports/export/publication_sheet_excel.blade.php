@@ -1,5 +1,5 @@
 @php
-    $colspan = 3 + count($data['semesters']) + 3; // 3 info cols + semesters + 3 summary cols
+    $colspan = 3 + count($report->reportSemesters ?? []) + 3; // 3 info cols + semesters + 3 summary cols
 @endphp
 <table>
     <thead>
@@ -15,14 +15,14 @@
     </tr>
     <tr>
         <th colspan="{{ $colspan }}" style="text-align: center; font-weight: bold; font-size: 12px; background-color: #f5deb3;">
-            PROGRAMME: {{ strtoupper($data['program'] ?? 'N/A') }}
+            PROGRAMME: {{ strtoupper($report->reportProgram ?? 'N/A') }}
         </th>
     </tr>
     <tr>
         <th></th>
         <th></th>
         <th></th>
-        @foreach($data['semesters'] as $semesterId => $semesterName)
+        @foreach($report->reportSemesters as $semesterId => $semesterName)
             <th style="font-weight: bold; text-align: center; background-color: #f5f5dc;">{{ strtoupper($semesterName) }}</th>
         @endforeach
         <th></th>
@@ -33,7 +33,7 @@
         <th style="font-weight: bold; border: 1px solid #000000; background-color: #e0e0e0;">SERIAL NO</th>
         <th style="font-weight: bold; border: 1px solid #000000; background-color: #e0e0e0;">INDEX NUMBER</th>
         <th style="font-weight: bold; border: 1px solid #000000; background-color: #e0e0e0;">NAME</th>
-        @foreach($data['semesters'] as $semesterId => $semesterName)
+        @foreach($report->reportSemesters as $semesterId => $semesterName)
             <th style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #e0e0e0;">GPA</th>
         @endforeach
         <th style="font-weight: bold; text-align: center; border: 1px solid #000000; background-color: #ffd700;">CGPA</th>
@@ -42,7 +42,7 @@
     </tr>
     </thead>
     <tbody>
-    @foreach($data['students'] as $index => $student)
+    @foreach($data as $index => $student)
         @php
             $remarkColor = '#ffffff';
             if ($student['remarks'] === 'REPEATED') $remarkColor = '#ffe4e1';
@@ -54,7 +54,7 @@
             <td style="border: 1px solid #000000;">{{ $student['index_number'] }}</td>
             <td style="border: 1px solid #000000;">{{ $student['name'] }}</td>
             
-            @foreach($data['semesters'] as $semesterId => $semesterName)
+            @foreach($report->reportSemesters as $semesterId => $semesterName)
                 @php
                     $gpa = isset($student['semester_gpas'][$semesterId]) ? $student['semester_gpas'][$semesterId]['gpa'] : '';
                 @endphp

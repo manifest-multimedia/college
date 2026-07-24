@@ -12,6 +12,14 @@ use App\Models\AssessmentScore;
 
 class PublicationSheetReport extends BaseReport
 {
+    protected $currentFilters = [];
+    public $reportSemesters = [];
+    public $reportProgram = 'N/A';
+
+    public function setFilters(array $filters)
+    {
+        $this->currentFilters = $filters;
+    }
     public function getName(): string
     {
         return 'Publication Sheet For Promotion';
@@ -49,15 +57,37 @@ class PublicationSheetReport extends BaseReport
 
     public function getColumns(): array
     {
-        // This report is meant to be exported to Excel. For the UI table, we can show a basic layout,
-        // but the full layout will be handled by the Excel export template.
-        return [
+        $columns = [
             'index_number' => 'Index Number',
             'name' => 'Name',
-            'cgpa' => 'CGPA',
-            'class_designation' => 'Class Designation',
-            'remarks' => 'Remarks',
         ];
+
+        // dynamically fetch semesters based on current filters
+        if (!empty($this->currentFilters['college_class_id'])) {
+            $query = Student::where('college_class_id', $this->currentFilters['college_class_id']);
+            if (!empty($this->currentFilters['cohort_id'])) {
+                $query->where('cohort_id', $this->currentFilters['cohort_id']);
+            }
+            $studentIds = $query->pluck('id');
+            
+            $semesters = AssessmentScore::with('semester')
+                ->whereIn('student_id', $studentIds)
+                ->where('is_published', true)
+                ->get()
+                ->groupBy('semester_id')
+                ->sortKeys();
+                
+            foreach ($semesters as $semesterId => $scores) {
+                $semesterName = $scores->first()->semester->name ?? 'Unknown';
+                $columns['sem_' . $semesterId] = $semesterName . ' (GPA)';
+            }
+        }
+
+        $columns['cgpa'] = 'CGPA';
+        $columns['class_designation'] = 'Class Designation';
+        $columns['remarks'] = 'Remarks';
+
+        return $columns;
     }
 
     public function generateData(array $filters = []): Collection
@@ -154,12 +184,18 @@ class PublicationSheetReport extends BaseReport
         
         // Pass the ordered semesters so the export can use them
         $sortedSemesters = $allSemesters->sortKeys();
+        
+        $this->reportSemesters = $sortedSemesters->toArray();
+        $this->reportProgram = CollegeClass::find($filters['college_class_id'])->name ?? 'N/A';
 
-        return collect([
-            'students' => $data,
-            'semesters' => $sortedSemesters->toArray(),
-            'program' => CollegeClass::find($filters['college_class_id'])->name ?? 'N/A',
-        ]);
+        // Add dynamic keys for the UI table
+        foreach ($data as &$studentRow) {
+            foreach ($studentRow['semester_gpas'] as $semId => $semInfo) {
+                $studentRow['sem_' . $semId] = $semInfo['gpa'];
+            }
+        }
+
+        return collect($data);
     }
 
     public function getExcelTemplate(): string
