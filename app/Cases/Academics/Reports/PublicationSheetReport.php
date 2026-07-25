@@ -39,12 +39,14 @@ class PublicationSheetReport extends BaseReport
             }
             $studentIds = $query->pluck('id');
             
+            // An assessment score's academic year is its authoritative training-period
+            // context.  A semester can be reused, or its academic_year_id can have
+            // changed since a score was recorded, so never derive a score's year from
+            // the semester relationship here.
             $scores = AssessmentScore::with(['semester', 'academicYear'])
                 ->whereIn('student_id', $studentIds)
                 ->where('is_published', true)
                 ->get();
-                
-            $uniqueSemesters = $scores->pluck('semester')->unique('id')->sortBy('start_date');
             
             // Fetch all global chronological timelines
             $allAcademicYears = AcademicYear::orderBy('start_date')->get();
@@ -66,7 +68,7 @@ class PublicationSheetReport extends BaseReport
             
             if (!$startingAyId) {
                 // Fallback to earliest grade's academic year
-                $academicYears = $uniqueSemesters->pluck('academicYear')->unique('id')->sortBy('start_date')->values();
+                $academicYears = $scores->pluck('academicYear')->filter()->unique('id')->sortBy('start_date')->values();
                 $startingAyId = $academicYears->first()->id ?? null;
             }
             
@@ -95,17 +97,32 @@ class PublicationSheetReport extends BaseReport
                 ],
             ];
             
-            // Map the actual DB semesters to the fixed structure keys (y1_s1, etc.)
+            // Map score contexts, rather than just semester IDs, to the fixed
+            // Year 1–3 / Semester 1–2 columns.  This retains results when the same
+            // semester record is used in more than one academic year.
             $this->dbSemesterToKeyMapping = [];
-            foreach ($uniqueSemesters as $sem) {
-                $yearIndex = array_search($sem->academic_year_id, $cohortYears);
+            $contextsByYear = $scores
+                ->filter(fn (AssessmentScore $score) => in_array($score->academic_year_id, $cohortYears, true))
+                ->groupBy('academic_year_id');
+
+            foreach ($contextsByYear as $academicYearId => $yearScores) {
+                $yearIndex = array_search((int) $academicYearId, $cohortYears, true);
                 if ($yearIndex !== false) {
                     $yearNum = $yearIndex + 1;
-                    $aySemesters = $allSemesters->get($sem->academic_year_id) ?? collect();
-                    $semIndex = $aySemesters->search(fn($s) => $s->id == $sem->id);
-                    if ($semIndex !== false && $semIndex < 2) {
-                        $semNum = $semIndex + 1;
-                        $this->dbSemesterToKeyMapping[$sem->id] = "y{$yearNum}_s{$semNum}";
+
+                    $semesters = $yearScores
+                        ->pluck('semester')
+                        ->filter()
+                        ->unique('id')
+                        ->sortBy(fn (Semester $semester) => $semester->start_date?->timestamp ?? PHP_INT_MAX)
+                        ->values();
+
+                    foreach ($semesters as $fallbackIndex => $semester) {
+                        $semesterNumber = $this->semesterNumber($semester, $fallbackIndex + 1);
+                        if ($semesterNumber <= 2) {
+                            $contextKey = $this->scoreContextKey((int) $academicYearId, $semester->id);
+                            $this->dbSemesterToKeyMapping[$contextKey] = "y{$yearNum}_s{$semesterNumber}";
+                        }
                     }
                 }
             }
@@ -207,14 +224,26 @@ class PublicationSheetReport extends BaseReport
                 ->where('is_published', true)
                 ->get();
 
-            $groupedBySemester = $scores->groupBy('semester_id')->sortKeys();
+            // Keep academic year in the group key. Grouping by semester_id alone
+            // merges distinct training periods whenever a semester is reused.
+            $groupedBySemester = $scores
+                ->groupBy(fn (AssessmentScore $score) => $this->scoreContextKey($score->academic_year_id, $score->semester_id))
+                ->sortBy(function ($semesterScores) {
+                    $firstScore = $semesterScores->first();
+
+                    return sprintf(
+                        '%020d-%020d',
+                        $firstScore->academicYear?->start_date?->timestamp ?? PHP_INT_MAX,
+                        $firstScore->semester?->start_date?->timestamp ?? PHP_INT_MAX,
+                    );
+                });
             $semesterGpas = [];
 
             $totalCredits = 0;
             $totalGradePoints = 0;
             $lastSemesterName = 'Unknown';
 
-            foreach ($groupedBySemester as $semesterId => $semesterScores) {
+            foreach ($groupedBySemester as $contextKey => $semesterScores) {
                 $semCredits = 0;
                 $semGradePoints = 0;
 
@@ -231,14 +260,14 @@ class PublicationSheetReport extends BaseReport
                 
                 $semesterName = $semesterScores->first()->semester->name ?? 'Unknown';
                 // Find year mapping if possible (e.g. 1st Year, 1st Sem)
-                $semesterGpas[$semesterId] = [
+                $semesterGpas[$contextKey] = [
                     'name' => $semesterName,
                     'gpa' => number_format((float)$gpa, 2, '.', '')
                 ];
                 $lastSemesterName = $semesterName;
                 
-                if (!$allSemesters->has($semesterId)) {
-                    $allSemesters->put($semesterId, $semesterName);
+                if (!$allSemesters->has($contextKey)) {
+                    $allSemesters->put($contextKey, $semesterName);
                 }
             }
 
@@ -279,8 +308,8 @@ class PublicationSheetReport extends BaseReport
 
         // Add dynamic keys for the UI table
         foreach ($data as &$studentRow) {
-            foreach ($studentRow['semester_gpas'] as $semId => $semInfo) {
-                $mappedKey = $this->dbSemesterToKeyMapping[$semId] ?? null;
+            foreach ($studentRow['semester_gpas'] as $contextKey => $semInfo) {
+                $mappedKey = $this->dbSemesterToKeyMapping[$contextKey] ?? null;
                 if ($mappedKey) {
                     $studentRow[$mappedKey] = $semInfo['gpa'];
                 }
@@ -293,5 +322,29 @@ class PublicationSheetReport extends BaseReport
     public function getExcelTemplate(): string
     {
         return 'reports.export.publication_sheet_excel';
+    }
+
+    protected function scoreContextKey(int $academicYearId, int $semesterId): string
+    {
+        return $academicYearId.':'.$semesterId;
+    }
+
+    /**
+     * Resolve the position within an academic year from the configured name first,
+     * then use chronological order as a safe legacy-data fallback.
+     */
+    protected function semesterNumber(Semester $semester, int $fallback): int
+    {
+        $name = strtolower($semester->name ?? '');
+
+        if (preg_match('/\b(first|1st|one)\b/', $name)) {
+            return 1;
+        }
+
+        if (preg_match('/\b(second|2nd|two)\b/', $name)) {
+            return 2;
+        }
+
+        return $fallback;
     }
 }

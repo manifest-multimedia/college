@@ -177,14 +177,15 @@ class AssessmentScoresController extends Controller
         $maxAssignmentCount = 3;
 
         foreach ($students as $student) {
-            // Query for existing scores WITHOUT academic year filter to show comprehensive view
-            // This allows users to see scores from any academic year for the same course/semester combination
+            // Scores are historical records. Always load the selected academic-year
+            // context so entering a new year's marks cannot display or overwrite a
+            // prior year's marks for the same course and semester.
             $existingScore = AssessmentScore::where([
                 'course_id' => $validated['course_id'],
                 'student_id' => $student->id,
                 'cohort_id' => $validated['cohort_id'],
                 'semester_id' => $validated['semester_id'],
-                // Note: academic_year_id is NOT included in this query per user requirements
+                'academic_year_id' => $selectedAcademicYear->id,
             ])->latest('updated_at')->first(); // Get most recent if multiple exist
 
             if ($existingScore && $existingScore->assignment_count) {
@@ -217,6 +218,7 @@ class AssessmentScoresController extends Controller
             'course_id' => $validated['course_id'],
             'cohort_id' => $validated['cohort_id'],
             'semester_id' => $validated['semester_id'],
+            'academic_year_id' => $selectedAcademicYear->id,
         ])->first();
 
         $weights = [
@@ -621,11 +623,21 @@ class AssessmentScoresController extends Controller
             ->orderBy('student_id')
             ->get();
 
+        $academicYearId = $validated['academic_year_id'] ?? AcademicYear::getCurrent()?->id;
+
+        if (! $academicYearId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No academic year selected or available. Please select an academic year or set one as current.',
+            ], 422);
+        }
+
         // Get weights from first existing score or defaults
         $firstScore = AssessmentScore::where([
             'course_id' => $validated['course_id'],
             'cohort_id' => $validated['cohort_id'],
             'semester_id' => $validated['semester_id'],
+            'academic_year_id' => $academicYearId,
         ])->first();
 
         $weights = [
@@ -642,6 +654,7 @@ class AssessmentScoresController extends Controller
                 'student_id' => $student->id,
                 'cohort_id' => $validated['cohort_id'],
                 'semester_id' => $validated['semester_id'],
+                'academic_year_id' => $academicYearId,
             ])->latest('updated_at')->first();
 
             $studentScores[] = [
