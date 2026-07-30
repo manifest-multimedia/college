@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckElectionIpBlacklist;
+use App\Http\Middleware\EnsureStudentIsActive;
 use App\Http\Middleware\OfflineApiAuth;
 use App\Http\Middleware\SyncUserRoles;
 use App\Providers\CommunicationServiceProvider;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'auth.offline.api' => OfflineApiAuth::class,
             'election.ip.blacklist' => CheckElectionIpBlacklist::class,
+            'student.active' => EnsureStudentIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

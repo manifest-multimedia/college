@@ -130,10 +130,10 @@ Route::middleware([
 
         // Otherwise, show the general dashboard for staff/admin users
         return view('dashboard');
-    })->name('dashboard');
+    })->middleware('student.active')->name('dashboard');
 
     // Student-only routes
-    Route::middleware(['role:Student'])->group(function () {
+    Route::middleware(['role:Student', 'student.active'])->group(function () {
         Route::get('/student-dashboard', [App\Http\Controllers\StudentDashboardController::class, 'index'])->name('student.dashboard');
 
         Route::get('/student-information', function () {
@@ -491,7 +491,7 @@ Route::middleware([
     | Finance Course Registration Routes (System & Student Only)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:System|Student'])->prefix('finance')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Student', 'student.active'])->prefix('finance')->group(function () {
         Route::get('/course-registration/{studentId?}', function ($studentId = null) {
             return view('finance.course-registration', ['studentId' => $studentId]);
         })->name('finance.course.registration');
@@ -502,7 +502,7 @@ Route::middleware([
     | Course Registration Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:System|Student'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Student', 'student.active'])->group(function () {
         Route::get('/course-registration', function () {
             return view('course.registration');
         })->name('courseregistration');

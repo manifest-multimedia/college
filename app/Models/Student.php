@@ -47,6 +47,19 @@ class Student extends Model
      */
     protected $casts = [];
 
+    /**
+     * A student is portal-eligible only when their record is explicitly active.
+     */
+    public function isActive(): bool
+    {
+        return strtolower(trim((string) $this->status)) === 'active';
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereRaw("LOWER(COALESCE(status, '')) = ?", ['active']);
+    }
+
     protected function dateOfBirth(): Attribute
     {
         return Attribute::make(

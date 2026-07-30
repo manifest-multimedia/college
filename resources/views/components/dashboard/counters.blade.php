@@ -26,6 +26,7 @@
     }
     
     $totalStudents = Student::count();
+    $activeStudents = Student::active()->count();
     $activePrograms = CollegeClass::count();
 @endphp
 
@@ -53,6 +54,15 @@
         :value="$totalStudents" 
         icon="fas fa-user-graduate" 
         color="warning" 
+    />
+</div>
+
+<div class="col-xl-3 col-md-6">
+    <x-dashboard.counter
+        title="Active Students"
+        :value="$activeStudents"
+        icon="fas fa-user-check"
+        color="success"
     />
 </div>
 
