@@ -1,14 +1,20 @@
-name: Deploy to Production
+name: Deploy PNMTC to Production
 
 on:
   push:
     branches:
       - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-pnmtc
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy to College
+    name: Deploy PNMTC
     runs-on: ubuntu-latest
+    environment: pnmtc-production
 
     steps:
       - name: Checkout code
@@ -30,7 +36,6 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H 69.197.187.20 >> ~/.ssh/known_hosts
           ssh-keyscan -H 62.77.158.206 >> ~/.ssh/known_hosts
 
       - name: Write deploy.php from secret
@@ -38,13 +43,10 @@ jobs:
           DEPLOY_PHP: ${{ secrets.DEPLOY_PHP_COLLEGE }}
         run: python3 -c "import os; open('deploy.php','w').write(os.environ['DEPLOY_PHP'])"
 
-      - name: Deploy to all institutions
+      - name: Deploy PNMTC
         env:
           GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN_COLLEGE }}
         run: |
-          # Inject token into repo URL so servers can pull private repo
           sed -i "s|https://github.com/manifest-multimedia/college.git|https://x-access-token:${GITHUB_TOKEN}@github.com/manifest-multimedia/college.git|" deploy.php
-          php vendor/bin/dep deploy:unlock mhtia --no-interaction || true
           php vendor/bin/dep deploy:unlock pnmtc --no-interaction || true
-          php vendor/bin/dep deploy mhtia --no-interaction -vvv
           php vendor/bin/dep deploy pnmtc --no-interaction -vvv

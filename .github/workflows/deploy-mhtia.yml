@@ -1,0 +1,52 @@
+name: Deploy MHTIA to Production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-mhtia
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy MHTIA
+    runs-on: ubuntu-latest
+    environment: mhtia-production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 69.197.187.20 >> ~/.ssh/known_hosts
+
+      - name: Write deploy.php from secret
+        env:
+          DEPLOY_PHP: ${{ secrets.DEPLOY_PHP_COLLEGE }}
+        run: python3 -c "import os; open('deploy.php','w').write(os.environ['DEPLOY_PHP'])"
+
+      - name: Deploy MHTIA
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN_COLLEGE }}
+        run: |
+          sed -i "s|https://github.com/manifest-multimedia/college.git|https://x-access-token:${GITHUB_TOKEN}@github.com/manifest-multimedia/college.git|" deploy.php
+          php vendor/bin/dep deploy:unlock mhtia --no-interaction || true
+          php vendor/bin/dep deploy mhtia --no-interaction -vvv
