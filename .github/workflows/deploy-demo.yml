@@ -1,0 +1,170 @@
+name: Deploy Demo to Production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy college.manifestghana.com
+    runs-on: ubuntu-latest
+    environment: demo-production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup SSH key
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Provision the demo database
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          sql_escape() { printf '%s' "$1" | sed "s/'/''/g"; }
+          db_user=$(sql_escape "$DB_USERNAME")
+          db_password=$(sql_escape "$DB_PASSWORD")
+
+          cat <<SQL | ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" 'sudo mysql'
+          CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS '$db_user'@'localhost' IDENTIFIED BY '$db_password';
+          ALTER USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';
+          GRANT ALL PRIVILEGES ON \`$DB_DATABASE\`.* TO '$db_user'@'localhost';
+          FLUSH PRIVILEGES;
+          SQL
+
+      - name: Prepare application directory
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "sudo install -d -o ${DEPLOY_USER} -g www-data -m 2775 /var/www/college.manifestghana.com/current && \
+             sudo install -d -o ${DEPLOY_USER} -g www-data -m 2775 /var/www/college.manifestghana.com/current/storage/framework/cache/data /var/www/college.manifestghana.com/current/storage/framework/sessions /var/www/college.manifestghana.com/current/storage/framework/views /var/www/college.manifestghana.com/current/storage/logs"
+
+      - name: Upload application
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='storage' \
+            --exclude='vendor' \
+            --exclude='demoservercredentials.env' \
+            -e 'ssh -i ~/.ssh/id_ed25519' \
+            ./ "${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/college.manifestghana.com/current/"
+
+      - name: Configure and migrate application
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" 'bash -s' <<EOF
+          set -euo pipefail
+          cd /var/www/college.manifestghana.com/current
+
+          if [ ! -f .env ]; then
+            cp .env.example .env
+            cat >> .env <<CONFIG
+          APP_NAME="College360 Demo"
+          APP_ENV=production
+          APP_DEBUG=false
+          APP_URL=https://college.manifestghana.com
+          DB_CONNECTION=$DB_CONNECTION
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=$DB_DATABASE
+          DB_USERNAME=$DB_USERNAME
+          DB_PASSWORD=$DB_PASSWORD
+          CONFIG
+          fi
+
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+          php artisan key:generate --force
+          php artisan migrate --force
+          php artisan storage:link || true
+          php artisan config:cache
+          php artisan view:cache
+          sudo chgrp -R www-data storage bootstrap/cache
+          sudo chmod -R ug+rwx storage bootstrap/cache
+          EOF
+
+      - name: Configure Nginx virtual host
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          cat > /tmp/college-demo.nginx <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name college.manifestghana.com;
+
+              root /var/www/college.manifestghana.com/current/public;
+              index index.php index.html;
+
+              location / {
+                  try_files $uri $uri/ /index.php?$query_string;
+              }
+
+              location ~ \.php$ {
+                  include snippets/fastcgi-php.conf;
+                  fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+                  fastcgi_pass unix:/var/run/php/php-fpm.sock;
+              }
+
+              location ~ /\.(?!well-known).* {
+                  deny all;
+              }
+          }
+          NGINX
+          scp -i ~/.ssh/id_ed25519 /tmp/college-demo.nginx "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/college-demo.nginx"
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            'sudo install -m 644 /tmp/college-demo.nginx /etc/nginx/sites-available/college.manifestghana.com && sudo ln -sfn /etc/nginx/sites-available/college.manifestghana.com /etc/nginx/sites-enabled/college.manifestghana.com && sudo nginx -t && sudo systemctl reload nginx'

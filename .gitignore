@@ -24,4 +24,5 @@ deploy-johnson.php
 deployOld.php
 deploy.php
 deployGabe.php
+demoservercredentials.env
 *.xlsx
