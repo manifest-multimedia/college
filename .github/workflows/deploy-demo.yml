@@ -65,7 +65,9 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           set -euo pipefail
-          sql_escape() { printf '%s' "$1" | sed "s/'/''/g"; }
+          # Escape both MySQL string delimiters and backslashes. This is
+          # necessary when a generated database password contains symbols.
+          sql_escape() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e "s/'/''/g"; }
           db_user=$(sql_escape "$DB_USERNAME")
           db_password=$(sql_escape "$DB_PASSWORD")
 
