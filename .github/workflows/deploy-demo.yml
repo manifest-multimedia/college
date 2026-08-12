@@ -112,28 +112,43 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" 'bash -s' <<EOF
+          demo_env_payload=$(php -r 'echo base64_encode(json_encode([
+              "APP_NAME" => "College360 Demo",
+              "APP_ENV" => "production",
+              "APP_DEBUG" => "false",
+              "APP_URL" => "https://college.manifestghana.com",
+              "DB_CONNECTION" => getenv("DB_CONNECTION"),
+              "DB_HOST" => "127.0.0.1",
+              "DB_PORT" => "3306",
+              "DB_DATABASE" => getenv("DB_DATABASE"),
+              "DB_USERNAME" => getenv("DB_USERNAME"),
+              "DB_PASSWORD" => getenv("DB_PASSWORD"),
+          ], JSON_THROW_ON_ERROR));')
+
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s -- '$demo_env_payload'" <<'EOF'
           set -euo pipefail
           cd /var/www/college.manifestghana.com/current
 
           if [ ! -f .env ]; then
             cp .env.example .env
-            cat >> .env <<CONFIG
-          APP_NAME="College360 Demo"
-          APP_ENV=production
-          APP_DEBUG=false
-          APP_URL=https://college.manifestghana.com
-          DB_CONNECTION=$DB_CONNECTION
-          DB_HOST=127.0.0.1
-          DB_PORT=3306
-          DB_DATABASE=$DB_DATABASE
-          DB_USERNAME=$DB_USERNAME
-          DB_PASSWORD=$DB_PASSWORD
-          CONFIG
           fi
 
+          php -r '
+              $updates = json_decode(base64_decode($argv[1]), true, flags: JSON_THROW_ON_ERROR);
+              $path = ".env";
+              $contents = file_get_contents($path);
+              foreach ($updates as $key => $value) {
+                  $line = $key."=".str_replace(["\\", "\"", "\n", "\r"], ["\\\\", "\\\"", "\\n", ""], (string) $value);
+                  $pattern = "/^".preg_quote($key, "/")."=.*/m";
+                  $contents = preg_match($pattern, $contents) ? preg_replace($pattern, $line, $contents) : rtrim($contents)."\n".$line."\n";
+              }
+              file_put_contents($path, $contents);
+          ' "$1"
+
           composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-          php artisan key:generate --force
+          if ! grep -q '^APP_KEY=base64:' .env; then
+            php artisan key:generate --force
+          fi
           php artisan migrate --force
           php artisan storage:link || true
           php artisan config:cache
