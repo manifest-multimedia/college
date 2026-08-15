@@ -10,6 +10,27 @@ use Illuminate\Support\Facades\Log;
 
 class MCPIntegrationService
 {
+    /**
+     * These tools can be selected by the local Needle model. Mutating tools
+     * continue through the existing assistant flow, where confirmation and
+     * richer reasoning are available.
+     */
+    public static function needleReadOnlyToolNames(): array
+    {
+        return [
+            'list_courses',
+            'list_question_sets',
+            'get_question_set_details',
+            'list_exams',
+            'get_exam_details',
+            'get_student_id_statistics',
+            'parse_student_id',
+            'get_student_id_configuration',
+            'list_cohorts',
+            'get_cohort_student_count',
+        ];
+    }
+
     protected $mcpService;
 
     protected $studentMcpService;
@@ -527,6 +548,18 @@ class MCPIntegrationService
     }
 
     /**
+     * Needle consumes raw function schemas rather than the OpenAI wrapper.
+     */
+    public function getNeedleToolsConfig(): array
+    {
+        return collect($this->getMCPToolsConfig())
+            ->pluck('function')
+            ->filter(fn (array $tool) => in_array($tool['name'] ?? null, self::needleReadOnlyToolNames(), true))
+            ->values()
+            ->all();
+    }
+
+    /**
      * Process MCP function calls from OpenAI Assistant with permission checks
      */
     public function processFunctionCall(string $functionName, array $arguments): array
@@ -909,14 +942,14 @@ class MCPIntegrationService
         $contextString .= "3. NEVER use `add_question_to_set` repeatedly in a loop\n";
         $contextString .= "4. Parse the file content programmatically - look for question patterns (Q:, Question:, numbered lists)\n";
         $contextString .= "5. If file format is unclear, ask user for the pattern/structure once, then extract all\n";
-        
+
         $contextString .= "\n📋 **Common Question File Formats**:\n";
         $contextString .= "- Pattern 1: `Q: [question]\\nA) option\\nB) option\\nCorrect: A`\n";
         $contextString .= "- Pattern 2: `1. [question]\\na. option\\nb. option\\nAnswer: a`\n";
         $contextString .= "- Pattern 3: Lines starting with numbers followed by period or parenthesis\n";
         $contextString .= "- Pattern 4: JSON arrays with question objects\n";
         $contextString .= "💡 Use regex or string parsing to extract all at once, don't process line-by-line\n";
-        
+
         $contextString .= "\n🤖 **Smart Question Extraction Algorithm**:\n";
         $contextString .= "```\n";
         $contextString .= "1. Read entire file content with file_search\n";

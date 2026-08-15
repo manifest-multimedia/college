@@ -64,6 +64,13 @@ return [
         'assistant_id' => env('OPENAI_ASSISTANT_ID', 'asst_NazjcT8qxaTUYexZuvcjiDss'),
     ],
 
+    'needle' => [
+        'enabled' => env('NEEDLE_ENABLED', false),
+        'url' => env('NEEDLE_URL', 'http://127.0.0.1:8011'),
+        'timeout' => env('NEEDLE_TIMEOUT', 5),
+        'minimum_confidence' => env('NEEDLE_MINIMUM_CONFIDENCE', 0.90),
+    ],
+
     'offline_exam_app' => [
         'api_token' => env('OFFLINE_EXAM_APP_API_TOKEN', 'bDp3UbbV4N0wY5mvOsIF52P1BMvXTUDk0K6A3SboNTwoLtyHtUxhWuDZv6gZxwhp'),
     ],

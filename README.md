@@ -1,66 +1,260 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# College360
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+College360 is a Laravel-based college management system for student administration, academic records and multi-year results, examinations, billing and fees, communications, elections, reporting, and student self-service.
 
-## About Laravel
+The application is deployed as separate institutional instances so each institution can retain its own configuration, data, customisations, and release path.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Contents
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Technology and requirements](#technology-and-requirements)
+- [Local development](#local-development)
+- [Configuration](#configuration)
+- [Useful commands](#useful-commands)
+- [AI Sensei and Needle](#ai-sensei-and-needle)
+- [Deployment](#deployment)
+- [Security and operational notes](#security-and-operational-notes)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Technology and requirements
 
-## Learning Laravel
+| Area | Requirement |
+| --- | --- |
+| Application | PHP 8.2 or later (PHP 8.4 is used by deployment workflows) |
+| Framework | Laravel 12, Livewire 3 |
+| PHP dependencies | Composer 2 |
+| Front-end build | Node.js 22 and npm |
+| Database | MySQL/MariaDB in production; SQLite can be used locally |
+| Runtime services | A web server with PHP-FPM, a queue worker where queues are enabled, and scheduled tasks where configured |
+| Optional local AI | Python 3.10+ with `venv` for the private Needle sidecar |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Local development
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+1. Clone the repository and create an environment file.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   ```bash
+   git clone https://github.com/manifest-multimedia/college.git
+   cd college
+   cp .env.example .env
+   ```
 
-## Laravel Sponsors
+2. Configure `DB_*` values in `.env`. For a quick local SQLite setup, set `DB_CONNECTION=sqlite` and create the configured SQLite database file.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. Install dependencies and initialise the application.
 
-### Premium Partners
+   ```bash
+   composer install
+   npm ci
+   php artisan key:generate
+   php artisan migrate
+   npm run build
+   ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+4. Start the application.
 
-## Contributing
+   ```bash
+   php artisan serve
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+   For the normal full development stack, use:
 
-## Code of Conduct
+   ```bash
+   composer run dev
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+   This runs the Laravel server, queue listener, logs, and Vite development server together.
 
-## Security Vulnerabilities
+## Configuration
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Use `.env.example` as the baseline. Never commit `.env`, private keys, deployment exports, or database credentials.
+
+Important settings include:
+
+| Setting group | Purpose |
+| --- | --- |
+| `APP_*` | Application name, environment, debug mode, URL, and encryption key |
+| `DB_*` | Database connection and credentials |
+| `SESSION_*`, `CACHE_*`, `QUEUE_*` | Laravel runtime storage and workers |
+| `AUTH_*`, `AUTHCENTRAL_*` | Institution-specific authentication behaviour |
+| `OPENAI_*` | Existing external AI Sensei assistant integration and file processing |
+| `NEEDLE_*` | Optional local-first AI Sensei tool routing; disabled by default |
+
+After changing configuration in production, refresh Laravel's cached configuration:
+
+```bash
+php artisan optimize:clear
+php artisan config:cache
+```
+
+## Useful commands
+
+```bash
+# Run the test suite
+php artisan test
+
+# Run a focused test
+php artisan test tests/Unit/Services/NeedleToolRouterTest.php
+
+# Format PHP code changed in the worktree
+vendor/bin/pint --dirty
+
+# Apply pending database migrations in production
+php artisan migrate --force
+
+# Inspect registered routes
+php artisan route:list
+```
+
+## AI Sensei and Needle
+
+AI Sensei continues to use the established MCP integration: application code, permissions, and business rules are the only authority for reading or changing College360 data.
+
+[Needle](https://github.com/cactus-compute/needle) is an optional small local model used before the external assistant for straightforward, high-confidence tool selection and structured argument extraction. The model does **not** receive direct database access and it does **not** execute application actions.
+
+### What stays local
+
+When enabled, Needle can select only these read-only Sensei tools:
+
+- List courses, question sets, exams, and cohorts
+- View question-set and exam details
+- View or parse student-ID configuration and statistics
+- Get a cohort student count
+
+Laravel validates the model output, applies the existing MCP permission checks, and executes the permitted tool. The response is stored in the normal AI Sensei conversation history.
+
+### When the external assistant is used
+
+The request is passed to the existing AI assistant when Needle is unavailable, below the confidence threshold, cannot match a tool, a file is attached, the request needs broader reasoning, or the request could change data. This includes creating exams or question sets, bulk imports, student-ID reassignment, and deletion.
+
+### Install the Needle sidecar
+
+Needle runs as a private Python HTTP service alongside Laravel. It must not be exposed to the public internet: Laravel is the only intended caller.
+
+The following example assumes Ubuntu/Debian and the demo path. Substitute the institution's actual release path for other deployments.
+
+1. Install Python prerequisites and create a durable virtual environment outside the web root.
+
+   ```bash
+   sudo apt update
+   sudo apt install -y python3 python3-venv
+   sudo install -d -o www-data -g www-data /opt/college360-needle
+   sudo -u www-data python3 -m venv /opt/college360-needle/venv
+   sudo -u www-data /opt/college360-needle/venv/bin/pip install --upgrade pip
+   sudo -u www-data /opt/college360-needle/venv/bin/pip install -r /var/www/college.manifestghana.com/current/services/needle/requirements.txt
+   ```
+
+2. Download Needle's inference engine once, using the same service user that will run it.
+
+   ```bash
+   sudo -u www-data HOME=/opt/college360-needle /opt/college360-needle/venv/bin/needle fetch
+   ```
+
+3. Create `/etc/systemd/system/college360-needle.service`.
+
+   ```ini
+   [Unit]
+   Description=College360 Needle sidecar
+   After=network-online.target
+   Wants=network-online.target
+
+   [Service]
+   Type=simple
+   User=www-data
+   Group=www-data
+   WorkingDirectory=/var/www/college.manifestghana.com/current/services/needle
+   Environment=HOME=/opt/college360-needle
+   ExecStart=/opt/college360-needle/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8011
+   Restart=always
+   RestartSec=5
+   NoNewPrivileges=true
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+4. Enable and verify the service.
+
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now college360-needle
+   sudo systemctl status college360-needle
+   curl --fail http://127.0.0.1:8011/health
+   ```
+
+   A healthy response is `{"ok":true}`. Troubleshoot with `sudo journalctl -u college360-needle -f`.
+
+5. Enable the Laravel integration in the institution's `.env` only after the health check succeeds.
+
+   ```dotenv
+   NEEDLE_ENABLED=true
+   NEEDLE_URL=http://127.0.0.1:8011
+   NEEDLE_TIMEOUT=5
+   NEEDLE_MINIMUM_CONFIDENCE=0.90
+   ```
+
+6. Refresh Laravel configuration.
+
+   ```bash
+   cd /var/www/college.manifestghana.com/current
+   php artisan optimize:clear
+   php artisan config:cache
+   ```
+
+### Needle operations
+
+- Keep the sidecar bound to `127.0.0.1` unless it is behind a protected internal network and authenticated transport.
+- Do not put credentials or database connection strings in the sidecar configuration.
+- The first model download is intentional; normal inference is local after the engine is cached.
+- The deployment workflows upload the sidecar source but do not create the Python environment or systemd service. Provision each server once, then restart the service after changes to `services/needle` or its requirements:
+
+  ```bash
+  sudo -u www-data /opt/college360-needle/venv/bin/pip install -r /var/www/college.manifestghana.com/current/services/needle/requirements.txt
+  sudo systemctl restart college360-needle
+  ```
+
+The lightweight sidecar source is in [services/needle](services/needle/README.md).
+
+## Deployment
+
+Pushing to `master` starts the institutional deployment workflows independently and in parallel:
+
+| Workflow | Target | GitHub environment |
+| --- | --- | --- |
+| `deploy-mhtia.yml` | MHTIA | `mhtia-production` |
+| `deploy-pnmtc.yml` | PNMTC | `pnmtc-production` |
+| `deploy-demo.yml` | `college.manifestghana.com` demo | `demo-production` |
+
+Each environment owns its deployment credentials and application configuration. Use GitHub Environment secrets; do not place server credentials in the repository.
+
+The demo workflow provisions its application database, publishes to `/var/www/college.manifestghana.com/current`, installs production Composer dependencies, builds front-end assets, runs migrations, caches Laravel configuration, and configures the Nginx virtual host. It requires these `demo-production` secrets:
+
+```text
+DEPLOY_HOST
+DEPLOY_USER
+SSH_KEY
+DB_CONNECTION
+DB_DATABASE
+DB_USERNAME
+DB_PASSWORD
+```
+
+MHTIA and PNMTC use their existing Deployer configuration supplied by their respective GitHub environments. A workflow can also be started manually through GitHub Actions.
+
+### Production checklist
+
+- Confirm the target environment secrets are present and correct.
+- Verify `.env` has production-safe `APP_ENV`, `APP_DEBUG=false`, `APP_URL`, database, mail, queue, and institution authentication settings.
+- Back up the database before data-affecting migrations.
+- Confirm queue workers and scheduled tasks are running where the institution uses them.
+- Run `php artisan migrate --force`, cache configuration, and verify a login and a critical student/admin workflow.
+- If enabling Needle, complete its health check before setting `NEEDLE_ENABLED=true`.
+
+## Security and operational notes
+
+- Student access is restricted to active students by the `student.active` middleware.
+- Sensitive information belongs in GitHub Environment secrets or server `.env` files, never source control or logs.
+- Treat AI Sensei write requests as privileged actions. Existing role and MCP permission checks remain mandatory regardless of the AI provider.
+- Take database backups before migrations, bulk changes, or institutional data imports.
+- Check `storage/logs/laravel.log`, web-server logs, queue-worker logs, GitHub Actions logs, and `journalctl` for production issues.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+College360 is proprietary software. All rights reserved unless a separate written license states otherwise.

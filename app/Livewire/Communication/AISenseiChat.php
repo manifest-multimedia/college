@@ -7,11 +7,13 @@ use App\Models\User;
 use App\Services\Communication\Chat\ChatSessionService;
 use App\Services\Communication\Chat\MarkdownRenderingService;
 use App\Services\Communication\Chat\MCPIntegrationService;
+use App\Services\Communication\Chat\Needle\NeedleToolRouter;
 use App\Services\Communication\Chat\OpenAI\OpenAIAssistantsService;
 use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -77,19 +79,23 @@ class AISenseiChat extends Component
 
     protected $chatSessionService;
 
+    protected $needleToolRouter;
+
     // Constructor with dependency injection
     public function boot(
         OpenAIAssistantsService $openAIAssistantsService,
         OpenAIFilesService $openAIFilesService,
         MCPIntegrationService $mcpIntegrationService,
         MarkdownRenderingService $markdownRenderingService,
-        ChatSessionService $chatSessionService
+        ChatSessionService $chatSessionService,
+        NeedleToolRouter $needleToolRouter
     ) {
         $this->openAIAssistantsService = $openAIAssistantsService;
         $this->openAIFilesService = $openAIFilesService;
         $this->mcpIntegrationService = $mcpIntegrationService;
         $this->markdownRenderingService = $markdownRenderingService;
         $this->chatSessionService = $chatSessionService;
+        $this->needleToolRouter = $needleToolRouter;
     }
 
     public function mount()
@@ -204,7 +210,11 @@ class AISenseiChat extends Component
                         'content' => $content,
                         'created_at' => $message['created_at'],
                     ];
-                })->toArray();
+                })
+                    ->merge($this->getStoredNeedleMessages())
+                    ->sortBy('created_at')
+                    ->values()
+                    ->toArray();
 
                 // Dispatch event for message updates
                 $this->dispatch('messages-updated');
@@ -222,6 +232,28 @@ class AISenseiChat extends Component
             ]);
             $this->error = 'Error loading messages: '.$e->getMessage();
         }
+    }
+
+    /**
+     * OpenAI does not know about requests handled locally, so restore those
+     * messages from our chat history when a session is re-opened.
+     */
+    protected function getStoredNeedleMessages()
+    {
+        if (! $this->currentChatSession) {
+            return collect();
+        }
+
+        return $this->currentChatSession->messages()
+            ->orderBy('created_at')
+            ->get()
+            ->filter(fn ($message) => ($message->metadata['provider'] ?? null) === 'needle')
+            ->map(fn ($message) => [
+                'id' => 'needle-history-'.$message->id,
+                'role' => $message->type === 'user' ? 'user' : 'assistant',
+                'content' => [['type' => 'text', 'text' => $message->message]],
+                'created_at' => $message->created_at->toIso8601String(),
+            ]);
     }
 
     public function loadAttachedFiles()
@@ -257,7 +289,7 @@ class AISenseiChat extends Component
     {
         // Increase PHP execution time for AI operations (prevents 504 gateway timeout)
         set_time_limit(300); // 5 minutes for AI processing
-        
+
         // Get message from parameter if provided, otherwise use the property
         $messageText = $message ?: $this->newMessage;
 
@@ -267,6 +299,17 @@ class AISenseiChat extends Component
 
         // 🎯 Natural Language Enhancement: Detect bulk operation intent
         $messageText = $this->enhanceMessageForBulkOperations($messageText);
+
+        // Needle handles simple, read-only requests locally. It returns false
+        // for uncertainty, write operations, file work, and service failures;
+        // those continue to the existing assistant below.
+        if (empty($this->pendingFiles) && $this->tryNeedleResponse($messageText)) {
+            if (! $message) {
+                $this->newMessage = '';
+            }
+
+            return;
+        }
 
         // Check if assistant ID is set
         if (! $this->assistantId) {
@@ -383,13 +426,68 @@ class AISenseiChat extends Component
     }
 
     /**
+     * Execute a high-confidence, local Needle request and persist both sides of
+     * the conversation without sending its content to an external model.
+     */
+    protected function tryNeedleResponse(string $message): bool
+    {
+        try {
+            $result = $this->needleToolRouter->handle($message);
+
+            if (! ($result['handled'] ?? false)) {
+                return false;
+            }
+
+            $createdAt = now()->toIso8601String();
+            $userMessage = [
+                'id' => 'needle-user-'.Str::uuid(),
+                'role' => 'user',
+                'content' => [['type' => 'text', 'text' => $message]],
+                'created_at' => $createdAt,
+            ];
+            $assistantMessage = [
+                'id' => 'needle-assistant-'.Str::uuid(),
+                'role' => 'assistant',
+                'content' => [['type' => 'text', 'text' => $result['response']]],
+                'created_at' => $createdAt,
+            ];
+
+            $this->messages[] = $userMessage;
+            $this->messages[] = $assistantMessage;
+
+            if ($this->currentChatSession) {
+                $metadata = [
+                    'provider' => 'needle',
+                    'confidence' => $result['confidence'] ?? null,
+                ];
+                $this->chatSessionService->storeMessage($this->currentChatSession, 'user', $message, $metadata);
+                $this->chatSessionService->storeMessage($this->currentChatSession, 'ai', $result['response'], $metadata);
+                $this->currentChatSession->update(['last_activity_at' => now()]);
+            }
+
+            $this->dispatch('messages-updated');
+            $this->broadcastTypingStatus(false);
+            $this->loadChatSessions();
+
+            return true;
+        } catch (\Exception $exception) {
+            Log::warning('Needle local routing failed; escalating AI Sensei request.', [
+                'error' => $exception->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * Process the AI response - this could be moved to a job if needed
      */
     protected function processAiResponse($runId)
     {
         // Ensure PHP doesn't timeout during long AI processing
         set_time_limit(300); // 5 minutes
-        
+
         try {
             // Enhanced polling with better timeout handling
             $status = 'queued';
@@ -415,7 +513,7 @@ class AISenseiChat extends Component
                     ]);
                     $this->error = '⏱️ Processing took too long (3 minutes). For large files with 100+ questions, try: (1) Ask for a smaller batch (e.g., "Add questions 1-50"), or (2) Upload a smaller file, or (3) Use a simpler file format.';
                     $this->broadcastTypingStatus(false);
-                    
+
                     // Try to cancel the stuck run
                     $this->cancelStuckRun($runId);
 
@@ -1090,7 +1188,7 @@ class AISenseiChat extends Component
     {
         // Increase PHP execution time for file uploads and AI processing
         set_time_limit(300); // 5 minutes
-        
+
         try {
             Log::info('sendMessageWithFiles called', [
                 'customMessage' => $customMessage,
@@ -1111,9 +1209,9 @@ class AISenseiChat extends Component
             $this->error = null;
 
             // Prepare the message content with explicit instruction to read files
-            if (!empty($this->pendingFiles) && empty(trim($customMessage ?: $this->newMessage))) {
+            if (! empty($this->pendingFiles) && empty(trim($customMessage ?: $this->newMessage))) {
                 // Generate file list for better context
-                $fileList = array_map(fn($f) => $f['filename'], $this->pendingFiles);
+                $fileList = array_map(fn ($f) => $f['filename'], $this->pendingFiles);
                 $fileNames = implode(', ', $fileList);
                 $messageText = "I've attached the file(s): {$fileNames}. Please confirm you can access the content and provide a brief summary of what you found.";
             } else {
@@ -1713,7 +1811,7 @@ class AISenseiChat extends Component
     {
         // Convert to lowercase for pattern matching
         $lowerMessage = strtolower($message);
-        
+
         // Patterns that indicate bulk operation intent
         $bulkPatterns = [
             '/\b(add\s+)?all\s+(the\s+)?(questions?|remaining|rest)\b/i',
@@ -1722,22 +1820,22 @@ class AISenseiChat extends Component
             '/\b(add|import)\s+\d{2,}\s+questions?\b/i', // 10+ questions
             '/\b(add|import)\s+questions?\s+\d+\s*-\s*\d+\b/i', // range like "1-100"
         ];
-        
+
         foreach ($bulkPatterns as $pattern) {
             if (preg_match($pattern, $message)) {
                 // Add explicit bulk operation instruction
                 $enhancement = "\n\n[SYSTEM INSTRUCTION: Use bulk_add_questions_to_set to add ALL questions in ONE operation. Extract the complete list from the file and pass them together. Do NOT add questions one by one.]";
-                
+
                 Log::info('Enhanced message for bulk operation', [
                     'original_message' => $message,
                     'pattern_matched' => $pattern,
                     'user_id' => Auth::id(),
                 ]);
-                
-                return $message . $enhancement;
+
+                return $message.$enhancement;
             }
         }
-        
+
         return $message;
     }
 
