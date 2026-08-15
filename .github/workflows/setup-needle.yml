@@ -1,0 +1,163 @@
+name: Provision Needle Sidecar
+
+on:
+  workflow_dispatch:
+    inputs:
+      institution:
+        description: Institution to provision
+        required: true
+        type: choice
+        options:
+          - mhtia
+          - pnmtc
+
+jobs:
+  mhtia:
+    if: inputs.institution == 'mhtia'
+    name: Provision Needle for MHTIA
+    runs-on: ubuntu-latest
+    environment: mhtia-production
+    env:
+      DEPLOY_HOST: 69.197.187.20
+      DEPLOY_USER: administrator
+      APP_PATH: /var/www/portal.mhtia.edu.gh/current
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Install, verify, and enable Needle
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s -- '${APP_PATH}'" <<'EOF'
+          set -euo pipefail
+          app_path="$1"
+
+          sudo -n apt-get update
+          sudo -n apt-get install -y python3-venv
+          sudo -n install -d -o www-data -g www-data /opt/college360-needle
+          if [ ! -x /opt/college360-needle/venv/bin/python ]; then
+            sudo -n -u www-data python3 -m venv /opt/college360-needle/venv
+          fi
+          sudo -n -u www-data env HOME=/opt/college360-needle /opt/college360-needle/venv/bin/pip install --upgrade pip
+          sudo -n -u www-data env HOME=/opt/college360-needle /opt/college360-needle/venv/bin/pip install -r "$app_path/services/needle/requirements.txt"
+          sudo -n -u www-data env HOME=/opt/college360-needle /opt/college360-needle/venv/bin/needle fetch
+
+          sudo -n tee /etc/systemd/system/college360-needle.service >/dev/null <<UNIT
+          [Unit]
+          Description=College360 Needle sidecar
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User=www-data
+          Group=www-data
+          WorkingDirectory=$app_path/services/needle
+          Environment=HOME=/opt/college360-needle
+          ExecStart=/opt/college360-needle/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8011
+          Restart=always
+          RestartSec=5
+          NoNewPrivileges=true
+
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          sudo -n systemctl daemon-reload
+          sudo -n systemctl enable --now college360-needle
+          curl --fail --silent --show-error http://127.0.0.1:8011/health
+
+          cd "$app_path"
+          for setting in NEEDLE_ENABLED=true NEEDLE_URL=http://127.0.0.1:8011 NEEDLE_TIMEOUT=5 NEEDLE_MINIMUM_CONFIDENCE=0.90; do
+            key="${setting%%=*}"
+            if grep -q "^${key}=" .env; then
+              sed -i "s|^${key}=.*|${setting}|" .env
+            else
+              printf '\n%s\n' "$setting" >> .env
+            fi
+          done
+          php artisan optimize:clear
+          php artisan config:cache
+          EOF
+
+  pnmtc:
+    if: inputs.institution == 'pnmtc'
+    name: Provision Needle for PNMTC
+    runs-on: ubuntu-latest
+    environment: pnmtc-production
+    env:
+      DEPLOY_HOST: 62.77.158.206
+      DEPLOY_USER: pnmtc
+      APP_PATH: /var/www/college.pnmtc.edu.gh/current
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Install, verify, and enable Needle
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s -- '${APP_PATH}'" <<'EOF'
+          set -euo pipefail
+          app_path="$1"
+
+          sudo -n apt-get update
+          sudo -n apt-get install -y python3-venv
+          sudo -n install -d -o www-data -g www-data /opt/college360-needle
+          if [ ! -x /opt/college360-needle/venv/bin/python ]; then
+            sudo -n -u www-data python3 -m venv /opt/college360-needle/venv
+          fi
+          sudo -n -u www-data env HOME=/opt/college360-needle /opt/college360-needle/venv/bin/pip install --upgrade pip
+          sudo -n -u www-data env HOME=/opt/college360-needle /opt/college360-needle/venv/bin/pip install -r "$app_path/services/needle/requirements.txt"
+          sudo -n -u www-data env HOME=/opt/college360-needle /opt/college360-needle/venv/bin/needle fetch
+
+          sudo -n tee /etc/systemd/system/college360-needle.service >/dev/null <<UNIT
+          [Unit]
+          Description=College360 Needle sidecar
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User=www-data
+          Group=www-data
+          WorkingDirectory=$app_path/services/needle
+          Environment=HOME=/opt/college360-needle
+          ExecStart=/opt/college360-needle/venv/bin/uvicorn app:app --host 127.0.0.1 --port 8011
+          Restart=always
+          RestartSec=5
+          NoNewPrivileges=true
+
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          sudo -n systemctl daemon-reload
+          sudo -n systemctl enable --now college360-needle
+          curl --fail --silent --show-error http://127.0.0.1:8011/health
+
+          cd "$app_path"
+          for setting in NEEDLE_ENABLED=true NEEDLE_URL=http://127.0.0.1:8011 NEEDLE_TIMEOUT=5 NEEDLE_MINIMUM_CONFIDENCE=0.90; do
+            key="${setting%%=*}"
+            if grep -q "^${key}=" .env; then
+              sed -i "s|^${key}=.*|${setting}|" .env
+            else
+              printf '\n%s\n' "$setting" >> .env
+            fi
+          done
+          php artisan optimize:clear
+          php artisan config:cache
+          EOF
