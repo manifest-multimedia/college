@@ -47,11 +47,21 @@
                             </div>
                             <!--end::Aside toggle-->
                             <!--begin::Logo-->
-                            <a href="{{ url('/') }}">
-                                <img alt="Logo" src="{{ asset(config('branding.logo.app', config('branding.logo.primary', '/images/app-logo.png'))) }}"
-                                    class="h-25px h-lg-30px d-none d-md-block" />
-                                <img alt="Logo" src="{{ asset(config('branding.logo.app', config('branding.logo.primary', '/images/app-logo.png'))) }}"
-                                    class="h-25px d-block d-md-none" />
+                            @php
+                                $appLogo = config('branding.logo.app') ?: config('branding.logo.primary');
+                                $appLogoFile = is_string($appLogo) && str_starts_with($appLogo, '/')
+                                    ? public_path(ltrim($appLogo, '/'))
+                                    : null;
+                                $hasAppLogo = $appLogoFile && is_file($appLogoFile) && is_readable($appLogoFile);
+                                $institutionAcronym = config('branding.institution.short_name') ?: config('app.name');
+                            @endphp
+                            <a href="{{ url('/') }}" class="d-flex align-items-center text-white text-decoration-none">
+                                @if ($hasAppLogo)
+                                    <img alt="{{ config('branding.institution.name', config('app.name')) }}"
+                                        src="{{ asset($appLogo) }}" class="h-25px h-lg-30px"
+                                        onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');" />
+                                @endif
+                                <span class="fw-bold fs-5 {{ $hasAppLogo ? 'd-none' : '' }}">{{ $institutionAcronym }}</span>
                             </a>
                             <!--end::Logo-->
                         </div>
@@ -442,4 +452,3 @@
                     <!--end::Container-->
                 </div>
                 <!--end::Header-->
-                

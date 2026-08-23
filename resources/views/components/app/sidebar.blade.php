@@ -358,7 +358,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
             
-            @hasrole('Super Admin|Administrator|Academic Officer')
+            @hasrole('System|Super Admin|Administrator|Academic Officer')
             <!--begin:Menu item-->
             @php
                 $academicRoutes = ['academics.dashboard', 'academics.exam-types', 'academic-officer.assessment-scores', 'assessment-scores'];
@@ -416,7 +416,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     @endhasrole
                     
-                    @hasanyrole(['Academic Officer', 'Super Admin'])
+                    @hasanyrole(['System', 'Academic Officer', 'Super Admin'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('academic-officer.assessment-scores') ? 'active' : '' }}" href="{{ route('academic-officer.assessment-scores') }}">
@@ -866,7 +866,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
-                    @hasrole('Finance Officer|Super Admin|Administrator')
+                    @hasrole('System|Finance Officer|Super Admin|Administrator')
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('finance.course.registration.approvals') ? 'active' : '' }}" href="{{ route('finance.course.registration.approvals') }}">
@@ -964,7 +964,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             ];
             $isElectionActive = in_array(request()->route()->getName(), $electionRoutes);
         @endphp
-            @hasanyrole('Super Admin|Administrator')
+            @hasanyrole('System|Super Admin|Administrator')
             <!--begin:Menu item-->
            
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isElectionActive ? 'show' : '' }}">

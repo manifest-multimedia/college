@@ -254,7 +254,7 @@ Route::middleware([
     });
 
     // Academic Officer Assessment Score Management
-    Route::middleware(['auth:sanctum', 'role:Academic Officer|Super Admin'])->prefix('academic-officer')->name('academic-officer.')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Academic Officer|Super Admin'])->prefix('academic-officer')->name('academic-officer.')->group(function () {
         Route::get('/assessment-scores', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'index'])->name('assessment-scores');
         Route::get('/assessment-scores/get', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'getScores'])->name('assessment-scores.get');
         Route::post('/assessment-scores/{id}/toggle-publish', [App\Http\Controllers\AcademicOfficer\AssessmentScoreManagementController::class, 'togglePublish'])->name('assessment-scores.toggle-publish');
@@ -521,7 +521,7 @@ Route::middleware([
     | Finance Officer Course Registration Approvals
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Finance Officer|Super Admin|Administrator'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Finance Officer|Super Admin|Administrator'])->group(function () {
         Route::get('/finance/course-registration-approvals', function () {
             return view('finance.course-registration-approvals');
         })->name('finance.course.registration.approvals');

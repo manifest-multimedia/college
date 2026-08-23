@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\BrandingSettingsService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +24,8 @@ class ThemeServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        app(BrandingSettingsService::class)->apply();
+
         // Share branding configuration with all views
         View::share('branding', config('branding'));
 

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\BrandingSettingsService;
 use App\Services\ThemeService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -14,9 +14,12 @@ class BrandingController extends Controller
 {
     protected ThemeService $themeService;
 
-    public function __construct(ThemeService $themeService)
+    protected BrandingSettingsService $brandingSettings;
+
+    public function __construct(ThemeService $themeService, BrandingSettingsService $brandingSettings)
     {
         $this->themeService = $themeService;
+        $this->brandingSettings = $brandingSettings;
     }
 
     /**
@@ -318,7 +321,7 @@ class BrandingController extends Controller
             $showBackgroundPattern = $request->show_background_pattern == '1' ? 'true' : 'false';
             $enableAnimations = $request->enable_animations == '1' ? 'true' : 'false';
 
-            // Update .env file
+            // Persist branding settings without changing deployment secrets.
             $this->updateEnvFile([
                 'AUTH_THEME' => $request->auth_theme,
                 'INSTITUTION_NAME' => '"'.$request->institution_name.'"',
@@ -443,7 +446,7 @@ class BrandingController extends Controller
             $envKey = 'COLLEGE_LOGO_'.strtoupper($logoType);
             $this->updateEnvFile([$envKey => $webPath]);
 
-            Log::info('Updated env file', ['key' => $envKey, 'value' => $webPath]);
+            Log::info('Updated branding setting', ['key' => $envKey, 'value' => $webPath]);
 
             // Test if .env file is still valid after update
             try {
@@ -453,8 +456,8 @@ class BrandingController extends Controller
                 // Verify the new configuration can be loaded
                 config('branding.logo.'.$logoType);
             } catch (\Exception $configException) {
-                Log::error('Configuration became invalid after env update', ['error' => $configException->getMessage()]);
-                throw new \Exception('Configuration update failed. The .env file may be corrupted.');
+                Log::error('Configuration became invalid after branding update', ['error' => $configException->getMessage()]);
+                throw new \Exception('Configuration update failed.');
             }
 
             return redirect()->back()->with('success', ucfirst($logoType).' logo uploaded successfully!');
@@ -473,51 +476,12 @@ class BrandingController extends Controller
     }
 
     /**
-     * Update .env file with new values
+     * Persist administrator-managed branding values without making .env writable
+     * to the PHP process.
      */
     protected function updateEnvFile(array $values): void
     {
-        $envFile = base_path('.env');
-        $envContent = File::get($envFile);
-
-        foreach ($values as $key => $value) {
-            if ($value === null) {
-                // Remove the line if value is null
-                $envContent = preg_replace("/^{$key}=.*$/m", '', $envContent);
-            } else {
-                // Properly escape and quote the value
-                $escapedValue = $this->formatEnvValue($value);
-
-                if (preg_match("/^{$key}=.*$/m", $envContent)) {
-                    // Update existing key
-                    $envContent = preg_replace("/^{$key}=.*$/m", "{$key}={$escapedValue}", $envContent);
-                } else {
-                    // Add new key
-                    $envContent .= "\n{$key}={$escapedValue}";
-                }
-            }
-        }
-
-        File::put($envFile, $envContent);
-    }
-
-    /**
-     * Format a value for .env file
-     */
-    protected function formatEnvValue($value): string
-    {
-        // If value already has quotes, return as is
-        if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-            (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
-            return $value;
-        }
-
-        // If value contains spaces, quotes, or special characters, wrap in double quotes
-        if (preg_match('/[\s"\'#\\\\]/', $value)) {
-            return '"'.str_replace('"', '\\"', $value).'"';
-        }
-
-        return $value;
+        $this->brandingSettings->update($values);
     }
 
     /**
@@ -555,14 +519,7 @@ class BrandingController extends Controller
      */
     protected function refreshConfiguration(): void
     {
-        Cache::forget('config');
-        Artisan::call('config:clear');
-
-        // In production environments, we need to regenerate the config cache
-        // since Laravel caches configuration for performance
-        if (app()->environment('production')) {
-            Artisan::call('config:cache');
-            Log::info('Configuration cache regenerated for production environment');
-        }
+        Cache::forget(BrandingSettingsService::CACHE_KEY);
+        $this->brandingSettings->apply();
     }
 }
