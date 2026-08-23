@@ -134,7 +134,7 @@
                   
                   
                         <!--begin::Container-->
-                        <div id="kt_content_container" class="container-xxl">
+                        <div id="kt_content_container" class="container-fluid">
                          
                           {{ $slot }}
                      

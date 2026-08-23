@@ -1,10 +1,31 @@
 <!--begin::Aside-->
-<div id="kt_aside" class="py-9 aside" data-kt-drawer="true" data-kt-drawer-name="aside"
+<div id="kt_aside" class="aside" data-kt-drawer="true" data-kt-drawer-name="aside"
 data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true"
 data-kt-drawer-width="{default:'200px', '300px': '250px'}" data-kt-drawer-direction="start"
 data-kt-drawer-toggle="#kt_aside_toggle">
     <!-- Collapsible Sidebar Styles -->
     <style>
+        /*
+         * The theme reserves 330px for the 300px desktop aside and its 30px
+         * outer gutter. Keep that reservation in sync with the sidebar state
+         * so the workspace, rather than just the aside, collapses.
+         */
+        @media (min-width: 992px) {
+            #kt_wrapper {
+                min-width: 0;
+                transition: padding-left 0.2s ease;
+            }
+
+            body.sidebar-collapsed #kt_wrapper {
+                padding-left: 102px !important; /* 72px icon rail + 30px gutter */
+            }
+
+            #kt_content,
+            #kt_content_container {
+                min-width: 0;
+            }
+        }
+
         /* Collapsed Aside Base */
         body.sidebar-collapsed #kt_aside {
             width: 72px !important;
@@ -39,17 +60,118 @@ data-kt-drawer-toggle="#kt_aside_toggle">
         /* Footer compaction */
         body.sidebar-collapsed #kt_aside .aside-footer { display: none; }
 
-        /* Collapse toggle button styling */
-        #sidebarCollapseToggle { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 60; }
+        /*
+         * Keep the control outside the navigation flow. The header remains
+         * visible while the separately scrollable menu contains long lists.
+         */
+        .aside-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 0 0 56px;
+            min-height: 56px;
+            padding: 0 1rem;
+            border-bottom: 1px solid var(--bs-gray-200);
+        }
+
+        #sidebarCollapseToggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            color: var(--bs-gray-700);
+            background: var(--bs-gray-100);
+            border: 1px solid var(--bs-gray-200);
+            border-radius: 9px;
+            box-shadow: none;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+        #sidebarCollapseToggle:hover { color: var(--bs-primary); background: var(--bs-primary-light); border-color: var(--bs-primary-light); }
+        #sidebarCollapseToggle:active { transform: scale(0.96); }
+        #sidebarCollapseToggle:focus-visible { outline: 3px solid rgba(var(--bs-primary-rgb), 0.3); outline-offset: 2px; }
         body.sidebar-collapsed #sidebarCollapseToggle .fa-chevron-left { transform: rotate(180deg); }
 
-        /* Make content container fluid when collapsed so content fills freed space */
-        body.sidebar-collapsed #kt_content_container.container-xxl { max-width: 100% !important; }
+        body.sidebar-collapsed #kt_aside .aside-header,
+        body.sidebar-collapsed #kt_aside .aside-menu {
+            width: 100%;
+        }
+        body.sidebar-collapsed #kt_aside .aside-header { justify-content: center; padding: 0; }
+        body.sidebar-collapsed #kt_aside .aside-menu {
+            padding: 1rem 0.5rem 0.75rem !important;
+            margin-bottom: 0 !important;
+        }
+        /*
+         * The expanded menu has an asymmetric right-padding utility (pe-2).
+         * A rail must remove that inherited geometry and center its children
+         * from the full 72px width.
+         */
+        body.sidebar-collapsed #kt_aside_menu_wrapper {
+            display: flex;
+            width: 100%;
+            padding-inline: 0 !important;
+            justify-content: center;
+            /* Avoid a right-only scrollbar shifting rail controls left. */
+            scrollbar-width: none;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper::-webkit-scrollbar { width: 0; height: 0; }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            min-height: 44px;
+            padding: 0 !important;
+            margin: 0.25rem auto;
+            border-radius: 10px;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link.active,
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item.here > .menu-link {
+            background: rgba(var(--bs-primary-rgb), 0.12);
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link.active .menu-icon,
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item.here > .menu-link .menu-icon {
+            color: var(--bs-primary);
+        }
+        /*
+         * The rail is icon-centered, but temporary hover expansion is a normal
+         * sidebar: restore full-width, left-aligned navigation items.
+         */
+        body.sidebar-collapsed #kt_aside:hover .aside-menu { padding: 0.75rem 1rem !important; }
+        body.sidebar-collapsed #kt_aside:hover #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link {
+            justify-content: flex-start;
+            width: 100%;
+            padding: 0.65rem 0.75rem !important;
+            margin-right: 0;
+            margin-left: 0;
+        }
+        body.sidebar-collapsed #kt_aside:hover #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link .menu-icon {
+            margin-right: 0.75rem !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #kt_wrapper,
+            body.sidebar-collapsed #kt_aside { transition: none !important; }
+        }
     </style>
-    <!-- Collapse / Expand Button -->
-    <button id="sidebarCollapseToggle" class="btn btn-sm btn-light" type="button" title="Toggle sidebar">
-        <i class="fas fa-chevron-left"></i>
-    </button>
+    <div class="aside-header">
+        <button id="sidebarCollapseToggle" type="button" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">
+            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+        </button>
+    </div>
     <!--begin::Aside menu-->
 <div class="mb-7 aside-menu flex-column-fluid ps-5 pe-3" id="kt_aside_menu">
     <!--begin::Aside Menu-->
@@ -1377,37 +1499,36 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             const key = 'cis.sidebar.collapsed';
             const body = document.body;
             const toggleBtn = document.getElementById('sidebarCollapseToggle');
-            const content = document.getElementById('kt_content_container');
-            function applyContentWidth(){
-                if(!content) return;
-                if(body.classList.contains('sidebar-collapsed')){
-                    content.classList.add('container-fluid');
-                    content.classList.remove('container-xxl');
-                } else {
-                    content.classList.remove('container-fluid');
-                    content.classList.add('container-xxl');
-                }
+            function updateToggleAccessibility(){
+                const isCollapsed = body.classList.contains('sidebar-collapsed');
+                toggleBtn?.setAttribute('aria-expanded', String(!isCollapsed));
+                toggleBtn?.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+                toggleBtn?.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
             }
             // Apply saved state
             if(localStorage.getItem(key) === '1'){
                 body.classList.add('sidebar-collapsed');
             }
-            applyContentWidth();
+            updateToggleAccessibility();
             // Toggle handler
             toggleBtn?.addEventListener('click', function(e){
                 e.preventDefault();
                 body.classList.toggle('sidebar-collapsed');
                 localStorage.setItem(key, body.classList.contains('sidebar-collapsed') ? '1' : '0');
-                applyContentWidth();
+                updateToggleAccessibility();
             });
 
             // Add native title tooltips to menu items from their text labels (for collapsed mode)
             const links = document.querySelectorAll('#kt_aside_menu .menu-link');
             links.forEach(link => {
-                if(!link.getAttribute('title')){
-                    const textEl = link.querySelector('.menu-title');
-                    if(textEl && textEl.textContent.trim().length){
-                        link.setAttribute('title', textEl.textContent.trim());
+                const textEl = link.querySelector('.menu-title');
+                if(textEl && textEl.textContent.trim().length){
+                    const label = textEl.textContent.trim();
+                    if(!link.getAttribute('title')){
+                        link.setAttribute('title', label);
+                    }
+                    if(!link.getAttribute('aria-label')){
+                        link.setAttribute('aria-label', label);
                     }
                 }
             });

@@ -1,7 +1,5 @@
-<div>
-    <x-dashboard.default title="Ticket Detail - {{ $ticket->ticket_number }}">
-        <!--begin::Card-->
-        <div class="card">
+<!--begin::Card-->
+<div class="card">
             <!--begin::Card header-->
             <div class="card-header">
                 <div class="card-title">
@@ -210,7 +208,7 @@
                             <form wire:submit.prevent="submitReply">
                                 <div class="mb-5">
                                     <label class="required fs-6 fw-semibold mb-2">Your Reply</label>
-                                    <textarea class="form-control form-control-solid @error('replyMessage') is-invalid @enderror" rows="6" wire:model="replyMessage" placeholder="Type your reply here"></textarea>
+                                    <textarea class="form-control form-control-solid border border-gray-400 @error('replyMessage') is-invalid @enderror" rows="6" wire:model="replyMessage" placeholder="Type your reply here" style="border-width: 1px !important;"></textarea>
                                     @error('replyMessage') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                                 
@@ -262,5 +260,4 @@
             <!--end::Card body-->
         </div>
         <!--end::Card-->
-    </x-dashboard.default>
 </div>

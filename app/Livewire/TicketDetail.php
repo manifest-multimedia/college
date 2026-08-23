@@ -49,7 +49,10 @@ class TicketDetail extends Component
 
     public function render()
     {
-        return view('livewire.ticket-detail');
+        return view('livewire.ticket-detail')
+            ->layout('components.dashboard.default', [
+                'title' => 'Ticket Detail - '.$this->ticket->ticket_number,
+            ]);
     }
 
     public function submitReply()

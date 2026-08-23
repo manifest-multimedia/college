@@ -1,602 +1,72 @@
 @php
     $authService = app(\App\Services\AuthenticationService::class);
+    $institutionName = config('branding.institution.name', config('app.name'));
+    $institutionAcronym = config('branding.institution.short_name') ?: config('app.name');
+    $authLogo = config('branding.logo.auth') ?: config('branding.logo.primary');
+    $authLogoFile = is_string($authLogo) && str_starts_with($authLogo, '/') ? public_path(ltrim($authLogo, '/')) : null;
+    $hasAuthLogo = $authLogoFile && is_file($authLogoFile) && is_readable($authLogoFile);
+    $supportEmail = config('branding.institution.support_email');
 @endphp
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{{ config('branding.institution.name', config('app.name')) }} - Login</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <title>{{ $institutionName }} — Sign in</title>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b1736">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset(config('branding.logo.favicon', '/favicon.ico')) }}">
-
     <style>
-        :root {
-            --primary-color: {{ config('branding.colors.primary', '#3B82F6') }};
-            --secondary-color: {{ config('branding.colors.secondary', '#64748B') }};
-            --accent-color: {{ config('branding.colors.accent', '#10B981') }};
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Animated Background Elements */
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-            z-index: 1;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            top: 10%;
-            right: 10%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: pulse 4s ease-in-out infinite;
-            z-index: 1;
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 0.4; }
-        }
-
-        .auth-container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 380px;
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 1.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
-            animation: slideUp 0.6s ease-out;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 400px;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .institution-header {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .institution-logo {
-            width: 55px;
-            height: 55px;
-            margin: 0 auto 0.5rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: white;
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-        }
-
-        .institution-name {
-            font-size: 1.375rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.125rem;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .institution-tagline {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 400;
-        }
-
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .welcome-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 0.125rem;
-        }
-
-        .welcome-subtitle {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .sso-section {
-            margin-bottom: 1rem;
-        }
-
-        .sso-btn {
-            width: 100%;
-            padding: 0.65rem 1rem;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25);
-        }
-
-        .sso-btn:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
-            color: white;
-            text-decoration: none;
-        }
-
-        .sso-description {
-            text-align: center;
-            font-size: 0.7rem;
-            margin-top: 0.375rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .divider {
-            text-align: center;
-            margin: 1rem 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .divider span {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0 0.75rem;
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.8);
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-
-        .form-group {
-            margin-bottom: 0.875rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.375rem;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .password-field {
-            position: relative;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.625rem 0.75rem;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            color: white;
-            font-size: 0.8rem;
-            transition: all 0.3s ease;
-            font-family: inherit;
-            backdrop-filter: blur(10px);
-        }
-
-        .form-control.has-icon {
-            padding-right: 2.5rem;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-            padding: 0;
-            width: 1.5rem;
-            height: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.3s ease;
-        }
-
-        .password-toggle:hover {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-        }
-
-        .form-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .form-check {
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .form-check-input {
-            margin: 0;
-            accent-color: var(--primary-color);
-        }
-
-        .form-check-label {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin: 0;
-        }
-
-        .forgot-link {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .forgot-link:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 0.65rem 1rem;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            backdrop-filter: blur(10px);
-        }
-
-        .submit-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .registration-section {
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .registration-text {
-            font-size: 0.8rem;
-            margin-bottom: 0.375rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .registration-links {
-            display: flex;
-            justify-content: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .registration-link {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .registration-link:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .support-section {
-            text-align: center;
-            margin-top: 0.875rem;
-        }
-
-        .support-link {
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            font-size: 0.7rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            transition: color 0.3s ease;
-        }
-
-        .support-link:hover {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Status Messages */
-        .alert {
-            margin-bottom: 0.875rem;
-            padding: 0.625rem 0.875rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            border: 1px solid #10b981;
-            color: #065f46;
-        }
-
-        .alert-danger {
-            background: #fee2e2;
-            border: 1px solid #ef4444;
-            color: #991b1b;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .glass-card {
-                padding: 1.5rem 1.25rem;
-                margin: 0.5rem;
-            }
-            
-            .institution-name {
-                font-size: 1.25rem;
-            }
-            
-            .welcome-title {
-                font-size: 1rem;
-            }
-            
-            .registration-links {
-                flex-direction: column;
-                gap: 0.375rem;
-            }
-        }
+        :root { --primary:{{ config('branding.colors.primary', '#2563eb') }};--accent:{{ config('branding.colors.accent', '#14b8a6') }};--navy:#0b1736;--ink:#0f172a;--muted:#64748b;--line:#dbe3ee;--surface:#f8fafc; }
+        *{box-sizing:border-box} body{min-width:320px;min-height:100vh;margin:0;color:var(--ink);background:var(--surface);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        .auth-shell{display:grid;min-height:100vh;grid-template-columns:minmax(0,1.25fr) minmax(420px,.95fr)}
+        .brand-panel{position:relative;display:flex;overflow:hidden;color:#fff;background:radial-gradient(circle at 16% 12%,rgba(59,130,246,.3),transparent 32%),radial-gradient(circle at 82% 82%,rgba(20,184,166,.18),transparent 30%),linear-gradient(145deg,#071126 0%,var(--navy) 52%,#142a5a 100%)}
+        .brand-panel:before{position:absolute;inset:0;content:"";opacity:.18;background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,#000,transparent 80%)}
+        .brand-panel:after{position:absolute;right:-18rem;bottom:-20rem;width:36rem;height:36rem;content:"";border:1px solid rgba(255,255,255,.15);border-radius:50%;box-shadow:0 0 0 4.5rem rgba(255,255,255,.025),0 0 0 9rem rgba(255,255,255,.02)}
+        .brand-content{position:relative;z-index:1;display:flex;flex-direction:column;width:min(100%,720px);padding:clamp(2rem,5vw,5.5rem);margin:auto}.brand-lockup,.mobile-brand{display:flex;align-items:center;gap:.875rem}
+        .brand-mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:3rem;height:3rem;overflow:hidden;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.18)}.brand-mark img{width:100%;height:100%;padding:.35rem;object-fit:contain}.brand-logo-text{max-width:14rem;color:#fff;font-size:1rem;font-weight:700;line-height:1.25;letter-spacing:-.03em;overflow-wrap:anywhere}.brand-name{max-width:30rem;font-size:1rem;font-weight:600;line-height:1.35}.brand-product{margin-top:.1rem;color:rgba(255,255,255,.65);font-size:.78rem;font-weight:500}
+        .brand-message{max-width:38rem;padding:5rem 0 3rem;margin:auto 0}.brand-kicker{margin:0 0 1rem;color:#8ed5ff;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.brand-message h1{max-width:10ch;margin:0;color:#fff;font-size:clamp(2.35rem,4.4vw,4.25rem);font-weight:700;line-height:1.06;letter-spacing:-.055em}.brand-message>p:last-child{max-width:34rem;margin:1.35rem 0 0;color:rgba(232,241,255,.9);font-size:1.04rem;line-height:1.75}
+        .benefits{display:grid;gap:.85rem;padding:0;margin:0;list-style:none}.benefits li{display:flex;align-items:center;gap:.65rem;color:rgba(255,255,255,.86);font-size:.9rem}.benefits i{display:inline-flex;align-items:center;justify-content:center;width:1.35rem;height:1.35rem;color:#bcefff;background:rgba(255,255,255,.09);border-radius:50%}
+        .form-panel{display:flex;align-items:center;justify-content:center;padding:clamp(1.5rem,5vw,4.5rem);background:#f8fafc}.auth-card{width:min(100%,29rem)}.mobile-brand{display:none}.auth-heading{margin:0;font-size:clamp(1.75rem,3vw,2.15rem);font-weight:700;letter-spacing:-.04em}.auth-intro{margin:.65rem 0 1.8rem;color:var(--muted);font-size:.94rem}
+        .alert{display:flex;gap:.7rem;margin:0 0 1.25rem;padding:.9rem 1rem;border:1px solid;border-radius:.8rem;font-size:.875rem;line-height:1.45}.alert ul{padding:0;margin:0;list-style:none}.alert-success{color:#065f46;background:#ecfdf5;border-color:#a7f3d0}.alert-danger{color:#8f1d18;background:#fef3f2;border-color:#fecdca}
+        .auth-action{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:3.15rem;gap:.65rem;padding:.75rem 1rem;border-radius:.72rem;font-size:.925rem;font-weight:600;text-decoration:none;cursor:pointer;transition:transform .18s,box-shadow .18s,background-color .18s,border-color .18s}.sso-btn{color:#fff;background:var(--primary);border:1px solid var(--primary);box-shadow:0 10px 20px color-mix(in srgb,var(--primary) 24%,transparent)}.sso-btn:hover{color:#fff;background:color-mix(in srgb,var(--primary) 88%,#000);transform:translateY(-1px);box-shadow:0 14px 24px color-mix(in srgb,var(--primary) 30%,transparent)}.sso-caption{margin:.65rem 0 0;color:var(--muted);font-size:.76rem;text-align:center}.divider{display:flex;align-items:center;gap:.85rem;margin:1.65rem 0;color:var(--muted);font-size:.76rem;font-weight:500}.divider:before,.divider:after{flex:1;height:1px;content:"";background:var(--line)}
+        .form-group{margin-bottom:1.15rem}.form-label{display:block;margin:0 0 .48rem;color:#334155;font-size:.84rem;font-weight:600}.field-wrap{position:relative}.field-icon{position:absolute;top:50%;left:1rem;color:var(--muted);pointer-events:none;transform:translateY(-50%)}.form-control{display:block;width:100%;min-height:3.15rem;padding:.75rem 1rem .75rem 2.75rem;color:var(--ink);background:#fff;border:1px solid #cbd5e1;border-radius:.72rem;font:inherit;font-size:.93rem;transition:border-color .18s,box-shadow .18s}.password-field .form-control{padding-right:3rem}.form-control::placeholder{color:#94a3b8}.form-control:focus{border-color:var(--primary);box-shadow:0 0 0 .24rem color-mix(in srgb,var(--primary) 15%,transparent);outline:0}.form-control.is-invalid{border-color:#b42318;background-image:none}.invalid-feedback{display:block;margin-top:.45rem;color:#b42318;font-size:.78rem}
+        .password-toggle{position:absolute;top:50%;right:.45rem;display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;padding:0;color:var(--muted);background:transparent;border:0;border-radius:.5rem;cursor:pointer;transform:translateY(-50%)}.password-toggle:hover{color:var(--primary);background:#eff6ff}.form-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:-.1rem 0 1.35rem}.form-check{display:flex;align-items:center;gap:.55rem}.form-check-input{width:1.05rem;height:1.05rem;margin:0;cursor:pointer}.form-check-input:checked{background-color:var(--primary);border-color:var(--primary)}.form-check-label,.forgot-link{font-size:.82rem}.forgot-link{color:var(--primary);font-weight:600;text-decoration:none;white-space:nowrap}.forgot-link:hover,.support-link:hover{color:color-mix(in srgb,var(--primary) 80%,#000);text-decoration:underline}
+        .email-submit{color:#1e293b;background:#fff;border:1px solid #cbd5e1}.email-submit:hover{background:#f1f5f9;border-color:#94a3b8;transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.08)}.auth-action[disabled],.auth-action.is-loading{cursor:wait;opacity:.72;transform:none;box-shadow:none}.button-spinner{display:none;width:1rem;height:1rem;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}.is-loading .button-spinner{display:inline-block}.is-loading .button-icon{display:none}
+        .registration-section{margin-top:1.75rem;padding-top:1.5rem;border-top:1px solid var(--line)}.registration-title{margin:0 0 .75rem;color:var(--muted);font-size:.82rem;text-align:center}.registration-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.registration-link{display:flex;align-items:center;justify-content:center;min-height:2.65rem;gap:.4rem;padding:.5rem .65rem;color:#334155;background:#fff;border:1px solid var(--line);border-radius:.65rem;font-size:.78rem;font-weight:600;text-align:center;text-decoration:none}.registration-link:hover{color:var(--primary);background:#f8fbff;border-color:color-mix(in srgb,var(--primary) 45%,white)}.support-section{margin-top:1.5rem;color:var(--muted);font-size:.78rem;text-align:center}.support-link{display:inline-flex;align-items:center;gap:.35rem;color:var(--muted);text-decoration:none}.support-link strong{color:var(--primary)}.auth-action:focus-visible,.form-control:focus-visible,.password-toggle:focus-visible,.registration-link:focus-visible,.forgot-link:focus-visible,.support-link:focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 35%,white);outline-offset:2px}@keyframes spin{to{transform:rotate(360deg)}}
+        @media(max-width:1024px){.auth-shell{grid-template-columns:minmax(0,1fr) minmax(390px,.9fr)}.brand-content{padding:2.5rem}.brand-message{padding:4rem 0 2rem}}@media(max-width:760px){body{background:#fff}.auth-shell{display:block}.brand-panel{display:none}.form-panel{display:block;min-height:100vh;padding:1.5rem 1.25rem 2rem;background:#fff}.auth-card{max-width:31rem;margin:0 auto}.mobile-brand{display:flex;margin-bottom:2.25rem}.mobile-brand .brand-mark{width:2.65rem;height:2.65rem;background:var(--navy);border-color:var(--navy);box-shadow:none}.mobile-brand .brand-logo-text{color:var(--ink);font-size:.9rem}.mobile-brand .brand-name{color:var(--ink);font-size:.9rem}.mobile-brand .brand-product{color:var(--muted)}}@media(max-width:390px){.form-panel{padding:1.2rem 1rem 1.75rem}.form-row{align-items:flex-start;flex-wrap:wrap;gap:.65rem}.registration-links{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
     </style>
 </head>
-
 <body>
-    <div class="auth-container">
-        @if (session('status'))
-            <div class="alert alert-success" role="alert">
-                {{ session('status') }}
-            </div>
+<main class="auth-shell">
+    <section class="brand-panel" aria-label="{{ $institutionName }} information"><div class="brand-content">
+        <div class="brand-lockup">@if($hasAuthLogo)<div class="brand-mark"><img src="{{ asset($authLogo) }}" alt="{{ $institutionName }} logo"></div>@else<div class="brand-logo-text">{{ $institutionAcronym }}</div>@endif<div><div class="brand-name">{{ $institutionName }}</div><div class="brand-product">College360</div></div></div>
+        <div class="brand-message"><p class="brand-kicker">Modern Academic Management</p><h1>Everything your institution needs, in one place.</h1><p>Bring academics, student records, staff operations and institutional workflows together in a secure, connected platform.</p></div>
+        <ul class="benefits" aria-label="College360 benefits"><li><i class="bi bi-shield-check" aria-hidden="true"></i>Secure institutional access</li><li><i class="bi bi-diagram-3" aria-hidden="true"></i>Unified academic management</li><li><i class="bi bi-people" aria-hidden="true"></i>Built for students and staff</li></ul>
+    </div></section>
+    <section class="form-panel" aria-label="Sign in"><div class="auth-card">
+        <div class="mobile-brand">@if($hasAuthLogo)<div class="brand-mark"><img src="{{ asset($authLogo) }}" alt="{{ $institutionName }} logo"></div>@else<div class="brand-logo-text">{{ $institutionAcronym }}</div>@endif<div><div class="brand-name">{{ $institutionName }}</div><div class="brand-product">College360</div></div></div>
+        @if(session('status'))<div class="alert alert-success" role="status"><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>{{ session('status') }}</span></div>@endif
+        @if($errors->any())<div class="alert alert-danger" role="alert" aria-live="assertive"><i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+        <header><h1 class="auth-heading">Welcome back</h1><p class="auth-intro">Sign in to continue to College360.</p></header>
+        @if(config('branding.theme_settings.show_auth_central_button',true) && $authService->getAuthCentralLoginUrl())
+        <div><a href="{{ $authService->getAuthCentralLoginUrl() }}" class="auth-action sso-btn" data-sso-login><span class="button-spinner" aria-hidden="true"></span><i class="bi bi-box-arrow-in-right button-icon" aria-hidden="true"></i><span>Continue with AuthCentral SSO</span></a><p class="sso-caption">Single Sign-On <span aria-hidden="true">·</span> Quick &amp; Secure</p></div>
+        @if(config('branding.theme_settings.show_regular_login',true))<div class="divider" aria-hidden="true">or continue with email</div>@endif
         @endif
-
-        @if ($errors->any())
-            <div class="alert alert-danger" role="alert">
-                @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="glass-card">
-            <!-- Institution Branding -->
-            <div class="institution-header">
-                <div class="institution-logo">
-                    @if(config('branding.logo.auth') || config('branding.logo.primary'))
-                        <img src="{{ asset(config('branding.logo.auth', config('branding.logo.primary'))) }}" alt="Logo" style="width: 35px; height: 35px; border-radius: 50%;">
-                    @else
-                        <i class="fas fa-graduation-cap"></i>
-                    @endif
-                </div>
-                <h1 class="institution-name">{{ config('branding.institution.name', config('app.name')) }}</h1>
-                <p class="institution-tagline">Modern Academic Management</p>
-            </div>
-
-            <!-- Welcome Section -->
-            <div class="welcome-section">
-                <h2 class="welcome-title">Welcome Back</h2>
-                <p class="welcome-subtitle">Sign in to continue your journey</p>
-            </div>
-
-            {{-- AuthCentral SSO Login Option --}}
-            @if(config('branding.theme_settings.show_auth_central_button', true) && $authService->getAuthCentralLoginUrl())
-                <div class="sso-section">
-                    <a href="{{ $authService->getAuthCentralLoginUrl() }}" class="sso-btn">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Continue with AuthCentral SSO
-                    </a>
-                    <p class="sso-description">Single Sign-On - Quick & Secure</p>
-                </div>
-
-                @if(config('branding.theme_settings.show_regular_login', true))
-                    {{-- Divider --}}
-                    <div class="divider">
-                        <span>OR</span>
-                    </div>
-                @endif
-            @endif
-
-            @if(config('branding.theme_settings.show_regular_login', true))
-                {{-- Email/Password Login Form --}}
-                <form method="POST" action="{{ route('regular.login') }}">
-                @csrf
-                
-                <div class="form-group">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" 
-                           class="form-control @error('email') is-invalid @enderror" 
-                           id="email" 
-                           name="email" 
-                           value="{{ old('email') }}" 
-                           required 
-                           autofocus 
-                           autocomplete="username"
-                           placeholder="Enter your email address">
-                    @error('email')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="password-field">
-                        <input type="password" 
-                               class="form-control has-icon @error('password') is-invalid @enderror" 
-                               id="password" 
-                               name="password" 
-                               required 
-                               autocomplete="current-password"
-                               placeholder="Enter your password">
-                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                            <i class="fas fa-eye" id="password-eye"></i>
-                        </button>
-                    </div>
-                    @error('password')
-                        <div class="invalid-feedback">
-                            {{ $message }}
-                        </div>
-                    @enderror
-                </div>
-
-                <div class="form-row">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                        <label class="form-check-label" for="remember">
-                            Remember me
-                        </label>
-                    </div>
-                    <a class="forgot-link" href="{{ route('password.request') }}">
-                        Forgot password?
-                    </a>
-                </div>
-
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-envelope"></i>
-                    Sign In with Email
-                </button>
-            </form>
-            @endif
-
-            {{-- Registration Links --}}
-            <div class="registration-section">
-                <p class="registration-text">Don't have an account?</p>
-                <div class="registration-links">
-                    @if ($authService->getStaffSignupUrl())
-                        <a class="registration-link" href="{{ $authService->getStaffSignupUrl() }}">Staff Registration</a>
-                    @endif
-                    @if ($authService->getStudentSignupUrl())
-                        <a class="registration-link" href="{{ $authService->getStudentSignupUrl() }}">Student Registration</a>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Support Link --}}
-            <div class="support-section">
-                <a class="support-link" href="mailto:{{ config('branding.support.email', 'support@college.edu') }}">
-                    <i class="fas fa-envelope"></i>
-                    Support
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function togglePassword(fieldId) {
-            const field = document.getElementById(fieldId);
-            const icon = document.getElementById(fieldId + '-eye');
-            
-            if (field.type === 'password') {
-                field.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                field.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-    </script>
-</body>
-</html>
+        @if(config('branding.theme_settings.show_regular_login',true))
+        <form method="POST" action="{{ route('regular.login') }}" data-login-form>@csrf
+            <div class="form-group"><label for="email" class="form-label">Email address</label><div class="field-wrap"><i class="bi bi-envelope field-icon" aria-hidden="true"></i><input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="name@institution.edu" @error('email') aria-describedby="email-error" @enderror></div>@error('email')<div class="invalid-feedback" id="email-error">{{ $message }}</div>@enderror</div>
+            <div class="form-group"><label for="password" class="form-label">Password</label><div class="field-wrap password-field"><i class="bi bi-lock field-icon" aria-hidden="true"></i><input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password" @error('password') aria-describedby="password-error" @enderror><button type="button" class="password-toggle" data-password-toggle aria-controls="password" aria-label="Show password" title="Show password"><i class="bi bi-eye" aria-hidden="true"></i></button></div>@error('password')<div class="invalid-feedback" id="password-error">{{ $message }}</div>@enderror</div>
+            <div class="form-row"><div class="form-check"><input class="form-check-input" type="checkbox" name="remember" id="remember" @checked(old('remember'))><label class="form-check-label" for="remember">Remember me</label></div><a class="forgot-link" href="{{ route('password.request') }}">Forgot password?</a></div>
+            <button type="submit" class="auth-action email-submit" data-submit-button><span class="button-spinner" aria-hidden="true"></span><i class="bi bi-envelope button-icon" aria-hidden="true"></i><span data-submit-label>Sign In with Email</span></button>
+        </form>@endif
+        @if($authService->getStaffSignupUrl() || $authService->getStudentSignupUrl())<section class="registration-section" aria-label="Registration options"><p class="registration-title">New to College360?</p><div class="registration-links">@if($authService->getStaffSignupUrl())<a class="registration-link" href="{{ $authService->getStaffSignupUrl() }}"><i class="bi bi-person-workspace" aria-hidden="true"></i>Register as Staff</a>@endif @if($authService->getStudentSignupUrl())<a class="registration-link" href="{{ $authService->getStudentSignupUrl() }}"><i class="bi bi-mortarboard" aria-hidden="true"></i>Register as Student</a>@endif</div></section>@endif
+        @if($supportEmail)<footer class="support-section"><a class="support-link" href="mailto:{{ $supportEmail }}"><i class="bi bi-question-circle" aria-hidden="true"></i>Need help signing in? <strong>Contact Support</strong></a></footer>@endif
+    </div></section>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded',function(){const t=document.querySelector('[data-password-toggle]');t?.addEventListener('click',function(){const i=document.getElementById(this.getAttribute('aria-controls')),e=this.querySelector('i'),s=i.type==='password';i.type=s?'text':'password';this.setAttribute('aria-label',s?'Hide password':'Show password');this.title=s?'Hide password':'Show password';e.classList.toggle('bi-eye',!s);e.classList.toggle('bi-eye-slash',s)});document.querySelector('[data-login-form]')?.addEventListener('submit',function(){const b=this.querySelector('[data-submit-button]');b.disabled=true;b.classList.add('is-loading');b.setAttribute('aria-busy','true');b.querySelector('[data-submit-label]').textContent='Signing in…'});document.querySelector('[data-sso-login]')?.addEventListener('click',function(){this.classList.add('is-loading');this.setAttribute('aria-busy','true')},{once:true})});
+</script>
+</body></html>
