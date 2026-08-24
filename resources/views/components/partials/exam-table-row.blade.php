@@ -42,7 +42,7 @@
                                 @endif
                             </span>
                         </td>
-                        @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
+                        @if(Auth::user()->hasAnyRole(['System', 'admin', 'Super Admin']))
                         <td>
                             
                             <span class="text-muted fw-semibold d-block fs-7">{{ $exam->password }}</span>
@@ -93,7 +93,7 @@
                                         </a>
                                     </li>
                                     
-                                    @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
+                                    @if(Auth::user()->hasAnyRole(['System', 'admin', 'Super Admin']))
                                         <li>
                                             <a href="{{ route('exams.edit', $exam->slug ? $exam->slug : $exam->id) }}" class="dropdown-item">
                                                 <i class="ki-duotone ki-pencil fs-6 me-2">

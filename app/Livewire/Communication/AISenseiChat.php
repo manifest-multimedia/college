@@ -34,6 +34,14 @@ class AISenseiChat extends Component
 
     public $error = null;
 
+    /**
+     * A non-blocking notice shown when only the local AI Sensei tools are
+     * available. Provider and credential details must never reach the UI.
+     */
+    public $serviceNotice = null;
+
+    public $usesLocalTools = false;
+
     public $isAITyping = false;
 
     public $isLoading = false;
@@ -107,13 +115,6 @@ class AISenseiChat extends Component
             // Set assistant ID from config
             $this->assistantId = Config::get('services.openai.assistant_id');
 
-            if (! $this->assistantId) {
-                Log::error('OpenAI Assistant ID is not configured', [
-                    'user_id' => Auth::id(),
-                ]);
-                $this->error = 'OpenAI Assistant ID is not configured. Please check your configuration.';
-            }
-
             // Initialize thread and messages
             $this->initializeChat($user);
         } catch (\Exception $e) {
@@ -121,7 +122,8 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = 'Failed to initialize chat: '.$e->getMessage();
+            $this->startLocalChatIfAvailable($user);
+            $this->error = $this->advancedReasoningUnavailableMessage();
         }
     }
 
@@ -133,7 +135,30 @@ class AISenseiChat extends Component
         // Get or restore the current thread
         $this->threadId = session('ai_sensei_thread_id');
 
+        if ($this->threadId && $this->isLocalSessionId($this->threadId)) {
+            $this->currentChatSession = $this->chatSessionService->getOrCreateActiveSession($user, $this->threadId);
+            $this->usesLocalTools = true;
+            $this->loadLocalMessages();
+
+            return;
+        }
+
+        // An existing external conversation cannot be used while the external
+        // reasoning service is not configured. Start a separate local session
+        // so the user can still use the safe Needle-backed tools.
+        if ($this->threadId && ! $this->hasExternalAssistantConfiguration()) {
+            $this->startLocalChatIfAvailable($user);
+
+            return;
+        }
+
         if (! $this->threadId) {
+            if (! $this->hasExternalAssistantConfiguration()) {
+                $this->startLocalChatIfAvailable($user);
+
+                return;
+            }
+
             // Create a new thread if one doesn't exist
             $threadResponse = $this->openAIAssistantsService->createThread();
 
@@ -144,7 +169,11 @@ class AISenseiChat extends Component
                 // Create a new chat session in the database
                 $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
             } else {
-                throw new \Exception('Failed to create a new thread: '.($threadResponse['message'] ?? 'Unknown error'));
+                Log::warning('AI Sensei external thread could not be created; using local tools if available.', [
+                    'user_id' => $user->id,
+                    'provider_message' => $threadResponse['message'] ?? 'Unknown error',
+                ]);
+                $this->startLocalChatIfAvailable($user);
             }
         } else {
             // Get or create the chat session for this thread
@@ -154,13 +183,69 @@ class AISenseiChat extends Component
             $this->loadMessages();
         }
 
-        // Load any files attached to this thread
-        $this->loadAttachedFiles();
+        // Load any files attached to this thread.
+        if ($this->threadId) {
+            $this->loadAttachedFiles();
+        }
+    }
+
+    protected function hasExternalAssistantConfiguration(): bool
+    {
+        return filled(Config::get('services.openai.key')) && filled($this->assistantId);
+    }
+
+    protected function isLocalSessionId(?string $sessionId): bool
+    {
+        return is_string($sessionId) && Str::startsWith($sessionId, 'needle_');
+    }
+
+    protected function startLocalChatIfAvailable(User $user): void
+    {
+        if (! config('services.needle.enabled')) {
+            $this->error = $this->advancedReasoningUnavailableMessage();
+
+            return;
+        }
+
+        $this->threadId = 'needle_'.Str::uuid();
+        $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
+        $this->currentChatSession->update([
+            'metadata' => array_merge($this->currentChatSession->metadata ?? [], [
+                'provider' => 'needle',
+                'local_only' => true,
+            ]),
+        ]);
+        $this->usesLocalTools = true;
+        $this->serviceNotice = 'AI Sensei is currently using secure local institutional tools. Advanced reasoning and file analysis will be available when the reasoning service is restored.';
+        session(['ai_sensei_thread_id' => $this->threadId]);
+        $this->messages = [];
+        $this->filesAttachedToThread = [];
+        $this->loadChatSessions();
+    }
+
+    protected function loadLocalMessages(): void
+    {
+        $this->messages = $this->getStoredNeedleMessages()->values()->toArray();
+        $this->filesAttachedToThread = [];
+        $this->dispatch('messages-updated');
+    }
+
+    protected function advancedReasoningUnavailableMessage(): string
+    {
+        return config('services.needle.enabled')
+            ? 'AI Sensei’s advanced reasoning service is unavailable right now. You can still use supported local institutional tools, or try again later.'
+            : 'AI Sensei is temporarily unavailable. Please try again later or contact your administrator.';
     }
 
     public function loadMessages()
     {
         if (! $this->threadId) {
+            return;
+        }
+
+        if ($this->isLocalSessionId($this->threadId)) {
+            $this->loadLocalMessages();
+
             return;
         }
 
@@ -223,14 +308,16 @@ class AISenseiChat extends Component
                     'error' => $response['message'] ?? 'Unknown error',
                     'thread_id' => $this->threadId,
                 ]);
-                $this->error = 'Failed to load messages: '.($response['message'] ?? 'Unknown error');
+                $this->error = 'AI Sensei could not retrieve this conversation right now. Please try again.';
+                $this->startLocalChatIfAvailable(Auth::user());
             }
         } catch (\Exception $e) {
             Log::error('Error loading messages', [
                 'error' => $e->getMessage(),
                 'thread_id' => $this->threadId,
             ]);
-            $this->error = 'Error loading messages: '.$e->getMessage();
+            $this->error = 'AI Sensei could not retrieve this conversation right now. Please try again.';
+            $this->startLocalChatIfAvailable(Auth::user());
         }
     }
 
@@ -258,7 +345,7 @@ class AISenseiChat extends Component
 
     public function loadAttachedFiles()
     {
-        if (! $this->threadId) {
+        if (! $this->threadId || $this->isLocalSessionId($this->threadId)) {
             return;
         }
 
@@ -312,9 +399,9 @@ class AISenseiChat extends Component
         }
 
         // Check if assistant ID is set
-        if (! $this->assistantId) {
-            $this->error = 'OpenAI Assistant ID is not configured. Please check your configuration.';
-            Log::error('Assistant ID not set when sending message', [
+        if (! $this->hasExternalAssistantConfiguration() || ! $this->threadId || $this->isLocalSessionId($this->threadId)) {
+            $this->error = $this->advancedReasoningUnavailableMessage();
+            Log::notice('AI Sensei advanced request could not be sent because the external service is unavailable.', [
                 'user_id' => Auth::id(),
             ]);
 
@@ -378,7 +465,12 @@ class AISenseiChat extends Component
             $userMessageResponse = $this->openAIAssistantsService->addMessage($this->threadId, $messageText, 'user');
 
             if (! $userMessageResponse['success']) {
-                $this->error = 'Failed to send message: '.($userMessageResponse['message'] ?? 'Unknown error');
+                Log::warning('AI Sensei external message was rejected.', [
+                    'user_id' => Auth::id(),
+                    'thread_id' => $this->threadId,
+                    'provider_message' => $userMessageResponse['message'] ?? 'Unknown error',
+                ]);
+                $this->error = $this->advancedReasoningUnavailableMessage();
                 $this->broadcastTypingStatus(false);
 
                 return;
@@ -395,7 +487,12 @@ class AISenseiChat extends Component
             );
 
             if (! $runResponse['success']) {
-                $this->error = 'Failed to process message: '.($runResponse['message'] ?? 'Unknown error');
+                Log::warning('AI Sensei external run could not be created.', [
+                    'user_id' => Auth::id(),
+                    'thread_id' => $this->threadId,
+                    'provider_message' => $runResponse['message'] ?? 'Unknown error',
+                ]);
+                $this->error = $this->advancedReasoningUnavailableMessage();
                 $this->broadcastTypingStatus(false);
 
                 return;
@@ -415,7 +512,7 @@ class AISenseiChat extends Component
                 'user_id' => Auth::id(),
                 'thread_id' => $this->threadId,
             ]);
-            $this->error = 'Error sending message: '.$e->getMessage();
+            $this->error = 'AI Sensei could not complete that request right now. Please try again shortly.';
             $this->broadcastTypingStatus(false);
         }
 
@@ -531,7 +628,7 @@ class AISenseiChat extends Component
                         'run_id' => $runId,
                         'error' => $runStatusResponse['message'] ?? 'Unknown error',
                     ]);
-                    $this->error = 'Failed to check message status: '.($runStatusResponse['message'] ?? 'Unknown error');
+                    $this->error = 'AI Sensei could not check the request status right now. Please try again shortly.';
                     $this->broadcastTypingStatus(false);
                     break;
                 }
@@ -628,7 +725,7 @@ class AISenseiChat extends Component
                     ]);
                 } else {
                     // Generic failure for non-rate-limit errors
-                    $this->error = 'AI processing failed: '.($lastError['message'] ?? 'Unknown error').'. Please try again.';
+                    $this->error = 'AI Sensei could not complete that request right now. Please try again shortly.';
                 }
 
                 $this->broadcastTypingStatus(false);
@@ -671,7 +768,7 @@ class AISenseiChat extends Component
                 // Try to cancel the stuck run
                 $this->cancelStuckRun($runId);
 
-                $this->error = "Message processing failed or timed out with status: {$status}. The run has been cancelled.";
+                $this->error = 'AI Sensei took too long to complete that request. Please try again with a simpler request.';
                 $this->broadcastTypingStatus(false);
                 session()->forget('ai_sensei_current_run_id');
             }
@@ -681,7 +778,7 @@ class AISenseiChat extends Component
                 'run_id' => $runId,
                 'thread_id' => $this->threadId,
             ]);
-            $this->error = 'Error processing response: '.$e->getMessage();
+            $this->error = 'AI Sensei could not complete that request right now. Please try again shortly.';
             $this->broadcastTypingStatus(false);
         }
     }
@@ -963,7 +1060,7 @@ class AISenseiChat extends Component
             Log::error('Error staging file uploads', [
                 'error' => $e->getMessage(),
             ]);
-            $this->error = 'Error preparing files: '.$e->getMessage();
+            $this->error = 'AI Sensei could not prepare those files. Please try again.';
         }
     }
 
@@ -983,7 +1080,7 @@ class AISenseiChat extends Component
                     // Refresh the list of attached files
                     $this->loadAttachedFiles();
                 } else {
-                    $this->error = 'Failed to remove file: '.($response['message'] ?? 'Unknown error');
+                    $this->error = 'AI Sensei could not remove that file right now. Please try again.';
                 }
             }
         } catch (\Exception $e) {
@@ -992,7 +1089,7 @@ class AISenseiChat extends Component
                 'file_id' => $fileId,
                 'thread_id' => $this->threadId,
             ]);
-            $this->error = 'Error removing file: '.$e->getMessage();
+            $this->error = 'AI Sensei could not remove that file right now. Please try again.';
         }
     }
 
@@ -1131,7 +1228,7 @@ class AISenseiChat extends Component
                 ]);
 
             } else {
-                $this->error = 'File analysis failed: '.$result['message'];
+                $this->error = 'AI Sensei could not analyse that file right now. Please try again.';
 
                 Log::error('File analysis failed', [
                     'error' => $result['message'],
@@ -1160,7 +1257,7 @@ class AISenseiChat extends Component
                 'thread_id' => $this->threadId,
             ]);
 
-            $this->error = 'Failed to process file: '.$e->getMessage();
+            $this->error = 'AI Sensei could not analyse that file right now. Please try again.';
         } finally {
             $this->uploadingFile = false;
             $this->isAITyping = false;
@@ -1207,6 +1304,12 @@ class AISenseiChat extends Component
 
             $this->uploadingFile = true;
             $this->error = null;
+
+            if (! $this->hasExternalAssistantConfiguration() || $this->isLocalSessionId($this->threadId)) {
+                $this->error = 'AI Sensei’s local tools cannot analyse uploaded files yet. Please try this request again when advanced reasoning is available.';
+
+                return;
+            }
 
             // Prepare the message content with explicit instruction to read files
             if (! empty($this->pendingFiles) && empty(trim($customMessage ?: $this->newMessage))) {
@@ -1293,7 +1396,7 @@ class AISenseiChat extends Component
                         'file_count' => count($fileInfos),
                     ]);
                 } else {
-                    $this->error = 'Failed to send message with files: '.$result['message'];
+                    $this->error = 'AI Sensei could not send that file request right now. Please try again.';
                 }
             } else {
                 // Send regular message without files
@@ -1305,7 +1408,7 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'thread_id' => $this->threadId,
             ]);
-            $this->error = 'Error sending message: '.$e->getMessage();
+            $this->error = 'AI Sensei could not process those files right now. Please try again shortly.';
         } finally {
             $this->uploadingFile = false;
         }
@@ -1318,8 +1421,11 @@ class AISenseiChat extends Component
     {
         try {
             // Check if assistant ID is set
-            if (! $this->assistantId) {
-                Log::error('Assistant ID not set when triggering AI response for files');
+            if (! $this->hasExternalAssistantConfiguration() || $this->isLocalSessionId($this->threadId)) {
+                Log::notice('AI Sensei file processing requires the external reasoning service.', [
+                    'user_id' => Auth::id(),
+                ]);
+                $this->error = 'AI Sensei’s local tools cannot analyse uploaded files yet. Please try this request again when advanced reasoning is available.';
 
                 return;
             }
@@ -1338,7 +1444,7 @@ class AISenseiChat extends Component
             );
 
             if (! $runResponse['success']) {
-                $this->error = 'Failed to process uploaded files: '.($runResponse['message'] ?? 'Unknown error');
+                $this->error = 'AI Sensei could not process those files right now. Please try again shortly.';
                 $this->broadcastTypingStatus(false);
                 Log::error('Failed to create run for file processing', ['error' => $runResponse['message'] ?? 'Unknown error']);
 
@@ -1360,7 +1466,7 @@ class AISenseiChat extends Component
                 'user_id' => Auth::id(),
             ]);
             $this->broadcastTypingStatus(false);
-            $this->error = 'Error processing files: '.$e->getMessage();
+            $this->error = 'AI Sensei could not process those files right now. Please try again shortly.';
         }
     }
 
@@ -1464,16 +1570,21 @@ class AISenseiChat extends Component
             // Switch to this session
             $this->threadId = $sessionId;
             $this->currentChatSession = $session;
+            $this->usesLocalTools = $this->isLocalSessionId($sessionId);
+            $this->serviceNotice = $this->usesLocalTools
+                ? 'This conversation uses secure local institutional tools. Advanced reasoning and file analysis require the reasoning service.'
+                : null;
 
             // Update session storage
             session(['ai_sensei_thread_id' => $sessionId]);
 
-            // Load messages and files
+            // Local conversations are entirely stored in College360. External
+            // conversations retain the existing OpenAI sync behaviour.
             $this->loadMessages();
-            $this->loadAttachedFiles();
-
-            // Sync messages from OpenAI (in case there are new ones)
-            $this->syncMessagesFromOpenAI();
+            if (! $this->usesLocalTools) {
+                $this->loadAttachedFiles();
+                $this->syncMessagesFromOpenAI();
+            }
 
             // Update last activity
             $session->update(['last_activity_at' => now()]);
@@ -1495,7 +1606,7 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = 'Failed to load chat session: '.$e->getMessage();
+            $this->error = 'AI Sensei could not open that conversation. Please try again.';
         }
     }
 
@@ -1505,12 +1616,21 @@ class AISenseiChat extends Component
     public function startNewChat()
     {
         try {
+            $user = Auth::user();
+
+            if (! $this->hasExternalAssistantConfiguration()) {
+                $this->startLocalChatIfAvailable($user);
+
+                return;
+            }
+
             // Create a new thread
             $threadResponse = $this->openAIAssistantsService->createThread();
 
             if ($threadResponse['success']) {
-                $user = Auth::user();
                 $this->threadId = $threadResponse['data']['id'];
+                $this->usesLocalTools = false;
+                $this->serviceNotice = null;
 
                 // Create new chat session in database
                 $this->currentChatSession = $this->chatSessionService->createNewSession($user, $this->threadId);
@@ -1536,14 +1656,19 @@ class AISenseiChat extends Component
                     'title' => $this->currentChatSession->title,
                 ]);
             } else {
-                $this->error = 'Failed to start new chat: '.($threadResponse['message'] ?? 'Unknown error');
+                Log::warning('AI Sensei external new chat could not be created.', [
+                    'user_id' => $user->id,
+                    'provider_message' => $threadResponse['message'] ?? 'Unknown error',
+                ]);
+                $this->startLocalChatIfAvailable($user);
             }
         } catch (\Exception $e) {
             Log::error('Error starting new chat', [
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = 'Error starting new chat: '.$e->getMessage();
+            $this->startLocalChatIfAvailable(Auth::user());
+            $this->error = $this->advancedReasoningUnavailableMessage();
         }
     }
 
@@ -1647,7 +1772,7 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = 'Error updating title: '.$e->getMessage();
+            $this->error = 'AI Sensei could not update that conversation title. Please try again.';
         }
     }
 
@@ -1679,7 +1804,7 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = 'Error archiving session: '.$e->getMessage();
+            $this->error = 'AI Sensei could not archive that conversation. Please try again.';
         }
     }
 
@@ -1711,7 +1836,7 @@ class AISenseiChat extends Component
                 'error' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-            $this->error = 'Error deleting session: '.$e->getMessage();
+            $this->error = 'AI Sensei could not delete that conversation. Please try again.';
         }
     }
 
@@ -1720,7 +1845,7 @@ class AISenseiChat extends Component
      */
     private function syncMessagesFromOpenAI()
     {
-        if (! $this->currentChatSession) {
+        if (! $this->currentChatSession || $this->isLocalSessionId($this->threadId)) {
             return;
         }
 

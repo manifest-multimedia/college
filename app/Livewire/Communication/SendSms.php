@@ -4,6 +4,7 @@ namespace App\Livewire\Communication;
 
 use App\Models\RecipientList;
 use App\Services\Communication\SMS\SmsServiceInterface;
+use App\Services\Communication\SMS\CallblySmsService;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -20,6 +21,8 @@ class SendSms extends Component
     public ?int $recipientListId = null;
 
     public array $recipientLists = [];
+
+    public ?array $balance = null;
 
     // Initialize with null to prevent "must not be accessed before initialization" error
     protected ?SmsServiceInterface $smsService = null;
@@ -139,6 +142,17 @@ class SendSms extends Component
             $this->message,
             ['user_id' => auth()->id()]
         );
+    }
+
+    public function refreshBalances(CallblySmsService $callbly): void
+    {
+        abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin']), 403);
+
+        $this->balance = $callbly->getBalances();
+
+        if (! $this->balance['success']) {
+            session()->flash('error', $this->balance['message'] ?? 'Unable to retrieve Callbly balances.');
+        }
     }
 
     public function render()

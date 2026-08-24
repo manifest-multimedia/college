@@ -144,4 +144,15 @@ class User extends Authenticatable
     {
         return ! $this->isAuthCentralUser();
     }
+
+    /**
+     * The System role is the institution's unrestricted staff role.
+     *
+     * Use this method instead of the legacy users.role column so access checks
+     * consistently use the assigned Spatie role.
+     */
+    public function isSystemUser(): bool
+    {
+        return $this->hasRole('System');
+    }
 }

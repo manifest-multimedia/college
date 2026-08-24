@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class SupportTicket extends Model
 {
@@ -33,10 +35,19 @@ class SupportTicket extends Model
         parent::boot();
 
         static::creating(function ($ticket) {
+            if (Schema::hasColumn('support_tickets', 'public_id') && empty($ticket->public_id)) {
+                $ticket->public_id = (string) Str::ulid();
+            }
+
             if (empty($ticket->ticket_number)) {
                 $ticket->ticket_number = 'TKT-'.str_pad(static::max('id') + 1, 6, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
     }
 
     // Relationships

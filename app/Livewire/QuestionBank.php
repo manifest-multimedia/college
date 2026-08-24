@@ -196,7 +196,7 @@ class QuestionBank extends Component
     public function loadSubjects()
     {
         // Get subjects based on user role - consistent with exam access control
-        if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+        if (Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin'])) {
             $this->subjects = Subject::all();
         } else {
             // Regular lecturers get all subjects (they can create question sets for any subject)
@@ -207,7 +207,7 @@ class QuestionBank extends Component
     public function loadAllQuestionSets()
     {
         // Apply same role-based filtering as exams
-        if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+        if (Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin'])) {
             // Super Admin and System roles can see all question sets
             $this->question_sets = QuestionSet::with(['course', 'creator'])->get();
         } else {
@@ -559,7 +559,7 @@ class QuestionBank extends Component
         }
 
         // Check permissions - only creator or Super Admin can delete
-        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to delete this question set.');
 
             return;
@@ -601,7 +601,7 @@ class QuestionBank extends Component
         }
 
         // Check permissions - only creator or Super Admin can duplicate
-        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $originalSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $originalSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to duplicate this question set.');
 
             return;
@@ -910,7 +910,7 @@ class QuestionBank extends Component
     public function render()
     {
         $exams = [];
-        if (Auth::user()->role !== 'Super Admin') {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin'])) {
             $exams = Exam::where('user_id', Auth::user()->id)->get();
         } else {
             $exams = Exam::all();

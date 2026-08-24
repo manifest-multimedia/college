@@ -123,7 +123,7 @@ class ElectionVoterIntegrityController extends Controller
         });
 
         return redirect()
-            ->route('admin.election.voter-integrity', ['election' => $election->id, 'student_id' => $studentId])
+            ->route('admin.election.voter-integrity', ['election' => $election, 'student_id' => $studentId])
             ->with('success', "Nullified {$deletedVotes} vote(s) for student ID {$studentId}.");
     }
 
@@ -176,7 +176,7 @@ class ElectionVoterIntegrityController extends Controller
         });
 
         return redirect()
-            ->route('admin.election.voter-integrity', ['election' => $election->id, 'student_id' => $studentId])
+            ->route('admin.election.voter-integrity', ['election' => $election, 'student_id' => $studentId])
             ->with('success', "Re-vote enabled for {$studentId}. Removed {$deletedSessions} session(s) and {$deletedVotes} vote(s).");
     }
 }

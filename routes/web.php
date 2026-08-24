@@ -392,7 +392,7 @@ Route::middleware([
     */
 
     // Admin Election Management Routes
-    Route::middleware(['auth:sanctum', 'role_or_permission:Super Admin|Administrator|election management.manage elections'])->prefix('admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'role_or_permission:System|Super Admin|Administrator|election management.manage elections'])->prefix('admin')->group(function () {
         // Election Management
         Route::get('/elections', \App\Livewire\ElectionManager::class)->name('elections');
         Route::get('/elections/{election}/positions', \App\Livewire\ElectionPositionManager::class)->name('election.positions');
@@ -574,6 +574,9 @@ Route::middleware([
         })->name('settings.api');
     });
 
+    Route::middleware(['auth:sanctum', 'role:System|Super Admin'])->get('/settings/sms-provider', \App\Livewire\Settings\SmsProviderSettings::class)
+        ->name('settings.sms-provider');
+
     /*
     |--------------------------------------------------------------------------
     | Institution Branding Routes
@@ -652,7 +655,7 @@ Route::middleware([
 
             // Year migration command (for admins only)
             Route::post('/migrate-year-data', function () {
-                if (auth()->user()->hasRole('admin')) {
+                if (auth()->user()->hasAnyRole(['System', 'admin'])) {
                     Artisan::call('academics:migrate-year-data');
 
                     return back()->with('success', 'Year data migration completed.');

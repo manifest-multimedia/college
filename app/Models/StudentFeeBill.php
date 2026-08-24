@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class StudentFeeBill extends Model
 {
@@ -22,6 +23,7 @@ class StudentFeeBill extends Model
         'status',
         'billing_date',
         'bill_reference',
+        'public_reference',
     ];
 
     protected $casts = [
@@ -146,6 +148,19 @@ class StudentFeeBill extends Model
         }
 
         return 0.0;
+    }
+
+    /**
+     * Generate immutable public reference when creating a bill
+     */
+    protected static function booted()
+    {
+        static::creating(function ($bill) {
+            if (empty($bill->public_reference)) {
+                // Use ULID and prefix with BILL-
+                $bill->public_reference = 'BILL-'.strtoupper(Str::ulid());
+            }
+        });
     }
 
     /**

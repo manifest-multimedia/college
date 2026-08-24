@@ -62,7 +62,7 @@
                         </td>
                         <td class="text-end">
                             @if(in_array($election->computed_status, ['completed', 'active']))
-                                <a href="{{ route('election.results', $election->id) }}" 
+                                <a href="{{ route('election.results', $election) }}"
                                    class="btn btn-sm btn-primary">
                                     <i class="ki-duotone ki-chart-pie-3 fs-4">
                                         <span class="path1"></span>

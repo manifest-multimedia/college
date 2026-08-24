@@ -30,7 +30,7 @@
             <div class="d-flex gap-2">
                 @if(Auth::user()->id === $exam->user_id || 
                     (method_exists(Auth::user(), 'hasRole') && Auth::user()->hasRole(['admin', 'Super Admin', 'System', 'Administrator'])) ||
-                    in_array(Auth::user()->role ?? '', ['admin', 'Super Admin', 'System', 'Administrator']))
+                    Auth::user()->hasAnyRole(['System', 'admin', 'Super Admin', 'Administrator']))
                     <button class="btn btn-sm btn-primary" wire:click="startEditing">
                         <i class="ki-duotone ki-pencil fs-3">
                             <span class="path1"></span>
@@ -108,7 +108,7 @@
                     @endif
 
                     @if((method_exists(Auth::user(), 'hasRole') && Auth::user()->hasRole(['admin', 'Super Admin', 'System', 'Administrator'])) ||
-                        in_array(Auth::user()->role ?? '', ['admin', 'Super Admin', 'System', 'Administrator']))
+                        Auth::user()->hasAnyRole(['System', 'admin', 'Super Admin', 'Administrator']))
                         <div class="row mb-3">
                             <label class="col-lg-4 fw-semibold text-muted">Exam Password</label>
                             <div class="col-lg-8">
@@ -179,7 +179,7 @@
                 </a>
                 
                 @if((method_exists(Auth::user(), 'hasRole') && Auth::user()->hasRole(['admin', 'Super Admin', 'System', 'Administrator'])) ||
-                    in_array(Auth::user()->role ?? '', ['admin', 'Super Admin', 'System', 'Administrator']))
+                    Auth::user()->hasAnyRole(['System', 'admin', 'Super Admin', 'Administrator']))
                     <a href="{{ route('exams.edit', $exam->slug ? $exam->slug : $exam->id) }}" class="btn btn-light-info">
                         <i class="ki-duotone ki-pencil fs-3">
                             <span class="path1"></span>

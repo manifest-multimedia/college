@@ -104,7 +104,9 @@ class NeedleToolRouter
     private function formatResults(array $results): string
     {
         $successful = collect($results)->every(fn (array $item) => ($item['result']['success'] ?? false) === true);
-        $heading = $successful ? 'Here is the requested information:' : 'I could not complete every requested lookup:';
+        $heading = $successful
+            ? 'AI Sensei completed this request using secure local institutional tools:'
+            : 'AI Sensei could not complete every local lookup:';
 
         return $heading."\n\n```json\n".json_encode(
             $results,

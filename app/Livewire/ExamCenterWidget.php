@@ -38,7 +38,7 @@ class ExamCenterWidget extends Component
     public function render()
     {
         try {
-            if (Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+            if (Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin'])) {
                 $exams = Exam::with([
                     'course',
                     'course.collegeClass',

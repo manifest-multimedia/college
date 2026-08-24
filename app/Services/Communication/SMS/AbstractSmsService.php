@@ -33,6 +33,14 @@ abstract class AbstractSmsService implements SmsServiceInterface
             // Log SMS details
             $this->logSms($recipient, $message, $result, 'single', $options['user_id'] ?? null);
 
+            if (! ($result['success'] ?? false)) {
+                return [
+                    'success' => false,
+                    'message' => $result['error_message'] ?? 'The SMS provider rejected the message.',
+                    'data' => $result,
+                ];
+            }
+
             return [
                 'success' => true,
                 'message' => 'SMS sent successfully',

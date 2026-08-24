@@ -66,7 +66,7 @@
                                                             You have already voted in this election
                                                         </div>
                                                         
-                                                        @hasrole('Super Admin|Administrator')
+                                                        @hasrole('System|Super Admin|Administrator')
                                                             <a href="{{ route('election.results', $election) }}" class="btn btn-info btn-sm d-block">
                                                                 <i class="fas fa-chart-bar me-1"></i>
                                                                 View Results
@@ -168,7 +168,7 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @hasrole('Super Admin|Administrator')
+                                                    @hasrole('System|Super Admin|Administrator')
                                                         <a href="{{ route('election.results', $election) }}" class="btn btn-outline-info btn-sm">
                                                             <i class="fas fa-chart-bar me-1"></i>
                                                             View Results
@@ -191,7 +191,7 @@
             </div>
         @endif
         
-        @hasrole('Super Admin|Administrator')
+        @hasrole('System|Super Admin|Administrator')
             <div class="row mt-2 mb-4">
                 <div class="col-12">
                     <div class="card bg-light border-0">

@@ -40,7 +40,7 @@ class QuestionImportExport extends Component
         $questionSet = QuestionSet::find($this->question_set_id);
 
         // Check permissions
-        if (Auth::user()->role !== 'Super Admin' && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin']) && $questionSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to import questions to this question set.');
 
             return;
@@ -148,7 +148,7 @@ class QuestionImportExport extends Component
         }
 
         // Check permissions
-        if (Auth::user()->role !== 'Super Admin' && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin']) && $questionSet->created_by !== Auth::id()) {
             session()->flash('error', 'You do not have permission to export questions from this question set.');
 
             return;

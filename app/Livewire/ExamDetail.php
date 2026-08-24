@@ -67,7 +67,7 @@ class ExamDetail extends Component
         }
 
         // Fallback to role column for backward compatibility
-        return in_array($user->role, ['admin', 'Super Admin', 'System', 'Administrator']);
+        return $user->hasAnyRole(['System', 'admin', 'Super Admin', 'Administrator']);
     }
 
     /**

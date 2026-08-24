@@ -42,7 +42,7 @@ class PublicElectionPerformanceController extends Controller
 
         return response()->json([
             'election' => [
-                'id' => $election->id,
+                'public_id' => $election->public_id,
                 'name' => $election->name,
                 'description' => $election->description,
                 'start_time' => optional($election->start_time)->toIso8601String(),

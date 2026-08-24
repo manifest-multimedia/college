@@ -130,7 +130,7 @@
                             </div>
 
                             <!-- User Assignment (Super Admin Only) -->
-                            @if(Auth::user()->role == 'Super Admin')
+                            @if(Auth::user()->hasAnyRole(['System', 'Super Admin']))
                                 <div class="mb-3">
                                     <label for="user_id" class="form-label">Assign to User</label>
                                     <select class="form-select" id="user_id" name="user_id">

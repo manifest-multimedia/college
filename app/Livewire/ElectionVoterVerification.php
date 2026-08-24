@@ -361,7 +361,7 @@ class ElectionVoterVerification extends Component
                 'election_id' => $this->election->id,
                 'session_id' => $sessionId,
                 'redirect_to' => route('public.elections.vote', [
-                    'election' => $this->election->id,
+                    'election' => $this->election,
                     'sessionId' => $votingSession->session_id,
                 ]),
             ]);
@@ -387,7 +387,7 @@ class ElectionVoterVerification extends Component
     protected function redirectToVoting($votingSession)
     {
         $url = route('public.elections.vote', [
-            'election' => $this->election->id,
+            'election' => $this->election,
             'sessionId' => $votingSession->session_id,
         ]);
 

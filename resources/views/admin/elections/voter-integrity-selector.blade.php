@@ -30,7 +30,7 @@
                                         @endif
                                     </td>
                                     <td class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.election.voter-integrity', ['election' => $election->id]) }}">
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.election.voter-integrity', ['election' => $election]) }}">
                                             Open Voter Integrity
                                         </a>
                                     </td>

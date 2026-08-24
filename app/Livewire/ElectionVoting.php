@@ -47,7 +47,7 @@ class ElectionVoting extends Component
             ->first();
 
         if (! $votingSession || $votingSession->vote_submitted || $votingSession->hasExpired()) {
-            return redirect()->route('election.verify', ['election' => $this->election->id])
+            return redirect()->route('election.verify', ['election' => $this->election])
                 ->with('error', 'Your voting session has expired or is invalid. Please verify again.');
         }
 
@@ -192,7 +192,10 @@ class ElectionVoting extends Component
             $this->dispatch('voteSubmitted');
 
             // Queue a redirect after a short delay to allow the thank you message to be displayed
-            return $this->redirect('/public/elections/'.$this->election->id.'/thank-you?sessionId='.$this->sessionId, navigate: true);
+            return $this->redirect(route('public.elections.thank-you', [
+                'election' => $this->election,
+                'sessionId' => $this->sessionId,
+            ]), navigate: true);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -203,7 +206,7 @@ class ElectionVoting extends Component
 
     public function handleTimeExpired()
     {
-        $this->redirect(route('election.expired', ['election' => $this->election->id]));
+        $this->redirect(route('election.expired', ['election' => $this->election]));
     }
 
     public function render()

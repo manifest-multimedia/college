@@ -509,7 +509,7 @@
                 
                 handleVoteSubmitted() {
                     setTimeout(() => {
-                        window.location.href = '/public/elections/{{ $election->id }}/thank-you?sessionId={{ $sessionId }}';
+                        window.location.href = @js(route('public.elections.thank-you', ['election' => $election, 'sessionId' => $sessionId]));
                     }, 1500);
                 }
             };

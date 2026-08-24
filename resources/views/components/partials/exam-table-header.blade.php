@@ -4,7 +4,7 @@
                         <th class="min-w-100px">Date Created</th>
                         <th class="min-w-100px">Duration</th>
                         <th class="min-w-100px">Class</th>
-                        @if(Auth::user()->role=='admin' || Auth::user()->role=='Super Admin')
+                        @if(Auth::user()->hasAnyRole(['System', 'admin', 'Super Admin']))
                         <th>Password</th>
                         @endif
                         <th class="min-w-100px">Status</th>

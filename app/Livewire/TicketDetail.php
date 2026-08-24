@@ -6,6 +6,7 @@ use App\Models\SupportTicket;
 use App\Models\TicketAttachment;
 use App\Models\TicketReply;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -30,21 +31,36 @@ class TicketDetail extends Component
     {
         $this->ticketId = $ticketId;
         $this->loadTicket();
+
+        if (Schema::hasColumn('support_tickets', 'public_id') &&
+            (string) $this->ticket->public_id !== (string) $ticketId) {
+            return redirect()->route('support.ticket.detail', ['ticketId' => $this->ticket->public_id]);
+        }
     }
 
     public function loadTicket()
     {
-        $this->ticket = SupportTicket::with([
+        $ticketQuery = SupportTicket::with([
             'user',
             'category',
             'assignedTo',
             'replies.user',
             'replies.attachments',
             'attachments',
-        ])
-            ->where('id', $this->ticketId)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
+        ])->where('user_id', Auth::id());
+
+        $hasPublicId = Schema::hasColumn('support_tickets', 'public_id');
+
+        $this->ticket = $hasPublicId
+            ? (clone $ticketQuery)->where('public_id', $this->ticketId)->first()
+            : null;
+
+        // Existing bookmarks remain usable during the staged production rollout.
+        if (! $this->ticket && (! $hasPublicId || ctype_digit((string) $this->ticketId))) {
+            $this->ticket = $ticketQuery->whereKey((int) $this->ticketId)->first();
+        }
+
+        abort_unless($this->ticket, 404);
     }
 
     public function render()

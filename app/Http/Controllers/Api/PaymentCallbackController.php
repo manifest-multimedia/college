@@ -70,13 +70,33 @@ class PaymentCallbackController extends Controller
                 }
 
                 // Retrieve the targeted fee item and parent bill
-                $billItem = StudentFeeBillItem::with('studentFeeBill')->find($data['student_fee_bill_item_id']);
-                if (!$billItem || !$billItem->studentFeeBill) {
-                    Log::error("Target bill item ID '{$data['student_fee_bill_item_id']}' not found from webhook callback.");
+                $billItem = null;
+                if (!empty($data['student_fee_bill_item_reference'])) {
+                    $billItem = StudentFeeBillItem::with('studentFeeBill')
+                        ->where('public_reference', $data['student_fee_bill_item_reference'])
+                        ->first();
+                    if (!$billItem) {
+                        Log::error("Target bill item reference '{$data['student_fee_bill_item_reference']}' not found from webhook callback.");
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Associated fee bill item not found for provided reference.',
+                        ], 404);
+                    }
+                } elseif (!empty($data['student_fee_bill_item_id'])) {
+                    $billItem = StudentFeeBillItem::with('studentFeeBill')->find($data['student_fee_bill_item_id']);
+                    if (!$billItem || !$billItem->studentFeeBill) {
+                        Log::error("Target bill item ID '{$data['student_fee_bill_item_id']}' not found from webhook callback.");
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Associated fee bill item not found.',
+                        ], 404);
+                    }
+                } else {
+                    Log::error('No fee item identifier provided in webhook payload.');
                     return response()->json([
                         'success' => false,
-                        'message' => 'Associated fee bill item not found.',
-                    ], 404);
+                        'message' => 'No fee item identifier provided in webhook payload.',
+                    ], 422);
                 }
 
                 $bill = $billItem->studentFeeBill;
@@ -150,7 +170,8 @@ class PaymentCallbackController extends Controller
                     'amount' => isset($payload['data']['amount']) ? ($payload['data']['amount'] / 100) : 0, // Paystack is in cents/pesewas
                     'payment_method' => 'Paystack (' . ($payload['data']['channel'] ?? 'card') . ')',
                     'external_receipt' => $payload['data']['receipt_url'] ?? null,
-                    'student_fee_bill_item_id' => $payload['data']['metadata']['student_fee_bill_item_id'] ?? $payload['data']['metadata']['custom_fields'][0]['value'] ?? null,
+                    'student_fee_bill_item_reference' => $payload['data']['metadata']['student_fee_bill_item_reference'] ?? null,
+                    'student_fee_bill_item_id' => $payload['data']['metadata']['student_fee_bill_item_id'] ?? ($payload['data']['metadata']['custom_fields'][0]['value'] ?? null),
                     'note' => 'Paystack Webhook Payment Confirmation',
                 ];
 
@@ -161,6 +182,7 @@ class PaymentCallbackController extends Controller
                     'amount' => $payload['data']['amount'] ?? 0,
                     'payment_method' => 'Flutterwave (' . ($payload['data']['payment_type'] ?? 'card') . ')',
                     'external_receipt' => null,
+                    'student_fee_bill_item_reference' => $payload['data']['meta']['student_fee_bill_item_reference'] ?? null,
                     'student_fee_bill_item_id' => $payload['data']['meta']['student_fee_bill_item_id'] ?? null,
                     'note' => 'Flutterwave Webhook Payment Confirmation',
                 ];
@@ -174,6 +196,7 @@ class PaymentCallbackController extends Controller
                     'amount' => $payload['data']['amount'] ?? 0,
                     'payment_method' => $payload['data']['payment_method'] ?? 'Online Payment',
                     'external_receipt' => $payload['data']['external_receipt'] ?? null,
+                    'student_fee_bill_item_reference' => $payload['data']['metadata']['student_fee_bill_item_reference'] ?? null,
                     'student_fee_bill_item_id' => $payload['data']['metadata']['student_fee_bill_item_id'] ?? null,
                     'note' => $payload['data']['note'] ?? 'Generic Payment Webhook Confirmation',
                 ];

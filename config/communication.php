@@ -10,10 +10,10 @@ return [
     | messages. You may change this to any of the providers defined in the
     | "providers" array below.
     |
-    | Available options: 'twilio', 'manifest-digital', 'nalo'
+    | Callbly is the institution-supported SMS provider.
     |
     */
-    'default_sms_provider' => env('SMS_PROVIDER', 'twilio'),
+    'default_sms_provider' => 'callbly',
 
     /*
     |--------------------------------------------------------------------------
@@ -48,9 +48,7 @@ return [
     |
     */
     'provider_display_names' => [
-        'twilio' => 'Twilio',
-        'nalo' => 'Manifest Digital',
-        'manifest-digital' => 'Manifest Digital',
+        'callbly' => 'Callbly',
     ],
 
     /*

@@ -27,7 +27,7 @@ class QuestionSetImportController extends Controller
         }
 
         // Check permissions - only creator or Super Admin can import
-        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
             return redirect()->route('question.sets')
                 ->with('error', 'You do not have permission to import questions to this question set.');
         }
@@ -53,7 +53,7 @@ class QuestionSetImportController extends Controller
         }
 
         // Check permissions
-        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
             return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
         }
 
@@ -140,7 +140,7 @@ class QuestionSetImportController extends Controller
         }
 
         // Check permissions
-        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
             return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
         }
 
@@ -187,7 +187,7 @@ class QuestionSetImportController extends Controller
         }
 
         // Check permissions
-        if (! Auth::user()->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== Auth::id()) {
             return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
         }
 

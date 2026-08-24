@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class Election extends Model
 {
@@ -26,6 +28,41 @@ class Election extends Model
         'is_active' => 'boolean',
         'requires_verification' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $election): void {
+            // Allows application code to be deployed before the additive
+            // migration has run on an institution's database.
+            if (Schema::hasColumn('elections', 'public_id') && empty($election->public_id)) {
+                $election->public_id = (string) Str::ulid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return Schema::hasColumn('elections', 'public_id') ? 'public_id' : 'id';
+    }
+
+    /**
+     * Resolve new public links by ULID while preserving existing numeric links
+     * throughout the adoption period.
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        if (Schema::hasColumn('elections', 'public_id')) {
+            $election = $this->where('public_id', $value)->first();
+
+            if ($election) {
+                return $election;
+            }
+        }
+
+        return ctype_digit((string) $value)
+            ? $this->whereKey($value)->first()
+            : null;
+    }
 
     /**
      * Get the positions for this election.

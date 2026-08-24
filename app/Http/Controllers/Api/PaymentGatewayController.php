@@ -95,8 +95,8 @@ class PaymentGatewayController extends Controller
             ],
             'bills' => $bills->map(function ($bill) {
                 return [
-                    'id' => $bill->id,
                     'bill_reference' => $bill->bill_reference,
+                    'bill_public_reference' => $bill->public_reference ?? null,
                     'academic_year' => $bill->academicYear?->name ?? 'N/A',
                     'semester' => $bill->semester?->name ?? 'N/A',
                     'total_amount' => (float)$bill->total_amount,
@@ -107,7 +107,7 @@ class PaymentGatewayController extends Controller
                     'billing_date' => $bill->billing_date->toIso8601String(),
                     'items' => $bill->billItems->map(function ($item) {
                         return [
-                            'id' => $item->id,
+                            'item_reference' => $item->public_reference ?? null,
                             'fee_name' => $item->feeType?->name ?? 'N/A',
                             'description' => $item->feeType?->description ?? '',
                             'amount' => (float)$item->amount,
@@ -163,8 +163,8 @@ class PaymentGatewayController extends Controller
         return response()->json([
             'success' => true,
             'bill' => [
-                'id' => $bill->id,
                 'bill_reference' => $bill->bill_reference,
+                'bill_public_reference' => $bill->public_reference ?? null,
                 'student' => [
                     'id' => $bill->student->id,
                     'student_id' => $bill->student->student_id,
@@ -180,7 +180,7 @@ class PaymentGatewayController extends Controller
                 'billing_date' => $bill->billing_date->toIso8601String(),
                 'items' => $bill->billItems->map(function ($item) {
                     return [
-                        'id' => $item->id,
+                        'item_reference' => $item->public_reference ?? null,
                         'fee_name' => $item->feeType?->name ?? 'N/A',
                         'amount' => (float)$item->amount,
                         'amount_paid' => (float)$item->amount_paid,
@@ -225,20 +225,44 @@ class PaymentGatewayController extends Controller
             ], 403);
         }
 
-        // 2. Validate request
+        // 2. Basic validation for common fields. Item reference or id must be provided.
         $request->validate([
-            'student_fee_bill_item_id' => 'required|integer|exists:student_fee_bill_items,id',
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string|max:50',
             'reference_number' => 'required|string|max:100|unique:fee_payments,reference_number',
             'external_receipt' => 'nullable|string',
             'note' => 'nullable|string|max:255',
+            'student_fee_bill_item_reference' => 'nullable|string|max:64',
+            'student_fee_bill_item_id' => 'nullable|integer',
         ]);
 
         try {
             return DB::transaction(function () use ($request, $user) {
-                // Fetch the targeted fee item and parent bill
-                $billItem = StudentFeeBillItem::with('studentFeeBill')->findOrFail($request->student_fee_bill_item_id);
+                // Resolve the targeted fee item either by public reference or legacy numeric id
+                if ($request->filled('student_fee_bill_item_reference')) {
+                    $billItem = StudentFeeBillItem::with('studentFeeBill')
+                        ->where('public_reference', $request->student_fee_bill_item_reference)
+                        ->first();
+                    if (!$billItem) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Fee item not found for provided reference.',
+                        ], 404);
+                    }
+                } elseif ($request->filled('student_fee_bill_item_id')) {
+                    $billItem = StudentFeeBillItem::with('studentFeeBill')->find($request->student_fee_bill_item_id);
+                    if (!$billItem) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Fee item not found for provided id.',
+                        ], 404);
+                    }
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please provide student_fee_bill_item_reference or student_fee_bill_item_id.',
+                    ], 422);
+                }
                 $bill = $billItem->studentFeeBill;
 
                 if (!$bill) {

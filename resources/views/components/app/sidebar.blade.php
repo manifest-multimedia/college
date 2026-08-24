@@ -1321,7 +1321,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     'settings.general', 'settings.users', 'settings.roles', 
                     'settings.permissions', 'settings.backup', 'settings.departments',
                     'settings.user-departments', 'admin.branding.index', 'settings.api',
-                    'settings.assessment-settings', 'admin.payment-providers'
+                    'settings.assessment-settings', 'settings.sms-provider', 'admin.payment-providers'
                 ];
                 $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
             @endphp
@@ -1440,6 +1440,12 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     <!--end:Menu item-->
                     
                     @hasanyrole('System|Super Admin')
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('settings.sms-provider') ? 'active' : '' }}" href="{{ route('settings.sms-provider') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">SMS Provider</span>
+                        </a>
+                    </div>
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('settings.api') ? 'active' : '' }}" href="{{ route('settings.api') }}">

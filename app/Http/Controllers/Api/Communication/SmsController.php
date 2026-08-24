@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\RecipientList;
 use App\Models\SmsLog;
 use App\Services\Communication\SMS\SmsServiceInterface;
+use App\Services\Communication\SMS\CallblySmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -223,5 +224,17 @@ class SmsController extends Controller
                 'message' => 'Failed to get recipient lists: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Return Callbly SMS credits and wallet balance to authorized system users.
+     */
+    public function getBalances(CallblySmsService $callbly): JsonResponse
+    {
+        abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin']), 403);
+
+        $result = $callbly->getBalances();
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 }

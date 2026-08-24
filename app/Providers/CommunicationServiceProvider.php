@@ -7,10 +7,8 @@ use App\Services\Communication\Chat\OpenAI\OpenAIFilesService;
 use App\Services\Communication\Chat\OpenAIChatService;
 use App\Services\Communication\Email\EmailServiceInterface;
 use App\Services\Communication\Email\LaravelMailService;
-use App\Services\Communication\SMS\NaloSmsService;
+use App\Services\Communication\SMS\CallblySmsService;
 use App\Services\Communication\SMS\SmsServiceInterface;
-use App\Services\Communication\SMS\TwilioSmsService;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 
 class CommunicationServiceProvider extends ServiceProvider
@@ -22,13 +20,7 @@ class CommunicationServiceProvider extends ServiceProvider
     {
         // Register SMS services
         $this->app->bind(SmsServiceInterface::class, function ($app) {
-            // Get the default SMS provider from configuration
-            $defaultProvider = Config::get('communication.default_sms_provider', 'twilio');
-
-            return match ($defaultProvider) {
-                'manifest-digital', 'nalo' => new NaloSmsService, // Allow both names for backward compatibility
-                default => new TwilioSmsService,
-            };
+            return $app->make(CallblySmsService::class);
         });
 
         // Register Email services

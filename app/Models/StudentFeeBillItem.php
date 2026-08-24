@@ -17,6 +17,7 @@ class StudentFeeBillItem extends Model
         'amount_paid',
         'balance',
         'status',
+        'public_reference',
     ];
 
     protected $casts = [
@@ -55,5 +56,17 @@ class StudentFeeBillItem extends Model
     public function payments()
     {
         return $this->hasMany(FeePayment::class, 'student_fee_bill_item_id');
+    }
+
+    /**
+     * Generate immutable public reference when creating a bill item
+     */
+    protected static function booted()
+    {
+        static::creating(function ($item) {
+            if (empty($item->public_reference)) {
+                $item->public_reference = 'FEE-'.strtoupper(\Illuminate\Support\Str::ulid());
+            }
+        });
     }
 }

@@ -227,8 +227,17 @@
                 @if ($error)
                     <div class="alert alert-danger alert-dismissible fade show mb-0 rounded-0 rounded-top"
                         role="alert">
+                        <i class="bi bi-robot me-2" aria-hidden="true"></i>
                         {{ $error }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if ($serviceNotice)
+                    <div class="alert alert-info alert-dismissible fade show mb-0 rounded-0" role="status">
+                        <i class="bi bi-shield-check me-2" aria-hidden="true"></i>
+                        {{ $serviceNotice }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
                     </div>
                 @endif
 
@@ -239,16 +248,19 @@
                             <div class="me-3 position-relative">
                                 <img src="{{ asset('images/ai-sensei.png') }}" alt="AI Sensei" class="rounded-circle"
                                     width="40" height="40">
-                                <!-- AI Status Indicator -->
-                                <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1"
+                                <!-- AI status reflects the service currently available to the user. -->
+                                <span class="position-absolute bottom-0 end-0 {{ $usesLocalTools ? 'bg-info' : 'bg-success' }} rounded-circle p-1"
                                     style="width: 10px; height: 10px;"></span>
                             </div>
                             <div>
                                 <h3 class="card-title mb-0">AI Sensei Assistant</h3>
                                 <small class="text-muted">
-                                    <span class="badge bg-success">Online</span>
-                                    <!-- Show available tools -->
-                                    <span class="ms-2">Tools: File Analysis, Code, Math</span>
+                                    <span class="badge {{ $usesLocalTools ? 'bg-info' : 'bg-success' }}">
+                                        {{ $usesLocalTools ? 'Local tools ready' : 'Online' }}
+                                    </span>
+                                    <span class="ms-2">
+                                        {{ $usesLocalTools ? 'Tools: secure institutional lookups' : 'Tools: File Analysis, Code, Math' }}
+                                    </span>
                                 </small>
                             </div>
                         </div>
@@ -463,8 +475,10 @@
                             <div class="input-group mb-2">
                                 <!-- File Upload Button -->
                                 <button class="btn btn-outline-secondary" type="button"
-                                    onclick="document.getElementById('file-upload').click()" 
-                                    wire:loading.attr="disabled" 
+                                    @if (! $usesLocalTools) onclick="document.getElementById('file-upload').click()" @endif
+                                    @disabled($usesLocalTools)
+                                    title="{{ $usesLocalTools ? 'File analysis is available when AI Sensei advanced reasoning is online.' : 'Attach files for AI Sensei to analyse.' }}"
+                                    wire:loading.attr="disabled"
                                     wire:target="temporaryUploads"
                                     style="border: 1px solid #ced4da;">
                                     <i class="bi bi-paperclip" style="font-size:25px"></i>
@@ -489,7 +503,7 @@
                                 multiple />
                             
                             <!-- File processing indicator (shows while Livewire uploads file) -->
-                            <div wire:loading wire:target="temporaryUploads" class="mt-2 alert alert-info d-flex align-items-center">
+                            <div wire:loading.flex wire:target="temporaryUploads" class="mt-2 alert alert-info align-items-center">
                                 <div class="spinner-border spinner-border-sm me-2" role="status">
                                     <span class="visually-hidden">Processing...</span>
                                 </div>

@@ -507,7 +507,7 @@ class ExamManagementMCPService
 
         // Check permissions - only creator or Super Admin can add questions
         $user = Auth::user();
-        if (! $user->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== $user->id) {
+        if (! $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== $user->id) {
             return [
                 'success' => false,
                 'error' => 'You do not have permission to add questions to this question set',
@@ -661,7 +661,7 @@ class ExamManagementMCPService
 
         // Apply role-based access control - same as exam filtering
         $user = Auth::user();
-        if (! $user->hasRole(['Super Admin', 'Administrator', 'admin'])) {
+        if (! $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin'])) {
             // Lecturers can only see their own question sets
             $query->where('created_by', $user->id);
         }
@@ -739,7 +739,7 @@ class ExamManagementMCPService
 
         // Check permissions - only creator or Super Admin can view details
         $user = Auth::user();
-        if (! $user->hasRole(['Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== $user->id) {
+        if (! $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin']) && $questionSet->created_by !== $user->id) {
             return [
                 'success' => false,
                 'error' => 'You do not have permission to view this question set',
@@ -1108,7 +1108,7 @@ class ExamManagementMCPService
 
             // Check permissions
             $user = Auth::user();
-            if (! $user->hasRole(['Super Admin', 'Administrator', 'admin', 'Lecturer']) && $questionSet->created_by !== $user->id) {
+            if (! $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin', 'Lecturer']) && $questionSet->created_by !== $user->id) {
                 return [
                     'success' => false,
                     'error' => 'You do not have permission to add questions to this question set',

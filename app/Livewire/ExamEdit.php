@@ -94,7 +94,7 @@ class ExamEdit extends Component
             ->where('course_id', $examSubjectId);
 
         // Apply user permissions
-        if (Auth::user()->role !== 'Super Admin') {
+        if (! Auth::user()->hasAnyRole(['System', 'Super Admin'])) {
             $query->where('created_by', Auth::id());
         }
 

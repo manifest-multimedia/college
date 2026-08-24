@@ -78,6 +78,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/send-to-group', [SmsController::class, 'sendToGroup']);
         Route::get('/logs', [SmsController::class, 'getLogs']);
         Route::get('/recipient-lists', [SmsController::class, 'getRecipientLists']);
+        Route::get('/balances', [SmsController::class, 'getBalances']);
     });
 
     // Email Routes
@@ -197,4 +198,3 @@ Route::prefix('offline-exam-delivery')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::post('/v1/payments/webhook/{provider}', [PaymentCallbackController::class, 'handleWebhook']);
-

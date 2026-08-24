@@ -22,7 +22,7 @@
                     
                     <div>
                         <p class="mb-4">To vote in this election, you'll need to verify your student ID again.</p>
-                        <a href="{{ route('election.verify', ['election' => $election->id]) }}" class="btn btn-primary btn-lg px-4">
+                        <a href="{{ route('election.verify', ['election' => $election]) }}" class="btn btn-primary btn-lg px-4">
                             <i class="fas fa-redo me-2"></i> Try Again
                         </a>
                         

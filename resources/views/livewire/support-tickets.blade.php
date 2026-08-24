@@ -80,7 +80,7 @@
                                 @foreach($tickets as $ticket)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('support.ticket.detail', $ticket->id) }}" class="text-gray-800 text-hover-primary mb-1">{{ $ticket->ticket_number }}</a>
+                                            <a href="{{ route('support.ticket.detail', $ticket->public_id ?? $ticket->id) }}" class="text-gray-800 text-hover-primary mb-1">{{ $ticket->ticket_number }}</a>
                                         </td>
                                         <td>{{ Str::limit($ticket->subject, 50) }}</td>
                                         <td>{{ $ticket->category->name }}</td>
