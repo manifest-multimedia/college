@@ -49,7 +49,7 @@ class AssessmentScoresImport implements ToCollection, WithStartRow
         return 7; // Start reading data from row 7 (skip header rows 1-4, heading row 5, and placeholder row 6)
     }
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         $currentChunkRows = $rows->count();
         $this->summary['total_records'] += $currentChunkRows;

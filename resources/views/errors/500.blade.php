@@ -17,12 +17,20 @@
     <!-- Favicon -->
     @php
         try {
-            $faviconPath = asset(config('branding.logo.favicon', '/favicon.ico'));
+            $favicon = config('branding.logo.favicon');
+            $faviconFile = is_string($favicon) && str_starts_with($favicon, '/')
+                ? public_path(ltrim($favicon, '/'))
+                : null;
+            $faviconPath = $faviconFile && is_file($faviconFile) && is_readable($faviconFile)
+                ? asset($favicon)
+                : null;
         } catch (\Throwable $e) {
-            $faviconPath = '/favicon.ico';
+            $faviconPath = null;
         }
     @endphp
-    <link rel="icon" type="image/x-icon" href="{{ $faviconPath }}">
+    @if($faviconPath)
+        <link rel="icon" type="image/x-icon" href="{{ $faviconPath }}">
+    @endif
 
     @php
         try {
@@ -269,6 +277,14 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
+        .institution-acronym {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
         .institution-name {
             font-size: 1.125rem;
             font-weight: 600;
@@ -338,21 +354,27 @@
         <div class="glass-card">
             <!-- Institution Branding -->
             <div class="institution-branding">
-                <div class="institution-logo">
-                    @php
-                        try {
-                            $logoPath = config('branding.logo.auth') ?: config('branding.logo.primary');
-                            $logoUrl = $logoPath ? asset($logoPath) : null;
-                        } catch (\Throwable $e) {
-                            $logoUrl = null;
-                        }
-                    @endphp
-                    @if($logoUrl)
+                @php
+                    try {
+                        $logoPath = config('branding.logo.auth') ?: config('branding.logo.primary');
+                        $logoFile = is_string($logoPath) && str_starts_with($logoPath, '/')
+                            ? public_path(ltrim($logoPath, '/'))
+                            : null;
+                        $hasLogo = $logoFile && is_file($logoFile) && is_readable($logoFile);
+                        $logoUrl = $hasLogo ? asset($logoPath) : null;
+                    } catch (\Throwable $e) {
+                        $logoUrl = null;
+                    }
+                @endphp
+                @if($logoUrl)
+                    <div class="institution-logo">
                         <img src="{{ $logoUrl }}" alt="Logo">
-                    @else
-                        <i class="fas fa-graduation-cap"></i>
-                    @endif
-                </div>
+                    </div>
+                @else
+                    <div class="institution-acronym">
+                        {{ config('branding.institution.short_name') ?: config('app.name', 'College360') }}
+                    </div>
+                @endif
                 @php
                     try {
                         $institutionName = config('branding.institution.name') ?: config('app.name', 'Laravel');

@@ -679,7 +679,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             @php
                 $examRoutes = [
-                    'examcenter', 'questionbank', 'exams.results', 
+                    'examcenter', 'questionbank', 'exams.results', 'admin.exam-devices.index',
                     'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
                     'exams.create', 'exams.edit', 'admin.exams.offline', 'admin.exams.offline-scores',
                     'admin.transcripts.generation', 'question.sets', 'question.sets.create', 
@@ -780,6 +780,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
+
+                    @hasanyrole(['System', 'IT Manager', 'Administrator', 'Super Admin'])
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.exam-devices.*') ? 'active' : '' }}" href="{{ route('admin.exam-devices.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Devices</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    @endhasanyrole
                     
                     @hasanyrole(['System', 'Lecturer', 'Super Admin'])
                     <!--begin:Menu item-->

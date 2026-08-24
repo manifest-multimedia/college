@@ -90,7 +90,7 @@
                                     Automatically create user accounts for imported students
                                 </label>
                             </div>
-                            <small class="text-muted">If checked, system accounts will be created for students based on their email address</small>
+                            <small class="text-muted">Optional. Account provisioning can take longer than the import itself and is best run as a background task for large files.</small>
                         </div>
 
                         <div class="d-flex justify-content-between">

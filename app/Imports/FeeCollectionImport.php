@@ -14,7 +14,7 @@ class FeeCollectionImport implements ToCollection, WithHeadingRow
      *
      * @return void
      */
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
             // Avoid duplicate entries based on student_id

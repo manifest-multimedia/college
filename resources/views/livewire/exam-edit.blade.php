@@ -222,6 +222,33 @@
                         @error('passing_percentage') <span class="invalid-feedback">{{ $message }}</span> @enderror
                     </div>
 
+                    @if(auth()->user()->hasAnyRole(['System', 'IT Manager', 'Administrator', 'Super Admin']))
+                        <div class="border rounded p-4 mb-3 bg-light">
+                            <h5 class="mb-2">Examination device access</h5>
+                            <p class="text-muted small">Restricted exams may only be opened from an active device registered by authorised staff.</p>
+                            <div class="mb-3">
+                                <label for="device_access_mode" class="form-label">Access mode</label>
+                                <select class="form-select @error('device_access_mode') is-invalid @enderror" wire:model.live="device_access_mode" id="device_access_mode">
+                                    <option value="open">Open access</option>
+                                    <option value="registered_devices_only">Registered devices only</option>
+                                </select>
+                                @error('device_access_mode') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            </div>
+                            @if($device_access_mode === 'registered_devices_only')
+                                <label class="form-label">Allowed registered device types</label>
+                                <div class="d-flex flex-wrap gap-4">
+                                    @foreach(['desktop' => 'Desktop', 'laptop' => 'Laptop', 'mobile' => 'Mobile', 'tablet' => 'Tablet'] as $type => $label)
+                                        <label class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="checkbox" wire:model="allowed_device_types" value="{{ $type }}">
+                                            <span class="form-check-label">{{ $label }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                @error('allowed_device_types.*') <div class="text-danger small mt-2">{{ $message }}</div> @enderror
+                            @endif
+                        </div>
+                    @endif
+
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-secondary" wire:click="cancel">Cancel</button>
                         <button type="submit" class="btn btn-primary">Update Exam</button>
@@ -230,4 +257,4 @@
             </div>
         </div>
     </div>
-</div> 
+</div>

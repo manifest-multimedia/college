@@ -7,7 +7,7 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 
 class RawDataImport implements ToCollection
 {
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         // This class is only used to read raw data, no processing needed
     }

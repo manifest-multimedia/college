@@ -66,6 +66,12 @@ class ExamLogin extends Component
             return;
         }
 
+        if (! app(\App\Services\Exams\RegisteredExamDeviceService::class)->allows($exam, request())) {
+            session()->flash('error', 'This examination is restricted to approved institutional devices. Please use a registered device or contact the examination office.');
+
+            return;
+        }
+
         // Hard cut-off: prevent login outside of exam availability period
         if ($exam->end_date && now()->isAfter($exam->end_date)) {
             session()->flash('error', 'The scheduled time for this examination has ended.');

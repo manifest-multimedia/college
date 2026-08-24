@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\User;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Ensure signed URLs generated on HTTPS production sites stay HTTPS
+        // when TLS is terminated by a reverse proxy.
+        if (app()->environment('production')
+            && parse_url((string) config('app.url'), PHP_URL_SCHEME) === 'https') {
+            URL::forceScheme('https');
+        }
+
         Paginator::useBootstrapFive();
 
         // System is the explicit unrestricted staff role. This covers Laravel

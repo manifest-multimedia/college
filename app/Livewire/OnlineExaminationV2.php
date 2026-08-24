@@ -67,6 +67,10 @@ class OnlineExaminationV2 extends Component
     {
         $this->exam = Exam::where('password', $examPassword)->with('questions.options')->firstOrFail();
 
+        if (! app(\App\Services\Exams\RegisteredExamDeviceService::class)->allows($this->exam, request())) {
+            abort(403, 'This examination is restricted to approved institutional devices.');
+        }
+
         // Hard cut-off: prevent access outside of exam availability period
         if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
             session()->flash('error', 'The scheduled time for this examination has ended.');
@@ -295,6 +299,8 @@ class OnlineExaminationV2 extends Component
     public function syncResponsesBatch($responses)
     {
         try {
+            $this->ensureRegisteredDeviceAccess();
+
             if ($this->readOnlyMode) {
                 return ['success' => false, 'message' => 'Exam is in read-only mode'];
             }
@@ -373,6 +379,8 @@ class OnlineExaminationV2 extends Component
     public function syncFlagsBatch($flags)
     {
         try {
+            $this->ensureRegisteredDeviceAccess();
+
             if ($this->readOnlyMode) {
                 return ['success' => false, 'message' => 'Exam is in read-only mode'];
             }
@@ -452,6 +460,8 @@ class OnlineExaminationV2 extends Component
     public function clearResponse($questionId)
     {
         try {
+            $this->ensureRegisteredDeviceAccess();
+
             if ($this->readOnlyMode) {
                 return ['success' => false, 'message' => 'Exam is in read-only mode'];
             }
@@ -618,6 +628,8 @@ class OnlineExaminationV2 extends Component
 
     public function submitExam()
     {
+        $this->ensureRegisteredDeviceAccess();
+
         if ($this->readOnlyMode) {
             session()->flash('error', 'Cannot submit exam in read-only mode.');
 
@@ -656,6 +668,13 @@ class OnlineExaminationV2 extends Component
             ]);
 
             session()->flash('error', 'Failed to submit exam. Please try again.');
+        }
+    }
+
+    private function ensureRegisteredDeviceAccess(): void
+    {
+        if (! app(\App\Services\Exams\RegisteredExamDeviceService::class)->allows($this->exam, request())) {
+            abort(403, 'This examination is restricted to approved institutional devices.');
         }
     }
 

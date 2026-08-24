@@ -15,6 +15,7 @@ class Exam extends Model
         'end_date' => 'datetime',
         'date' => 'datetime',
         'enable_proctoring' => 'boolean',
+        'allowed_device_types' => 'array',
     ];
 
     protected $fillable = [
@@ -30,6 +31,8 @@ class Exam extends Model
         'clearance_threshold',
         'password',
         'status',
+        'device_access_mode',
+        'allowed_device_types',
         'slug',
         'start_date',
         'end_date',

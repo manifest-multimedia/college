@@ -75,7 +75,7 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         $this->columnMapping = array_merge($defaultMapping, $columnMapping);
     }
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         $this->importStats['total'] = count($rows);
 

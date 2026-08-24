@@ -24,7 +24,10 @@ class StudentImport extends Component
 
     public $academicYearId;
 
-    public $syncUsers = true;
+    // Account provisioning is deliberately opt-in: it can be materially more
+    // expensive than importing the spreadsheet and must not hold the web
+    // request open for every bulk import.
+    public $syncUsers = false;
 
     public $columnMapping = [];
 

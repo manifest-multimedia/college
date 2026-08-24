@@ -582,6 +582,14 @@ Route::middleware([
     | Institution Branding Routes
     |--------------------------------------------------------------------------
     */
+    Route::middleware(['auth:sanctum', 'role:System|IT Manager|Administrator|Super Admin'])->prefix('admin')->group(function () {
+        Route::get('/exam-devices', [App\Http\Controllers\Admin\ExamDeviceController::class, 'index'])->name('admin.exam-devices.index');
+        Route::post('/exam-devices', [App\Http\Controllers\Admin\ExamDeviceController::class, 'store'])->name('admin.exam-devices.store');
+        Route::post('/exam-devices/{examDevice}/suspend', [App\Http\Controllers\Admin\ExamDeviceController::class, 'suspend'])->name('admin.exam-devices.suspend');
+        Route::post('/exam-devices/{examDevice}/activate', [App\Http\Controllers\Admin\ExamDeviceController::class, 'activate'])->name('admin.exam-devices.activate');
+        Route::post('/exam-devices/{examDevice}/revoke', [App\Http\Controllers\Admin\ExamDeviceController::class, 'revoke'])->name('admin.exam-devices.revoke');
+    });
+
     Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|System'])->prefix('admin')->group(function () {
         Route::get('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'index'])->name('admin.branding.index');
         Route::post('/branding', [App\Http\Controllers\Admin\BrandingController::class, 'update'])->name('admin.branding.update');

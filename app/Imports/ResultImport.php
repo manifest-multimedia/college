@@ -31,7 +31,7 @@ class ResultImport implements ToCollection, WithHeadingRow
 
     }
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         $this->totalRecords = $rows->count();
 

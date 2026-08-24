@@ -14,12 +14,6 @@ class UserManagement extends Component
 {
     use WithPagination;
 
-    private const MODAL_STATE_EVENT = 'user-management:modal-state-changed';
-
-    private const MODAL_CLOSE_EVENT = 'user-management:close-modal';
-
-    private const USER_DATA_LOADED_EVENT = 'user-management:data-loaded';
-
     protected $paginationTheme = 'bootstrap';
 
     public $search = '';
@@ -113,8 +107,6 @@ class UserManagement extends Component
         $this->editMode = $mode === 'edit';
         $this->isOpen = true;
 
-        // Dispatch event to notify JavaScript to open modal
-        $this->dispatch(self::MODAL_STATE_EVENT, ['isOpen' => true]);
     }
 
     public function closeModal()
@@ -122,8 +114,6 @@ class UserManagement extends Component
         $this->isOpen = false;
         $this->reset(['userId', 'name', 'email', 'phone', 'password', 'passwordConfirmation', 'selectedRoles', 'selectedPermissions', 'editMode']);
 
-        // Dispatch event to notify JavaScript to close modal
-        $this->dispatch(self::MODAL_CLOSE_EVENT);
     }
 
     public function editUser($id)
@@ -155,10 +145,6 @@ class UserManagement extends Component
             // Set modal state
             $this->editMode = true;
             $this->isOpen = true;
-
-            // Dispatch events to signal data is loaded and modal should open
-            $this->dispatch(self::MODAL_STATE_EVENT, ['isOpen' => true]);
-            $this->dispatch(self::USER_DATA_LOADED_EVENT);
 
         } catch (\Exception $e) {
             Log::error('Error editing user: '.$e->getMessage(), [

@@ -217,6 +217,22 @@
                                 <div class="invalid-feedback"></div>
                             </div>
 
+                            @if(auth()->user()->hasAnyRole(['System', 'IT Manager', 'Administrator', 'Super Admin']))
+                                <div class="mb-3">
+                                    <label for="device_access_mode" class="form-label">Device access</label>
+                                    <select id="device_access_mode" name="device_access_mode" class="form-select">
+                                        <option value="open">Open access (default)</option>
+                                        <option value="registered_devices_only">Registered devices only</option>
+                                    </select>
+                                    <small class="form-text text-muted">Restricted exams can only be opened on devices registered by authorised staff.</small>
+                                </div>
+                                <div class="mb-3" id="allowedDeviceTypes" style="display: none;">
+                                    <label class="form-label">Allowed registered device types</label>
+                                    @foreach(['desktop' => 'Desktop', 'laptop' => 'Laptop', 'mobile' => 'Mobile', 'tablet' => 'Tablet'] as $value => $label)
+                                        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="allowed_device_types[]" value="{{ $value }}" id="device_type_{{ $value }}" checked><label class="form-check-label" for="device_type_{{ $value }}">{{ $label }}</label></div>
+                                    @endforeach
+                                </div>
+                            @endif
                             <!-- Enable Proctoring -->
                             <div class="mb-3">
                                 <div class="form-check">
@@ -243,6 +259,12 @@
             <div id="hiddenInputs"></div>
         </form>
     </div>
+
+    <script>
+        document.getElementById('device_access_mode')?.addEventListener('change', function () {
+            document.getElementById('allowedDeviceTypes').style.display = this.value === 'registered_devices_only' ? '' : 'none';
+        });
+    </script>
 
     @push('scripts')
     <script>

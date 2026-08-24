@@ -120,7 +120,9 @@
     </div>
 
     <!-- Modal for Adding/Editing User -->
-    <div class="modal fade" id="userFormModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+    <div class="modal fade {{ $isOpen ? 'show d-block' : '' }}" id="userFormModal" tabindex="-1"
+        aria-hidden="{{ $isOpen ? 'false' : 'true' }}" aria-modal="{{ $isOpen ? 'true' : 'false' }}"
+        style="{{ $isOpen ? 'background-color: rgba(0, 0, 0, 0.5);' : '' }}">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
@@ -259,6 +261,10 @@
         </div>
     </div>
 
+    @if($isOpen)
+        <div class="modal-backdrop fade show"></div>
+    @endif
+
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
         <div class="modal-dialog">
@@ -284,12 +290,8 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the Bootstrap modal elements
-            const userFormModalEl = document.getElementById('userFormModal');
             const deleteConfirmationModalEl = document.getElementById('deleteConfirmationModal');
-            
-            // Create modal instances
-            const userFormModal = new bootstrap.Modal(userFormModalEl);
+
             const deleteConfirmationModal = new bootstrap.Modal(deleteConfirmationModalEl);
             
             // Fix for permissions and roles checkboxes - stop propagation to prevent accordion issues
@@ -302,75 +304,10 @@
             
             // Wait for Livewire to be fully initialized
             document.addEventListener('livewire:initialized', () => {
-                // Handle userDataLoaded event - show modal when data is ready
-                Livewire.on('user-management:data-loaded', () => {
-                    console.log('User data loaded event received');
-                    setTimeout(() => {
-                        userFormModal.show();
-                    }, 100);
-                });
-                
-                // Close modal event handler
-                Livewire.on('user-management:close-modal', () => {
-                    userFormModal.hide();
-                });
-                
                 // Delete confirmation modal handler
                 Livewire.on('showDeleteConfirmation', () => {
                     deleteConfirmationModal.show();
                 });
-                
-                // Modal hidden event - no-op (closing is handled by wire:click on close/cancel buttons)
-                
-                // Handle modal state changes triggered by Livewire
-                Livewire.on('user-management:modal-state-changed', (...args) => {
-                    const normalizeState = (value) => {
-                        if (Array.isArray(value) && value.length > 0) {
-                            return normalizeState(value[0]);
-                        }
-
-                        return value && typeof value === 'object' ? value : {};
-                    };
-
-                    const state = normalizeState(args);
-
-                    if (state.isOpen && !userFormModalEl.classList.contains('show')) {
-                        // Only show if not already shown
-                        setTimeout(() => userFormModal.show(), 100);
-                    } else if (!state.isOpen && userFormModalEl.classList.contains('show')) {
-                        userFormModal.hide();
-                    }
-                });
-            });
-            
-            // Debug modal content when shown
-            userFormModalEl.addEventListener('shown.bs.modal', () => {
-                console.log('Modal shown, roles selected:', @this.selectedRoles);
-                console.log('Modal shown, permissions selected:', @this.selectedPermissions);
-                
-                // Ensure form elements are properly populated
-                if (@this.editMode) {
-                    // Explicitly set form field values from component properties
-                    document.getElementById('name').value = @this.name;
-                    document.getElementById('email').value = @this.email;
-                    if (document.getElementById('phone')) {
-                        document.getElementById('phone').value = @this.phone || '';
-                    }
-                    
-                    // Check the appropriate role checkboxes
-                    const roleIds = @this.selectedRoles || [];
-                    roleIds.forEach(id => {
-                        const checkbox = document.getElementById(`role_${id}`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                    
-                    // Check the appropriate permission checkboxes
-                    const permissionIds = @this.selectedPermissions || [];
-                    permissionIds.forEach(id => {
-                        const checkbox = document.getElementById(`perm_${id}`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
             });
         });
     </script>

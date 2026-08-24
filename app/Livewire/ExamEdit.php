@@ -8,6 +8,7 @@ use App\Models\QuestionSet;
 use App\Models\Subject;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Auth\Access\AuthorizationException;
 use Livewire\Component;
 
 class ExamEdit extends Component
@@ -29,6 +30,10 @@ class ExamEdit extends Component
     public $questions_per_session;
 
     public $passing_percentage;
+
+    public $device_access_mode = 'open';
+
+    public $allowed_device_types = [];
 
     // Question Set Management
     public $availableQuestionSets = [];
@@ -55,6 +60,9 @@ class ExamEdit extends Component
             'status' => 'sometimes|in:upcoming,active,completed',
             'questions_per_session' => 'sometimes|integer|min:1',
             'passing_percentage' => 'sometimes|numeric|min:0|max:100',
+            'device_access_mode' => 'required|in:open,registered_devices_only',
+            'allowed_device_types' => 'required_if:device_access_mode,registered_devices_only|array|min:1',
+            'allowed_device_types.*' => 'in:mobile,laptop,desktop,tablet',
             'selectedQuestionSetId' => 'sometimes|exists:question_sets,id',
             'questionsToPickPerSet.*' => 'sometimes|integer|min:1',
             'shuffleQuestionsPerSet.*' => 'sometimes|boolean',
@@ -79,6 +87,8 @@ class ExamEdit extends Component
         $this->status = $this->exam->status;
         $this->questions_per_session = $this->exam->questions_per_session;
         $this->passing_percentage = $this->exam->passing_percentage;
+        $this->device_access_mode = $this->exam->device_access_mode ?? 'open';
+        $this->allowed_device_types = $this->exam->allowed_device_types ?? [];
 
         // Load question sets
         $this->loadQuestionSets();
@@ -125,6 +135,17 @@ class ExamEdit extends Component
     {
         try {
             $validatedData = $this->validate();
+
+            $deviceAccessChanged = $this->exam->device_access_mode !== $this->device_access_mode
+                || $this->exam->allowed_device_types !== ($this->device_access_mode === 'registered_devices_only' ? $this->allowed_device_types : null);
+
+            if ($deviceAccessChanged && ! Auth::user()->hasAnyRole(['System', 'IT Manager', 'Administrator', 'Super Admin'])) {
+                throw new AuthorizationException('Only authorised examination administrators can change device access rules.');
+            }
+
+            $validatedData['allowed_device_types'] = $this->device_access_mode === 'registered_devices_only'
+                ? $this->allowed_device_types
+                : null;
             Log::info('Validation passed', ['status' => $this->status]);
 
             // Only update fields that have been changed

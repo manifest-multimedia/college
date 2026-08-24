@@ -116,6 +116,9 @@ class ExamController extends Controller
             'exam_password' => 'required|string',
             'passing_mark' => 'nullable|integer|min:0|max:100',
             'enable_proctoring' => 'boolean',
+            'device_access_mode' => 'nullable|in:open,registered_devices_only',
+            'allowed_device_types' => 'required_if:device_access_mode,registered_devices_only|array|min:1',
+            'allowed_device_types.*' => 'in:mobile,laptop,desktop,tablet',
             'user_id' => 'nullable|exists:users,id',
             'selected_question_sets' => 'required|array|min:1',
             'selected_question_sets.*' => 'exists:question_sets,id',
@@ -126,6 +129,11 @@ class ExamController extends Controller
             'selected_question_sets.required' => 'Please select at least one question set.',
             'selected_question_sets.min' => 'Please select at least one question set.',
         ]);
+
+        if ($request->input('device_access_mode') === 'registered_devices_only'
+            && ! $request->user()->hasAnyRole(['System', 'IT Manager', 'Administrator', 'Super Admin'])) {
+            abort(403, 'Only authorised examination administrators can restrict an examination to registered devices.');
+        }
 
         try {
             DB::beginTransaction();
@@ -150,6 +158,10 @@ class ExamController extends Controller
                 'questions_per_session' => $request->questions_per_session,
                 'slug' => $slug,
                 'status' => 'upcoming', // Use valid enum value instead of 'draft'
+                'device_access_mode' => $request->input('device_access_mode', 'open'),
+                'allowed_device_types' => $request->input('device_access_mode') === 'registered_devices_only'
+                    ? $request->input('allowed_device_types', [])
+                    : null,
                 'passing_percentage' => $request->passing_mark ?: 50.00,
                 'clearance_threshold' => (int) ($request->passing_mark ?: 50),
                 'start_date' => $request->start_date,

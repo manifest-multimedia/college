@@ -93,6 +93,10 @@ class OnlineExamination extends Component
             abort(404, 'Exam not found');
         }
 
+        if (! app(\App\Services\Exams\RegisteredExamDeviceService::class)->allows($this->exam, request())) {
+            abort(403, 'This examination is restricted to approved institutional devices.');
+        }
+
         // Hard cut-off: prevent access outside of exam availability period
         if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
             session()->flash('error', 'The scheduled time for this examination has ended.');
@@ -158,11 +162,20 @@ class OnlineExamination extends Component
         return json_encode($detector->getDeviceInfo());
     }
 
+    private function ensureRegisteredDeviceAccess(): void
+    {
+        if (! app(\App\Services\Exams\RegisteredExamDeviceService::class)->allows($this->exam, request())) {
+            abort(403, 'This examination is restricted to approved institutional devices.');
+        }
+    }
+
     /**
      * Handle regular heartbeat from client to update last activity
      */
     public function heartbeat()
     {
+        $this->ensureRegisteredDeviceAccess();
+
         if ($this->examSession) {
             $sessionToken = session('exam_session_token');
             if ($sessionToken) {
@@ -608,6 +621,8 @@ class OnlineExamination extends Component
     public function storeResponse($questionId, $answer)
     {
         try {
+            $this->ensureRegisteredDeviceAccess();
+
             // If in read-only mode, don't allow any changes to responses
             if ($this->readOnlyMode) {
                 // Log attempt to modify in read-only mode
@@ -818,6 +833,8 @@ class OnlineExamination extends Component
     public function submitExam()
     {
         try {
+            $this->ensureRegisteredDeviceAccess();
+
             // Enhanced logging to track submission details
             $answeredCount = count(array_filter($this->responses));
             $totalQuestions = count($this->questions);
