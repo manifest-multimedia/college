@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Option;
 use App\Models\Question;
 use App\Models\QuestionSet;
+use App\Services\Exams\DocxQuestionTextExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -129,8 +130,8 @@ class QuestionSetImportController extends Controller
     public function preview(Request $request, $questionSetId)
     {
         $request->validate([
-            'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt',
-            'format' => 'required|in:excel,aiken',
+            'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt,docx',
+            'format' => 'required|in:excel,aiken,word',
             'column_mapping' => 'nullable|json', // For Excel column mapping
         ]);
 
@@ -144,17 +145,18 @@ class QuestionSetImportController extends Controller
             return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
         }
 
+        $file = $request->file('import_file');
+        $format = $request->input('format');
+        $this->ensureFileMatchesFormat($file, $format);
+
         try {
-            $file = $request->file('import_file');
-            $format = $request->input('format');
             $columnMapping = $request->input('column_mapping') ? json_decode($request->input('column_mapping'), true) : null;
 
-            if ($format === 'excel') {
-                $previewData = $this->previewExcelFile($file, $questionSetId, $columnMapping);
-            } else {
-                // No limit for preview - show all questions for accurate preview
-                $previewData = $this->previewAikenFile($file, false);
-            }
+            $previewData = match ($format) {
+                'excel' => $this->previewExcelFile($file, $questionSetId, $columnMapping),
+                'word' => $this->previewWordFile($file),
+                default => $this->previewAikenFile($file, false),
+            };
 
             return response()->json([
                 'success' => true,
@@ -176,8 +178,8 @@ class QuestionSetImportController extends Controller
     public function store(Request $request, $questionSetId)
     {
         $request->validate([
-            'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt',
-            'format' => 'required|in:excel,aiken',
+            'import_file' => 'required|file|max:10240|mimes:xlsx,xls,csv,txt,docx',
+            'format' => 'required|in:excel,aiken,word',
             'column_mapping' => 'nullable|json',
         ]);
 
@@ -191,18 +193,20 @@ class QuestionSetImportController extends Controller
             return response()->json(['error' => 'You do not have permission to import to this question set.'], 403);
         }
 
+        $file = $request->file('import_file');
+        $format = $request->input('format');
+        $this->ensureFileMatchesFormat($file, $format);
+
         try {
             DB::beginTransaction();
 
-            $file = $request->file('import_file');
-            $format = $request->input('format');
             $columnMapping = $request->input('column_mapping') ? json_decode($request->input('column_mapping'), true) : null;
 
-            if ($format === 'excel') {
-                $result = $this->importExcelFile($file, $questionSetId, $columnMapping);
-            } else {
-                $result = $this->importAikenFile($file, $questionSetId);
-            }
+            $result = match ($format) {
+                'excel' => $this->importExcelFile($file, $questionSetId, $columnMapping),
+                'word' => $this->importWordFile($file, $questionSetId),
+                default => $this->importAikenFile($file, $questionSetId),
+            };
 
             DB::commit();
 
@@ -278,6 +282,15 @@ class QuestionSetImportController extends Controller
     private function previewAikenFile($file, $limitPreview = false)
     {
         $content = file_get_contents($file->path());
+
+        return $this->previewAikenContent($content);
+    }
+
+    /**
+     * Parse Aiken-compatible text.
+     */
+    private function previewAikenContent(string $content): array
+    {
         $blocks = preg_split('/\n\s*\n/', trim($content));
         $questions = [];
         $errors = [];
@@ -299,6 +312,39 @@ class QuestionSetImportController extends Controller
             $lineNumber += count(explode("\n", $block)) + 1;
 
             // No limit - process all questions for complete preview and import
+        }
+
+        return ['questions' => $questions, 'errors' => $errors];
+    }
+
+    private function previewWordFile($file): array
+    {
+        $content = app(DocxQuestionTextExtractor::class)->extract($file->path());
+        $questions = [];
+        $errors = [];
+
+        preg_match_all('/^QUESTION:\s*.*$/mi', $content, $matches, PREG_OFFSET_CAPTURE);
+        $markers = $matches[0] ?? [];
+
+        if (empty($markers)) {
+            return [
+                'questions' => [],
+                'errors' => ['No question blocks were found. In Word documents, every question must start with "QUESTION:".'],
+            ];
+        }
+
+        foreach ($markers as $index => [$marker, $offset]) {
+            $nextOffset = $markers[$index + 1][1] ?? strlen($content);
+            $block = substr($content, $offset, $nextOffset - $offset);
+            $block = preg_replace('/^QUESTION:\s*/i', '', $block, 1);
+            $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
+
+            $questionData = $this->parseAikenBlock(trim($block), $lineNumber);
+            if ($questionData['errors']) {
+                $errors = array_merge($errors, $questionData['errors']);
+            } else {
+                $questions[] = $questionData['question'];
+            }
         }
 
         return ['questions' => $questions, 'errors' => $errors];
@@ -420,6 +466,8 @@ class QuestionSetImportController extends Controller
         $options = [];
         $correctAnswer = '';
         $feedback = '';
+        $marks = 1;
+        $examSection = '';
         $errors = [];
 
         foreach ($lines as $line) {
@@ -432,8 +480,12 @@ class QuestionSetImportController extends Controller
                 ];
             } elseif (preg_match('/^ANSWER:\s*([A-D])/i', $line, $matches)) {
                 $correctAnswer = strtoupper($matches[1]);
-            } elseif (preg_match('/^FEEDBACK:\s*(.+)/i', $line, $matches)) {
+            } elseif (preg_match('/^(?:FEEDBACK|EXPLANATION):\s*(.+)/i', $line, $matches)) {
                 $feedback = trim($matches[1]);
+            } elseif (preg_match('/^MARKS:\s*(\d+(?:\.\d+)?)/i', $line, $matches)) {
+                $marks = max(1, (int) $matches[1]);
+            } elseif (preg_match('/^(?:SECTION|EXAM SECTION):\s*(.+)/i', $line, $matches)) {
+                $examSection = trim($matches[1]);
             } elseif (empty($questionText) && ! empty($line)) {
                 $questionText = $line;
             }
@@ -474,9 +526,9 @@ class QuestionSetImportController extends Controller
                 'question_text' => $questionText,
                 'options' => $options,
                 'correct_option' => $correctIndex,
-                'marks' => 1,
+                'marks' => $marks,
                 'explanation' => $feedback,
-                'exam_section' => '',
+                'exam_section' => $examSection,
             ],
         ];
     }
@@ -500,6 +552,28 @@ class QuestionSetImportController extends Controller
         $previewData = $this->previewAikenFile($file, false);
 
         return $this->processImportData($previewData['questions'], $questionSetId, $previewData['errors']);
+    }
+
+    private function importWordFile($file, $questionSetId)
+    {
+        $previewData = $this->previewWordFile($file);
+
+        return $this->processImportData($previewData['questions'], $questionSetId, $previewData['errors']);
+    }
+
+    private function ensureFileMatchesFormat($file, string $format): void
+    {
+        $extensions = [
+            'excel' => ['xlsx', 'xls', 'csv'],
+            'aiken' => ['txt'],
+            'word' => ['docx'],
+        ];
+
+        if (! in_array(strtolower($file->getClientOriginalExtension()), $extensions[$format] ?? [], true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'import_file' => 'The selected file does not match the chosen import format.',
+            ]);
+        }
     }
 
     /**

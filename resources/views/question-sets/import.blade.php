@@ -60,7 +60,7 @@
                             <h1 class="h3 mb-0 text-gray-800">
                                 <i class="bi bi-upload me-2"></i>Import Questions
                             </h1>
-                            <p class="text-muted mb-0">Bulk import questions from Excel/CSV or Aiken format files</p>
+                            <p class="text-muted mb-0">Bulk import questions from Excel/CSV, Aiken text, or structured Word documents</p>
                         </div>
                         <div>
                             <a href="{{ route('question.sets') }}" class="btn btn-outline-secondary me-2">
@@ -96,10 +96,10 @@
                                                class="form-control" 
                                                id="import_file" 
                                                name="import_file" 
-                                               accept=".xlsx,.xls,.csv,.txt" 
+                                               accept=".xlsx,.xls,.csv,.txt,.docx"
                                                required>
                                         <div class="form-text">
-                                            Supported formats: Excel (.xlsx, .xls), CSV (.csv), Aiken (.txt)
+                                            Supported formats: Excel (.xlsx, .xls), CSV (.csv), Aiken (.txt), Word (.docx)
                                         </div>
                                     </div>
                                 </div>
@@ -110,6 +110,7 @@
                                             <option value="">Select format</option>
                                             <option value="excel">Excel/CSV</option>
                                             <option value="aiken">Aiken Format</option>
+                                            <option value="word">Word Document (.docx)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -202,7 +203,7 @@
                     <div class="card-body">
                         <div class="row">
                             <!-- Excel/CSV Format -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="fw-bold">Excel/CSV Format</h6>
                                 <p class="text-muted mb-2">Upload Excel (.xlsx, .xls) or CSV files with the following columns:</p>
                                 <ul class="small">
@@ -219,7 +220,7 @@
                             </div>
                             
                             <!-- Aiken Format -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <h6 class="fw-bold">Aiken Format</h6>
                                 <p class="text-muted mb-2">Upload plain text files (.txt) with Aiken format:</p>
                                 <div class="bg-light p-3 rounded">
@@ -246,13 +247,38 @@ ANSWER: B</pre>
                                     <li>Blank line separates questions</li>
                                 </ul>
                             </div>
+
+                            <!-- Word Format -->
+                            <div class="col-md-4">
+                                <h6 class="fw-bold">Word Document Format</h6>
+                                <p class="text-muted mb-2">Upload a text-based <code>.docx</code> document using the same structured question blocks:</p>
+                                <div class="bg-light p-3 rounded">
+                                    <pre class="mb-0 small">QUESTION: What is 2 + 2?
+A. 3
+B. 4
+C. 5
+D. 6
+ANSWER: B
+MARKS: 1
+EXPLANATION: 2 + 2 equals 4.
+
+[Blank paragraph before next question]</pre>
+                                </div>
+                                <ul class="small mt-2">
+                                    <li>Use normal Word paragraphs; avoid tables and images.</li>
+                                    <li>Start every question with <code>QUESTION:</code>; unrelated text is ignored.</li>
+                                    <li>A blank paragraph between questions is recommended.</li>
+                                    <li><code>MARKS</code>, <code>EXPLANATION</code>, and <code>SECTION</code> are optional.</li>
+                                    <li>Cover pages and unrelated text are ignored.</li>
+                                </ul>
+                            </div>
                         </div>
                         
                         <div class="alert alert-info mt-3">
                             <i class="bi bi-lightbulb me-2"></i>
                             <strong>Tips:</strong>
                             <ul class="mb-0 mt-2">
-                                <li>Ensure your file has a header row (Excel/CSV) or proper format (Aiken)</li>
+                                <li>Ensure your file has a header row (Excel/CSV) or proper question blocks (Aiken/Word)</li>
                                 <li>Preview your import before confirming to check for errors</li>
                                 <li>Maximum file size: 10MB</li>
                                 <li>For large imports, consider breaking them into smaller files</li>
@@ -416,7 +442,9 @@ ANSWER: B</pre>
                             $('#import-btn').prop('disabled', false).show();
                             showSuccess('Preview generated successfully! ' + response.total + ' questions found.');
                         } else {
-                            showError(['No questions found in the file. Please check the file format and content.']);
+                            showError(response.errors && response.errors.length > 0
+                                ? response.errors
+                                : ['No questions found in the file. Please check the file format and content.']);
                         }
                         
                         // Show any parsing errors (but don't override success message)
@@ -713,12 +741,22 @@ ANSWER: B</pre>
                 }
                 
                 // Validate file type
-                const validExtensions = ['.xlsx', '.xls', '.csv', '.txt'];
+                const validExtensions = ['.xlsx', '.xls', '.csv', '.txt', '.docx'];
                 const fileName = file.name.toLowerCase();
                 const isValidType = validExtensions.some(ext => fileName.endsWith(ext));
                 
                 if (!isValidType) {
-                    errors.push('Invalid file type. Please select Excel (.xlsx, .xls), CSV (.csv), or Aiken (.txt) files only');
+                    errors.push('Invalid file type. Please select Excel (.xlsx, .xls), CSV (.csv), Aiken (.txt), or Word (.docx) files only');
+                    $('#import_file').addClass('is-invalid');
+                }
+
+                const expectedExtensions = {
+                    excel: ['.xlsx', '.xls', '.csv'],
+                    aiken: ['.txt'],
+                    word: ['.docx']
+                };
+                if (format && expectedExtensions[format] && !expectedExtensions[format].some(ext => fileName.endsWith(ext))) {
+                    errors.push('The selected file does not match the chosen import format.');
                     $('#import_file').addClass('is-invalid');
                 }
             }
