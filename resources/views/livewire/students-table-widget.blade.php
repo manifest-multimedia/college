@@ -1,6 +1,6 @@
 <div>
     <!-- Compact Professional Page Header -->
-    <div class="mb-5">
+    <div class="mb-7 mb-lg-8">
         <h1 class="text-gray-900 fw-bold mb-1" style="font-size: 1.5rem; letter-spacing: -0.01em;">Student Information</h1>
         <p class="text-muted fs-7 mb-0">Manage student records, admissions and academic information.</p>
     </div>
