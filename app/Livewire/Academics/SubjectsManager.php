@@ -39,6 +39,11 @@ class SubjectsManager extends Component
 
     public $college_class_id;
 
+    // Filter properties (Programme / Year / Semester)
+    public $filter_college_class = '';
+    public $filter_year = '';
+    public $filter_semester = '';
+
     public $isOpen = false;
 
     public $isDeleteModalOpen = false;
@@ -61,11 +66,32 @@ class SubjectsManager extends Component
 
     public function render()
     {
+        $query = Subject::query();
+
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('name', 'like', '%'.$this->search.'%')
+                  ->orWhere('course_code', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        // Apply compact filters when set
+        $query->when($this->filter_college_class, function ($q) {
+            $q->where('college_class_id', $this->filter_college_class);
+        });
+
+        $query->when($this->filter_year, function ($q) {
+            $q->where('year_id', $this->filter_year);
+        });
+
+        $query->when($this->filter_semester, function ($q) {
+            $q->where('semester_id', $this->filter_semester);
+        });
+
+        $subjects = $query->orderBy('created_at', 'desc')->paginate(10);
+
         return view('livewire.academics.subjects-manager', [
-            'subjects' => Subject::where('name', 'like', '%'.$this->search.'%')
-                ->orWhere('course_code', 'like', '%'.$this->search.'%')
-                ->orderBy('created_at', 'desc')
-                ->paginate(10),
+            'subjects' => $subjects,
             'semesters' => Semester::all(),
             'years' => Year::all(),
             'collegeClasses' => CollegeClass::all(),
@@ -179,7 +205,15 @@ class SubjectsManager extends Component
 
         $filename = 'courses_export_'.date('Y_m_d_His').'.xlsx';
 
-        return Excel::download(new CoursesExport($this->search), $filename);
+        return Excel::download(
+            new CoursesExport(
+                $this->search,
+                $this->filter_college_class ?? '',
+                $this->filter_year ?? '',
+                $this->filter_semester ?? ''
+            ),
+            $filename
+        );
     }
 
     public function openImportModal()
@@ -227,5 +261,13 @@ class SubjectsManager extends Component
             Log::error('Error importing courses: '.$e->getMessage());
             session()->flash('error', 'Failed to import courses: '.$e->getMessage());
         }
+    }
+
+    // Clear applied filters
+    public function clearFilters()
+    {
+        $this->filter_college_class = '';
+        $this->filter_year = '';
+        $this->filter_semester = '';
     }
 }
