@@ -286,4 +286,50 @@ class Exam extends Model
     {
         return 'slug';
     }
+
+    /**
+     * Dynamically evaluate and update the exam status based on current time and start/end dates.
+     * Returns the current (and potentially updated) status.
+     *
+     * @return string
+     */
+    public function syncScheduleStatus(): string
+    {
+        $now = now();
+        $newStatus = null;
+
+        // If end_date has passed, status must be completed
+        if ($this->end_date && $now->greaterThanOrEqualTo($this->end_date)) {
+            if ($this->status !== 'completed') {
+                $newStatus = 'completed';
+            }
+        }
+        // If start_date has reached/passed and end_date has not passed
+        elseif ($this->start_date && $now->greaterThanOrEqualTo($this->start_date)) {
+            if ($this->status === 'upcoming') {
+                $newStatus = 'active';
+            }
+        }
+
+        if ($newStatus) {
+            $this->status = $newStatus;
+            if ($this->exists) {
+                $this->saveQuietly();
+            }
+        }
+
+        return $this->status;
+    }
+
+    /**
+     * Perform Model Booting & Listeners
+     */
+    protected static function booted(): void
+    {
+        static::retrieved(function (Exam $exam) {
+            if ($exam->start_date || $exam->end_date) {
+                $exam->syncScheduleStatus();
+            }
+        });
+    }
 }

@@ -71,8 +71,10 @@ class OnlineExaminationV2 extends Component
             abort(403, 'This examination is restricted to approved institutional devices.');
         }
 
+        $this->exam->syncScheduleStatus();
+
         // Hard cut-off: prevent access outside of exam availability period
-        if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
+        if ($this->exam->status === 'completed' || ($this->exam->end_date && now()->isAfter($this->exam->end_date))) {
             session()->flash('error', 'The scheduled time for this examination has ended.');
             return redirect()->route('take-exam');
         }

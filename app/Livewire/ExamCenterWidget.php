@@ -38,6 +38,11 @@ class ExamCenterWidget extends Component
     public function render()
     {
         try {
+            // Auto-sync status for non-completed exams before rendering so filter tabs are accurate
+            Exam::where('status', '!=', 'completed')->get()->each(function ($exam) {
+                $exam->syncScheduleStatus();
+            });
+
             if (Auth::user()->hasAnyRole(['System', 'Super Admin', 'Administrator', 'admin'])) {
                 $exams = Exam::with([
                     'course',
