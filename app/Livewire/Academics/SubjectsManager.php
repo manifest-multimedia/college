@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Academics;
 
+use App\Exports\CoursesExport;
+use App\Imports\CoursesImport;
 use App\Models\CollegeClass;
 use App\Models\Semester;
 use App\Models\Subject;
@@ -9,11 +11,13 @@ use App\Models\Year;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SubjectsManager extends Component
 {
-    use WithPagination;
+    use WithFileUploads, WithPagination;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -161,5 +165,67 @@ class SubjectsManager extends Component
         }
         $this->closeDeleteModal();
         $this->resetInputFields();
+    }
+
+    public $importFile;
+
+    public $isImportModalOpen = false;
+
+    public function export()
+    {
+        if (! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized action. Only users with System role can export courses.');
+        }
+
+        $filename = 'courses_export_'.date('Y_m_d_His').'.xlsx';
+
+        return Excel::download(new CoursesExport($this->search), $filename);
+    }
+
+    public function openImportModal()
+    {
+        if (! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized action. Only users with System role can import courses.');
+        }
+
+        $this->importFile = null;
+        $this->isImportModalOpen = true;
+    }
+
+    public function closeImportModal()
+    {
+        $this->isImportModalOpen = false;
+        $this->importFile = null;
+    }
+
+    public function import()
+    {
+        if (! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized action. Only users with System role can import courses.');
+        }
+
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $importer = new CoursesImport();
+            Excel::import($importer, $this->importFile->getRealPath());
+
+            $created = $importer->getImportedCount();
+            $updated = $importer->getUpdatedCount();
+            $errors = $importer->getErrors();
+
+            $msg = "Course import completed: {$created} created, {$updated} updated.";
+            if (! empty($errors)) {
+                $msg .= ' Some rows had errors: '.implode('; ', array_slice($errors, 0, 3));
+            }
+
+            session()->flash('message', $msg);
+            $this->closeImportModal();
+        } catch (\Exception $e) {
+            Log::error('Error importing courses: '.$e->getMessage());
+            session()->flash('error', 'Failed to import courses: '.$e->getMessage());
+        }
     }
 }

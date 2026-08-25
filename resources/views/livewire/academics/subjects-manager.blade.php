@@ -7,13 +7,21 @@
                             <i class="fas fa-book me-2"></i> Manage Courses
                         </h1>
                         </div>
-                        <div class="d-flex">
-                            <div class="input-group me-2">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <div class="input-group me-2" style="width: auto; min-width: 220px;">
                                 <input wire:model.live.debounce.300ms="search" class="form-control" placeholder="Search courses...">
                                 <button class="btn btn-outline-secondary" type="button">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
+                            @if(auth()->user()->hasRole('System'))
+                                <button wire:click="export" wire:loading.attr="disabled" class="btn btn-outline-success me-2">
+                                    <i class="fas fa-file-export me-1"></i> Export Courses
+                                </button>
+                                <button wire:click="openImportModal" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-file-import me-1"></i> Import Courses
+                                </button>
+                            @endif
                             <button wire:click="openModal" class="btn btn-primary">
                                 <i class="fas fa-plus-circle me-1"></i> Add New Course
                             </button>
@@ -180,3 +188,45 @@
         </div>
     </div>
     @endif
+
+    <!-- Import Courses Modal -->
+    @if($isImportModalOpen)
+    <div class="modal show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-import me-2"></i> Import Courses</h5>
+                    <button type="button" class="btn-close" wire:click="closeImportModal" aria-label="Close"></button>
+                </div>
+                <form wire:submit.prevent="import" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="fas fa-info-circle me-1"></i> Import Instructions</h6>
+                            <p class="mb-1">Select an Excel (.xlsx, .xls) or CSV file containing courses to import into the system.</p>
+                            <p class="mb-0 text-muted small"><strong>Expected columns (with header row):</strong> Course Code, Course Name, Credit Hours, Program, Year, Semester, Description.</p>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="importFile" class="form-label font-weight-bold">Upload Course File (.xlsx, .xls, .csv)</label>
+                            <input type="file" wire:model="importFile" id="importFile" class="form-control @error('importFile') is-invalid @enderror">
+                            @error('importFile') <span class="text-danger small">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div wire:loading wire:target="importFile" class="text-primary small mb-3">
+                            <i class="fas fa-spinner fa-spin me-1"></i> Uploading file preview...
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeImportModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="import">
+                            <span wire:loading.remove wire:target="import"><i class="fas fa-upload me-1"></i> Import Courses</span>
+                            <span wire:loading wire:target="import"><i class="fas fa-spinner fa-spin me-1"></i> Processing Import...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+</div>
+
