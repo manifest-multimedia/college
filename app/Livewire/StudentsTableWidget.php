@@ -36,20 +36,68 @@ class StudentsTableWidget extends Component
 
     public $exportFormat = '';
 
+    public $selectedStudents = [];
+
+    public $selectAll = false;
+
     // Reset pagination when filters change
     public function updatingSearch()
     {
         $this->resetPage();
+        $this->selectedStudents = [];
+        $this->selectAll = false;
     }
 
     public function updatingProgramFilter()
     {
         $this->resetPage();
+        $this->selectedStudents = [];
+        $this->selectAll = false;
     }
 
     public function updatingCohortFilter()
     {
         $this->resetPage();
+        $this->selectedStudents = [];
+        $this->selectAll = false;
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedStudents = $this->getFilteredStudentsQuery()->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+        } else {
+            $this->selectedStudents = [];
+        }
+    }
+
+    public function updatedSelectedStudents()
+    {
+        $allIds = $this->getFilteredStudentsQuery()->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+        if (count($allIds) > 0 && count(array_intersect($allIds, $this->selectedStudents)) === count($allIds)) {
+            $this->selectAll = true;
+        } else {
+            $this->selectAll = false;
+        }
+    }
+
+    private function getFilteredStudentsQuery()
+    {
+        return Student::query()
+            ->when($this->search, function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('student_id', 'like', '%'.$this->search.'%')
+                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
+                });
+            })
+            ->when($this->programFilter, function ($query) {
+                return $query->where('college_class_id', $this->programFilter);
+            })
+            ->when($this->cohortFilter, function ($query) {
+                return $query->where('cohort_id', $this->cohortFilter);
+            });
     }
 
     /**

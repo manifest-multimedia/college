@@ -91,94 +91,150 @@
             </div>
         </div>
 
+        <style>
+            .student-table-row {
+                transition: background-color 0.15s ease-in-out;
+            }
+            .student-table-row:hover {
+                background-color: #F8FAFC !important;
+            }
+            .student-table-row.selected-row {
+                background-color: #EFF6FF !important;
+            }
+            .student-table-row.selected-row:hover {
+                background-color: #DBEAFE !important;
+            }
+        </style>
         <div class="card-body p-0">
-            <table class="table align-middle table-row-dashed table-row-gray-300 gs-0 gy-4">
-                <thead>
-                    <tr class="fw-bold text-gray-800 border-bottom-2 border-gray-200">
-                        <th class="ps-4 min-w-100px">Student ID</th>
-                        <th class="min-w-150px">Student Name</th>
-                        <th class="min-w-100px">Program</th>
-                        <th class="min-w-100px">Cohort</th>
-                        <th class="min-w-100px">Status</th>
-                        <th class="text-center min-w-100px pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($students as $student)
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
+                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
                         <tr>
-                            <td class="ps-4">
-                                <a href="{{ route('students.show', $student->id) }}" class="text-gray-800 text-hover-primary fw-bold">
-                                    {{ $student->student_id }}
-                                </a>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    @if ($student->profile_photo_url)
-                                        <div class="me-3">
-                                            <a href="{{ route('students.show', $student->id) }}">
-                                                <img class="rounded-circle" src="{{ $student->profile_photo_url }}" alt="avatar" width="40" height="40">
+                            <th class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 12px 16px;">
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <input type="checkbox" 
+                                           class="form-check-input m-0"
+                                           style="cursor: pointer; width: 16px; height: 16px;"
+                                           wire:model.live="selectAll"
+                                           title="Select all students">
+                                </div>
+                            </th>
+                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student ID</th>
+                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student Name</th>
+                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Program</th>
+                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Cohort</th>
+                            <th class="align-middle fw-semibold text-secondary text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Status</th>
+                            <th class="align-middle fw-semibold text-secondary text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($students as $student)
+                            @php
+                                $isSelected = in_array((string)$student->id, $selectedStudents);
+                            @endphp
+                            <tr class="student-table-row {{ $isSelected ? 'selected-row' : '' }}" style="border-bottom: 1px solid #F1F5F9;">
+                                <td class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 14px 16px;">
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <input type="checkbox" 
+                                               class="form-check-input m-0"
+                                               style="cursor: pointer; width: 16px; height: 16px;"
+                                               value="{{ $student->id }}"
+                                               wire:model.live="selectedStudents">
+                                    </div>
+                                </td>
+                                <td class="align-middle" style="padding: 14px 16px;">
+                                    <a href="{{ route('students.show', $student->id) }}" class="fw-semibold text-gray-900 text-hover-primary" style="font-variant-numeric: tabular-nums; font-size: 0.875rem; letter-spacing: 0.02em;">
+                                        {{ $student->student_id }}
+                                    </a>
+                                </td>
+                                <td class="align-middle" style="padding: 14px 16px;">
+                                    <div class="d-flex align-items-center">
+                                        @if ($student->profile_photo_url)
+                                            <div class="me-3 flex-shrink-0">
+                                                <a href="{{ route('students.show', $student->id) }}">
+                                                    <img class="rounded-circle" src="{{ $student->profile_photo_url }}" alt="avatar" width="36" height="36">
+                                                </a>
+                                            </div>
+                                        @endif
+                                        <div class="overflow-hidden">
+                                            <a href="{{ route('students.show', $student->id) }}" class="fw-semibold text-gray-900 text-hover-primary d-block text-truncate fs-7" title="{{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}">
+                                                {{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}
                                             </a>
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <a href="{{ route('students.show', $student->id) }}" class="text-gray-800 text-hover-primary fw-bold">
-                                            {{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}
-                                        </a>
-                                        <div class="text-gray-600 fs-7">
-                                            <a href="{{ route('students.show', $student->id) }}" class="text-gray-600 text-hover-primary">
-                                                {{ $student->email }}
-                                            </a>
+                                            <div class="text-muted fs-7 text-truncate" style="max-width: 220px;">
+                                                <a href="{{ route('students.show', $student->id) }}" class="text-muted text-hover-primary fs-7" title="{{ $student->email }}">
+                                                    {{ $student->email }}
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>{{ $student->CollegeClass()->first()?->name }}</td>
-                            <td>{{ $student->Cohort()->first()->name ?? 'N/A' }}</td>
-                            <td>
-                                @if($student->status == 'Active')
-                                    <span class="badge badge-light-success">{{ $student->status ?? 'Active' }}</span>
-                                @elseif($student->status == 'Inactive')
-                                    <span class="badge badge-light-danger">{{ $student->status }}</span>
-                                @elseif($student->status == 'Pending')
-                                    <span class="badge badge-light-warning">{{ $student->status }}</span>
-                                @else
-                                    <span class="badge badge-light-secondary">{{ $student->status ?? 'Unknown' }}</span>
-                                @endif
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-light-primary btn-active-light-primary" type="button" id="dropdownMenuButton{{ $student->id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Actions
-                                        <i class="fas fa-chevron-down ms-2 fs-7"></i>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ $student->id }}">
-                                        <li><a class="dropdown-item" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary"></i>Edit</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('students.show', $student->id) }}"><i class="fas fa-eye me-2 text-info"></i>View</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item text-danger" href="#" 
-                                               wire:click.prevent="confirmStudentDeletion({{ $student->id }})">
-                                               <i class="fas fa-trash-alt me-2"></i>Delete
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                    
-                    @if(count($students) == 0)
-                        <tr>
-                            <td colspan="6" class="text-center">
-                                <div class="pt-10 pb-10 fs-6 fw-bold">
-                                    No students found.<br />
-                                    <a class="mt-5 btn btn-sm btn-primary" href="/students/create">Add New Student</a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endif
-                </tbody>
-            </table>
+                                </td>
+                                <td class="align-middle" style="padding: 14px 16px;">
+                                    <span class="text-gray-800 fw-medium fs-7">
+                                        {{ $student->CollegeClass()->first()?->name ?? 'N/A' }}
+                                    </span>
+                                </td>
+                                <td class="align-middle" style="padding: 14px 16px;">
+                                    <span class="text-muted fs-7">
+                                        {{ $student->Cohort()->first()->name ?? 'N/A' }}
+                                    </span>
+                                </td>
+                                <td class="text-center align-middle" style="padding: 14px 16px;">
+                                    @if(($student->status ?? 'Active') == 'Active')
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
+                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #10B981;"></span>
+                                            Active
+                                        </span>
+                                    @elseif($student->status == 'Inactive')
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;">
+                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #EF4444;"></span>
+                                            Inactive
+                                        </span>
+                                    @elseif($student->status == 'Pending')
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
+                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #F59E0B;"></span>
+                                            Pending
+                                        </span>
+                                    @else
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">
+                                            {{ $student->status ?? 'Active' }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-end align-middle" style="padding: 14px 16px;">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary border-0 px-2.5 py-1 rounded-2 text-gray-700" type="button" id="dropdownMenuButton{{ $student->id }}" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8125rem;">
+                                            Actions
+                                            <i class="fas fa-chevron-down ms-1.5 fs-8 text-muted"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-gray-200" aria-labelledby="dropdownMenuButton{{ $student->id }}">
+                                            <li><a class="dropdown-item py-2 fs-7" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary"></i>Edit</a></li>
+                                            <li><a class="dropdown-item py-2 fs-7" href="{{ route('students.show', $student->id) }}"><i class="fas fa-eye me-2 text-info"></i>View</a></li>
+                                            <li><hr class="dropdown-divider my-1"></li>
+                                            <li>
+                                                <a class="dropdown-item py-2 fs-7 text-danger" href="#" 
+                                                   wire:click.prevent="confirmStudentDeletion({{ $student->id }})">
+                                                   <i class="fas fa-trash-alt me-2"></i>Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                        
+                        @if(count($students) == 0)
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="fs-6 fw-semibold text-muted">
+                                        No students found.<br />
+                                        <a class="mt-3 btn btn-sm btn-primary" href="/students/create">Add New Student</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
         </div>
         
         <div class="d-flex justify-content-center py-3">

@@ -199,68 +199,127 @@
         @endif
 
         <!-- Students List -->
+        <style>
+            .student-table-row {
+                transition: background-color 0.15s ease-in-out;
+            }
+            .student-table-row:hover {
+                background-color: #F8FAFC !important;
+            }
+            .student-table-row.selected-row {
+                background-color: #EFF6FF !important;
+            }
+            .student-table-row.selected-row:hover {
+                background-color: #DBEAFE !important;
+            }
+        </style>
         <div class="row">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-users me-2"></i>
-                            Students
-                            @if($students->count() > 0)
-                                <span class="badge bg-primary ms-2">{{ $students->total() }}</span>
-                            @endif
-                            @if(count($selectedStudents) > 0)
-                                <span class="badge bg-success ms-2">{{ count($selectedStudents) }} selected</span>
-                            @endif
-                        </h6>
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-body border-0 py-3 px-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h6 class="card-title mb-0 d-flex align-items-center gap-2">
+                                <i class="fas fa-users text-primary me-1 fs-5"></i>
+                                <span class="fw-bold text-gray-800 fs-5">Students</span>
+                                @if($students->count() > 0)
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2.5 py-1 rounded-pill fs-7 ms-1">{{ $students->total() }}</span>
+                                @endif
+                                @if(count($selectedStudents) > 0)
+                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2.5 py-1 rounded-pill fs-7 ms-1">{{ count($selectedStudents) }} selected</span>
+                                @endif
+                            </h6>
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         @if($students->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
+                                <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
+                                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
                                         <tr>
-                                            <th width="50">
-                                                <input type="checkbox" 
-                                                       class="form-check-input"
-                                                       @if(count($selectedStudents) > 0 && count($selectedStudents) == $students->count()) checked @endif
-                                                       wire:click="@if(count($selectedStudents) == $students->count()) deselectAllStudents @else selectAllStudents @endif">
+                                            <th class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 12px 16px;">
+                                                <div class="d-flex justify-content-center align-items-center">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input m-0"
+                                                           style="cursor: pointer; width: 16px; height: 16px;"
+                                                           @if(count($selectedStudents) > 0 && count($selectedStudents) == $students->count()) checked @endif
+                                                           wire:click="@if(count($selectedStudents) == $students->count()) deselectAllStudents @else selectAllStudents @endif"
+                                                           title="Select all students">
+                                                </div>
                                             </th>
-                                            <th>Student ID</th>
-                                            <th>Student Name</th>
-                                            <th>Email</th>
-                                            <th>Class</th>
-                                            <th>Status</th>
-                                            <th width="120">Actions</th>
+                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student ID</th>
+                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student Name</th>
+                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Email</th>
+                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Class</th>
+                                            <th class="align-middle fw-semibold text-secondary text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Status</th>
+                                            <th class="align-middle fw-semibold text-secondary text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($students as $student)
-                                            <tr>
-                                                <td>
-                                                    <input type="checkbox" 
-                                                           class="form-check-input"
-                                                           @if(in_array($student->id, $selectedStudents)) checked @endif
-                                                           wire:click="toggleStudentSelection({{ $student->id }})">
+                                            @php
+                                                $isSelected = in_array($student->id, $selectedStudents);
+                                            @endphp
+                                            <tr class="student-table-row {{ $isSelected ? 'selected-row' : '' }}" 
+                                                style="border-bottom: 1px solid #F1F5F9;">
+                                                <td class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 14px 16px;">
+                                                    <div class="d-flex justify-content-center align-items-center">
+                                                        <input type="checkbox" 
+                                                               class="form-check-input m-0"
+                                                               style="cursor: pointer; width: 16px; height: 16px;"
+                                                               @if($isSelected) checked @endif
+                                                               wire:click="toggleStudentSelection({{ $student->id }})">
+                                                    </div>
                                                 </td>
-                                                <td>
-                                                    <strong>{{ $student->student_id }}</strong>
+                                                <td class="align-middle" style="padding: 14px 16px;">
+                                                    <span class="fw-semibold text-gray-900" style="font-variant-numeric: tabular-nums; font-size: 0.875rem; letter-spacing: 0.02em;">
+                                                        {{ $student->student_id }}
+                                                    </span>
                                                 </td>
-                                                <td>{{ $student->full_name }}</td>
-                                                <td>
-                                                    <small class="text-muted">{{ $student->email }}</small>
+                                                <td class="align-middle" style="padding: 14px 16px;">
+                                                    <span class="fw-semibold text-gray-900 fs-7" title="{{ $student->full_name }}">
+                                                        {{ $student->full_name }}
+                                                    </span>
                                                 </td>
-                                                <td>{{ $student->collegeClass->name ?? 'N/A' }}</td>
-                                                <td>
-                                                    <span class="badge bg-success">Active</span>
+                                                <td class="align-middle" style="padding: 14px 16px;">
+                                                    <span class="text-muted fs-7 d-inline-block text-truncate" style="max-width: 220px;" title="{{ $student->email }}">
+                                                        {{ $student->email }}
+                                                    </span>
                                                 </td>
-                                                <td>
+                                                <td class="align-middle" style="padding: 14px 16px;">
+                                                    <span class="text-gray-800 fw-medium fs-7">
+                                                        {{ $student->collegeClass->name ?? 'N/A' }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center align-middle" style="padding: 14px 16px;">
+                                                    @if(($student->status ?? 'Active') == 'Active')
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
+                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #10B981;"></span>
+                                                            Active
+                                                        </span>
+                                                    @elseif($student->status == 'Inactive')
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;">
+                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #EF4444;"></span>
+                                                            Inactive
+                                                        </span>
+                                                    @elseif($student->status == 'Pending')
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
+                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #F59E0B;"></span>
+                                                            Pending
+                                                        </span>
+                                                    @else
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">
+                                                            {{ $student->status ?? 'Active' }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-end align-middle" style="padding: 14px 16px;">
                                                     <button type="button" 
-                                                            class="btn btn-primary btn-sm"
+                                                            class="btn btn-sm btn-outline-primary fw-semibold px-3 py-1 rounded-2 d-inline-flex align-items-center gap-1.5 ms-auto"
+                                                            style="font-size: 0.8125rem; transition: all 0.15s ease-in-out;"
                                                             wire:click="generateTranscript({{ $student->id }})"
                                                             wire:loading.attr="disabled"
                                                             title="Generate Transcript">
-                                                        <i class="fas fa-certificate"></i>
+                                                        <i class="fas fa-file-invoice text-primary fs-7"></i>
                                                         <span wire:loading.remove wire:target="generateTranscript({{ $student->id }})">
                                                             Generate
                                                         </span>
@@ -276,9 +335,9 @@
                             </div>
                             
                             <!-- Pagination -->
-                            <div class="d-flex justify-content-between align-items-center p-3">
+                            <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top border-gray-100">
                                 <div>
-                                    <small class="text-muted">
+                                    <small class="text-muted fw-medium">
                                         Showing {{ $students->firstItem() }} to {{ $students->lastItem() }} 
                                         of {{ $students->total() }} results
                                     </small>
