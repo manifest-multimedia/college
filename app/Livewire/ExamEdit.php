@@ -31,6 +31,10 @@ class ExamEdit extends Component
 
     public $passing_percentage;
 
+    public $start_date;
+
+    public $end_date;
+
     public $device_access_mode = 'open';
 
     public $allowed_device_types = [];
@@ -52,7 +56,7 @@ class ExamEdit extends Component
 
     protected function rules()
     {
-        return [
+        $rules = [
             'title' => 'sometimes|nullable|string|max:255',
             'description' => 'sometimes|nullable|string',
             'duration' => 'sometimes|integer|min:1',
@@ -60,13 +64,17 @@ class ExamEdit extends Component
             'status' => 'sometimes|in:upcoming,active,completed',
             'questions_per_session' => 'sometimes|integer|min:1',
             'passing_percentage' => 'sometimes|numeric|min:0|max:100',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'device_access_mode' => 'required|in:open,registered_devices_only',
-            'allowed_device_types' => 'required_if:device_access_mode,registered_devices_only|array|min:1',
             'allowed_device_types.*' => 'in:mobile,laptop,desktop,tablet',
-            'selectedQuestionSetId' => 'sometimes|exists:question_sets,id',
-            'questionsToPickPerSet.*' => 'sometimes|integer|min:1',
-            'shuffleQuestionsPerSet.*' => 'sometimes|boolean',
         ];
+
+        $rules['allowed_device_types'] = $this->device_access_mode === 'registered_devices_only'
+            ? ['required', 'array', 'min:1']
+            : ['nullable', 'array'];
+
+        return $rules;
     }
 
     public function mount($exam_slug)
@@ -87,6 +95,8 @@ class ExamEdit extends Component
         $this->status = $this->exam->status;
         $this->questions_per_session = $this->exam->questions_per_session;
         $this->passing_percentage = $this->exam->passing_percentage;
+        $this->start_date = $this->exam->start_date?->format('Y-m-d\\TH:i');
+        $this->end_date = $this->exam->end_date?->format('Y-m-d\\TH:i');
         $this->device_access_mode = $this->exam->device_access_mode ?? 'open';
         $this->allowed_device_types = $this->exam->allowed_device_types ?? [];
 
@@ -149,9 +159,11 @@ class ExamEdit extends Component
             Log::info('Validation passed', ['status' => $this->status]);
 
             // Only update fields that have been changed
-            $updates = array_filter($validatedData, function ($value) {
-                return ! is_null($value);
-            });
+            $updates = array_filter(
+                $validatedData,
+                fn ($value, $key) => ! is_null($value) || $key === 'allowed_device_types',
+                ARRAY_FILTER_USE_BOTH
+            );
 
             if (! empty($updates)) {
                 $this->exam->update($updates);
@@ -216,6 +228,11 @@ class ExamEdit extends Component
 
     public function updateQuestionSetConfig($questionSetId)
     {
+        $this->validate([
+            "questionsToPickPerSet.{$questionSetId}" => ['nullable', 'integer', 'min:0'],
+            "shuffleQuestionsPerSet.{$questionSetId}" => ['nullable', 'boolean'],
+        ]);
+
         // Update the pivot table with new configuration
         $this->exam->questionSets()->updateExistingPivot($questionSetId, [
             'questions_to_pick' => $this->questionsToPickPerSet[$questionSetId] ?? 0,

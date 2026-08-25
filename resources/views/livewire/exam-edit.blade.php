@@ -171,6 +171,26 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="start_date" class="form-label">Start date and time</label>
+                                <input type="datetime-local" class="form-control @error('start_date') is-invalid @enderror"
+                                    wire:model="start_date" id="start_date">
+                                @error('start_date') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">End date and time</label>
+                                <input type="datetime-local" class="form-control @error('end_date') is-invalid @enderror"
+                                    wire:model="end_date" id="end_date">
+                                @error('end_date') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="duration" class="form-label">Duration (minutes)</label>
                                 <input type="number" class="form-control @error('duration') is-invalid @enderror" 
                                     wire:model="duration" id="duration">
