@@ -2,7 +2,7 @@
 
     <!-- Original Green Banner before Page Title -->
     <div class="mb-6">
-        <div class="card-rounded p-6 p-lg-8 shadow-sm justify-content-center d-flex flex-wrap flex-md-nowrap align-items-center" style="background: linear-gradient(90deg, #20AA3E 0%, #03A588 100%); border-radius: 12px;">
+        <div class="card-rounded p-6 p-lg-8 justify-content-center d-flex flex-wrap flex-md-nowrap align-items-center" style="background: linear-gradient(90deg, #20AA3E 0%, #03A588 100%); border-radius: 12px;">
             <div class="text-center">
                 <div class="text-center text-white fs-2 fs-lg-1 fw-bold d-flex align-items-center justify-content-center gap-3">
                     <span>Manage Student Admissions, Generate IDs, and Access Student Information</span>

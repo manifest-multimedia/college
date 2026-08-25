@@ -31,7 +31,7 @@
     @endif
 
     <!-- Single Cohesive Workspace Container -->
-    <div class="card mb-xl-10 shadow-sm border-0 rounded-3">
+    <div class="card mb-xl-10 border border-gray-200 shadow-none rounded-3">
         <!-- Toolbar & Filter Surface -->
         <div class="p-4 p-md-5 border-bottom border-gray-200">
             <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
