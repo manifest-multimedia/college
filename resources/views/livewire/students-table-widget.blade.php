@@ -146,11 +146,37 @@
             .student-table-row.selected-row:hover {
                 background-color: #DBEAFE !important;
             }
+            .btn-table-action {
+                background-color: #F8FAFC !important;
+                color: #334155 !important;
+                border: 1px solid #CBD5E1 !important;
+                font-size: 0.8125rem !important;
+                font-weight: 600 !important;
+                transition: all 0.15s ease-in-out !important;
+            }
+            .btn-table-action i {
+                color: #64748B !important;
+                transition: color 0.15s ease-in-out !important;
+            }
+            .btn-table-action:hover, 
+            .btn-table-action:focus, 
+            .btn-table-action:active,
+            .show > .btn-table-action {
+                background-color: #2563EB !important;
+                color: #FFFFFF !important;
+                border-color: #1D4ED8 !important;
+            }
+            .btn-table-action:hover i, 
+            .btn-table-action:focus i, 
+            .btn-table-action:active i,
+            .show > .btn-table-action i {
+                color: #FFFFFF !important;
+            }
         </style>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
-                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
                         <tr>
                             <th class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 12px 16px;">
                                 <div class="d-flex justify-content-center align-items-center">
@@ -161,12 +187,12 @@
                                            title="Select all students">
                                 </div>
                             </th>
-                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student ID</th>
-                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student Name</th>
-                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Program</th>
-                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Cohort</th>
-                            <th class="align-middle fw-semibold text-secondary text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Status</th>
-                            <th class="align-middle fw-semibold text-secondary text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Actions</th>
+                            <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student ID</th>
+                            <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student Name</th>
+                            <th class="align-middle fw-bold text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Program</th>
+                            <th class="align-middle fw-bold text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Cohort</th>
+                            <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Status</th>
+                            <th class="align-middle fw-bold text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -256,9 +282,9 @@
                                 </td>
                                 <td class="text-end align-middle" style="padding: 14px 16px;">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary border-0 px-2.5 py-1 rounded-2 text-gray-700" type="button" id="dropdownMenuButton{{ $student->id }}" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8125rem;">
+                                        <button class="btn btn-sm btn-table-action rounded-2 px-2.5 py-1" type="button" id="dropdownMenuButton{{ $student->id }}" data-bs-toggle="dropdown" aria-expanded="false">
                                             Actions
-                                            <i class="fas fa-chevron-down ms-1.5 fs-8 text-muted"></i>
+                                            <i class="fas fa-chevron-down ms-1.5 fs-8"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-gray-200" aria-labelledby="dropdownMenuButton{{ $student->id }}">
                                             <li><a class="dropdown-item py-2 fs-7" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary"></i>Edit</a></li>

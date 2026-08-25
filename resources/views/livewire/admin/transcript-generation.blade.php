@@ -212,6 +212,30 @@
             .student-table-row.selected-row:hover {
                 background-color: #DBEAFE !important;
             }
+            .btn-generate-action {
+                background-color: #EFF6FF !important;
+                color: #1D4ED8 !important;
+                border: 1px solid #BFDBFE !important;
+                font-size: 0.8125rem !important;
+                font-weight: 600 !important;
+                transition: all 0.15s ease-in-out !important;
+            }
+            .btn-generate-action i {
+                color: #1D4ED8 !important;
+                transition: color 0.15s ease-in-out !important;
+            }
+            .btn-generate-action:hover, 
+            .btn-generate-action:focus, 
+            .btn-generate-action:active {
+                background-color: #2563EB !important;
+                color: #FFFFFF !important;
+                border-color: #1D4ED8 !important;
+            }
+            .btn-generate-action:hover i, 
+            .btn-generate-action:focus i, 
+            .btn-generate-action:active i {
+                color: #FFFFFF !important;
+            }
         </style>
         <div class="row">
             <div class="col-12">
@@ -220,9 +244,9 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <h6 class="card-title mb-0 d-flex align-items-center gap-2">
                                 <i class="fas fa-users text-primary me-1 fs-5"></i>
-                                <span class="fw-bold text-gray-800 fs-5">Students</span>
+                                <span class="fw-bold text-gray-900 fs-5">Students</span>
                                 @if($students->count() > 0)
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-semibold px-2.5 py-1 rounded-pill fs-7 ms-1">{{ $students->total() }}</span>
+                                    <span class="badge fw-bold px-2.5 py-1 rounded-pill fs-7 ms-1" style="background-color: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1;">{{ $students->total() }}</span>
                                 @endif
                                 @if(count($selectedStudents) > 0)
                                     <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2.5 py-1 rounded-pill fs-7 ms-1">{{ count($selectedStudents) }} selected</span>
@@ -234,7 +258,7 @@
                         @if($students->count() > 0)
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
-                                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
+                                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
                                         <tr>
                                             <th class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 12px 16px;">
                                                 <div class="d-flex justify-content-center align-items-center">
@@ -246,12 +270,12 @@
                                                            title="Select all students">
                                                 </div>
                                             </th>
-                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student ID</th>
-                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Student Name</th>
-                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Email</th>
-                                            <th class="align-middle fw-semibold text-secondary text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Class</th>
-                                            <th class="align-middle fw-semibold text-secondary text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Status</th>
-                                            <th class="align-middle fw-semibold text-secondary text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px;">Actions</th>
+                                            <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student ID</th>
+                                            <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student Name</th>
+                                            <th class="align-middle fw-bold text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Email</th>
+                                            <th class="align-middle fw-bold text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Class</th>
+                                            <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Status</th>
+                                            <th class="align-middle fw-bold text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -328,12 +352,11 @@
                                                 </td>
                                                 <td class="text-end align-middle" style="padding: 14px 16px;">
                                                     <button type="button" 
-                                                            class="btn btn-sm btn-outline-primary fw-semibold px-3 py-1 rounded-2 d-inline-flex align-items-center gap-1.5 ms-auto"
-                                                            style="font-size: 0.8125rem; transition: all 0.15s ease-in-out;"
+                                                            class="btn btn-sm btn-generate-action rounded-2 d-inline-flex align-items-center gap-1.5 ms-auto"
                                                             wire:click="generateTranscript({{ $student->id }})"
                                                             wire:loading.attr="disabled"
                                                             title="Generate Transcript">
-                                                        <i class="fas fa-file-invoice text-primary fs-7"></i>
+                                                        <i class="fas fa-file-invoice fs-7"></i>
                                                         <span wire:loading.remove wire:target="generateTranscript({{ $student->id }})">
                                                             Generate
                                                         </span>
