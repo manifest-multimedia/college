@@ -5,26 +5,6 @@
         <p class="text-muted fs-7 mb-0">Manage student records, admissions and academic information.</p>
     </div>
 
-    <!-- Green Module Identity Banner -->
-    <div class="mb-6 rounded-3 shadow-sm px-6 py-5 position-relative overflow-hidden" 
-         style="background: linear-gradient(90deg, #10B981 0%, #059669 100%); border-radius: 12px; min-height: 96px;">
-        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 position-relative" style="z-index: 2;">
-            <div>
-                <h2 class="text-white fw-bold mb-1" style="font-size: 1.35rem; letter-spacing: -0.01em; line-height: 1.3;">
-                    Manage Student Admissions, Generate IDs, and Access Student Information
-                </h2>
-                <p class="text-white opacity-85 fs-7 mb-0 fw-medium">
-                    Manage admissions, student records and identification from one workspace.
-                </p>
-            </div>
-            <div class="d-none d-md-flex align-items-center justify-content-center flex-shrink-0 ms-4">
-                <div class="rounded-circle bg-white bg-opacity-20 text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                    <i class="fas fa-id-card fs-3"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Alert Notifications -->
     @if(session()->has('success'))
         <div class="alert alert-success alert-dismissible fade show shadow-sm mb-5" role="alert">
