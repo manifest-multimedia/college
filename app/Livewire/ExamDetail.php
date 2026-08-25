@@ -46,6 +46,7 @@ class ExamDetail extends Component
     ];
 
     protected $rules = [
+        'examTitle' => 'nullable|string|max:255',
         'examDuration' => 'required|integer|min:1',
         'startDate' => 'nullable|date',
         'endDate' => 'nullable|date|after_or_equal:startDate',
@@ -121,6 +122,7 @@ class ExamDetail extends Component
 
     public function initializeEditForm()
     {
+        $this->examTitle = $this->exam->title;
         $this->examDuration = $this->exam->duration;
         $this->startDate = $this->exam->start_date ? Carbon::parse($this->exam->start_date)->format('Y-m-d\TH:i') : null;
         $this->endDate = $this->exam->end_date ? Carbon::parse($this->exam->end_date)->format('Y-m-d\TH:i') : null;
@@ -161,6 +163,7 @@ class ExamDetail extends Component
 
         try {
             $this->exam->update([
+                'title' => $this->examTitle,
                 'duration' => $this->examDuration,
                 'start_date' => $this->startDate,
                 'end_date' => $this->endDate,
@@ -168,6 +171,11 @@ class ExamDetail extends Component
                 'passing_percentage' => $this->passingPercentage,
                 'status' => $this->status,
             ]);
+
+            $this->exam->refresh();
+            $this->title = $this->exam->course
+                ? 'Exam Details - '.$this->exam->display_title.' ('.$this->exam->course->course_code.')'
+                : 'Exam Details';
 
             $this->editing = false;
             session()->flash('message', 'Exam updated successfully.');

@@ -168,6 +168,15 @@
                 @endif
 
                 <form wire:submit.prevent="updateExam">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Examination Title</label>
+                        <input type="text" class="form-control @error('title') is-invalid @enderror"
+                            wire:model="title" id="title" maxlength="255"
+                            placeholder="e.g. Quiz 1, Mid-Semester Examination">
+                        <small class="text-muted">This is the primary title shown to students and staff. The course remains separate.</small>
+                        @error('title') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">

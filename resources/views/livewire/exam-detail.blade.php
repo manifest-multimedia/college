@@ -294,6 +294,14 @@
                 </div>
                 <div class="modal-body">
                     <form wire:submit.prevent="updateExam">
+                        <div class="mb-3">
+                            <label for="examTitle" class="form-label">Examination Title</label>
+                            <input type="text" class="form-control @error('examTitle') is-invalid @enderror" id="examTitle"
+                                wire:model="examTitle" maxlength="255" placeholder="e.g. Quiz 1, Mid-Semester Examination">
+                            <div class="form-text">This title is shown across the Exam Center; the course remains separate.</div>
+                            @error('examTitle') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="examDuration" class="form-label required">Duration (minutes)</label>
