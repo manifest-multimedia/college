@@ -17,6 +17,8 @@
         color: #0f172a !important;
         background-color: #f8fafc !important;
         border: 1px solid #cbd5e1 !important;
+        padding-left: 0.875rem !important;
+        padding-right: 0.875rem !important;
     }
     .exam-portal-input:focus {
         border-color: #2563eb !important;
@@ -107,17 +109,17 @@
                         <div class="mb-3">
                             <label for="studentId" class="form-label fw-bold mb-2" style="color: #1e293b; font-size: 0.9rem;">Student ID</label>
                             <div class="input-group">
-                                <span class="input-group-text border-end-0" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-id-card"></i></span>
-                                <input type="text" class="form-control exam-portal-input border-start-0 ps-0" id="studentId" wire:model="studentId" placeholder="e.g. STU12345" required autocomplete="off">
+                                <span class="input-group-text border-end-0 px-3" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-id-card"></i></span>
+                                <input type="text" class="form-control exam-portal-input border-start-0 ps-3" id="studentId" wire:model="studentId" placeholder="Enter your Student ID" required autocomplete="off">
                             </div>
                         </div>
 
                         <div class="mb-4">
                             <label for="examPassword" class="form-label fw-bold mb-2" style="color: #1e293b; font-size: 0.9rem;">Exam Password</label>
                             <div class="input-group">
-                                <span class="input-group-text border-end-0" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-key"></i></span>
-                                <input type="{{ $showPassword ? 'text' : 'password' }}" class="form-control exam-portal-input border-start-0 border-end-0 ps-0" id="examPassword" wire:model="examPassword" placeholder="Enter exam password" required>
-                                <button type="button" class="input-group-text border-start-0" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569; cursor: pointer;" wire:click="toggleShowPassword">
+                                <span class="input-group-text border-end-0 px-3" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-key"></i></span>
+                                <input type="{{ $showPassword ? 'text' : 'password' }}" class="form-control exam-portal-input border-start-0 border-end-0 ps-3" id="examPassword" wire:model="examPassword" placeholder="Enter exam password" required>
+                                <button type="button" class="input-group-text border-start-0 px-3" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569; cursor: pointer;" wire:click="toggleShowPassword">
                                     <i class="fas {{ $showPassword ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                                 </button>
                             </div>
@@ -210,14 +212,14 @@
                             <form wire:submit.prevent="startExam" autocomplete="off">
                                 <div class="mb-3">
                                     <label for="studentId" class="form-label fw-bold mb-2" style="color: #1e293b; font-size: 0.9rem;">Student ID</label>
-                                    <input type="text" class="form-control form-control-lg fs-6 exam-portal-input" id="studentId" wire:model="studentId" placeholder="Enter your Student ID" required>
+                                    <input type="text" class="form-control form-control-lg fs-6 exam-portal-input ps-3" id="studentId" wire:model="studentId" placeholder="Enter your Student ID" required>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="examPassword" class="form-label fw-bold mb-2" style="color: #1e293b; font-size: 0.9rem;">Exam Password</label>
                                     <div class="input-group">
-                                        <input type="{{ $showPassword ? 'text' : 'password' }}" class="form-control form-control-lg fs-6 exam-portal-input border-end-0" id="examPassword" wire:model="examPassword" placeholder="Enter Exam Password" required>
-                                        <button type="button" class="btn btn-outline-secondary" style="border-color: #cbd5e1;" wire:click="toggleShowPassword">
+                                        <input type="{{ $showPassword ? 'text' : 'password' }}" class="form-control form-control-lg fs-6 exam-portal-input border-end-0 ps-3" id="examPassword" wire:model="examPassword" placeholder="Enter Exam Password" required>
+                                        <button type="button" class="btn btn-outline-secondary px-3" style="border-color: #cbd5e1;" wire:click="toggleShowPassword">
                                             <i class="fas {{ $showPassword ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                                         </button>
                                     </div>
@@ -286,7 +288,7 @@
                     Welcome to your institution's secure assessment gateway. Enter your credentials to begin your timed examination.
                 </p>
 
-                <!-- Trust Indicators (Fixed explicit transparent background & crisp text) -->
+                <!-- Trust Indicators -->
                 <div class="d-flex flex-column gap-3 mb-4" style="max-width: 520px;">
                     <div class="d-flex align-items-center p-3 rounded-3 shadow-sm" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px);">
                         <div class="me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; width: 42px; height: 42px; border-radius: 50%;">
@@ -372,8 +374,8 @@
                     <div class="mb-3">
                         <label for="studentIdInput" class="form-label fw-bold mb-2" style="color: #1e293b; font-size: 0.9rem;">Student ID</label>
                         <div class="input-group">
-                            <span class="input-group-text border-end-0" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-user-graduate"></i></span>
-                            <input type="text" class="form-control form-control-lg fs-6 exam-portal-input border-start-0 ps-0 @error('studentId') is-invalid @enderror" 
+                            <span class="input-group-text border-end-0 px-3" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-user-graduate"></i></span>
+                            <input type="text" class="form-control form-control-lg fs-6 exam-portal-input border-start-0 ps-3 @error('studentId') is-invalid @enderror" 
                                    id="studentIdInput" wire:model="studentId" placeholder="Enter your Student ID" required autocomplete="off">
                         </div>
                     </div>
@@ -381,11 +383,11 @@
                     <div class="mb-4">
                         <label for="examPasswordInput" class="form-label fw-bold mb-2" style="color: #1e293b; font-size: 0.9rem;">Exam Password</label>
                         <div class="input-group">
-                            <span class="input-group-text border-end-0" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-lock"></i></span>
+                            <span class="input-group-text border-end-0 px-3" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569;"><i class="fas fa-lock"></i></span>
                             <input type="{{ $showPassword ? 'text' : 'password' }}" 
-                                   class="form-control form-control-lg fs-6 exam-portal-input border-start-0 border-end-0 ps-0 @error('examPassword') is-invalid @enderror" 
+                                   class="form-control form-control-lg fs-6 exam-portal-input border-start-0 border-end-0 ps-3 @error('examPassword') is-invalid @enderror" 
                                    id="examPasswordInput" wire:model="examPassword" placeholder="Enter your Exam Password" required>
-                            <button type="button" class="input-group-text border-start-0" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569; cursor: pointer;" wire:click="toggleShowPassword" title="Toggle password visibility">
+                            <button type="button" class="input-group-text border-start-0 px-3" style="background-color: #f1f5f9; border-color: #cbd5e1; color: #475569; cursor: pointer;" wire:click="toggleShowPassword" title="Toggle password visibility">
                                 <i class="fas {{ $showPassword ? 'fa-eye-slash' : 'fa-eye' }}"></i>
                             </button>
                         </div>
