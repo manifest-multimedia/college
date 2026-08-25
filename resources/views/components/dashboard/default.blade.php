@@ -113,11 +113,13 @@
                 @break
 
             @case('students')
-            <div class="float-end">
-                <a href="{{ route('students.create') }}" class="btn btn-sm btn-success me-2"
-                    ><i class="fas fa-plus me-2"></i>Add Student</a>
-                <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary"
-                    ><i class="fas fa-file-import me-2"></i>Import Students</a>
+            <div class="d-flex align-items-center gap-2 float-end">
+                <a href="{{ route('students.create') }}" class="btn btn-sm btn-primary px-3.5 py-2 fw-semibold">
+                    <i class="fas fa-plus me-1.5 fs-7"></i>Add Student
+                </a>
+                <a href="{{ route('students.import') }}" class="btn btn-sm btn-light-primary px-3.5 py-2 fw-semibold">
+                    <i class="fas fa-file-import me-1.5 fs-7"></i>Import
+                </a>
             </div>
                 @break
 

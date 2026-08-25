@@ -1,139 +1,145 @@
 <div>
-    <!-- Heading outside the card with badge -->
-    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-6 mt-4">
-        <div>
-            <h1 class="text-gray-900 fw-bold fs-2 mb-1">Student Information</h1>
-            <p class="text-muted fs-7 mb-0">View, manage, filter, import, and export student academic records.</p>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge fw-bold px-3 py-2 fs-7 rounded-pill" style="background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
-                <i class="fas fa-user-graduate me-1.5 text-primary"></i>
-                {{ $studentsTotal }} Total Students
-            </span>
-            @if(count($selectedStudents) > 0)
-                <span class="badge fw-bold px-3 py-2 fs-7 rounded-pill" style="background-color: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
-                    <i class="fas fa-check-circle me-1.5 text-success"></i>
-                    {{ count($selectedStudents) }} Selected
-                </span>
-            @endif
-        </div>
+    <!-- Compact Professional Page Header -->
+    <div class="mb-5">
+        <h1 class="text-gray-900 fw-bold mb-1" style="font-size: 1.5rem; letter-spacing: -0.01em;">Student Information</h1>
+        <p class="text-muted fs-7 mb-0">Manage student records, admissions and academic information.</p>
     </div>
 
-    <!-- Success message -->
+    <!-- Alert Notifications -->
     @if(session()->has('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-5" role="alert">
             <i class="fas fa-check-circle me-2"></i>
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <!-- Error message -->
     @if(session()->has('error'))
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-5" role="alert">
             <i class="fas fa-exclamation-circle me-2"></i>
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <!-- Info message -->
     @if(session()->has('info'))
-        <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+        <div class="alert alert-info alert-dismissible fade show shadow-sm mb-5" role="alert">
             <i class="fas fa-info-circle me-2"></i>
             {{ session('info') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <!-- Bulk Action Toolbar -->
-    @if(count($selectedStudents) > 0)
-        <div class="card border-primary border-opacity-25 bg-primary bg-opacity-10 mb-4 shadow-sm">
-            <div class="card-body py-3 px-4">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-check-circle text-primary fs-5"></i>
-                        <span class="fw-bold text-gray-900 fs-7">
-                            {{ count($selectedStudents) }} student(s) selected
+    <!-- Single Cohesive Workspace Container -->
+    <div class="card mb-xl-10 shadow-sm border-0 rounded-3">
+        <!-- Toolbar & Filter Surface -->
+        <div class="p-4 p-md-5 border-bottom border-gray-200">
+            <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                
+                <!-- Title & Count Badge -->
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <h3 class="fw-bold text-gray-900 fs-4 mb-0">Students</h3>
+                    <span class="text-muted fs-5 fw-normal">·</span>
+                    <span class="badge bg-light text-gray-700 fw-semibold fs-7 px-2.5 py-1 border border-gray-300 rounded-2" style="font-variant-numeric: tabular-nums;">
+                        {{ number_format($studentsTotal) }}
+                    </span>
+                    @if(count($selectedStudents) > 0)
+                        <span class="badge bg-light-primary text-primary fw-semibold fs-7 px-2.5 py-1 border border-primary border-opacity-25 rounded-2 ms-1">
+                            {{ count($selectedStudents) }} selected
                         </span>
-                        <span class="text-muted fs-7 d-none d-sm-inline">Choose an action for the selected records:</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
-                        <button type="button" class="btn btn-sm btn-primary px-3 fw-medium" wire:click="exportStudents">
-                            <i class="fas fa-file-export me-1.5 fs-7"></i>
-                            Export Selected
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary px-3 fw-medium bg-white" wire:click="$set('selectedStudents', []); $set('selectAll', false)">
-                            <i class="fas fa-times me-1.5 fs-7"></i>
-                            Clear Selection
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <div class="card mb-xl-10 shadow-sm border-0">
-        <!-- Filter toolbar with generous 2-row layout -->
-        <div class="card-header border-0 pt-5 pb-4 flex-column align-items-stretch">
-            <!-- Row 1: Title & Primary Actions -->
-            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
-                <h3 class="card-title fw-bold text-gray-900 fs-4 mb-0 d-flex align-items-center">
-                    <i class="fas fa-users text-primary me-2.5 fs-4"></i>
-                    Students Directory
-                </h3>
-                <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary px-3.5 py-2 d-flex align-items-center fw-semibold">
-                        <i class="fas fa-file-import me-2 fs-7"></i>
-                        Import Students
-                    </a>
-                    <button class="btn btn-sm btn-light-primary px-3.5 py-2 d-flex align-items-center fw-semibold" wire:click="exportStudents">
-                        <i class="fas fa-file-export me-2 fs-7"></i>
-                        Export List
-                    </button>
-                    @if($cohortFilter)
-                        <button class="btn btn-sm btn-light-warning px-3.5 py-2 d-flex align-items-center fw-semibold" wire:click="confirmIdRegeneration">
-                            <i class="fas fa-sync-alt me-2 fs-7"></i>
-                            Regenerate IDs
-                        </button>
                     @endif
                 </div>
-            </div>
 
-            <!-- Row 2: Search & Filter Controls -->
-            <div class="row g-3 align-items-center pt-3 border-top border-gray-200">
-                <!-- Search box -->
-                <div class="col-12 col-md-5">
-                    <div class="position-relative">
+                <!-- Desktop Single-Row Filter System -->
+                <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 flex-grow-1 justify-content-lg-end">
+                    
+                    <!-- Search Input (Flexible 40-50%) -->
+                    <div class="position-relative flex-grow-1" style="max-width: 420px; min-width: 220px;">
                         <span class="position-absolute top-50 translate-middle-y ms-3 text-muted">
                             <i class="fas fa-search fs-6"></i>
                         </span>
-                        <input type="text" class="form-control form-control-sm form-control-solid ps-9 py-2" 
-                               placeholder="Search by student ID, name, or email..." 
-                               wire:model.live.debounce.500ms="search">
+                        <input type="text" 
+                               class="form-control form-control-solid ps-9" 
+                               style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
+                               placeholder="Search by ID, name or email..." 
+                               wire:model.live.debounce.400ms="search">
+                        @if($search)
+                            <button type="button" 
+                                    class="btn btn-sm btn-icon position-absolute top-50 end-0 translate-middle-y me-2 text-muted text-hover-primary border-0" 
+                                    wire:click="$set('search', '')">
+                                <i class="fas fa-times fs-7"></i>
+                            </button>
+                        @endif
+                    </div>
+
+                    <!-- Programme Filter (220-280px) -->
+                    <div style="min-width: 200px; max-width: 260px;" class="flex-grow-1 flex-sm-grow-0">
+                        <select class="form-select form-select-solid" 
+                                style="height: 42px; border-radius: 8px; font-size: 0.875rem;" 
+                                wire:model.live="programFilter">
+                            <option value="">All Programmes</option>
+                            @foreach ($programs as $program)
+                                <option value="{{ $program->id }}">{{ $program->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Cohort Filter (180-240px) -->
+                    <div style="min-width: 180px; max-width: 220px;" class="flex-grow-1 flex-sm-grow-0">
+                        <select class="form-select form-select-solid" 
+                                style="height: 42px; border-radius: 8px; font-size: 0.875rem;" 
+                                wire:model.live="cohortFilter">
+                            <option value="">All Cohorts</option>
+                            @foreach ($cohorts as $cohort)
+                                <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Tertiary Export & Actions -->
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <button type="button" 
+                                class="btn btn-light-secondary border border-gray-300 text-gray-700 fw-medium d-inline-flex align-items-center px-3" 
+                                style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
+                                wire:click="exportStudents">
+                            <i class="fas fa-file-export me-1.5 text-muted fs-7"></i>
+                            Export
+                        </button>
+
+                        @if($cohortFilter)
+                            <button type="button" 
+                                    class="btn btn-light-warning border border-warning border-opacity-50 text-warning-dark fw-medium d-inline-flex align-items-center px-3" 
+                                    style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
+                                    wire:click="confirmIdRegeneration">
+                                <i class="fas fa-sync-alt me-1.5 fs-7"></i>
+                                Regenerate IDs
+                            </button>
+                        @endif
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Contextual Selected Action Bar -->
+            @if(count($selectedStudents) > 0)
+                <div class="mt-3 pt-3 border-top border-gray-200 d-flex align-items-center justify-content-between bg-light-primary rounded-2 px-3 py-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-primary fs-6"></i>
+                        <span class="fw-semibold text-gray-800 fs-7">
+                            {{ count($selectedStudents) }} student(s) selected
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-primary py-1 px-3 fs-7 fw-semibold" wire:click="exportStudents">
+                            Export Selected
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light py-1 px-3 fs-7 fw-semibold text-gray-700" wire:click="$set('selectedStudents', []); $set('selectAll', false)">
+                            Clear
+                        </button>
                     </div>
                 </div>
-                
-                <!-- Program Filter -->
-                <div class="col-12 col-sm-6 col-md-3.5">
-                    <select class="form-select form-select-sm form-select-solid py-2" wire:model.live="programFilter">
-                        <option value="">All Programs</option>
-                        @foreach ($programs as $program)
-                            <option value="{{ $program->id }}">{{ $program->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                
-                <!-- Cohort Filter -->
-                <div class="col-12 col-sm-6 col-md-3.5">
-                    <select class="form-select form-select-sm form-select-solid py-2" wire:model.live="cohortFilter">
-                        <option value="">All Cohorts</option>
-                        @foreach ($cohorts as $cohort)
-                            <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+            @endif
         </div>
 
         <style>
@@ -179,38 +185,40 @@
             .badge-light-success {
                 background-color: #E8FFF3 !important;
                 color: #50CD89 !important;
-                border: 1px solid #A7F3D0 !important;
+                border: none !important;
             }
             .badge-light-danger {
                 background-color: #FFF5F8 !important;
                 color: #F1416C !important;
-                border: 1px solid #FECACA !important;
+                border: none !important;
             }
             .badge-light-warning {
                 background-color: #FFF8DD !important;
                 color: #F1C40F !important;
-                border: 1px solid #FDE68A !important;
+                border: none !important;
             }
             .badge-light-info {
                 background-color: #F8F5FF !important;
                 color: #7239EA !important;
-                border: 1px solid #BFDBFE !important;
+                border: none !important;
             }
             .badge-light-primary {
                 background-color: #F1FAFF !important;
                 color: #009EF7 !important;
-                border: 1px solid #E9D5FF !important;
+                border: none !important;
             }
             .badge-light-secondary {
                 background-color: #F5F8FA !important;
                 color: #7E8299 !important;
-                border: 1px solid #CBD5E1 !important;
+                border: none !important;
             }
         </style>
+
+        <!-- Table Surface -->
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
-                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #CBD5E1;">
+                    <thead style="background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
                         <tr>
                             <th class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 12px 16px;">
                                 <div class="d-flex justify-content-center align-items-center">
@@ -221,12 +229,12 @@
                                            title="Select all students">
                                 </div>
                             </th>
-                            <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student ID</th>
-                            <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student Name</th>
-                            <th class="align-middle fw-bold text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Program</th>
-                            <th class="align-middle fw-bold text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Cohort</th>
-                            <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Status</th>
-                            <th class="align-middle fw-bold text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Actions</th>
+                            <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Student ID</th>
+                            <th class="align-middle fw-bold text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Student Name</th>
+                            <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Programme</th>
+                            <th class="align-middle fw-bold text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Cohort</th>
+                            <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Status</th>
+                            <th class="align-middle fw-bold text-uppercase text-end" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -235,7 +243,7 @@
                                 $isSelected = in_array((string)$student->id, $selectedStudents);
                                 $statusStr = $student->status ?? 'Active';
                             @endphp
-                            <tr class="student-table-row {{ $isSelected ? 'selected-row' : '' }}" style="border-bottom: 1px solid #F1F5F9;">
+                            <tr class="student-table-row {{ $isSelected ? 'selected-row' : '' }}" style="border-bottom: 1px solid #F1F5F9; height: 56px;">
                                 <td class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 14px 16px;">
                                     <div class="d-flex justify-content-center align-items-center">
                                         <input type="checkbox" 
@@ -255,24 +263,22 @@
                                         @if ($student->profile_photo_url)
                                             <div class="me-3 flex-shrink-0">
                                                 <a href="{{ route('students.show', $student->id) }}">
-                                                    <img class="rounded-circle" src="{{ $student->profile_photo_url }}" alt="avatar" width="36" height="36">
+                                                    <img class="rounded-circle" src="{{ $student->profile_photo_url }}" alt="avatar" width="34" height="34">
                                                 </a>
                                             </div>
                                         @endif
                                         <div class="overflow-hidden">
-                                            <a href="{{ route('students.show', $student->id) }}" class="fw-semibold text-gray-900 text-hover-primary d-block text-truncate fs-7" title="{{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}">
+                                            <a href="{{ route('students.show', $student->id) }}" class="fw-bold text-gray-900 text-hover-primary d-block text-truncate fs-7" title="{{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}">
                                                 {{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}
                                             </a>
-                                            <div class="text-muted fs-7 text-truncate" style="max-width: 220px;">
-                                                <a href="{{ route('students.show', $student->id) }}" class="text-muted text-hover-primary fs-7" title="{{ $student->email }}">
-                                                    {{ $student->email }}
-                                                </a>
+                                            <div class="text-muted fs-8 text-truncate" style="max-width: 240px;">
+                                                {{ $student->email }}
                                             </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="align-middle" style="padding: 14px 16px;">
-                                    <span class="text-gray-800 fw-medium fs-7">
+                                    <span class="text-gray-800 fw-normal fs-7">
                                         {{ $student->CollegeClass()->first()?->name ?? 'N/A' }}
                                     </span>
                                 </td>
@@ -298,18 +304,18 @@
                                 </td>
                                 <td class="text-end align-middle" style="padding: 14px 16px;">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-table-action rounded-2 px-2.5 py-1" type="button" id="dropdownMenuButton{{ $student->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <button class="btn btn-sm btn-light border border-gray-300 rounded-2 px-2.5 py-1 text-gray-700 fw-medium fs-7" type="button" id="dropdownMenuButton{{ $student->id }}" data-bs-toggle="dropdown" aria-expanded="false">
                                             Actions
-                                            <i class="fas fa-chevron-down ms-1.5 fs-8"></i>
+                                            <i class="fas fa-chevron-down ms-1 fs-8 text-muted"></i>
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-gray-200" aria-labelledby="dropdownMenuButton{{ $student->id }}">
-                                            <li><a class="dropdown-item py-2 fs-7" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary"></i>Edit</a></li>
-                                            <li><a class="dropdown-item py-2 fs-7" href="{{ route('students.show', $student->id) }}"><i class="fas fa-eye me-2 text-info"></i>View</a></li>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-gray-200 fs-7" aria-labelledby="dropdownMenuButton{{ $student->id }}">
+                                            <li><a class="dropdown-item py-2" href="{{ route('students.show', $student->id) }}"><i class="fas fa-eye me-2 text-info fs-7"></i>View Details</a></li>
+                                            <li><a class="dropdown-item py-2" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary fs-7"></i>Edit Student</a></li>
                                             <li><hr class="dropdown-divider my-1"></li>
                                             <li>
-                                                <a class="dropdown-item py-2 fs-7 text-danger" href="#" 
+                                                <a class="dropdown-item py-2 text-danger" href="#" 
                                                    wire:click.prevent="confirmStudentDeletion({{ $student->id }})">
-                                                   <i class="fas fa-trash-alt me-2"></i>Delete
+                                                   <i class="fas fa-trash-alt me-2 fs-7"></i>Delete Student
                                                 </a>
                                             </li>
                                         </ul>
@@ -318,12 +324,45 @@
                             </tr>
                         @endforeach
                         
-                        @if(count($students) == 0)
+                        <!-- Empty State A: Filter/Search returns no matches -->
+                        @if(count($students) == 0 && ($search != '' || $programFilter != '' || $cohortFilter != ''))
                             <tr>
-                                <td colspan="7" class="text-center py-5">
-                                    <div class="fs-6 fw-semibold text-muted">
-                                        No students found.<br />
-                                        <a class="mt-3 btn btn-sm btn-primary" href="/students/create">Add New Student</a>
+                                <td colspan="7" class="text-center py-12 px-4 border-0">
+                                    <div class="w-48px h-48px rounded-circle bg-light-primary text-primary mx-auto mb-3 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-search fs-3"></i>
+                                    </div>
+                                    <h4 class="fw-bold text-gray-900 mb-1">No matching students</h4>
+                                    <p class="text-muted fs-7 mb-4 mx-auto" style="max-width: 400px;">
+                                        We couldn't find any students matching the current search or filters.
+                                    </p>
+                                    <button type="button" class="btn btn-sm btn-light-primary fw-semibold px-4 py-2" wire:click="resetFilters">
+                                        <i class="fas fa-undo me-1.5 fs-7"></i>
+                                        Clear filters
+                                    </button>
+                                </td>
+                            </tr>
+                        @endif
+
+                        <!-- Empty State B: No students exist in the system at all -->
+                        @if(count($students) == 0 && $search == '' && $programFilter == '' && $cohortFilter == '')
+                            <tr>
+                                <td colspan="7" class="text-center py-12 px-4 border-0">
+                                    <div class="w-56px h-56px rounded-circle bg-light text-gray-600 mx-auto mb-3 d-flex align-items-center justify-content-center border border-gray-300">
+                                        <i class="fas fa-user-graduate fs-2 text-gray-500"></i>
+                                    </div>
+                                    <h4 class="fw-bold text-gray-900 mb-1">No students yet</h4>
+                                    <p class="text-muted fs-7 mb-4 mx-auto" style="max-width: 400px;">
+                                        Add your first student record or import existing student files to get started.
+                                    </p>
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                        <a href="{{ route('students.create') }}" class="btn btn-sm btn-primary fw-semibold px-4 py-2">
+                                            <i class="fas fa-plus me-1.5 fs-7"></i>
+                                            Add Student
+                                        </a>
+                                        <a href="{{ route('students.import') }}" class="btn btn-sm btn-light-primary fw-semibold px-4 py-2">
+                                            <i class="fas fa-file-import me-1.5 fs-7"></i>
+                                            Import Students
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -332,9 +371,19 @@
                 </table>
             </div>
         </div>
-        
-        <div class="d-flex justify-content-center py-3">
-            {{ $students->links() }}
+
+        <!-- Footer Pagination Surface -->
+        <div class="p-4 border-top border-gray-200 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+            <div class="text-muted fs-7">
+                @if($students->total() > 0)
+                    Showing <span class="fw-semibold text-gray-800">{{ $students->firstItem() }}</span> to <span class="fw-semibold text-gray-800">{{ $students->lastItem() }}</span> of <span class="fw-semibold text-gray-800">{{ number_format($students->total()) }}</span> students
+                @else
+                    Showing <span class="fw-semibold text-gray-800">0</span> students
+                @endif
+            </div>
+            <div>
+                {{ $students->links() }}
+            </div>
         </div>
     </div>
 
@@ -342,157 +391,44 @@
     @if($confirmingStudentDeletion)
     <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger">
-                    <h5 class="modal-title text-white">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white py-3 px-4">
+                    <h5 class="modal-title text-white fw-bold fs-6">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         Delete Student
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" wire:click="cancelStudentDeletion" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" wire:click="$set('confirmingStudentDeletion', false)"></button>
                 </div>
-                <div class="modal-body py-4">
-                    <p class="fs-5 text-gray-800 mb-0">
-                        Are you sure you want to delete this student? This action cannot be undone.
-                    </p>
-                    <div class="alert alert-warning mt-4 mb-0">
-                        <div class="d-flex">
-                            <i class="fas fa-info-circle fs-4 me-3"></i>
-                            <div>
-                                <p class="mb-1">This will remove the student from the system including:</p>
-                                <ul class="mb-0 ps-3">
-                                    <li>Student academic records</li>
-                                    <li>Course registrations</li>
-                                    <li>Financial records</li>
-                                    <li>Associated documents</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <div class="modal-body p-4">
+                    <p class="mb-0 text-gray-800 fs-6">Are you sure you want to delete this student record? This action cannot be undone.</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" wire:click="cancelStudentDeletion">
-                        <i class="fas fa-times me-1"></i>
-                        Cancel
-                    </button>
-                    <button type="button" class="btn btn-danger" wire:click="deleteStudent" wire:loading.attr="disabled">
-                        <i class="fas fa-trash-alt me-1"></i>
-                        <span wire:loading.remove>Delete Student</span>
-                        <span wire:loading wire:target="deleteStudent">Deleting...</span>
-                    </button>
+                <div class="modal-footer bg-light py-3 px-4 border-0">
+                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="$set('confirmingStudentDeletion', false)">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-danger fw-semibold px-4" wire:click="deleteStudent">Delete</button>
                 </div>
             </div>
         </div>
     </div>
     @endif
 
-    <!-- ID Regeneration Confirmation Modal -->
+    <!-- ID Regeneration Modal -->
     @if($confirmingIdRegeneration)
     <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title text-white">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-warning text-dark py-3 px-4">
+                    <h5 class="modal-title fw-bold fs-6">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         Regenerate Student IDs
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" wire:click="cancelIdRegeneration" aria-label="Close"></button>
+                    <button type="button" class="btn-close" wire:click="$set('confirmingIdRegeneration', false)"></button>
                 </div>
-                <div class="modal-body py-4">
-                    <p class="fs-5 text-gray-800 mb-0">
-                        Are you sure you want to regenerate IDs for the selected cohort?
-                    </p>
-                    <div class="alert alert-danger mt-4 mb-0">
-                        <div class="d-flex">
-                            <i class="fas fa-exclamation-circle fs-4 me-3"></i>
-                            <div>
-                                <p class="mb-1 fw-bold">Warning: This is a destructive action!</p>
-                                <p class="mb-0">All students in this cohort will be assigned NEW Student IDs based on the current configuration. Existing IDs will be overwritten.</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="modal-body p-4">
+                    <p class="mb-0 text-gray-800 fs-6">This action will regenerate IDs for all students in the selected cohort. Are you sure you want to proceed?</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" wire:click="cancelIdRegeneration">
-                        <i class="fas fa-times me-1"></i>
-                        Cancel
-                    </button>
-                    <button type="button" class="btn btn-warning" wire:click="regenerateIds" wire:loading.attr="disabled">
-                        <i class="fas fa-sync-alt me-1"></i>
-                        <span wire:loading.remove>Regenerate IDs</span>
-                        <span wire:loading wire:target="regenerateIds">Processing...</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <!-- Export Format Selection Modal -->
-    @if($showingExportModal)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary">
-                    <h5 class="modal-title text-white">
-                        <i class="fas fa-file-export me-2"></i>
-                        Export Students
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" wire:click="cancelExport" aria-label="Close"></button>
-                </div>
-                <div class="modal-body py-4">
-                    <p class="fs-5 text-gray-800 mb-4">
-                        Please select your preferred export format:
-                    </p>
-                    
-                    <div class="d-flex flex-column gap-3">
-                        <!-- Excel Option -->
-                        <div class="form-check form-check-custom form-check-solid">
-                            <input class="form-check-input" type="radio" value="excel" id="export_excel" wire:model.live="exportFormat">
-                            <label class="form-check-label d-flex align-items-center" for="export_excel">
-                                <span class="symbol symbol-30px me-3">
-                                    <i class="fas fa-file-excel text-success fs-1"></i>
-                                </span>
-                                <div>
-                                    <span class="fw-bold d-block">Excel (.xlsx)</span>
-                                    <span class="text-muted">Export to Microsoft Excel spreadsheet format</span>
-                                </div>
-                            </label>
-                        </div>
-                        
-                        <!-- PDF Option -->
-                        <div class="form-check form-check-custom form-check-solid">
-                            <input class="form-check-input" type="radio" value="pdf" id="export_pdf" wire:model="exportFormat">
-                            <label class="form-check-label d-flex align-items-center" for="export_pdf">
-                                <span class="symbol symbol-30px me-3">
-                                    <i class="fas fa-file-pdf text-danger fs-1"></i>
-                                </span>
-                                <div>
-                                    <span class="fw-bold d-block">PDF (.pdf)</span>
-                                    <span class="text-muted">Export to Portable Document Format</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-4 mb-0">
-                        <div class="d-flex">
-                            <i class="fas fa-info-circle fs-4 me-3"></i>
-                            <div>
-                                <p class="mb-0">The export will include {{ $studentsTotal }} student records based on your current filters.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" wire:click="cancelExport">
-                        <i class="fas fa-times me-1"></i>
-                        Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" wire:click="processExport" wire:loading.attr="disabled" @if(!$exportFormat) disabled @endif>
-                        <i class="fas fa-file-export me-1"></i>
-                        <span wire:loading.remove>Export</span>
-                        <span wire:loading wire:target="processExport">Exporting...</span>
-                    </button>
+                <div class="modal-footer bg-light py-3 px-4 border-0">
+                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="$set('confirmingIdRegeneration', false)">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-warning text-dark fw-semibold px-4" wire:click="regenerateIds">Regenerate</button>
                 </div>
             </div>
         </div>

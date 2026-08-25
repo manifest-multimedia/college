@@ -62,6 +62,16 @@ class StudentsTableWidget extends Component
         $this->selectAll = false;
     }
 
+    public function resetFilters()
+    {
+        $this->search = '';
+        $this->programFilter = '';
+        $this->cohortFilter = '';
+        $this->resetPage();
+        $this->selectedStudents = [];
+        $this->selectAll = false;
+    }
+
     public function updatedSelectAll($value)
     {
         if ($value) {
