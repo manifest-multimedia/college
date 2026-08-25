@@ -291,24 +291,38 @@
                                                     </span>
                                                 </td>
                                                 <td class="text-center align-middle" style="padding: 14px 16px;">
-                                                    @if(($student->status ?? 'Active') == 'Active')
+                                                    @php
+                                                        $statusStr = $student->status ?? 'Active';
+                                                    @endphp
+                                                    @if($statusStr == 'Active')
                                                         <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
                                                             <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #10B981;"></span>
                                                             Active
                                                         </span>
-                                                    @elseif($student->status == 'Inactive')
+                                                    @elseif($statusStr == 'Inactive')
                                                         <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;">
                                                             <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #EF4444;"></span>
                                                             Inactive
                                                         </span>
-                                                    @elseif($student->status == 'Pending')
+                                                    @elseif($statusStr == 'Pending')
                                                         <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
                                                             <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #F59E0B;"></span>
                                                             Pending
                                                         </span>
+                                                    @elseif($statusStr == 'Graduated')
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
+                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #3B82F6;"></span>
+                                                            Graduated
+                                                        </span>
+                                                    @elseif($statusStr == 'Suspended')
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F3E8FF; color: #6B21A8; border: 1px solid #E9D5FF;">
+                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #A855F7;"></span>
+                                                            Suspended
+                                                        </span>
                                                     @else
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">
-                                                            {{ $student->status ?? 'Active' }}
+                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
+                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #64748B;"></span>
+                                                            {{ $statusStr }}
                                                         </span>
                                                     @endif
                                                 </td>

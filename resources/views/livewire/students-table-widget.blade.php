@@ -1,14 +1,24 @@
 <div>
     <!-- Heading outside the card with badge -->
-    <div class="mb-3 mt-20 mb-10">
-        <h1 class="text-gray-900 fw-bold">Student Information 
-            <span class="badge bg-primary rounded-pill ms-2 text-white px-3 py-2 fs-6">{{ $studentsTotal }}</span>
-        </h1>
+    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4 mt-2">
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="text-gray-900 fw-bold fs-2 mb-0">Student Information</h1>
+            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-1.5 rounded-pill fs-7">
+                {{ $studentsTotal }} total students
+            </span>
+        </div>
+        @if(count($selectedStudents) > 0)
+            <div class="badge bg-success bg-opacity-10 text-success fw-semibold px-3 py-1.5 rounded-pill fs-7 d-flex align-items-center gap-1.5">
+                <i class="fas fa-check-circle fs-8 text-success"></i>
+                {{ count($selectedStudents) }} student(s) selected
+            </div>
+        @endif
     </div>
 
     <!-- Success message -->
     @if(session()->has('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -16,7 +26,8 @@
 
     <!-- Error message -->
     @if(session()->has('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -24,17 +35,48 @@
 
     <!-- Info message -->
     @if(session()->has('info'))
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
             {{ session('info') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    <div class="card mb-xl-10">
+    <!-- Bulk Action Toolbar -->
+    @if(count($selectedStudents) > 0)
+        <div class="card border-primary border-opacity-25 bg-primary bg-opacity-10 mb-4 shadow-sm">
+            <div class="card-body py-3 px-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-primary fs-5"></i>
+                        <span class="fw-bold text-gray-900 fs-7">
+                            {{ count($selectedStudents) }} student(s) selected
+                        </span>
+                        <span class="text-muted fs-7 d-none d-sm-inline">Choose an action for the selected records:</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
+                        <button type="button" class="btn btn-sm btn-primary px-3 fw-medium" wire:click="exportStudents">
+                            <i class="fas fa-file-export me-1.5 fs-7"></i>
+                            Export Selected
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-3 fw-medium bg-white" wire:click="$set('selectedStudents', []); $set('selectAll', false)">
+                            <i class="fas fa-times me-1.5 fs-7"></i>
+                            Clear Selection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <div class="card mb-xl-10 shadow-sm border-0">
         <!-- Filter toolbar -->
         <div class="card-header border-0 py-3">
             <div class="card-title">
-                <h3 class="card-title fw-bold text-gray-800">Students List</h3>
+                <h3 class="card-title fw-bold text-gray-800 fs-5 mb-0">
+                    <i class="fas fa-users text-primary me-2 fs-5"></i>
+                    Students List
+                </h3>
             </div>
             <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
                 <!-- Search box -->
@@ -71,17 +113,17 @@
                 
                 <!-- Action buttons - using flex-fill on mobile to space them out -->
                 <div class="d-flex gap-2 flex-md-nowrap ms-auto">
-                    <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary px-3 d-flex align-items-center">
+                    <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary px-3 d-flex align-items-center fw-medium">
                         <i class="fas fa-file-import me-2"></i>
                         Import
                     </a>
-                    <button class="btn btn-sm btn-light-primary px-3 d-flex align-items-center" wire:click="exportStudents">
+                    <button class="btn btn-sm btn-light-primary px-3 d-flex align-items-center fw-medium" wire:click="exportStudents">
                         <i class="fas fa-file-export me-2"></i>
                         Export
                     </button>
 
                     @if($cohortFilter)
-                    <button class="btn btn-sm btn-light-warning px-3 d-flex align-items-center" wire:click="confirmIdRegeneration">
+                    <button class="btn btn-sm btn-light-warning px-3 d-flex align-items-center fw-medium" wire:click="confirmIdRegeneration">
                         <i class="fas fa-sync-alt me-2"></i>
                         Regenerate IDs
                     </button>
@@ -131,6 +173,7 @@
                         @foreach ($students as $student)
                             @php
                                 $isSelected = in_array((string)$student->id, $selectedStudents);
+                                $statusStr = $student->status ?? 'Active';
                             @endphp
                             <tr class="student-table-row {{ $isSelected ? 'selected-row' : '' }}" style="border-bottom: 1px solid #F1F5F9;">
                                 <td class="text-center align-middle" style="width: 48px; min-width: 48px; max-width: 48px; padding: 14px 16px;">
@@ -179,24 +222,35 @@
                                     </span>
                                 </td>
                                 <td class="text-center align-middle" style="padding: 14px 16px;">
-                                    @if(($student->status ?? 'Active') == 'Active')
+                                    @if($statusStr == 'Active')
                                         <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
                                             <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #10B981;"></span>
                                             Active
                                         </span>
-                                    @elseif($student->status == 'Inactive')
+                                    @elseif($statusStr == 'Inactive')
                                         <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;">
                                             <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #EF4444;"></span>
                                             Inactive
                                         </span>
-                                    @elseif($student->status == 'Pending')
+                                    @elseif($statusStr == 'Pending')
                                         <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
                                             <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #F59E0B;"></span>
                                             Pending
                                         </span>
+                                    @elseif($statusStr == 'Graduated')
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
+                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #3B82F6;"></span>
+                                            Graduated
+                                        </span>
+                                    @elseif($statusStr == 'Suspended')
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F3E8FF; color: #6B21A8; border: 1px solid #E9D5FF;">
+                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #A855F7;"></span>
+                                            Suspended
+                                        </span>
                                     @else
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;">
-                                            {{ $student->status ?? 'Active' }}
+                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
+                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #64748B;"></span>
+                                            {{ $statusStr }}
                                         </span>
                                     @endif
                                 </td>
