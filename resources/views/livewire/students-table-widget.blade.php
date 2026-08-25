@@ -5,6 +5,26 @@
         <p class="text-muted fs-7 mb-0">Manage student records, admissions and academic information.</p>
     </div>
 
+    <!-- Green Module Identity Banner -->
+    <div class="mb-6 rounded-3 shadow-sm px-6 py-5 position-relative overflow-hidden" 
+         style="background: linear-gradient(90deg, #10B981 0%, #059669 100%); border-radius: 12px; min-height: 96px;">
+        <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 position-relative" style="z-index: 2;">
+            <div>
+                <h2 class="text-white fw-bold mb-1" style="font-size: 1.35rem; letter-spacing: -0.01em; line-height: 1.3;">
+                    Manage Student Admissions, Generate IDs, and Access Student Information
+                </h2>
+                <p class="text-white opacity-85 fs-7 mb-0 fw-medium">
+                    Manage admissions, student records and identification from one workspace.
+                </p>
+            </div>
+            <div class="d-none d-md-flex align-items-center justify-content-center flex-shrink-0 ms-4">
+                <div class="rounded-circle bg-white bg-opacity-20 text-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                    <i class="fas fa-id-card fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Alert Notifications -->
     @if(session()->has('success'))
         <div class="alert alert-success alert-dismissible fade show shadow-sm mb-5" role="alert">
@@ -327,18 +347,20 @@
                         <!-- Empty State A: Filter/Search returns no matches -->
                         @if(count($students) == 0 && ($search != '' || $programFilter != '' || $cohortFilter != ''))
                             <tr>
-                                <td colspan="7" class="text-center py-12 px-4 border-0">
-                                    <div class="w-48px h-48px rounded-circle bg-light-primary text-primary mx-auto mb-3 d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-search fs-3"></i>
+                                <td colspan="7" class="p-0 border-0">
+                                    <div class="d-flex flex-column align-items-center justify-content-center text-center py-12 px-4" style="min-height: 220px;">
+                                        <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px; background-color: #EFF6FF; border: 1px solid #BFDBFE;">
+                                            <i class="fas fa-search fs-3 text-primary"></i>
+                                        </div>
+                                        <h4 class="fw-bold text-gray-900 mb-1" style="font-size: 1.125rem;">No matching students</h4>
+                                        <p class="text-muted fs-7 mb-4 mx-auto" style="max-width: 440px; line-height: 1.5;">
+                                            We couldn't find any students matching your current search criteria or filters.
+                                        </p>
+                                        <button type="button" class="btn btn-sm btn-light-primary border border-primary border-opacity-25 fw-semibold px-4 py-2.5 d-inline-flex align-items-center gap-2" style="height: 42px; border-radius: 8px;" wire:click="resetFilters">
+                                            <i class="fas fa-undo fs-7"></i>
+                                            Clear filters
+                                        </button>
                                     </div>
-                                    <h4 class="fw-bold text-gray-900 mb-1">No matching students</h4>
-                                    <p class="text-muted fs-7 mb-4 mx-auto" style="max-width: 400px;">
-                                        We couldn't find any students matching the current search or filters.
-                                    </p>
-                                    <button type="button" class="btn btn-sm btn-light-primary fw-semibold px-4 py-2" wire:click="resetFilters">
-                                        <i class="fas fa-undo me-1.5 fs-7"></i>
-                                        Clear filters
-                                    </button>
                                 </td>
                             </tr>
                         @endif
@@ -346,23 +368,25 @@
                         <!-- Empty State B: No students exist in the system at all -->
                         @if(count($students) == 0 && $search == '' && $programFilter == '' && $cohortFilter == '')
                             <tr>
-                                <td colspan="7" class="text-center py-12 px-4 border-0">
-                                    <div class="w-56px h-56px rounded-circle bg-light text-gray-600 mx-auto mb-3 d-flex align-items-center justify-content-center border border-gray-300">
-                                        <i class="fas fa-user-graduate fs-2 text-gray-500"></i>
-                                    </div>
-                                    <h4 class="fw-bold text-gray-900 mb-1">No students yet</h4>
-                                    <p class="text-muted fs-7 mb-4 mx-auto" style="max-width: 400px;">
-                                        Add your first student record or import existing student files to get started.
-                                    </p>
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <a href="{{ route('students.create') }}" class="btn btn-sm btn-primary fw-semibold px-4 py-2">
-                                            <i class="fas fa-plus me-1.5 fs-7"></i>
-                                            Add Student
-                                        </a>
-                                        <a href="{{ route('students.import') }}" class="btn btn-sm btn-light-primary fw-semibold px-4 py-2">
-                                            <i class="fas fa-file-import me-1.5 fs-7"></i>
-                                            Import Students
-                                        </a>
+                                <td colspan="7" class="p-0 border-0">
+                                    <div class="d-flex flex-column align-items-center justify-content-center text-center py-12 px-4" style="min-height: 240px;">
+                                        <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px; background-color: #EFF6FF; border: 1px solid #BFDBFE;">
+                                            <i class="fas fa-user-graduate fs-3 text-primary"></i>
+                                        </div>
+                                        <h4 class="fw-bold text-gray-900 mb-1" style="font-size: 1.125rem;">No students yet</h4>
+                                        <p class="text-muted fs-7 mb-4 mx-auto" style="max-width: 440px; line-height: 1.5;">
+                                            Add your first student record or import existing student data to get started.
+                                        </p>
+                                        <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                                            <a href="{{ route('students.create') }}" class="btn btn-sm btn-primary fw-semibold px-4 py-2.5 d-inline-flex align-items-center gap-2" style="height: 42px; border-radius: 8px;">
+                                                <i class="fas fa-plus fs-7"></i>
+                                                Add Student
+                                            </a>
+                                            <a href="{{ route('students.import') }}" class="btn btn-sm btn-light-primary border border-primary border-opacity-25 fw-semibold px-4 py-2.5 d-inline-flex align-items-center gap-2" style="height: 42px; border-radius: 8px;">
+                                                <i class="fas fa-file-import fs-7"></i>
+                                                Import Students
+                                            </a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -372,19 +396,17 @@
             </div>
         </div>
 
-        <!-- Footer Pagination Surface -->
-        <div class="p-4 border-top border-gray-200 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
-            <div class="text-muted fs-7">
-                @if($students->total() > 0)
+        <!-- Footer Pagination Surface (Option B: Hidden when 0 records exist) -->
+        @if($students->total() > 0)
+            <div class="p-4 border-top border-gray-200 d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                <div class="text-muted fs-7">
                     Showing <span class="fw-semibold text-gray-800">{{ $students->firstItem() }}</span> to <span class="fw-semibold text-gray-800">{{ $students->lastItem() }}</span> of <span class="fw-semibold text-gray-800">{{ number_format($students->total()) }}</span> students
-                @else
-                    Showing <span class="fw-semibold text-gray-800">0</span> students
-                @endif
+                </div>
+                <div>
+                    {{ $students->links() }}
+                </div>
             </div>
-            <div>
-                {{ $students->links() }}
-            </div>
-        </div>
+        @endif
     </div>
 
     <!-- Delete Confirmation Modal -->
