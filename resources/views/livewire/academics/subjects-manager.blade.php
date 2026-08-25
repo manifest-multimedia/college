@@ -208,8 +208,13 @@
 
                         <div class="mb-3">
                             <label for="importFile" class="form-label font-weight-bold">Upload Course File (.xlsx, .xls, .csv)</label>
-                            <input type="file" wire:model="importFile" id="importFile" class="form-control @error('importFile') is-invalid @enderror">
+                            <input type="file" wire:model.live="importFile" id="importFile" class="form-control @error('importFile') is-invalid @enderror">
                             @error('importFile') <span class="text-danger small">{{ $message }}</span> @enderror
+                            @if ($importFile)
+                                <div class="mt-2 text-success small">
+                                    <i class="fas fa-check-circle me-1"></i> File selected: <strong>{{ $importFile->getClientOriginalName() }}</strong>
+                                </div>
+                            @endif
                         </div>
 
                         <div wire:loading wire:target="importFile" class="text-primary small mb-3">
@@ -218,8 +223,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click="closeImportModal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="import">
-                            <span wire:loading.remove wire:target="import"><i class="fas fa-upload me-1"></i> Import Courses</span>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="import, importFile" @if(!$importFile) disabled @endif>
+                            <span wire:loading.remove wire:target="import, importFile"><i class="fas fa-upload me-1"></i> Import Courses</span>
+                            <span wire:loading wire:target="importFile"><i class="fas fa-spinner fa-spin me-1"></i> Uploading File...</span>
                             <span wire:loading wire:target="import"><i class="fas fa-spinner fa-spin me-1"></i> Processing Import...</span>
                         </button>
                     </div>

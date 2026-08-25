@@ -232,6 +232,18 @@ class SubjectsManager extends Component
         $this->importFile = null;
     }
 
+    public function updatedImportFile()
+    {
+        $this->validateOnly('importFile', [
+            'importFile' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ], [
+            'importFile.required' => 'Please select a file to import.',
+            'importFile.file' => 'The uploaded file is invalid.',
+            'importFile.mimes' => 'The file must be an Excel (.xlsx, .xls) or CSV file.',
+            'importFile.max' => 'The file size must not exceed 10MB.',
+        ]);
+    }
+
     public function import()
     {
         if (! auth()->user()->hasRole('System')) {
@@ -240,11 +252,16 @@ class SubjectsManager extends Component
 
         $this->validate([
             'importFile' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ], [
+            'importFile.required' => 'Please select a file to import.',
+            'importFile.file' => 'The uploaded file is invalid.',
+            'importFile.mimes' => 'The file must be an Excel (.xlsx, .xls) or CSV file.',
+            'importFile.max' => 'The file size must not exceed 10MB.',
         ]);
 
         try {
             $importer = new CoursesImport();
-            Excel::import($importer, $this->importFile->getRealPath());
+            Excel::import($importer, $this->importFile);
 
             $created = $importer->getImportedCount();
             $updated = $importer->getUpdatedCount();
