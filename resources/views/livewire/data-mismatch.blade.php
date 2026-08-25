@@ -42,7 +42,7 @@
                                     >
                                         <option value="">Select Exam</option>
                                         @forelse ($exams as $exam)
-                                            <option value="{{ $exam->id }}">{{ $exam->course->name }}</option>
+                                            <option value="{{ $exam->id }}">{{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}</option>
                                             @empty
                                             <option value="">No Exams Found</option>
                                         @endforelse

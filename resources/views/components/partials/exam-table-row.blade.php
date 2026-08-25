@@ -8,7 +8,7 @@
                                 </div>
                                 <div class="d-flex justify-content-start flex-column">
                                     <div class="d-flex align-items-center">
-                                        <a href="{{ route('exams.show', $exam->slug ? $exam->slug : $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->title ?? (($exam->examType?->name ?? 'Exam') . ' - ' . ($exam->course ? $exam->course->name : 'No Course Name')) }}</a>
+                                        <a href="{{ route('exams.show', $exam->slug ? $exam->slug : $exam->id) }}" class="mb-1 text-dark fw-bold text-hover-primary fs-6">{{ $exam->display_title }}</a>
                                         <span class="badge badge-light-primary ms-2">{{ $exam->total_questions_count ?? 0 }} questions</span>
                                     </div>
                                     <span class="text-muted fw-semibold d-block fs-7">
@@ -112,7 +112,7 @@
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <a href="javascript:void(0)" wire:click="$dispatch('confirmDelete', { examId: {{ $exam->id }}, examName: '{{ $exam->course ? $exam->course->name : 'this exam' }}' })" class="dropdown-item text-danger">
+                                            <a href="javascript:void(0)" wire:click="$dispatch('confirmDelete', { examId: {{ $exam->id }}, examName: '{{ addslashes($exam->display_title) }}' })" class="dropdown-item text-danger">
                                                 <i class="ki-duotone ki-trash fs-6 me-2">
                                                     <span class="path1"></span>
                                                     <span class="path2"></span>

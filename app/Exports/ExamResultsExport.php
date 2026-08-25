@@ -85,6 +85,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
                     'date' => $session->completed_at ? $session->completed_at->format('Y-m-d') : ($session->started_at ? $session->started_at->format('Y-m-d') : 'N/A'),
                     'student_id' => $student ? $student->student_id : 'N/A',
                     'student_name' => $student ? $student->name : ($session->student->name ?? 'N/A'), // Use Student model's name
+                    'exam_title' => $session->exam->display_title,
                     'course' => $session->exam->course->name ?? 'N/A',
                     'score' => "{$totalCorrect}/{$questionsPerSession}",
                     'marks' => "{$obtainedMarks}/{$totalMarks}",
@@ -108,6 +109,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
             'Date',
             'Student ID',
             'Student Name',
+            'Examination',
             'Course',
             'Score',
             'Marks',

@@ -11,6 +11,7 @@ use App\Services\StudentIdGenerationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class StudentImportWithIdGenerationTest extends TestCase
@@ -58,6 +59,8 @@ class StudentImportWithIdGenerationTest extends TestCase
                 'updated_at' => now(),
             ]);
         }
+
+        Role::firstOrCreate(['name' => 'Student', 'guard_name' => 'web']);
     }
 
     /** @test */
@@ -105,6 +108,7 @@ class StudentImportWithIdGenerationTest extends TestCase
         // Verify students were created
         $students = Student::all();
         $this->assertCount(3, $students);
+        $this->assertEquals(3, $stats['accounts_created']);
 
         // Verify ID generation for students without IDs
         $alice = Student::where('email', 'alice.johnson@example.com')->first();

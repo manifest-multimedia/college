@@ -222,6 +222,13 @@ class ExamTimerService {
                 this.clock.sync(data.serverTimeIso);
             }
 
+            if (typeof data.hasExtraTime === 'boolean') {
+                this.hasExtraTime = data.hasExtraTime;
+            }
+            if (typeof data.extraTimeMinutes === 'number') {
+                this.extraTimeMinutes = data.extraTimeMinutes;
+            }
+
             // 2. Update End Time (in case extra time was added)
             if (data.endTimeIso) {
                 const oldEnd = new Date(this.endTimeIso).getTime();
@@ -237,7 +244,7 @@ class ExamTimerService {
                         this.showNotification(`${addedMinutes} minutes of extra time added!`);
 
                         if (this.extraTimeCallback) {
-                            this.extraTimeCallback({ extraMinutes: addedMinutes });
+                            this.extraTimeCallback({ ...data, extraMinutes: addedMinutes });
                         }
                     }
                 }

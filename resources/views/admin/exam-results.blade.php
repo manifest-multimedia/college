@@ -31,7 +31,7 @@
                                     <option value="">-- Select an Exam to View Results --</option>
                                     @foreach($exams as $exam)
                                         <option value="{{ $exam->id }}">
-                                            {{ $exam->course->name ?? 'Unknown Course' }} ({{ $exam->created_at->format('d M, Y') }})
+                                            {{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}
                                         </option>
                                     @endforeach
                                 </select>

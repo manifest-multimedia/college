@@ -24,7 +24,7 @@
                     <div class="card-header bg-white py-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <h1 class="card-title h4 mb-0">
-                                <i class="bi bi-file-text me-2"></i> {{ $exam->course->name }} Exam Results
+                                <i class="bi bi-file-text me-2"></i> {{ $exam->display_title }} Results
                             </h1>
                         </div>
                     </div>

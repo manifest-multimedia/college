@@ -30,8 +30,10 @@ class ExamTimerController extends Controller
             return response()->json([
                 'isActive' => $isActive,
                 'endTimeIso' => $examSession->adjustedCompletionTime->toIso8601String(),
+                'serverTimeIso' => now()->toIso8601String(),
                 'currentServerTime' => now()->toIso8601String(),
                 'hasExtraTime' => $examSession->extra_time_minutes > 0,
+                'extraTimeMinutes' => (int) $examSession->extra_time_minutes,
                 'remainingSeconds' => $isActive ? now()->diffInSeconds($examSession->adjustedCompletionTime, false) : 0,
             ]);
         } catch (\Exception $e) {

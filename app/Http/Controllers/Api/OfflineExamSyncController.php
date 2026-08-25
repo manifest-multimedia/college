@@ -409,7 +409,7 @@ class OfflineExamSyncController extends Controller
                 'session' => [
                     'id' => $examSession->id,
                     'exam_id' => $examSession->exam_id,
-                    'exam_title' => $examSession->exam->title ?? 'Unknown',
+                    'exam_title' => $examSession->exam->display_title,
                     'student_id' => $examSession->student->student_id ?? 'Unknown',
                     'student_name' => $examSession->student->user->name ?? 'Unknown',
                     'started_at' => $examSession->started_at,
@@ -436,7 +436,7 @@ class OfflineExamSyncController extends Controller
                 ],
                 'exam' => [
                     'id' => $examSession->exam->id,
-                    'title' => $examSession->exam->title,
+                    'title' => $examSession->exam->display_title,
                     'duration_minutes' => $examSession->exam->duration_minutes,
                 ],
             ]);
@@ -492,7 +492,7 @@ class OfflineExamSyncController extends Controller
                 'session' => [
                     'id' => $examSession->id,
                     'exam_id' => $examSession->exam_id,
-                    'exam_title' => $examSession->exam->title ?? 'Unknown',
+                    'exam_title' => $examSession->exam->display_title,
                     'student_id' => $student->student_id,
                     'student_name' => $student->full_name,
                     'started_at' => $examSession->started_at,
@@ -519,7 +519,7 @@ class OfflineExamSyncController extends Controller
                 ],
                 'exam' => [
                     'id' => $examSession->exam->id,
-                    'title' => $examSession->exam->title,
+                    'title' => $examSession->exam->display_title,
                     'duration_minutes' => $examSession->exam->duration_minutes,
                 ],
             ]);

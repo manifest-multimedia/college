@@ -144,10 +144,10 @@ class ExamCenterWidget extends Component
                 continue;
             }
 
-            $slug = Str::slug($exam->course->name.'-'.now()->format('Y-m-d H:i:s'));
+            $slug = Str::slug($exam->display_title.'-'.now()->format('Y-m-d H:i:s'));
 
             while (Exam::where('slug', $slug)->exists()) {
-                $slug = Str::slug($exam->course->name.'-'.now()->format('Y-m-d H:i:s'));
+                $slug = Str::slug($exam->display_title.'-'.now()->format('Y-m-d H:i:s'));
             }
 
             $exam->update(['slug' => $slug]);
@@ -177,7 +177,7 @@ class ExamCenterWidget extends Component
             $exam = Exam::find($id);
             if ($exam) {
                 // Get the exam name for the success message
-                $examName = $exam->course ? $exam->course->name : 'Exam';
+                $examName = $exam->display_title;
 
                 // Delete the exam
                 $exam->delete();

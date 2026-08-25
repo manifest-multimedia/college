@@ -34,8 +34,8 @@ class AdminExamModule extends Component
             });
 
         $users = User::all();
-        $exams = Exam::all();
-        $examSessions = ExamSession::all();
+        $exams = Exam::with('course')->get();
+        $examSessions = ExamSession::with('exam.course')->get();
         $students = Student::all();
 
         return view('livewire.admin-exam-module', [

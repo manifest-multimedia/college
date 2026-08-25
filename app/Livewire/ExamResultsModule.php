@@ -121,7 +121,7 @@ class ExamResultsModule extends Component
                     'date' => $session->created_at->format('Y-m-d'),
                     'student_id' => $session->student->student_id ?? 'N/A',
                     'student_name' => $session->student->user->name ?? 'N/A',
-                    'course' => ($session->exam->examType->name ?? 'Exam') . ' - ' . ($session->exam->course->name ?? 'N/A'),
+                    'course' => $session->exam->display_title . ' — ' . ($session->exam->course->name ?? 'N/A'),
                     'score' => $result['score'],
                     'answered' => $result['total_answered'].'/'.$questions_per_session,
                     'percentage' => $result['percentage'],
@@ -188,8 +188,7 @@ class ExamResultsModule extends Component
         // Properly sanitize class name to remove any invalid characters
         $sanitizedClassName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $collegeClass->name);
 
-        $examTitle = $exam->examType ? $exam->examType->name . '-' : '';
-        $filename = Str::slug($examTitle . $exam->course->name).'-'.$sanitizedClassName.'-results.xlsx';
+        $filename = Str::slug($exam->display_title).'-'.$sanitizedClassName.'-results.xlsx';
 
         return Excel::download(new ExamResultsExport($this->selected_exam_id, $this->selected_college_class_id), $filename);
     }
@@ -199,7 +198,7 @@ class ExamResultsModule extends Component
         $formatted_id = str_replace('/', '-', $student_id);
 
         $exam = Exam::find($this->selected_exam_id);
-        $filename = Str::slug($exam->course->name).'-'.$formatted_id.'-results-for-sync.xlsx';
+        $filename = Str::slug($exam->display_title).'-'.$formatted_id.'-results-for-sync.xlsx';
 
         return Excel::download(new ExamResultExport($this->selected_exam_id, $student_id), $filename);
     }
@@ -207,7 +206,7 @@ class ExamResultsModule extends Component
     public function exportBulkResults()
     {
         $exam = Exam::find($this->selected_exam_id);
-        $filename = Str::slug($exam->course->name).'-bulk-results.xlsx';
+        $filename = Str::slug($exam->display_title).'-bulk-results.xlsx';
 
         return Excel::download(new BulkExportResults($this->selected_exam_id), $filename);
     }

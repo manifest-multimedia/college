@@ -47,6 +47,23 @@ class Exam extends Model
     }
 
     /**
+     * Get the human-readable examination title used throughout the Exam Center.
+     *
+     * Older records may not have a title, so retain the course-based label as a
+     * backwards-compatible fallback rather than presenting a blank identifier.
+     */
+    public function getDisplayTitleAttribute(): string
+    {
+        if (filled($this->title)) {
+            return $this->title;
+        }
+
+        return $this->examType?->name
+            ?? $this->course?->name
+            ?? 'Untitled examination';
+    }
+
+    /**
      * Get the exam type associated with the exam
      */
     public function examType()

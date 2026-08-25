@@ -83,14 +83,10 @@
                             <small class="text-muted">Select the academic year for student ID generation. If not selected, the current academic year will be used.</small>
                         </div>
                         
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="syncUsers" wire:model="syncUsers">
-                                <label class="form-check-label" for="syncUsers">
-                                    Automatically create user accounts for imported students
-                                </label>
-                            </div>
-                            <small class="text-muted">Optional. Account provisioning can take longer than the import itself and is best run as a background task for large files.</small>
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-user-check me-2"></i>
+                            <strong>Student portal accounts are created automatically.</strong>
+                            Every imported student must have a unique, valid email address. Their initial password is their Student ID.
                         </div>
 
                         <div class="d-flex justify-content-between">
@@ -198,6 +194,16 @@
                                 <span class="fw-bold text-info">{{ $importResults['ids_generated'] }}</span>
                             </div>
                             @endif
+                            @if(isset($importResults['accounts_created']))
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Student Accounts Created:</span>
+                                <span class="fw-bold text-success">{{ $importResults['accounts_created'] }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Existing Accounts Linked:</span>
+                                <span class="fw-bold text-info">{{ $importResults['accounts_linked'] ?? 0 }}</span>
+                            </div>
+                            @endif
                         </div>
                         
                         @if(isset($importResults['validation_errors']) && count($importResults['validation_errors']) > 0)
@@ -256,7 +262,7 @@
                         <li><strong>First Name</strong>: Student's first name (required for ID generation)</li>
                         <li><strong>Last Name</strong>: Student's last name (required for ID generation)</li>
                         <li><strong>Other Name(s)</strong>: Middle names or other names</li>
-                        <li><strong>Email</strong>: Required for user account creation</li>
+                        <li><strong>Email</strong>: Required and must be unique for student account creation</li>
                         <li><strong>Mobile Number</strong>: Contact number</li>
                         <li>... and other demographic information</li>
                     </ul>

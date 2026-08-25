@@ -3,9 +3,13 @@
 namespace App\Imports;
 
 use App\Models\Student;
+use App\Models\User;
 use App\Services\StudentIdGenerationService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -24,6 +28,11 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
 
     protected $studentIdService;
 
+    protected $createAccounts;
+
+    /** @var array<string, int> */
+    protected $processedEmails = [];
+
     protected $importStats = [
         'total' => 0,
         'created' => 0,
@@ -33,6 +42,9 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         'ids_generated' => 0,
         'validation_errors' => [],
         'processed' => 0,
+        'accounts_created' => 0,
+        'accounts_linked' => 0,
+        'accounts_failed' => 0,
     ];
 
     /**
@@ -42,12 +54,14 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
      * @param  int  $cohortId  The cohort ID to assign to imported students
      * @param  array  $columnMapping  Custom column mapping if provided
      * @param  int|null  $academicYearId  The academic year ID for student ID generation
+     * @param  bool  $createAccounts  Whether student portal accounts must be provisioned
      */
-    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null)
+    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null, $createAccounts = true)
     {
         $this->programId = $programId;
         $this->cohortId = $cohortId;
         $this->academicYearId = $academicYearId;
+        $this->createAccounts = $createAccounts;
         $this->studentIdService = new StudentIdGenerationService;
 
         // Default column mapping (Excel column => Database field)
@@ -103,6 +117,19 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                     continue; // Skip this record
                 }
 
+                $emailKey = strtolower($studentData['email']);
+                if (isset($this->processedEmails[$emailKey])) {
+                    $this->importStats['skipped']++;
+                    $this->importStats['validation_errors'][] = [
+                        'row' => $rowIndex + 2,
+                        'errors' => ['Duplicate email in import file; it was already used on row '.$this->processedEmails[$emailKey].'.'],
+                        'data' => array_filter($studentData),
+                    ];
+
+                    continue;
+                }
+                $this->processedEmails[$emailKey] = $rowIndex + 2;
+
                 $this->importStats['processed']++;
 
                 // Add program and cohort data
@@ -155,28 +182,40 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                     $existingStudent = Student::where('email', $studentData['email'])->first();
                 }
 
-                if ($existingStudent) {
-                    // Update existing student with non-empty values only
-                    $updateData = array_filter($studentData, function ($value) {
-                        return ! is_null($value) && $value !== '';
-                    });
-                    $existingStudent->update($updateData);
-                    $this->importStats['updated']++;
-
-                    Log::info('Updated existing student during import', [
-                        'student_id' => $existingStudent->student_id,
-                        'updated_fields' => array_keys($updateData),
-                    ]);
-                } else {
-                    // Create new student
-                    $newStudent = Student::create($studentData);
-                    $this->importStats['created']++;
-
-                    Log::info('Created new student during import', [
-                        'student_id' => $newStudent->student_id,
-                        'student_name' => $newStudent->name,
-                    ]);
+                if ($existingStudent && Student::where('email', $studentData['email'])
+                    ->whereKeyNot($existingStudent->id)
+                    ->exists()) {
+                    throw new \RuntimeException("Email {$studentData['email']} is already assigned to another student.");
                 }
+
+                DB::transaction(function () use ($existingStudent, $studentData) {
+                    if ($existingStudent) {
+                        // Update existing student with non-empty values only.
+                        $updateData = array_filter($studentData, function ($value) {
+                            return ! is_null($value) && $value !== '';
+                        });
+                        $existingStudent->update($updateData);
+                        $student = $existingStudent->fresh();
+                        $this->importStats['updated']++;
+
+                        Log::info('Updated existing student during import', [
+                            'student_id' => $student->student_id,
+                            'updated_fields' => array_keys($updateData),
+                        ]);
+                    } else {
+                        $student = Student::create($studentData);
+                        $this->importStats['created']++;
+
+                        Log::info('Created new student during import', [
+                            'student_id' => $student->student_id,
+                            'student_name' => $student->name,
+                        ]);
+                    }
+
+                    if ($this->createAccounts) {
+                        $this->provisionStudentAccount($student);
+                    }
+                });
             } catch (\Exception $e) {
                 $this->importStats['failed']++;
                 Log::error('Student import error: '.$e->getMessage(), [
@@ -260,7 +299,7 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         $valid = true;
 
         // Check required fields
-        $requiredFields = ['first_name', 'last_name'];
+        $requiredFields = ['first_name', 'last_name', 'email'];
 
         foreach ($requiredFields as $field) {
             if (empty($studentData[$field])) {
@@ -315,6 +354,61 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
     public function getImportStats()
     {
         return $this->importStats;
+    }
+
+    /**
+     * Create or link the portal account for one imported student.
+     *
+     * This deliberately works only on the current import row. It avoids the
+     * former full-database Artisan sync, which can make a large import exceed
+     * the web server request limit.
+     */
+    protected function provisionStudentAccount(Student $student): void
+    {
+        $user = User::where('email', $student->email)->first();
+
+        if ($user) {
+            $linkedStudent = Student::where('user_id', $user->id)
+                ->whereKeyNot($student->id)
+                ->first();
+
+            if ($linkedStudent) {
+                throw new \RuntimeException(
+                    "Email {$student->email} is already linked to student {$linkedStudent->student_id}."
+                );
+            }
+
+            if (! $user->hasRole('Student')) {
+                $studentRole = Role::where('name', 'Student')->first();
+                if (! $studentRole) {
+                    throw new \RuntimeException('The Student role is not configured.');
+                }
+
+                $user->assignRole($studentRole);
+            }
+
+            if ((int) $student->user_id !== (int) $user->id) {
+                $student->update(['user_id' => $user->id]);
+                $this->importStats['accounts_linked']++;
+            }
+
+            return;
+        }
+
+        $user = User::create([
+            'name' => $student->full_name ?: 'Student '.$student->student_id,
+            'email' => $student->email,
+            'password' => Hash::make($student->student_id),
+        ]);
+
+        $studentRole = Role::where('name', 'Student')->first();
+        if (! $studentRole) {
+            throw new \RuntimeException('The Student role is not configured.');
+        }
+
+        $user->assignRole($studentRole);
+        $student->update(['user_id' => $user->id]);
+        $this->importStats['accounts_created']++;
     }
 
     /**

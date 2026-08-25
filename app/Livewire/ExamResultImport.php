@@ -19,7 +19,7 @@ class ExamResultImport extends Component
     public function render()
     {
         return view('livewire.exam-result-import', [
-            'exams' => Exam::all(),
+            'exams' => Exam::with('course')->get(),
         ]);
     }
 

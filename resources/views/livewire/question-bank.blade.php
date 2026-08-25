@@ -43,7 +43,7 @@
                 <select id="examSelect" class="form-select" wire:model="exam_id" wire:change="loadQuestions">
                     <option value="">Select Exam</option>
                     @foreach($exams as $exam)
-                        <option value="{{ $exam->id }}">{{ $exam->course->course_code }} {{ $exam->course->name }} - {{ $exam->course->collegeClass->name . ' ' . $exam->course->year->name . ' (' . $exam->course->semester->name . ')' }}</option>
+                        <option value="{{ $exam->id }}">{{ $exam->display_title }} — {{ $exam->course->course_code ?? '' }} {{ $exam->course->name ?? 'Unknown Course' }}</option>
                     @endforeach
                 </select>
             </div>

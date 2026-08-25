@@ -16,7 +16,7 @@
                         <select wire:model.live="examFilter" class="form-control">
                             <option value="">All Exams</option>
                             @foreach($exams as $exam)
-                                <option value="{{ $exam->id }}">{{ $exam->title }}</option>
+                                <option value="{{ $exam->id }}">{{ $exam->title ?: 'Untitled examination' }}</option>
                             @endforeach
                         </select>
                     </div>

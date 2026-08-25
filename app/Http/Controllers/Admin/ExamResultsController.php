@@ -258,6 +258,7 @@ class ExamResultsController extends Controller
                     'email' => $user->email ?? 'N/A',
                     'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
                     'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
+                    'exam_title' => $session->exam->display_title,
                     'course' => $session->exam->course->name ?? 'N/A',
                     'score' => $scoreData['correct_answers'].'/'.$questionsPerSession,
                     'total_marks' => $scoreData['total_marks'],
@@ -355,7 +356,7 @@ class ExamResultsController extends Controller
                 }
             }
 
-            $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->course->name ?? 'unknown');
+            $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->display_title);
             $sanitizedName = str_replace(' ', '_', $sanitizedName);
             $fileName = 'exam_results_'.$sanitizedName.'_'.now()->format('Y-m-d').'.xlsx';
 
@@ -417,7 +418,7 @@ class ExamResultsController extends Controller
                 'stats' => $stats,
             ]);
 
-            $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->course->name ?? 'unknown');
+            $sanitizedName = preg_replace('/[\/\\\\:*?"<>|]/', '-', $exam->display_title);
             $sanitizedName = str_replace(' ', '_', $sanitizedName);
             $fileName = 'exam_results_'.$sanitizedName.'_'.now()->format('Y-m-d').'.pdf';
 
@@ -521,6 +522,7 @@ class ExamResultsController extends Controller
                 'email' => $user->email ?? 'N/A',
                 'completed_at' => $session->completed_at ? $session->completed_at->format('Y-m-d H:i') : 'N/A',
                 'class' => $student && $student->collegeClass ? $student->collegeClass->name : 'N/A',
+                'exam_title' => $session->exam->display_title,
                 'course' => $session->exam->course->name ?? 'N/A',
                 'score' => $scoreData['correct_answers'].'/'.$questionsPerSession,
                 'total_marks' => $scoreData['total_marks'],

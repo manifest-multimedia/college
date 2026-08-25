@@ -93,7 +93,8 @@ class ExamEntryTicketsManager extends Component
 
         $clearance = ExamClearance::findOrFail($this->clearanceId);
 
-        return Exam::where('semester_id', $clearance->semester_id)
+        return Exam::with('course')
+            ->where('semester_id', $clearance->semester_id)
             ->where('active', true)
             ->get();
     }

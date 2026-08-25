@@ -86,7 +86,7 @@ class ExamDetail extends Component
         }
 
         if ($this->exam->course) {
-            $this->title = 'Exam Details - '.$exam->course->name.' ('.$exam->course->course_code.')';
+            $this->title = 'Exam Details - '.$exam->display_title.' ('.$exam->course->course_code.')';
         } else {
             $this->title = 'Exam Details';
         }

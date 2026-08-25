@@ -310,7 +310,7 @@ class ExamPreview extends Component
             'flaggedQuestions' => $this->flaggedQuestions,
             'isPreview' => $isPreview,
         ])->layout('components.frontend.exams', [
-            'title' => 'Exam Preview - '.$this->exam->course->name,
+            'title' => 'Exam Preview - '.$this->exam->display_title,
         ]);
     }
 }

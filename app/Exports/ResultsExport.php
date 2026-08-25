@@ -84,6 +84,7 @@ class ResultsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
         $rows = [];
 
         foreach ($student->examSessions as $examSession) {
+            $examTitle = $examSession->exam->display_title;
             $courseName = optional($examSession->exam->course)->name ?? 'N/A';
             $score = computeResults($examSession->id, 'score') ?? '0/0';
             $answered = computeResults($examSession->id, 'total_answered') ?? 0;
@@ -93,6 +94,7 @@ class ResultsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
                 $student->student_id,
                 $examSession->created_at->format('Y-m-d H:i:s'),
                 $student->first_name.' '.$student->last_name,
+                $examTitle,
                 $courseName,
                 $score,
                 $answered,
@@ -109,6 +111,7 @@ class ResultsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
             'Student ID',
             'Date',
             'Name',
+            'Examination',
             'Course',
             'Score',
             'Answered',

@@ -154,15 +154,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         extraTimeCallback: function(extraTime) {
-            // This will be called when extra time is detected
-            console.log('Extra time detected:', extraTime);
-            
-            // Refresh the page to ensure UI consistency
-            if (extraTime.recentlyAdded) {
-                setTimeout(() => {
-                    location.reload();
-                }, 3000); // Give the user a chance to see the notification
-            }
+            // The timer has already updated its end time in place. Do not reload
+            // an active examination, as that can interrupt student navigation.
+            document.dispatchEvent(new CustomEvent('exam-extra-time-added', { detail: extraTime }));
         }
     });
 

@@ -12,7 +12,7 @@
                         <select class="form-select" wire:model.live="selected_exam_id">
                             <option value="">Select Exam</option>
                             @foreach ($exams as $exam)
-                                <option value="{{ $exam->id }}">{{ $exam->course->name }}</option>
+                                <option value="{{ $exam->id }}">{{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -111,5 +111,4 @@
         @endif
     </div>
 </div>
-
 

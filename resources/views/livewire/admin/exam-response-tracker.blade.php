@@ -58,7 +58,7 @@
                                                         {{ $exam->id }} -
                                                     @endif
                                                     
-                                                    {{ $exam->course->name ?? 'Unknown Course' }} ({{ $exam->created_at->format('d M, Y') }})
+                                                    {{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}
                                                 </option>
                                             @endforeach
                                         </select>

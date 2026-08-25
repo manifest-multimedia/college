@@ -9,7 +9,7 @@
                 <select wire:model="examId" id="examId" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm form-select">
                     <option value="">Select an exam</option>
                     @foreach ($exams as $exam)
-                        <option value="{{ $exam->id }}">{{ $exam->course->name  }}</option>
+                        <option value="{{ $exam->id }}">{{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}</option>
                     @endforeach
                 </select>
                 @error('examId') 
@@ -42,4 +42,3 @@
             @endif
         </form>
     </div>
-

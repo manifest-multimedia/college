@@ -42,7 +42,7 @@
                    <td>
                        @if($student->user && $student->user->examSessions)
                             @foreach ($student->user->examSessions as $item)
-                                {{ $item->exam->course->name }}
+                                {{ $item->exam->display_title }} — {{ $item->exam->course->name ?? 'Unknown Course' }}
                             @endforeach
                             @else 
                             <span class="text-danger">No Exam Session</span>

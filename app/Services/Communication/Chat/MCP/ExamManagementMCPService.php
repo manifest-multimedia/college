@@ -810,6 +810,7 @@ class ExamManagementMCPService
             return [
                 'id' => $exam->id,
                 'slug' => $exam->slug,
+                'title' => $exam->display_title,
                 'course' => $exam->course->course_code.' - '.$exam->course->name,
                 'type' => $exam->type,
                 'duration' => $exam->duration,

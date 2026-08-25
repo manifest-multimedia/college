@@ -110,7 +110,7 @@ class DataMismatch extends Component
         ")
             ->paginate(15);
 
-        $exams = Exam::all();
+        $exams = Exam::with('course')->get();
 
         $this->classes = CollegeClass::distinct()->whereIn('id', function ($query) {
             $query->select('college_class_id')
@@ -207,7 +207,7 @@ class DataMismatch extends Component
 
         $fileName = 'results.csv';
         if ($this->filter_by_exam || $this->filter_by_class) {
-            $examName = Exam::find($this->filter_by_exam)->course->name ?? 'Results';
+            $examName = Exam::find($this->filter_by_exam)?->display_title ?? 'Results';
             if ($this->filter_by_class) {
 
                 $className = CollegeClass::find($this->filter_by_class)->name ?? 'Results';

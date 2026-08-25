@@ -349,6 +349,7 @@
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     You are about to restore the exam session:
                                     <br><strong>{{ $student->first_name }} {{ $student->last_name }}</strong>
+                                    <br>Examination: <strong>{{ $restoringSession->exam->display_title }}</strong>
                                     <br>Course: <strong>{{ $restoringSession->exam->course->name ?? 'Unknown Course' }}</strong>
                                     <br>Started: {{ $restoringSession->started_at->format('M d, Y g:i A') }}
                                 </div>

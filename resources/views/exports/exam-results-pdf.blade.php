@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Exam Results - {{ $exam->course->name ?? 'Unknown Course' }}</title>
+    <title>Exam Results - {{ $exam->display_title }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,6 +73,7 @@
 <body>
     <div class="header">
         <h1>Exam Results</h1>
+        <p><strong>Examination:</strong> {{ $exam->display_title }}</p>
         <p><strong>Course:</strong> {{ $exam->course->name ?? 'Unknown Course' }}</p>
         <p><strong>Date Generated:</strong> {{ now()->format('F d, Y h:i A') }}</p>
     </div>

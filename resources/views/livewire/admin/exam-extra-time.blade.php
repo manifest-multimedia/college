@@ -45,7 +45,7 @@
                             <option value="">-- Select an Exam --</option>
                             @foreach($exams as $exam)
                                 <option value="{{ $exam->id }}">
-                                    {{ $exam->course->name ?? 'Unknown Course' }} ({{ $exam->created_at->format('d M, Y') }})
+                                    {{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}
                                 </option>
                             @endforeach
                         </select>
@@ -382,7 +382,9 @@
                                             <span class="fs-6 fw-semibold">{{ $viewingSession->student->student->student_id ?? 'No ID' }}</span>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="text-muted fs-7 d-block">Course:</label>
+                                            <label class="text-muted fs-7 d-block">Examination:</label>
+                                            <span class="fs-6 fw-semibold d-block">{{ $viewingSession->exam->display_title }}</span>
+                                            <label class="text-muted fs-7 d-block mt-2">Course:</label>
                                             <span class="fs-6 fw-semibold">{{ $viewingSession->exam->course->name ?? 'Unknown Course' }}</span>
                                         </div>
                                     </div>
@@ -715,6 +717,7 @@
                                     <i class="bi bi-exclamation-triangle me-2"></i>
                                     You are about to resume the exam session for:
                                     <br><strong>{{ $resumingSession->student->name ?? 'Unknown Student' }}</strong>
+                                    <br>Examination: <strong>{{ $resumingSession->exam->display_title }}</strong>
                                     <br>Course: <strong>{{ $resumingSession->exam->course->name ?? 'Unknown Course' }}</strong>
                                     <br>Started: {{ $resumingSession->started_at->format('M d, Y g:i A') }}
                                 </div>

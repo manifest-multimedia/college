@@ -65,7 +65,7 @@
 
             // Get stored values
             const savedStartAt = parseInt(localStorage.getItem(STORAGE_START_AT), 10);
-            const savedCompletedAt = parseInt(localStorage.getItem(STORAGE_COMPLETED_AT), 10);
+            let savedCompletedAt = parseInt(localStorage.getItem(STORAGE_COMPLETED_AT), 10);
             
             // Calculate time left based on end time, not browser refresh time
             let timeLeft = savedCompletedAt - new Date().getTime();
@@ -306,6 +306,7 @@
                             
                             // Update the end time in localStorage
                             localStorage.setItem(STORAGE_COMPLETED_AT, newCompletedAt);
+                            savedCompletedAt = newCompletedAt;
                             
                             // Recalculate time left
                             timeLeft = newCompletedAt - new Date().getTime();
@@ -319,10 +320,8 @@
                                 showNotification(`${extraTimeMinutes} minutes of extra time have been added to your exam.`);
                             }
                             
-                            // Only reload if the changes are significant
-                            if (extraTimeInfo.recentlyAdded) {
-                                location.reload();
-                            }
+                            // Keep the student on the current exam page. Reloading here can
+                            // restart Livewire/navigation state while the examination is active.
                         }
                     } else {
                         document.getElementById('debug-extra-time').innerText = 'No extra time detected';

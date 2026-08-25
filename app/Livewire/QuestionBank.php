@@ -911,9 +911,9 @@ class QuestionBank extends Component
     {
         $exams = [];
         if (! Auth::user()->hasAnyRole(['System', 'Super Admin'])) {
-            $exams = Exam::where('user_id', Auth::user()->id)->get();
+            $exams = Exam::with('course')->where('user_id', Auth::user()->id)->get();
         } else {
-            $exams = Exam::all();
+            $exams = Exam::with('course')->get();
         }
 
         $currentQuestionSet = null;

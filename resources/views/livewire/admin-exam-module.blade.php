@@ -29,7 +29,7 @@
                     <select name="exam" id="exam" wire:model="selected_exam" class="form-control">
                         <option value="">Select Exam</option>
                         @foreach ($exams as $exam)
-                            <option value="{{ $exam->id }}">{{ $exam->name }} ({{ $exam->exam_code }})</option>
+                            <option value="{{ $exam->id }}">{{ $exam->display_title }} — {{ $exam->course->name ?? 'Unknown Course' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -40,7 +40,7 @@
                         <option value="">Select Session</option>
                         @foreach ($examSessions as $session)
                             <option value="{{ $session->id }}">
-                                {{ $session->course->name }} - {{ $session->exam->exam_code }}
+                                {{ $session->exam->display_title }} — {{ $session->exam->course->name ?? 'Unknown Course' }}
                             </option>
                         @endforeach
                     </select>

@@ -6,7 +6,6 @@ use App\Imports\StudentImporter;
 use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -24,10 +23,11 @@ class StudentImport extends Component
 
     public $academicYearId;
 
-    // Account provisioning is deliberately opt-in: it can be materially more
-    // expensive than importing the spreadsheet and must not hold the web
-    // request open for every bulk import.
-    public $syncUsers = false;
+    /**
+     * Every imported student must have a portal account in order to access
+     * examinations and other student services.
+     */
+    public $syncUsers = true;
 
     public $columnMapping = [];
 
@@ -83,7 +83,6 @@ class StudentImport extends Component
         'programId' => 'required|exists:college_classes,id',
         'cohortId' => 'required|exists:cohorts,id',
         'academicYearId' => 'nullable|exists:academic_years,id',
-        'syncUsers' => 'boolean',
     ];
 
     protected $messages = [
@@ -128,19 +127,14 @@ class StudentImport extends Component
                 $this->programId,
                 $this->cohortId,
                 $this->columnMapping,
-                $this->academicYearId
+                $this->academicYearId,
+                true
             );
 
             Excel::import($importer, $this->file);
 
             // Get import results
             $this->importResults = $importer->getImportStats();
-
-            // Sync user accounts if requested
-            if ($this->syncUsers && ($this->importResults['created'] > 0 || $this->importResults['updated'] > 0)) {
-                Artisan::call('students:sync-user-ids', ['--force' => true]);
-                $this->importResults['sync_output'] = Artisan::output();
-            }
 
             $message = 'Students imported successfully: '.
                 $this->importResults['created'].' created, '.
@@ -156,6 +150,10 @@ class StudentImport extends Component
 
             if (isset($this->importResults['ids_generated']) && $this->importResults['ids_generated'] > 0) {
                 $message .= ', '.$this->importResults['ids_generated'].' student IDs generated automatically';
+            }
+
+            if (isset($this->importResults['accounts_created'])) {
+                $message .= ', '.$this->importResults['accounts_created'].' student accounts created';
             }
 
             session()->flash('success', $message.'.');

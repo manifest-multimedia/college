@@ -190,7 +190,7 @@ class TranscriptService
 
         return [
             'exam_id' => $exam->id,
-            'exam_title' => $exam->course->name ?? 'Online Exam',
+            'exam_title' => $exam->display_title,
             'session_id' => $examSession->id,
             'total_questions' => $totalQuestions,
             'correct_answers' => $correctAnswers,

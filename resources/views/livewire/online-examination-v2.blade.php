@@ -23,7 +23,8 @@
     <div class="row">
         <!-- Main Exam Content -->
         <div class="mb-4 text-center">
-            <h2>{{ $exam->examType?->name ?? 'Exam' }} - {{ $exam->course->name }}</h2>
+            <h2>{{ $exam->display_title }}</h2>
+            <p class="text-muted mb-0">{{ $exam->course->name ?? 'Unknown Course' }}</p>
             Date of Exam: {{ $examSession->started_at }}
             <p>Student Name: {{ $displayStudentName }} | Student ID : {{ $displayStudentId }} </p>
             @if ($isPreview)
