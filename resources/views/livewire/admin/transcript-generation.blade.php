@@ -236,6 +236,36 @@
             .btn-generate-action:active i {
                 color: #FFFFFF !important;
             }
+            .badge-light-success {
+                background-color: #E8FFF3 !important;
+                color: #50CD89 !important;
+                border: 1px solid #A7F3D0 !important;
+            }
+            .badge-light-danger {
+                background-color: #FFF5F8 !important;
+                color: #F1416C !important;
+                border: 1px solid #FECACA !important;
+            }
+            .badge-light-warning {
+                background-color: #FFF8DD !important;
+                color: #F1C40F !important;
+                border: 1px solid #FDE68A !important;
+            }
+            .badge-light-info {
+                background-color: #F8F5FF !important;
+                color: #7239EA !important;
+                border: 1px solid #BFDBFE !important;
+            }
+            .badge-light-primary {
+                background-color: #F1FAFF !important;
+                color: #009EF7 !important;
+                border: 1px solid #E9D5FF !important;
+            }
+            .badge-light-secondary {
+                background-color: #F5F8FA !important;
+                color: #7E8299 !important;
+                border: 1px solid #CBD5E1 !important;
+            }
         </style>
         <div class="row">
             <div class="col-12">
@@ -319,35 +349,17 @@
                                                         $statusStr = $student->status ?? 'Active';
                                                     @endphp
                                                     @if($statusStr == 'Active')
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
-                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #10B981;"></span>
-                                                            Active
-                                                        </span>
+                                                        <span class="badge badge-light-success px-3 py-1.5 fs-7 fw-bold rounded-pill">Active</span>
                                                     @elseif($statusStr == 'Inactive')
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;">
-                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #EF4444;"></span>
-                                                            Inactive
-                                                        </span>
+                                                        <span class="badge badge-light-danger px-3 py-1.5 fs-7 fw-bold rounded-pill">Inactive</span>
                                                     @elseif($statusStr == 'Pending')
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
-                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #F59E0B;"></span>
-                                                            Pending
-                                                        </span>
+                                                        <span class="badge badge-light-warning px-3 py-1.5 fs-7 fw-bold rounded-pill">Pending</span>
                                                     @elseif($statusStr == 'Graduated')
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
-                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #3B82F6;"></span>
-                                                            Graduated
-                                                        </span>
+                                                        <span class="badge badge-light-info px-3 py-1.5 fs-7 fw-bold rounded-pill">Graduated</span>
                                                     @elseif($statusStr == 'Suspended')
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F3E8FF; color: #6B21A8; border: 1px solid #E9D5FF;">
-                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #A855F7;"></span>
-                                                            Suspended
-                                                        </span>
+                                                        <span class="badge badge-light-primary px-3 py-1.5 fs-7 fw-bold rounded-pill">Suspended</span>
                                                     @else
-                                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
-                                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #64748B;"></span>
-                                                            {{ $statusStr }}
-                                                        </span>
+                                                        <span class="badge badge-light-secondary px-3 py-1.5 fs-7 fw-bold rounded-pill">{{ $statusStr }}</span>
                                                     @endif
                                                 </td>
                                                 <td class="text-end align-middle" style="padding: 14px 16px;">

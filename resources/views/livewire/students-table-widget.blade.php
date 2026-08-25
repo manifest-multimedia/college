@@ -1,18 +1,22 @@
 <div>
     <!-- Heading outside the card with badge -->
-    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4 mt-2">
-        <div class="d-flex align-items-center gap-3">
-            <h1 class="text-gray-900 fw-bold fs-2 mb-0">Student Information</h1>
-            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-1.5 rounded-pill fs-7">
-                {{ $studentsTotal }} total students
-            </span>
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-6 mt-4">
+        <div>
+            <h1 class="text-gray-900 fw-bold fs-2 mb-1">Student Information</h1>
+            <p class="text-muted fs-7 mb-0">View, manage, filter, import, and export student academic records.</p>
         </div>
-        @if(count($selectedStudents) > 0)
-            <div class="badge bg-success bg-opacity-10 text-success fw-semibold px-3 py-1.5 rounded-pill fs-7 d-flex align-items-center gap-1.5">
-                <i class="fas fa-check-circle fs-8 text-success"></i>
-                {{ count($selectedStudents) }} student(s) selected
-            </div>
-        @endif
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge fw-bold px-3 py-2 fs-7 rounded-pill" style="background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
+                <i class="fas fa-user-graduate me-1.5 text-primary"></i>
+                {{ $studentsTotal }} Total Students
+            </span>
+            @if(count($selectedStudents) > 0)
+                <span class="badge fw-bold px-3 py-2 fs-7 rounded-pill" style="background-color: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
+                    <i class="fas fa-check-circle me-1.5 text-success"></i>
+                    {{ count($selectedStudents) }} Selected
+                </span>
+            @endif
+        </div>
     </div>
 
     <!-- Success message -->
@@ -70,29 +74,49 @@
     @endif
 
     <div class="card mb-xl-10 shadow-sm border-0">
-        <!-- Filter toolbar -->
-        <div class="card-header border-0 py-3">
-            <div class="card-title">
-                <h3 class="card-title fw-bold text-gray-800 fs-5 mb-0">
-                    <i class="fas fa-users text-primary me-2 fs-5"></i>
-                    Students List
+        <!-- Filter toolbar with generous 2-row layout -->
+        <div class="card-header border-0 pt-5 pb-4 flex-column align-items-stretch">
+            <!-- Row 1: Title & Primary Actions -->
+            <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+                <h3 class="card-title fw-bold text-gray-900 fs-4 mb-0 d-flex align-items-center">
+                    <i class="fas fa-users text-primary me-2.5 fs-4"></i>
+                    Students Directory
                 </h3>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary px-3.5 py-2 d-flex align-items-center fw-semibold">
+                        <i class="fas fa-file-import me-2 fs-7"></i>
+                        Import Students
+                    </a>
+                    <button class="btn btn-sm btn-light-primary px-3.5 py-2 d-flex align-items-center fw-semibold" wire:click="exportStudents">
+                        <i class="fas fa-file-export me-2 fs-7"></i>
+                        Export List
+                    </button>
+                    @if($cohortFilter)
+                        <button class="btn btn-sm btn-light-warning px-3.5 py-2 d-flex align-items-center fw-semibold" wire:click="confirmIdRegeneration">
+                            <i class="fas fa-sync-alt me-2 fs-7"></i>
+                            Regenerate IDs
+                        </button>
+                    @endif
+                </div>
             </div>
-            <div class="d-flex flex-column flex-md-row align-items-md-center gap-3">
+
+            <!-- Row 2: Search & Filter Controls -->
+            <div class="row g-3 align-items-center pt-3 border-top border-gray-200">
                 <!-- Search box -->
-                <div class="position-relative me-md-3 flex-grow-1" style="max-width: 300px;">
-                    <span class="position-absolute top-50 translate-middle-y ms-3 text-muted">
-                        <i class="fas fa-search fs-5"></i>
-                    </span>
-                    <input type="text" class="form-control form-control-sm form-control-solid ps-8" 
-                           placeholder="Search students..." 
-                           wire:model.live.debounce.500ms="search">
+                <div class="col-12 col-md-5">
+                    <div class="position-relative">
+                        <span class="position-absolute top-50 translate-middle-y ms-3 text-muted">
+                            <i class="fas fa-search fs-6"></i>
+                        </span>
+                        <input type="text" class="form-control form-control-sm form-control-solid ps-9 py-2" 
+                               placeholder="Search by student ID, name, or email..." 
+                               wire:model.live.debounce.500ms="search">
+                    </div>
                 </div>
                 
                 <!-- Program Filter -->
-                <div class="me-md-3" style="min-width: 170px;">
-                    <select class="form-select form-select-sm form-select-solid" 
-                        wire:model.live="programFilter">
+                <div class="col-12 col-sm-6 col-md-3.5">
+                    <select class="form-select form-select-sm form-select-solid py-2" wire:model.live="programFilter">
                         <option value="">All Programs</option>
                         @foreach ($programs as $program)
                             <option value="{{ $program->id }}">{{ $program->name }}</option>
@@ -101,34 +125,13 @@
                 </div>
                 
                 <!-- Cohort Filter -->
-                <div class="me-md-3" style="min-width: 170px;">
-                    <select class="form-select form-select-sm form-select-solid" 
-                        wire:model.live="cohortFilter">
+                <div class="col-12 col-sm-6 col-md-3.5">
+                    <select class="form-select form-select-sm form-select-solid py-2" wire:model.live="cohortFilter">
                         <option value="">All Cohorts</option>
                         @foreach ($cohorts as $cohort)
                             <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
                         @endforeach
                     </select>
-                </div>
-                
-                <!-- Action buttons - using flex-fill on mobile to space them out -->
-                <div class="d-flex gap-2 flex-md-nowrap ms-auto">
-                    <a href="{{ route('students.import') }}" class="btn btn-sm btn-primary px-3 d-flex align-items-center fw-medium">
-                        <i class="fas fa-file-import me-2"></i>
-                        Import
-                    </a>
-                    <button class="btn btn-sm btn-light-primary px-3 d-flex align-items-center fw-medium" wire:click="exportStudents">
-                        <i class="fas fa-file-export me-2"></i>
-                        Export
-                    </button>
-
-                    @if($cohortFilter)
-                    <button class="btn btn-sm btn-light-warning px-3 d-flex align-items-center fw-medium" wire:click="confirmIdRegeneration">
-                        <i class="fas fa-sync-alt me-2"></i>
-                        Regenerate IDs
-                    </button>
-                    @endif
-                   
                 </div>
             </div>
         </div>
@@ -171,6 +174,37 @@
             .btn-table-action:active i,
             .show > .btn-table-action i {
                 color: #FFFFFF !important;
+            }
+
+            .badge-light-success {
+                background-color: #E8FFF3 !important;
+                color: #50CD89 !important;
+                border: 1px solid #A7F3D0 !important;
+            }
+            .badge-light-danger {
+                background-color: #FFF5F8 !important;
+                color: #F1416C !important;
+                border: 1px solid #FECACA !important;
+            }
+            .badge-light-warning {
+                background-color: #FFF8DD !important;
+                color: #F1C40F !important;
+                border: 1px solid #FDE68A !important;
+            }
+            .badge-light-info {
+                background-color: #F8F5FF !important;
+                color: #7239EA !important;
+                border: 1px solid #BFDBFE !important;
+            }
+            .badge-light-primary {
+                background-color: #F1FAFF !important;
+                color: #009EF7 !important;
+                border: 1px solid #E9D5FF !important;
+            }
+            .badge-light-secondary {
+                background-color: #F5F8FA !important;
+                color: #7E8299 !important;
+                border: 1px solid #CBD5E1 !important;
             }
         </style>
         <div class="card-body p-0">
@@ -249,35 +283,17 @@
                                 </td>
                                 <td class="text-center align-middle" style="padding: 14px 16px;">
                                     @if($statusStr == 'Active')
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
-                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #10B981;"></span>
-                                            Active
-                                        </span>
+                                        <span class="badge badge-light-success px-3 py-1.5 fs-7 fw-bold rounded-pill">Active</span>
                                     @elseif($statusStr == 'Inactive')
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;">
-                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #EF4444;"></span>
-                                            Inactive
-                                        </span>
+                                        <span class="badge badge-light-danger px-3 py-1.5 fs-7 fw-bold rounded-pill">Inactive</span>
                                     @elseif($statusStr == 'Pending')
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">
-                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #F59E0B;"></span>
-                                            Pending
-                                        </span>
+                                        <span class="badge badge-light-warning px-3 py-1.5 fs-7 fw-bold rounded-pill">Pending</span>
                                     @elseif($statusStr == 'Graduated')
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;">
-                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #3B82F6;"></span>
-                                            Graduated
-                                        </span>
+                                        <span class="badge badge-light-info px-3 py-1.5 fs-7 fw-bold rounded-pill">Graduated</span>
                                     @elseif($statusStr == 'Suspended')
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F3E8FF; color: #6B21A8; border: 1px solid #E9D5FF;">
-                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #A855F7;"></span>
-                                            Suspended
-                                        </span>
+                                        <span class="badge badge-light-primary px-3 py-1.5 fs-7 fw-bold rounded-pill">Suspended</span>
                                     @else
-                                        <span class="d-inline-flex align-items-center px-2.5 py-1 rounded-pill fw-medium fs-8" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
-                                            <span class="rounded-circle me-1.5" style="width: 5px; height: 5px; background-color: #64748B;"></span>
-                                            {{ $statusStr }}
-                                        </span>
+                                        <span class="badge badge-light-secondary px-3 py-1.5 fs-7 fw-bold rounded-pill">{{ $statusStr }}</span>
                                     @endif
                                 </td>
                                 <td class="text-end align-middle" style="padding: 14px 16px;">
