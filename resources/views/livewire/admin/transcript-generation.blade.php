@@ -269,7 +269,7 @@
         </style>
         <div class="row">
             <div class="col-12">
-                <div class="card shadow-sm border-0">
+                <div class="card border border-gray-200 shadow-none">
                     <div class="card-header bg-body border-0 py-3 px-4">
                         <div class="d-flex align-items-center justify-content-between">
                             <h6 class="card-title mb-0 d-flex align-items-center gap-2">
