@@ -78,7 +78,9 @@
                         <td class="align-middle">{{ $user->phone ?? 'N/A' }}</td>
                         <td class="align-middle">
                             @foreach($user->roles as $role)
-                                <span class="badge badge-light-primary">{{ $role->name }}</span>
+                                @if($role->name !== 'System' || auth()->user()->hasRole('System'))
+                                    <span class="badge badge-light-primary">{{ $role->name }}</span>
+                                @endif
                             @endforeach
                         </td>
                         <td class="align-middle">

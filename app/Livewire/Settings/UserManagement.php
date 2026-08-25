@@ -134,6 +134,14 @@ class UserManagement extends Component
             $this->selectedRoles = $user->roles->pluck('id')->toArray();
             $this->selectedPermissions = $user->permissions->pluck('id')->toArray();
 
+            // Hide System role from selection for non-System users
+            if (! auth()->user()->hasRole('System')) {
+                $systemRole = Role::where('name', 'System')->first();
+                if ($systemRole) {
+                    $this->selectedRoles = array_values(array_diff($this->selectedRoles, [$systemRole->id]));
+                }
+            }
+
             // Log loading process for debugging
             Log::info('Loading user data for editing', [
                 'user_id' => $id,
@@ -160,6 +168,19 @@ class UserManagement extends Component
         $this->validate();
 
         try {
+            if (! auth()->user()->hasRole('System')) {
+                $systemRole = Role::where('name', 'System')->first();
+                if ($systemRole) {
+                    $this->selectedRoles = array_values(array_diff($this->selectedRoles, [$systemRole->id]));
+                    if ($this->editMode) {
+                        $existingUser = User::find($this->userId);
+                        if ($existingUser && $existingUser->hasRole('System')) {
+                            $this->selectedRoles[] = $systemRole->id;
+                        }
+                    }
+                }
+            }
+
             if ($this->editMode) {
                 $user = User::findOrFail($this->userId);
 
@@ -253,7 +274,11 @@ class UserManagement extends Component
 
     public function render()
     {
-        $roles = Role::all();
+        $roles = Role::query()
+            ->when(! auth()->user()->hasRole('System'), function ($q) {
+                return $q->where('name', '!=', 'System');
+            })
+            ->get();
         $permissions = Permission::all()->groupBy(function ($permission) {
             // Group permissions by category (similar to RoleManagement)
             $name = $permission->name;

@@ -96,6 +96,12 @@ class RoleManagement extends Component
             // Load the role with all its permissions
             $role = Role::with('permissions')->findOrFail($id);
 
+            if ($role->name === 'System' && ! auth()->user()->hasRole('System')) {
+                session()->flash('error', 'Unauthorized action. The System role is protected.');
+
+                return;
+            }
+
             // Reset form values first
             $this->reset(['name', 'description', 'selectedPermissions']);
 
@@ -137,6 +143,12 @@ class RoleManagement extends Component
         try {
             // Load the role with all its permissions
             $role = Role::with('permissions')->findOrFail($id);
+
+            if ($role->name === 'System' && ! auth()->user()->hasRole('System')) {
+                session()->flash('error', 'Unauthorized action. The System role is protected.');
+
+                return;
+            }
 
             // Reset form values first
             $this->reset(['name', 'description', 'selectedPermissions']);
@@ -181,12 +193,24 @@ class RoleManagement extends Component
             $this->validate();
         }
 
+        if (strcasecmp($this->name, 'System') === 0 && ! auth()->user()->hasRole('System')) {
+            session()->flash('error', 'The System role name is reserved.');
+
+            return;
+        }
+
         try {
             if ($this->editMode) {
                 $role = Role::findOrFail($this->roleId);
 
+                if ($role->name === 'System' && ! auth()->user()->hasRole('System')) {
+                    session()->flash('error', 'Unauthorized action. The System role is protected.');
+
+                    return;
+                }
+
                 // Check if this is a system role
-                if (in_array($role->name, ['Super Admin', 'Administrator'])) {
+                if (in_array($role->name, ['Super Admin', 'Administrator', 'System'])) {
                     // Allow updating permissions but not the name for system roles
                     if ($role->name !== $this->name) {
                         session()->flash('error', 'System role names cannot be changed.');
@@ -235,7 +259,7 @@ class RoleManagement extends Component
             $role = Role::findOrFail($this->roleId);
 
             // Prevent deletion of system roles
-            if (in_array($role->name, ['Super Admin', 'Administrator', 'Student', 'Lecturer'])) {
+            if (in_array($role->name, ['Super Admin', 'Administrator', 'Student', 'Lecturer', 'System'])) {
                 session()->flash('error', 'System roles cannot be deleted.');
 
                 return;
@@ -277,6 +301,9 @@ class RoleManagement extends Component
         });
 
         $roles = Role::query()
+            ->when(! auth()->user()->hasRole('System'), function ($query) {
+                return $query->where('name', '!=', 'System');
+            })
             ->when($this->search, function ($query) {
                 return $query->where('name', 'like', '%'.$this->search.'%');
             })
