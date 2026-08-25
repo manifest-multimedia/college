@@ -121,6 +121,22 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        <div class="mb-4">
+                            <label for="examPortalTheme" class="form-label fw-bold">Exam Portal Login Theme</label>
+                            <select wire:model="examPortalTheme" id="examPortalTheme" class="form-select @error('examPortalTheme') is-invalid @enderror">
+                                <option value="split-screen">Split-Screen Exam Gateway (Recommended)</option>
+                                <option value="centered-gateway">Premium Centered Exam Gateway</option>
+                                <option value="academic-portal">Academic Portal Layout</option>
+                                <option value="default">Default Floating Card (Legacy)</option>
+                            </select>
+                            <div class="form-text">
+                                Choose the visual layout and design for student exam authentication (/take-exam).
+                            </div>
+                            @error('examPortalTheme')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         
                         <div class="mb-4">
                             <label for="schoolLogo" class="form-label fw-bold">School Logo</label>

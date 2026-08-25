@@ -29,6 +29,8 @@ class BrandingController extends Controller
     {
         $currentTheme = $this->themeService->getCurrentTheme();
         $availableThemes = $this->themeService->getAvailableThemes();
+        $availableExamPortalThemes = config('branding.available_exam_portal_themes', []);
+        $currentExamPortalTheme = config('branding.exam_portal_theme', 'split-screen');
         $institution = $this->themeService->getInstitution();
         $logos = $this->themeService->getLogos();
         $colors = config('branding.colors', []);
@@ -37,6 +39,8 @@ class BrandingController extends Controller
         return view('admin.branding.index', compact(
             'currentTheme',
             'availableThemes',
+            'availableExamPortalThemes',
+            'currentExamPortalTheme',
             'institution',
             'logos',
             'colors',
@@ -84,6 +88,31 @@ class BrandingController extends Controller
             Log::error('Theme update failed: '.$e->getMessage());
 
             return redirect()->back()->with('error', 'Failed to update theme. Please try again.');
+        }
+    }
+
+    /**
+     * Update exam portal access theme
+     */
+    public function updateExamPortalTheme(Request $request)
+    {
+        try {
+            $validThemes = array_keys(config('branding.available_exam_portal_themes', []));
+            $request->validate([
+                'exam_portal_theme' => 'required|string|in:'.implode(',', $validThemes),
+            ]);
+
+            $this->brandingSettings->update([
+                'EXAM_PORTAL_THEME' => $request->exam_portal_theme,
+            ]);
+
+            return redirect()->back()->with('success', 'Exam portal access theme updated successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        } catch (\Exception $e) {
+            Log::error('Exam portal theme update failed: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to update exam portal theme. Please try again.');
         }
     }
 

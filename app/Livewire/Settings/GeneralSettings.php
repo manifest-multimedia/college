@@ -39,6 +39,8 @@ class GeneralSettings extends Component
 
     public $examTheme = 'default';
 
+    public $examPortalTheme = 'split-screen';
+
     public function mount()
     {
         $this->loadSettings();
@@ -69,6 +71,7 @@ class GeneralSettings extends Component
                     'system_timezone',
                     'current_academic_year',
                     'exam_active_theme',
+                    'exam_portal_theme',
                 ])
                 ->get();
 
@@ -99,6 +102,7 @@ class GeneralSettings extends Component
             $this->systemTimeZone = $dbSettings['system_timezone'] ?? config('app.timezone');
             $this->academicYear = $dbSettings['current_academic_year'] ?? '';
             $this->examTheme = $dbSettings['exam_active_theme'] ?? 'default';
+            $this->examPortalTheme = $dbSettings['exam_portal_theme'] ?? config('branding.exam_portal_theme', 'split-screen');
 
         } catch (\Exception $e) {
             Log::error('Error loading general settings', [
@@ -126,6 +130,7 @@ class GeneralSettings extends Component
         $this->systemTimeZone = config('app.timezone');
         $this->academicYear = date('Y').'-'.((int) date('Y') + 1);
         $this->examTheme = 'default';
+        $this->examPortalTheme = config('branding.exam_portal_theme', 'split-screen');
     }
 
     public function save()
@@ -141,6 +146,7 @@ class GeneralSettings extends Component
             'academicYear' => 'required|string',
             'schoolLogo' => 'nullable|image|max:1024', // 1MB Max
             'examTheme' => 'required|in:default,one-by-one',
+            'examPortalTheme' => 'required|in:split-screen,centered-gateway,academic-portal,default',
         ]);
 
         try {
@@ -168,6 +174,11 @@ class GeneralSettings extends Component
             $this->updateSetting('system_timezone', $this->systemTimeZone);
             $this->updateSetting('current_academic_year', $this->academicYear);
             $this->updateSetting('exam_active_theme', $this->examTheme);
+            $this->updateSetting('exam_portal_theme', $this->examPortalTheme);
+
+            app(\App\Services\BrandingSettingsService::class)->update([
+                'EXAM_PORTAL_THEME' => $this->examPortalTheme,
+            ]);
 
             // Handle logo upload if provided
             if ($this->schoolLogo) {

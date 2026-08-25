@@ -598,6 +598,7 @@ Route::middleware([
 
         // Individual section updates
         Route::post('/branding/update-theme', [App\Http\Controllers\Admin\BrandingController::class, 'updateTheme'])->name('admin.branding.update-theme');
+        Route::post('/branding/update-exam-portal-theme', [App\Http\Controllers\Admin\BrandingController::class, 'updateExamPortalTheme'])->name('admin.branding.update-exam-portal-theme');
         Route::post('/branding/update-institution', [App\Http\Controllers\Admin\BrandingController::class, 'updateInstitution'])->name('admin.branding.update-institution');
         Route::post('/branding/update-urls', [App\Http\Controllers\Admin\BrandingController::class, 'updateUrls'])->name('admin.branding.update-urls');
         Route::post('/branding/update-colors', [App\Http\Controllers\Admin\BrandingController::class, 'updateColors'])->name('admin.branding.update-colors');

@@ -17,6 +17,7 @@ class BrandingSettingsService
      */
     private const ENVIRONMENT_KEY_MAP = [
         'AUTH_THEME' => 'branding.auth_theme',
+        'EXAM_PORTAL_THEME' => 'branding.exam_portal_theme',
         'COLLEGE_LOGO_PRIMARY' => 'branding.logo.primary',
         'COLLEGE_LOGO_WHITE' => 'branding.logo.white',
         'COLLEGE_LOGO_FAVICON' => 'branding.logo.favicon',

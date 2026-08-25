@@ -19,6 +19,13 @@ class ExamLogin extends Component
 
     public $deviceConflict = false;
 
+    public $showPassword = false;
+
+    public function toggleShowPassword()
+    {
+        $this->showPassword = ! $this->showPassword;
+    }
+
     public function mount()
     {
         // check environment set values for local

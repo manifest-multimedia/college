@@ -101,6 +101,40 @@
                         @endforeach
                     </div>
                 </div>
+            <!-- Exam Portal Theme Card -->
+            <div class="card mb-8">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-shield fs-2 me-2 text-primary"></i>
+                        Exam Portal Gateway Theme
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Select the design layout for student examination authentication (/take-exam).</p>
+                    <form action="{{ route('admin.branding.update-exam-portal-theme') }}" method="POST">
+                        @csrf
+                        <div class="row g-4 mb-4">
+                            @foreach($availableExamPortalThemes as $themeKey => $theme)
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card border {{ $currentExamPortalTheme === $themeKey ? 'border-primary bg-light-primary' : 'border-gray-300' }} h-100 p-4">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="exam_portal_theme" value="{{ $themeKey }}" id="exam_theme_{{ $themeKey }}" {{ $currentExamPortalTheme === $themeKey ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-bold text-gray-800" for="exam_theme_{{ $themeKey }}">
+                                            {{ $theme['name'] }}
+                                        </label>
+                                    </div>
+                                    <p class="text-muted fs-7 mb-0">{{ $theme['description'] }}</p>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Update Exam Portal Theme
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Authentication Theme -->

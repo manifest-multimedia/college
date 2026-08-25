@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exam Portal Theme
+    |--------------------------------------------------------------------------
+    |
+    | This value determines which theme to use for the Exam Login Access Gateway.
+    | Supported themes: "split-screen", "centered-gateway", "academic-portal", "default"
+    |
+    */
+
+    'exam_portal_theme' => env('EXAM_PORTAL_THEME', 'split-screen'),
+
+    /*
+    |--------------------------------------------------------------------------
     | College Logo Configuration
     |--------------------------------------------------------------------------
     |
@@ -98,6 +110,29 @@ return [
             'name' => 'Modern Theme',
             'description' => 'Contemporary design with gradient backgrounds',
             'preview' => '/images/themes/modern-preview.png',
+        ],
+    ],
+
+    'available_exam_portal_themes' => [
+        'split-screen' => [
+            'name' => 'Split-Screen Exam Gateway (Recommended)',
+            'description' => '50-58% branded academic context panel with interactive login card',
+            'preview' => '/images/themes/exam-split-preview.png',
+        ],
+        'centered-gateway' => [
+            'name' => 'Premium Centered Exam Gateway',
+            'description' => 'Atmospheric deep navy backdrop with centered high-contrast card and trust badges',
+            'preview' => '/images/themes/exam-centered-preview.png',
+        ],
+        'academic-portal' => [
+            'name' => 'Academic Portal Layout',
+            'description' => 'Institutional header banner layout with pre-exam guidance and security indicators',
+            'preview' => '/images/themes/exam-academic-preview.png',
+        ],
+        'default' => [
+            'name' => 'Default Floating Card (Legacy)',
+            'description' => 'Original minimal floating card login interface',
+            'preview' => '/images/themes/default-preview.png',
         ],
     ],
 
