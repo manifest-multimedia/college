@@ -7,6 +7,9 @@
                 </h1>
             </div>
             <div class="card-toolbar">
+                    <button wire:click="openReverseBillsModal" class="btn btn-light-danger me-2">
+                        <i class="fas fa-undo me-2"></i>Reverse Bills
+                    </button>
                     <button wire:click="openBatchBillsModal" class="btn btn-success me-2">
                         <i class="fas fa-users me-2"></i>Batch Bills
                     </button>
@@ -59,6 +62,12 @@
                     <input type="text" id="search" wire:model.live.debounce.300ms="search" class="form-control"
                         placeholder="Search student name, ID">
                 </div>
+                <div class="col-md-12 mt-3">
+                    <label class="form-check form-switch form-check-custom form-check-solid">
+                        <input class="form-check-input" type="checkbox" wire:model.live="showReversedBills">
+                        <span class="form-check-label text-muted">Include reversed bills in this list</span>
+                    </label>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -101,6 +110,9 @@
                                         @endif
                                     </td>
                                     <td>
+                                        @if($bill->isReversed())
+                                            <span class="badge bg-secondary" title="{{ $bill->reversal_reason }}">Reversed</span>
+                                        @else
                                         @php
                                             $status = $bill->getPaymentStatus();
                                         @endphp
@@ -111,6 +123,7 @@
                                                 ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                                         @else
                                             <span class="badge bg-danger">Unpaid ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
+                                        @endif
                                         @endif
                                     </td>
                                     <td>
@@ -134,6 +147,78 @@
 
             <div class="mt-3">
                 {{ $bills->links() }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Bill Reversal Modal -->
+    <div class="modal @if ($showReverseBillsModal) show @endif" tabindex="-1" role="dialog"
+        style="display: @if ($showReverseBillsModal) block @else none @endif; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-light-danger">
+                    <h5 class="modal-title"><i class="fas fa-undo me-2"></i>Reverse Incorrect Bills</h5>
+                    <button type="button" class="btn-close" wire:click="closeReverseBillsModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Use this only for wrongly generated bills.</strong> The original bills and their fee items are retained for audit, but will no longer be active. Bills with recorded payments are protected and cannot be reversed here.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Academic Year</label>
+                            <select wire:model="reverseAcademicYearId" class="form-select @error('reverseAcademicYearId') is-invalid @enderror">
+                                <option value="">Select academic year</option>
+                                @foreach ($academicYears as $academicYear)
+                                    <option value="{{ $academicYear->id }}">{{ $academicYear->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('reverseAcademicYearId') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required">Semester</label>
+                            <select wire:model="reverseSemesterId" class="form-select @error('reverseSemesterId') is-invalid @enderror">
+                                <option value="">Select semester</option>
+                                @foreach ($semesters as $semester)
+                                    <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('reverseSemesterId') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required">Program</label>
+                            <select wire:model="reverseClassId" class="form-select @error('reverseClassId') is-invalid @enderror">
+                                <option value="">Select program</option>
+                                @foreach ($classes as $class)
+                                    <option value="{{ $class->id }}">{{ $class->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('reverseClassId') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cohort <span class="text-muted">(optional)</span></label>
+                            <select wire:model="reverseCohortId" class="form-select @error('reverseCohortId') is-invalid @enderror">
+                                <option value="">All cohorts in this program</option>
+                                @foreach ($cohorts as $cohort)
+                                    <option value="{{ $cohort->id }}">{{ $cohort->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('reverseCohortId') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label required">Reason for reversal</label>
+                            <textarea wire:model="reversalReason" rows="3" class="form-control border border-warning @error('reversalReason') is-invalid @enderror"
+                                placeholder="e.g. Incorrect fee structure was selected during batch billing."></textarea>
+                            @error('reversalReason') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" wire:click="closeReverseBillsModal">Cancel</button>
+                    <button type="button" class="btn btn-danger" wire:click="reverseBatchBills">
+                        <i class="fas fa-undo me-1"></i>Reverse Eligible Bills
+                    </button>
+                </div>
             </div>
         </div>
     </div>

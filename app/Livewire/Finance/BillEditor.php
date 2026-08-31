@@ -56,6 +56,13 @@ class BillEditor extends Component
                 'payments',
             ])->findOrFail($this->billId);
 
+            if ($this->bill->isReversed()) {
+                session()->flash('error', 'This bill has been reversed and cannot be edited. Generate a fresh bill instead.');
+                $this->canEdit = false;
+                $this->loading = false;
+                return;
+            }
+
             // Admin can always edit the bill (even with payments); recalculate will update balance/credit/arrears
             $this->canEdit = true;
 
@@ -170,4 +177,3 @@ class BillEditor extends Component
         ]);
     }
 }
-

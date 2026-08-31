@@ -26,7 +26,7 @@
                                     <div class="mb-3">
                                         <label for="name" class="form-label">Semester Name</label>
                                         <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" placeholder="e.g., First Semester" required>
-                                        <small class="form-text text-muted">A descriptive name for the semester</small>
+                                        <small class="form-text text-muted">This name may be reused in another Academic Year (e.g. Semester 1).</small>
                                         @error('name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -57,6 +57,15 @@
                                         @if($errors->has('date_range'))
                                             <div class="text-danger mt-2">{{ $errors->first('date_range') }}</div>
                                         @endif
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="sequence" class="form-label">Semester Position</label>
+                                        <input type="number" min="1" class="form-control @error('sequence') is-invalid @enderror" id="sequence" name="sequence" value="{{ old('sequence') }}" placeholder="e.g., 1" required>
+                                        <small class="form-text text-muted">Use 1, 2, 3… to define the order within this Academic Year.</small>
+                                        @error('sequence')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                     
                                     <div class="row">

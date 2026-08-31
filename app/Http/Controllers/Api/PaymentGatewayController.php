@@ -76,7 +76,7 @@ class PaymentGatewayController extends Controller
         }
 
         // 2. Fetch bills with items and fee types
-        $bills = StudentFeeBill::where('student_id', $student->id)
+        $bills = StudentFeeBill::active()->where('student_id', $student->id)
             ->with(['billItems.feeType', 'academicYear', 'semester'])
             ->latest()
             ->get();
@@ -129,7 +129,7 @@ class PaymentGatewayController extends Controller
     public function getBillDetails(Request $request, $id)
     {
         $user = Auth::user();
-        $bill = StudentFeeBill::with(['billItems.feeType', 'student', 'academicYear', 'semester', 'payments'])->find($id);
+        $bill = StudentFeeBill::active()->with(['billItems.feeType', 'student', 'academicYear', 'semester', 'payments'])->find($id);
 
         if (!$bill) {
             return response()->json([

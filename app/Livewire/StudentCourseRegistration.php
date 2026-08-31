@@ -75,7 +75,7 @@ class StudentCourseRegistration extends Component
     public function checkPaymentStatus()
     {
         // Get the student's fee bill for current academic year and semester
-        $feeBill = StudentFeeBill::where('student_id', $this->student->id)
+        $feeBill = StudentFeeBill::active()->where('student_id', $this->student->id)
             ->where('academic_year_id', $this->currentAcademicYear->id)
             ->where('semester_id', $this->currentSemester->id)
             ->first();

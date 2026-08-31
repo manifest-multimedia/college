@@ -24,6 +24,9 @@ class StudentFeeBill extends Model
         'billing_date',
         'bill_reference',
         'public_reference',
+        'reversed_at',
+        'reversed_by',
+        'reversal_reason',
     ];
 
     protected $casts = [
@@ -32,6 +35,7 @@ class StudentFeeBill extends Model
         'balance' => 'decimal:2',
         'payment_percentage' => 'decimal:2',
         'billing_date' => 'datetime',
+        'reversed_at' => 'datetime',
     ];
 
     /**
@@ -80,6 +84,22 @@ class StudentFeeBill extends Model
     public function payments()
     {
         return $this->hasMany(FeePayment::class);
+    }
+
+    /** Bills currently in force. Reversed bills remain available for audit. */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('reversed_at');
+    }
+
+    public function reversedBy()
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    public function isReversed(): bool
+    {
+        return $this->reversed_at !== null;
     }
 
     /**

@@ -100,7 +100,7 @@ class CourseRegistrationManager extends Component
         $this->student = Student::findOrFail($this->studentId);
 
         // Check if student has paid at least 60% of fees
-        $feeBill = StudentFeeBill::where('student_id', $this->studentId)
+        $feeBill = StudentFeeBill::active()->where('student_id', $this->studentId)
             ->where('academic_year_id', $this->academicYearId)
             ->where('semester_id', $this->semesterId)
             ->first();
@@ -160,7 +160,7 @@ class CourseRegistrationManager extends Component
                     ->delete();
 
                 // Get fee bill for payment percentage
-                $feeBill = StudentFeeBill::where('student_id', $this->studentId)
+                $feeBill = StudentFeeBill::active()->where('student_id', $this->studentId)
                     ->where('academic_year_id', $this->academicYearId)
                     ->where('semester_id', $this->semesterId)
                     ->first();

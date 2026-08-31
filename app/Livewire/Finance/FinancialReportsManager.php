@@ -239,7 +239,7 @@ class FinancialReportsManager extends Component
 
     public function getOutstandingFeesProperty()
     {
-        return StudentFeeBill::query()
+        return StudentFeeBill::active()
             ->with(['student', 'academicYear', 'semester'])
             ->where('academic_year_id', $this->academicYearId)
             ->where('semester_id', $this->semesterId)

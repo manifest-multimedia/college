@@ -11,12 +11,14 @@
                     <button wire:click="printBill" class="btn btn-light btn-sm">
                         <i class="fas fa-print"></i> Print Bill
                     </button>
+                    @if(! $bill->isReversed())
                     <button wire:click="recordPayment" class="btn btn-success btn-sm ms-2">
                         <i class="fas fa-money-bill-wave"></i> Record Payment
                     </button>
                     <a href="{{ route('finance.bill.edit', ['billId' => $billId]) }}" class="btn btn-warning btn-sm ms-2">
                         <i class="fas fa-edit"></i> Edit Bill
                     </a>
+                    @endif
                 </div>
                 @endif
             </div>
@@ -41,6 +43,18 @@
                     <i class="fas fa-exclamation-triangle"></i> Bill not found or has been deleted.
                 </div>
             @else
+                @if($bill->isReversed())
+                    <div class="alert alert-warning">
+                        <strong>This bill was reversed on {{ $bill->reversed_at->format('d M, Y H:i') }}.</strong>
+                        It is retained for audit only and does not affect the student's current fees.
+                        @if($bill->reversal_reason)
+                            <div class="mt-1"><strong>Reason:</strong> {{ $bill->reversal_reason }}</div>
+                        @endif
+                        @if($bill->reversedBy)
+                            <div class="small mt-1">Reversed by {{ $bill->reversedBy->name }}.</div>
+                        @endif
+                    </div>
+                @endif
                 <!-- Student & Bill Information -->
                 <div class="row mb-4">
                     <div class="col-md-6">
@@ -82,6 +96,9 @@
                             <tr>
                                 <th>Status:</th>
                                 <td>
+                                    @if($bill->isReversed())
+                                        <span class="badge bg-secondary">Reversed</span>
+                                    @else
                                     @php
                                         $status = $bill->getPaymentStatus();
                                     @endphp
@@ -91,6 +108,7 @@
                                         <span class="badge bg-warning">Partially Paid ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
                                     @else
                                         <span class="badge bg-danger">Unpaid ({{ number_format($bill->display_payment_percentage, 1) }}%)</span>
+                                    @endif
                                     @endif
                                 </td>
                             </tr>

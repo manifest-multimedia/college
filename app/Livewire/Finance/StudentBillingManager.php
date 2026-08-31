@@ -10,6 +10,7 @@ use App\Models\Semester;
 use App\Models\Student;
 use App\Models\StudentFeeBill;
 use App\Services\StudentBillingService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -29,6 +30,8 @@ class StudentBillingManager extends Component
     public $cohortId = '';
 
     public $search = '';
+
+    public $showReversedBills = false;
 
     // New Bill Modal Properties
     public $showNewBillModal = false;
@@ -58,6 +61,19 @@ class StudentBillingManager extends Component
     public $batchSelectedFeeIds = [];
 
     public $showBatchBillsModal = false;
+
+    // Batch bill reversal properties
+    public $showReverseBillsModal = false;
+
+    public $reverseAcademicYearId = null;
+
+    public $reverseSemesterId = null;
+
+    public $reverseClassId = null;
+
+    public $reverseCohortId = null;
+
+    public $reversalReason = '';
 
     /**
      * Effective selected fee IDs = mandatory fees (always included, not submitted when checkboxes are disabled)
@@ -108,6 +124,11 @@ class StudentBillingManager extends Component
     }
 
     public function updatingCohortId()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingShowReversedBills()
     {
         $this->resetPage();
     }
@@ -187,6 +208,68 @@ class StudentBillingManager extends Component
         $this->showBatchBillsModal = false;
         $this->reset(['batchAcademicYearId', 'batchSemesterId', 'batchClassId', 'batchCohortId', 'batchAvailableFees', 'batchSelectedFeeIds']);
         $this->resetValidation();
+    }
+
+    public function openReverseBillsModal()
+    {
+        $this->showReverseBillsModal = true;
+        $this->reverseAcademicYearId = $this->academicYearId ?: null;
+        $this->reverseSemesterId = $this->semesterId ?: null;
+        $this->reverseClassId = $this->collegeClassId ?: null;
+        $this->reverseCohortId = $this->cohortId ?: null;
+        $this->reversalReason = '';
+        $this->resetValidation();
+    }
+
+    public function closeReverseBillsModal()
+    {
+        $this->showReverseBillsModal = false;
+        $this->reset(['reverseAcademicYearId', 'reverseSemesterId', 'reverseClassId', 'reverseCohortId', 'reversalReason']);
+        $this->resetValidation();
+    }
+
+    public function reverseBatchBills()
+    {
+        $this->validate([
+            'reverseAcademicYearId' => 'required|exists:academic_years,id',
+            'reverseSemesterId' => 'required|exists:semesters,id',
+            'reverseClassId' => 'required|exists:college_classes,id',
+            'reverseCohortId' => 'nullable|exists:cohorts,id',
+            'reversalReason' => 'required|string|min:3|max:500',
+        ]);
+
+        try {
+            $result = (new StudentBillingService)->reverseBillsForScope(
+                (int) $this->reverseAcademicYearId,
+                (int) $this->reverseSemesterId,
+                (int) $this->reverseClassId,
+                $this->reverseCohortId ? (int) $this->reverseCohortId : null,
+                (int) Auth::id(),
+                trim($this->reversalReason),
+            );
+
+            $this->closeReverseBillsModal();
+
+            if ($result['reversed'] === 0) {
+                $message = $result['skipped_with_payments'] > 0
+                    ? 'No bills were reversed. '.$result['skipped_with_payments'].' bill(s) have payments and must be handled through payment reversal first.'
+                    : 'No active bills were found for the selected scope.';
+                session()->flash('warning', $message);
+                $this->dispatch('notify', ['type' => 'warning', 'message' => $message]);
+
+                return;
+            }
+
+            $message = $result['reversed'].' bill(s) reversed. You can now generate fresh bills for this group.';
+            if ($result['skipped_with_payments'] > 0) {
+                $message .= ' '.$result['skipped_with_payments'].' bill(s) with payments were protected and not reversed.';
+            }
+            session()->flash('success', $message);
+            $this->dispatch('notify', ['type' => 'success', 'message' => $message]);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Unable to reverse bills: '.$e->getMessage());
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Unable to reverse bills: '.$e->getMessage()]);
+        }
     }
 
     public function updatedBatchAcademicYearId()
@@ -312,7 +395,8 @@ class StudentBillingManager extends Component
 
     public function render()
     {
-        $bills = StudentFeeBill::with(['student', 'academicYear', 'semester'])
+        $bills = StudentFeeBill::with(['student', 'academicYear', 'semester', 'reversedBy'])
+            ->when(! $this->showReversedBills, fn ($query) => $query->active())
             ->when($this->academicYearId !== '', function ($query) {
                 return $query->where('academic_year_id', $this->academicYearId);
             })

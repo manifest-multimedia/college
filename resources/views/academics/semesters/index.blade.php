@@ -42,6 +42,7 @@
                                 <thead>
                                     <tr>
                                         <th>Name</th>
+                                        <th>Position</th>
                                         <th>Academic Year</th>
                                         <th>Duration</th>
                                         <th>Status</th>
@@ -52,6 +53,7 @@
                                     @forelse($semesters as $semester)
                                         <tr>
                                             <td>{{ $semester->name }}</td>
+                                            <td>{{ $semester->sequence ?? '—' }}</td>
                                             <td>
                                                 @if($semester->academicYear)
                                                     <a href="{{ route('academics.academic-years.show', $semester->academicYear) }}">
@@ -88,8 +90,9 @@
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="btn {{ $semester->is_current ? 'btn-secondary' : 'btn-success' }}" 
-                                                                title="{{ $semester->is_current ? 'Deactivate' : 'Set as Current' }}">
-                                                            <i class="fas {{ $semester->is_current ? 'fa-toggle-off' : 'fa-toggle-on' }}"></i>
+                                                                title="{{ $semester->is_current ? 'Current academic period' : 'Set as current academic period' }}"
+                                                                @if($semester->is_current) disabled @endif>
+                                                            <i class="fas {{ $semester->is_current ? 'fa-check' : 'fa-calendar-check' }}"></i>
                                                         </button>
                                                     </form>
                                                     <button type="button" class="btn btn-danger" title="Delete" 
@@ -126,7 +129,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center">No semesters found.</td>
+                                            <td colspan="6" class="text-center">No semesters found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

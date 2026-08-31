@@ -156,11 +156,10 @@
                 type="button"
                 class="btn btn-primary"
                 wire:click="save"
-                @if (empty($availableFees)) disabled @endif
+                @if (! $canEdit || empty($availableFees)) disabled @endif
             >
                 <i class="fas fa-save"></i> Save Changes
             </button>
         </div>
     </div>
 </div>
-

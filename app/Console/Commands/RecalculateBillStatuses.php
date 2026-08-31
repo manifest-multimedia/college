@@ -28,7 +28,7 @@ class RecalculateBillStatuses extends Command
     {
         $this->info('Starting to recalculate bill payment statuses...');
 
-        $bills = StudentFeeBill::all();
+        $bills = StudentFeeBill::active()->get();
         $updated = 0;
         $unchanged = 0;
 

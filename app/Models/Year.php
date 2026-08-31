@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Represents a student's level of study, for example Year 1, Year 2 or Year 3.
+ *
+ * This model is deliberately separate from AcademicYear. AcademicYear records
+ * an institutional calendar (for example 2026/2027); Year describes a stage in
+ * a programme of training and is used by curriculum and subject assignments.
+ */
 class Year extends Model
 {
     use HasFactory;
@@ -24,7 +31,10 @@ class Year extends Model
     ];
 
     /**
-     * Get all semesters for this academic year
+     * Legacy relationship retained for compatibility only.
+     *
+     * A Year of Study is not an Academic Year and must not be used to control
+     * the institutional calendar or the current semester.
      */
     public function semesters(): HasMany
     {
@@ -32,7 +42,7 @@ class Year extends Model
     }
 
     /**
-     * Get active semesters for this academic year
+     * Legacy helper retained for compatibility only.
      */
     public function activeSemesters()
     {
@@ -40,7 +50,7 @@ class Year extends Model
     }
 
     /**
-     * Get current semester (if any)
+     * Legacy helper retained for compatibility only.
      */
     public function currentSemester()
     {
@@ -54,7 +64,7 @@ class Year extends Model
     }
 
     /**
-     * Check if this academic year is active
+     * Check whether this study level is active.
      */
     public function isActive(): bool
     {
@@ -62,7 +72,8 @@ class Year extends Model
     }
 
     /**
-     * Check if this academic year is current
+     * Determine whether this study level is currently active by its configured
+     * dates. This does not represent the current Academic Year.
      */
     public function isCurrent(): bool
     {
@@ -72,7 +83,7 @@ class Year extends Model
     }
 
     /**
-     * Scope for active academic years
+     * Scope for active study levels.
      */
     public function scopeActive($query)
     {
@@ -80,7 +91,7 @@ class Year extends Model
     }
 
     /**
-     * Scope for current academic year
+     * Scope for currently active study levels by date.
      */
     public function scopeCurrent($query)
     {

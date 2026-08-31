@@ -299,6 +299,7 @@ class Student extends Model
     public function getCurrentFeeBill($academicYearId, $semesterId)
     {
         return $this->feeBills()
+            ->active()
             ->where('academic_year_id', $academicYearId)
             ->where('semester_id', $semesterId)
             ->latest()

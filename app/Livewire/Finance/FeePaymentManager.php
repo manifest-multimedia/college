@@ -115,7 +115,8 @@ class FeePaymentManager extends Component
     public function loadStudent($id)
     {
         $this->loadedStudent = Student::with(['feeBills' => function ($query) {
-            $query->where('academic_year_id', $this->academicYearId)
+            $query->active()
+                ->where('academic_year_id', $this->academicYearId)
                 ->where('semester_id', $this->semesterId)
                 ->latest();
         }])->findOrFail($id);
@@ -133,7 +134,7 @@ class FeePaymentManager extends Component
 
     public function loadBill($id)
     {
-        $this->loadedBill = StudentFeeBill::with(['payments', 'student', 'academicYear', 'semester'])
+        $this->loadedBill = StudentFeeBill::active()->with(['payments', 'student', 'academicYear', 'semester'])
             ->findOrFail($id);
         $this->studentFeeBillId = $this->loadedBill->id;
     }
@@ -163,6 +164,14 @@ class FeePaymentManager extends Component
         $this->validate();
 
         try {
+            // A bill may have been reversed in another finance session after
+            // this form was opened. Never attach a new payment to it.
+            $activeBill = StudentFeeBill::active()->find($this->studentFeeBillId);
+            if (! $activeBill) {
+                throw new \Exception('This bill is no longer active and cannot receive a payment. Please select the newly generated bill.');
+            }
+            $this->loadedBill = $activeBill;
+
             // Allow overpayment: payment can exceed current balance (excess is recorded; balance is capped at 0 on this bill).
             // Applying excess as credit to future bills would require a separate student-credit/ledger feature.
 

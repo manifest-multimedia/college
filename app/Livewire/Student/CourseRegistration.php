@@ -76,7 +76,7 @@ class CourseRegistrationForm extends Component
     protected function checkEligibilityAndLoadExistingRegistrations()
     {
         // Check if student has paid at least 60% of fees
-        $feeBill = StudentFeeBill::where('student_id', $this->student->id)
+        $feeBill = StudentFeeBill::active()->where('student_id', $this->student->id)
             ->where('academic_year_id', $this->currentAcademicYear->id)
             ->where('semester_id', $this->currentSemester->id)
             ->first();
@@ -135,7 +135,7 @@ class CourseRegistrationForm extends Component
                     ->delete();
 
                 // Get fee bill for payment percentage
-                $feeBill = StudentFeeBill::where('student_id', $this->student->id)
+                $feeBill = StudentFeeBill::active()->where('student_id', $this->student->id)
                     ->where('academic_year_id', $this->currentAcademicYear->id)
                     ->where('semester_id', $this->currentSemester->id)
                     ->first();

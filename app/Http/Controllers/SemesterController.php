@@ -7,6 +7,7 @@ use App\Models\Semester;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SemesterController extends Controller
 {
@@ -23,7 +24,10 @@ class SemesterController extends Controller
      */
     public function index()
     {
-        $semesters = Semester::with('academicYear')->paginate(10);
+        $semesters = Semester::with('academicYear')
+            ->orderByDesc('academic_year_id')
+            ->orderBy('sequence')
+            ->paginate(10);
 
         return view('academics.semesters.index', compact('semesters'));
     }
@@ -44,13 +48,21 @@ class SemesterController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:semesters,name',
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('semesters', 'name')->where('academic_year_id', $request->input('academic_year_id')),
+            ],
             'description' => 'nullable|string',
             'academic_year_id' => 'required|exists:academic_years,id',
+            'sequence' => [
+                'required', 'integer', 'min:1',
+                Rule::unique('semesters', 'sequence')->where('academic_year_id', $request->input('academic_year_id')),
+            ],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ], [
             'name.unique' => 'A semester with this name already exists.',
+            'sequence.unique' => 'This semester position already exists in the selected Academic Year.',
         ]);
 
         // Check if the dates fall within the academic year dates
@@ -68,11 +80,18 @@ class SemesterController extends Controller
                 ->withInput();
         }
 
+        if ($this->hasOverlappingPeriod($validated['academic_year_id'], $semesterStartDate, $semesterEndDate)) {
+            return redirect()->back()
+                ->withErrors(['date_range' => 'Semester dates cannot overlap another semester in the selected Academic Year.'])
+                ->withInput();
+        }
+
         $semester = Semester::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'description' => $validated['description'],
             'academic_year_id' => $validated['academic_year_id'],
+            'sequence' => $validated['sequence'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
         ]);
@@ -107,13 +126,25 @@ class SemesterController extends Controller
     public function update(Request $request, Semester $semester)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:semesters,name,' . $semester->id,
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('semesters', 'name')
+                    ->where('academic_year_id', $request->input('academic_year_id'))
+                    ->ignore($semester->id),
+            ],
             'description' => 'nullable|string',
             'academic_year_id' => 'required|exists:academic_years,id',
+            'sequence' => [
+                'required', 'integer', 'min:1',
+                Rule::unique('semesters', 'sequence')
+                    ->where('academic_year_id', $request->input('academic_year_id'))
+                    ->ignore($semester->id),
+            ],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
         ], [
             'name.unique' => 'A semester with this name already exists.',
+            'sequence.unique' => 'This semester position already exists in the selected Academic Year.',
         ]);
 
         // Check if the dates fall within the academic year dates
@@ -131,11 +162,18 @@ class SemesterController extends Controller
                 ->withInput();
         }
 
+        if ($this->hasOverlappingPeriod($validated['academic_year_id'], $semesterStartDate, $semesterEndDate, $semester->id)) {
+            return redirect()->back()
+                ->withErrors(['date_range' => 'Semester dates cannot overlap another semester in the selected Academic Year.'])
+                ->withInput();
+        }
+
         $semester->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'description' => $validated['description'],
             'academic_year_id' => $validated['academic_year_id'],
+            'sequence' => $validated['sequence'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
         ]);
@@ -178,18 +216,18 @@ class SemesterController extends Controller
     {
         try {
             if ($semester->is_current) {
-                // If already active, just deactivate it
-                $semester->is_current = false;
-                $semester->save();
-                $message = 'Semester deactivated successfully.';
-            } else {
-                // If not active, set it as current (which deactivates all others)
-                $result = $semester->setAsCurrent();
-                if (! $result) {
-                    throw new \Exception('Failed to set semester as active');
-                }
-                $message = 'Semester activated successfully.';
+                return redirect()->route('academics.semesters.index')
+                    ->with('warning', 'This is already the current academic period. Use Academic Settings to switch to another Academic Year and Semester.');
             }
+
+            $result = app(\App\Services\AcademicsService::class)->setCurrentAcademicContext(
+                (int) $semester->academic_year_id,
+                (int) $semester->id
+            );
+            if (! $result) {
+                throw new \Exception('Failed to set the current academic context.');
+            }
+            $message = 'Current Academic Year and Semester updated successfully.';
 
             return redirect()->route('academics.semesters.index')
                 ->with('success', $message);
@@ -199,5 +237,15 @@ class SemesterController extends Controller
             return redirect()->route('academics.semesters.index')
                 ->with('error', 'An error occurred while updating semester status: '.$e->getMessage());
         }
+    }
+
+    private function hasOverlappingPeriod(int $academicYearId, Carbon $startDate, Carbon $endDate, ?int $ignoreSemesterId = null): bool
+    {
+        return Semester::query()
+            ->where('academic_year_id', $academicYearId)
+            ->when($ignoreSemesterId, fn ($query) => $query->whereKeyNot($ignoreSemesterId))
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate)
+            ->exists();
     }
 }

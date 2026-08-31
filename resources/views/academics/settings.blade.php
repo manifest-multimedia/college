@@ -77,7 +77,7 @@
                                             </div>
                                             
                                             <div class="alert alert-warning">
-                                                <i class="fas fa-exclamation-triangle me-1"></i> Setting the current academic year and semester will affect system-wide defaults for forms, filters, and reports.
+                                                <i class="fas fa-exclamation-triangle me-1"></i> This saves one Academic Year and one Semester together. The Semester must belong to the selected Academic Year and the pair affects system-wide defaults for forms, filters, and reports.
                                             </div>
                                             
                                             <div class="d-grid gap-2">

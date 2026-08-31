@@ -16,6 +16,7 @@ class Semester extends Model
         'name',
         'slug',
         'academic_year_id',
+        'sequence',
         'start_date',
         'end_date',
         'is_current',
@@ -26,6 +27,7 @@ class Semester extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'is_current' => 'boolean',
+        'sequence' => 'integer',
     ];
 
     /**
@@ -85,7 +87,8 @@ class Semester extends Model
     }
 
     /**
-     * Set this semester as current and unset others
+     * Set this academic-period instance as the one current semester for the
+     * institution. The selected period's Academic Year is made current too.
      */
     public function setAsCurrent()
     {
@@ -93,6 +96,14 @@ class Semester extends Model
         DB::beginTransaction();
 
         try {
+            if (! $this->academic_year_id) {
+                throw new \LogicException('A semester must belong to an Academic Year before it can be current.');
+            }
+
+            // Keep the current academic context a valid Year + Semester pair.
+            AcademicYear::where('is_current', true)->update(['is_current' => false]);
+            $this->academicYear()->update(['is_current' => true]);
+
             // Unset all current semesters
             self::where('is_current', true)->update(['is_current' => false]);
 

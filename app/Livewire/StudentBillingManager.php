@@ -128,7 +128,7 @@ class StudentFeeBillingManager extends Component
 
     private function getBills()
     {
-        return StudentFeeBill::with(['student.collegeClass', 'academicYear', 'semester'])
+        return StudentFeeBill::active()->with(['student.collegeClass', 'academicYear', 'semester'])
             ->when($this->search, function ($query) {
                 return $query->whereHas('student', function ($q) {
                     $q->where('first_name', 'like', '%'.$this->search.'%')
@@ -166,7 +166,7 @@ class StudentFeeBillingManager extends Component
 
         $this->selectedStudent = Student::find($this->selectedStudentId);
         if ($this->selectedStudent) {
-            $this->studentFeeBills = StudentFeeBill::where('student_id', $this->selectedStudentId)
+            $this->studentFeeBills = StudentFeeBill::active()->where('student_id', $this->selectedStudentId)
                 ->with(['academicYear', 'semester', 'payments'])
                 ->orderBy('academic_year_id', 'desc')
                 ->orderBy('semester_id', 'desc')
@@ -268,7 +268,7 @@ class StudentFeeBillingManager extends Component
         try {
             foreach ($students as $student) {
                 // Check if a bill already exists
-                $existingBill = StudentFeeBill::where('student_id', $student->id)
+                $existingBill = StudentFeeBill::active()->where('student_id', $student->id)
                     ->where('academic_year_id', $this->bulkBillingAcademicYear)
                     ->where('semester_id', $this->bulkBillingSemester)
                     ->first();

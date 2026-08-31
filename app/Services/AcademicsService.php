@@ -30,7 +30,11 @@ class AcademicsService
      */
     public function getCurrentSemester()
     {
-        return Semester::where('is_current', true)->first();
+        $academicYear = $this->getCurrentAcademicYear();
+
+        return $academicYear
+            ? Semester::where('is_current', true)->where('academic_year_id', $academicYear->id)->first()
+            : null;
     }
 
     /**
@@ -66,6 +70,36 @@ class AcademicsService
             return $semester->setAsCurrent();
         } catch (\Exception $e) {
             Log::error('Error setting current semester: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Set the current academic calendar context atomically. A current semester
+     * must always belong to the current Academic Year.
+     */
+    public function setCurrentAcademicContext(int $academicYearId, int $semesterId): bool
+    {
+        try {
+            return DB::transaction(function () use ($academicYearId, $semesterId): bool {
+                $academicYear = AcademicYear::lockForUpdate()->findOrFail($academicYearId);
+                $semester = Semester::lockForUpdate()->findOrFail($semesterId);
+
+                if ((int) $semester->academic_year_id !== (int) $academicYear->id) {
+                    throw new \InvalidArgumentException('The selected semester does not belong to the selected Academic Year.');
+                }
+
+                AcademicYear::where('is_current', true)->update(['is_current' => false]);
+                Semester::where('is_current', true)->update(['is_current' => false]);
+
+                $academicYear->update(['is_current' => true]);
+                $semester->update(['is_current' => true]);
+
+                return true;
+            });
+        } catch (\Throwable $e) {
+            Log::error('Error setting current academic context: '.$e->getMessage());
 
             return false;
         }

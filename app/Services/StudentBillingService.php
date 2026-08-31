@@ -29,7 +29,7 @@ class StudentBillingService
         // Start a transaction to ensure data integrity
         return DB::transaction(function () use ($student, $academicYearId, $semesterId, $selectedFeeStructureIds) {
             // Check if student already has a bill for this academic year and semester
-            $existingBill = StudentFeeBill::where('student_id', $student->id)
+            $existingBill = StudentFeeBill::active()->where('student_id', $student->id)
                 ->where('academic_year_id', $academicYearId)
                 ->where('semester_id', $semesterId)
                 ->first();
@@ -142,7 +142,7 @@ class StudentBillingService
     public function updateBillPaymentStatus(StudentFeeBill $bill)
     {
         $totalAmount = $bill->total_amount;
-        $amountPaid = $bill->payments()->sum('amount');
+        $amountPaid = $bill->payments()->active()->sum('amount');
         $balance = $totalAmount - $amountPaid;
         $paymentPercentage = $totalAmount > 0 ? ($amountPaid / $totalAmount * 100) : 0;
 
@@ -183,6 +183,10 @@ class StudentBillingService
     public function updateBillItems(StudentFeeBill $bill, array $selectedFeeStructureIds): StudentFeeBill
     {
         return DB::transaction(function () use ($bill, $selectedFeeStructureIds) {
+            if ($bill->isReversed()) {
+                throw new \Exception('A reversed bill is read-only and cannot be edited. Generate a fresh bill instead.');
+            }
+
             $student = $bill->student()->firstOrFail();
 
             if (empty($selectedFeeStructureIds)) {
@@ -232,6 +236,52 @@ class StudentBillingService
             $bill->recalculatePaymentStatus();
 
             return $bill->fresh(['student', 'academicYear', 'semester', 'billItems.feeType']);
+        });
+    }
+
+    /**
+     * Reverse incorrect, unpaid bills without deleting their financial audit
+     * trail. Payments must be reversed separately before the bill can be
+     * reversed and re-billed.
+     *
+     * @return array{reversed: int, skipped_with_payments: int}
+     */
+    public function reverseBillsForScope(int $academicYearId, int $semesterId, int $classId, ?int $cohortId, int $reversedBy, string $reason): array
+    {
+        return DB::transaction(function () use ($academicYearId, $semesterId, $classId, $cohortId, $reversedBy, $reason) {
+            $bills = StudentFeeBill::active()
+                ->where('academic_year_id', $academicYearId)
+                ->where('semester_id', $semesterId)
+                ->whereHas('student', function ($query) use ($classId, $cohortId) {
+                    $query->where('college_class_id', $classId);
+
+                    if ($cohortId) {
+                        $query->where('cohort_id', $cohortId);
+                    }
+                })
+                ->lockForUpdate()
+                ->get();
+
+            $reversed = 0;
+            $skippedWithPayments = 0;
+
+            foreach ($bills as $bill) {
+                if ((float) $bill->amount_paid > 0.005 || $bill->payments()->active()->exists()) {
+                    $skippedWithPayments++;
+                    continue;
+                }
+
+                $bill->update([
+                    'status' => 'reversed',
+                    'reversed_at' => now(),
+                    'reversed_by' => $reversedBy,
+                    'reversal_reason' => $reason,
+                ]);
+
+                $reversed++;
+            }
+
+            return ['reversed' => $reversed, 'skipped_with_payments' => $skippedWithPayments];
         });
     }
 }

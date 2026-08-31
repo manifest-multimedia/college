@@ -71,7 +71,7 @@ class StudentDashboardController extends Controller
             $balanceDisplayAmount = 0.0;
 
             if ($currentAcademicYear && $currentSemester) {
-                $feeBill = StudentFeeBill::where('student_id', $student->id)
+                $feeBill = StudentFeeBill::active()->where('student_id', $student->id)
                     ->where('academic_year_id', $currentAcademicYear->id)
                     ->where('semester_id', $currentSemester->id)
                     ->first();

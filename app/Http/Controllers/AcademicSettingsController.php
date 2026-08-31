@@ -23,7 +23,7 @@ class AcademicSettingsController extends Controller
     public function index()
     {
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
-        $semesters = Semester::all();
+        $semesters = Semester::orderBy('academic_year_id')->orderBy('sequence')->get();
         $currentAcademicYear = $this->academicsService->getCurrentAcademicYear();
         $currentSemester = $this->academicsService->getCurrentSemester();
 
@@ -49,13 +49,10 @@ class AcademicSettingsController extends Controller
                 ->withInput();
         }
 
-        // Update current academic year
-        $yearSuccess = $this->academicsService->setCurrentAcademicYear($validated['academic_year_id']);
-
-        // Update current semester
-        $semesterSuccess = $this->academicsService->setCurrentSemester($validated['semester_id']);
-
-        if ($yearSuccess && $semesterSuccess) {
+        if ($this->academicsService->setCurrentAcademicContext(
+            (int) $validated['academic_year_id'],
+            (int) $validated['semester_id']
+        )) {
             return redirect()->route('academics.settings.index')
                 ->with('success', 'Current academic year and semester updated successfully.');
         }
