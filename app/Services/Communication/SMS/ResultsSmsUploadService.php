@@ -7,6 +7,7 @@ use App\Models\Student;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -178,7 +179,10 @@ class ResultsSmsUploadService
         $students = [];
         foreach (array_chunk(array_values(array_unique(array_filter($studentIds))), 1000) as $studentIdChunk) {
             Student::active()
-                ->whereIn('student_id', $studentIdChunk)
+                // Imported registration numbers can retain incidental spaces.
+                // Match them as users see them in the Students search while
+                // retaining the exact value only in protected storage.
+                ->whereIn(DB::raw('TRIM(student_id)'), $studentIdChunk)
                 ->get(['id', 'student_id', 'mobile_number'])
                 ->each(fn (Student $student) => $students[trim((string) $student->student_id)] = $student);
         }

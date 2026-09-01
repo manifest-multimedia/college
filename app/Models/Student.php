@@ -57,7 +57,7 @@ class Student extends Model
 
     public function scopeActive($query)
     {
-        return $query->whereRaw("LOWER(COALESCE(status, '')) = ?", ['active']);
+        return $query->whereRaw("LOWER(TRIM(COALESCE(status, ''))) = ?", ['active']);
     }
 
     protected function dateOfBirth(): Attribute
