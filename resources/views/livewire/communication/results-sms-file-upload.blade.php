@@ -42,6 +42,7 @@
                     </div>
                     <a class="btn btn-light-primary me-2" href="{{ route('communication.results-sms.report', $batch->public_id) }}">Download validation / delivery report</a>
                     @if($batch->status === 'validated')
+                        <button class="btn btn-light-warning" wire:click="retryValidation" wire:loading.attr="disabled">Revalidate Preview</button>
                         <div class="border rounded p-4 mt-5 bg-light">
                             <div class="form-check mb-4"><input class="form-check-input" type="checkbox" id="results-sms-confirm" wire:model="confirmed"><label class="form-check-label" for="results-sms-confirm">I have reviewed this preview and confirm that the <strong>{{ $batch->ready_rows }}</strong> Ready messages should be sent.</label></div>
                             @error('confirmed') <div class="text-danger mb-3">{{ $message }}</div> @enderror

@@ -96,7 +96,7 @@ class ResultsSmsFileUpload extends Component
     {
         $this->authorizeAccess();
         $batch = $this->batchOrFail();
-        if ($batch->status !== 'failed') {
+        if (! in_array($batch->status, ['failed', 'validated'], true)) {
             return;
         }
 
@@ -106,7 +106,7 @@ class ResultsSmsFileUpload extends Component
             'missing_student_rows' => 0, 'missing_number_rows' => 0, 'duplicate_id_rows' => 0,
         ]);
         ValidateResultsSmsUpload::dispatch($batch->id);
-        session()->flash('success', 'The batch has been queued for validation again.');
+        session()->flash('success', 'The batch has been queued for validation again. No messages have been sent.');
     }
 
     public function retryFailed(): void
