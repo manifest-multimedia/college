@@ -1,0 +1,42 @@
+name: Diagnose PNMTC Results SMS Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      batch_public_id:
+        description: 'Results SMS batch public ID from the batch URL'
+        required: true
+        type: string
+
+jobs:
+  diagnose:
+    name: Read Results SMS validation diagnostic
+    runs-on: ubuntu-latest
+    environment: pnmtc-production
+    env:
+      DEPLOY_HOST: 62.77.158.206
+      DEPLOY_USER: pnmtc
+      APP_PATH: /var/www/college.pnmtc.edu.gh/current
+      BATCH_PUBLIC_ID: ${{ inputs.batch_public_id }}
+    steps:
+      - name: Setup SSH key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Show the validation exception only
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s -- '${APP_PATH}' '${BATCH_PUBLIC_ID}'" <<'EOF'
+          set -euo pipefail
+          app_path="$1"
+          batch_public_id="$2"
+          [[ "$batch_public_id" =~ ^[0-9a-fA-F-]{36}$ ]] || { echo 'Invalid batch identifier.'; exit 1; }
+          cd "$app_path"
+          batch_id=$(php artisan tinker --execute="echo App\\Models\\ResultsSmsUploadBatch::where('public_id', '${batch_public_id}')->firstOrFail()->id;" | tail -n 1)
+          php artisan tinker --execute="\$batch = App\\Models\\ResultsSmsUploadBatch::findOrFail(${batch_id}); dump(['status' => \$batch->status, 'created_at' => \$batch->created_at?->toDateTimeString(), 'rows' => \$batch->total_rows]);"
+          grep -h -F "Results SMS upload validation failed" storage/logs/laravel*.log 2>/dev/null | grep -F "\"batch_id\":${batch_id}" | tail -n 1 || true
+          EOF
