@@ -16,6 +16,8 @@ abstract class AbstractSmsService implements SmsServiceInterface
      */
     public function sendSingle(string $recipient, string $message, array $options = [])
     {
+        $recipient = $this->normalizePhoneNumber($recipient) ?? '';
+
         // Validate phone number
         if (! $this->validatePhoneNumber($recipient)) {
             Log::error('Invalid phone number', ['recipient' => $recipient]);
@@ -138,11 +140,53 @@ abstract class AbstractSmsService implements SmsServiceInterface
      */
     public function validatePhoneNumber(string $phoneNumber): bool
     {
+        $phoneNumber = $this->normalizePhoneNumber($phoneNumber);
+
         $validator = Validator::make(['phone' => $phoneNumber], [
-            'phone' => 'required|regex:/^\+?[0-9]{10,15}$/',
+            'phone' => 'required|regex:/^[1-9][0-9]{9,14}$/',
         ]);
 
         return ! $validator->fails();
+    }
+
+    /**
+     * Normalise common Ghanaian mobile number formats to a Callbly-ready
+     * international number without a leading plus sign. Other already-valid
+     * international numbers are retained as digits only.
+     */
+    public function normalizePhoneNumber(?string $phoneNumber): ?string
+    {
+        if (blank($phoneNumber)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', trim((string) $phoneNumber));
+
+        if (blank($digits)) {
+            return null;
+        }
+
+        // International dialling prefix, e.g. 00233549539417.
+        if (str_starts_with($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        // Ghana country code followed by a local zero, e.g. 2330549539417.
+        if (preg_match('/^2330([0-9]{9})$/', $digits, $matches)) {
+            return '233'.$matches[1];
+        }
+
+        // Ghana local format, e.g. 0549539417.
+        if (preg_match('/^0([0-9]{9})$/', $digits, $matches)) {
+            return '233'.$matches[1];
+        }
+
+        // Ghana local number saved without its leading zero, e.g. 549539417.
+        if (preg_match('/^[0-9]{9}$/', $digits) && in_array($digits[0], ['2', '5'], true)) {
+            return '233'.$digits;
+        }
+
+        return $digits;
     }
 
     /**

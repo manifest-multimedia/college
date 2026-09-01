@@ -24,7 +24,9 @@ class SendSms extends Component
 
     public array $recipients = [];
 
-    public ?int $recipientListId = null;
+    // HTML select controls submit an empty option as an empty string. Keep
+    // selector state untyped and let the validation rules enforce real IDs.
+    public $recipientListId = null;
 
     public array $recipientLists = [];
 
@@ -36,9 +38,9 @@ class SendSms extends Component
 
     public string $audience = 'all_students';
 
-    public ?int $audienceCohortId = null;
+    public $audienceCohortId = null;
 
-    public ?int $audienceProgramId = null;
+    public $audienceProgramId = null;
 
     public array $cohorts = [];
 
@@ -118,7 +120,7 @@ class SendSms extends Component
         if (! empty($this->recipient)) {
             // Validate phone number
             if ($this->smsService->validatePhoneNumber($this->recipient)) {
-                $this->recipients[] = $this->recipient;
+                $this->recipients[] = $this->smsService->normalizePhoneNumber($this->recipient);
                 $this->recipient = '';
             } else {
                 session()->flash('error', 'Invalid phone number format.');
@@ -198,7 +200,7 @@ class SendSms extends Component
         ]);
 
         return $this->smsService->sendToGroup(
-            $this->recipientListId,
+            (int) $this->recipientListId,
             $this->message,
             $this->sendOptions()
         );
@@ -293,7 +295,8 @@ class SendSms extends Component
         $phoneField = $this->audience === 'all_staff' ? 'phone' : 'mobile_number';
         $validNumbers = $records->pluck($phoneField)
             ->filter(fn ($phone) => filled($phone))
-            ->map(fn ($phone) => preg_replace('/[\s\-()]/', '', (string) $phone))
+            ->map(fn ($phone) => $this->smsService?->normalizePhoneNumber((string) $phone))
+            ->filter()
             ->filter(fn ($phone) => $this->smsService?->validatePhoneNumber($phone) ?? false)
             ->values();
         $recipients = $validNumbers->unique()->values()->all();

@@ -29,4 +29,9 @@ interface SmsServiceInterface
      * Validate a phone number format.
      */
     public function validatePhoneNumber(string $phoneNumber): bool;
+
+    /**
+     * Convert a supported phone number to the provider-ready international format.
+     */
+    public function normalizePhoneNumber(?string $phoneNumber): ?string;
 }

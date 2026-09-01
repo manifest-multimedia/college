@@ -13,7 +13,10 @@ class CallblySmsService extends AbstractSmsService
 
     public function sendBulk(array $recipients, string $message, array $options = []): array
     {
-        $recipients = array_values(array_unique(array_filter($recipients, fn ($recipient) => $this->validatePhoneNumber($recipient))));
+        $recipients = array_values(array_unique(array_filter(array_map(
+            fn ($recipient) => $this->normalizePhoneNumber((string) $recipient),
+            $recipients
+        ), fn ($recipient) => $recipient !== null && $this->validatePhoneNumber($recipient))));
 
         if ($recipients === []) {
             return ['success' => false, 'message' => 'No valid recipient phone numbers were supplied.'];
