@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 return new class extends Migration
 {
@@ -19,7 +18,7 @@ return new class extends Migration
             ->each(function (object $batch): void {
                 try {
                     Crypt::decryptString($batch->failure_reason);
-                } catch (Throwable) {
+                } catch (\Throwable) {
                     DB::table('results_sms_upload_batches')
                         ->where('id', $batch->id)
                         ->update(['failure_reason' => Crypt::encryptString($batch->failure_reason)]);
