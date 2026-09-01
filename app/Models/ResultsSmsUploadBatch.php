@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class ResultsSmsUploadBatch extends Model
@@ -20,7 +22,6 @@ class ResultsSmsUploadBatch extends Model
 
     protected $casts = [
         'original_filename' => 'encrypted',
-        'failure_reason' => 'encrypted',
         'validated_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'completed_at' => 'datetime',
@@ -36,4 +37,26 @@ class ResultsSmsUploadBatch extends Model
     public function uploader(): BelongsTo { return $this->belongsTo(User::class, 'uploaded_by'); }
     public function confirmer(): BelongsTo { return $this->belongsTo(User::class, 'confirmed_by'); }
     public function rows(): HasMany { return $this->hasMany(ResultsSmsUploadRow::class, 'batch_id'); }
+
+    /**
+     * Read existing legacy plaintext failure messages safely while encrypting
+     * all writes made through the model.
+     */
+    protected function failureReason(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if ($value === null) {
+                    return null;
+                }
+
+                try {
+                    return Crypt::decryptString($value);
+                } catch (\Throwable) {
+                    return $value;
+                }
+            },
+            set: fn (?string $value): ?string => $value === null ? null : Crypt::encryptString($value),
+        );
+    }
 }

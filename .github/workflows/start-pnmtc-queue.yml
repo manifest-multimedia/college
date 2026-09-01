@@ -30,6 +30,8 @@ jobs:
           app_path="$1"
           cd "$app_path"
           php_binary=$(command -v php)
+          "$php_binary" artisan queue:restart
+          sleep 5
           worker_command="cd $app_path && $php_binary artisan queue:work --queue=default --sleep=1 --tries=3 --timeout=900 >> $app_path/storage/logs/queue-worker.log 2>&1"
           cron_line="* * * * * pgrep -u \$(id -u) -f '[a]rtisan queue:work --queue=default' >/dev/null || nohup sh -c '$worker_command' >/dev/null 2>&1 & # college360-queue-worker"
 
