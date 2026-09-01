@@ -38,5 +38,5 @@ jobs:
           cd "$app_path"
           batch_id=$(php artisan tinker --execute="echo App\\Models\\ResultsSmsUploadBatch::where('public_id', '${batch_public_id}')->firstOrFail()->id;" | tail -n 1)
           php artisan tinker --execute="\$batch = App\\Models\\ResultsSmsUploadBatch::findOrFail(${batch_id}); dump(['status' => \$batch->status, 'created_at' => \$batch->created_at?->toDateTimeString(), 'rows' => \$batch->total_rows]);"
-          grep -h -F "Results SMS upload validation failed" storage/logs/laravel*.log 2>/dev/null | grep -F "\"batch_id\":${batch_id}" | tail -n 1 || true
+          grep -h -E "Results SMS upload (validation failed|could not be read)" storage/logs/laravel*.log 2>/dev/null | grep -F "\"batch_id\":${batch_id}" | tail -n 1 || true
           EOF
