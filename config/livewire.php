@@ -81,7 +81,7 @@ return [
         */
         'preview_mimes' => [
             'png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp',
-            'tiff', 'pdf', 'doc', 'docx', 'txt', 'xls', 'xlsx',
+            'tiff', 'pdf', 'doc', 'docx', 'txt', 'csv', 'xls', 'xlsx',
             'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mov', 'webm', 'mkv', 'flv',
         ],
 
@@ -96,7 +96,7 @@ return [
         */
         'rules' => [
             'file',
-            'mimes:png,gif,bmp,svg,jpg,jpeg,tiff,webp,pdf,doc,docx,txt,xls,xlsx,mp3,wav,ogg,m4a,mp4,mov,mkv,webm,flv',
+            'mimes:png,gif,bmp,svg,jpg,jpeg,tiff,webp,pdf,doc,docx,txt,csv,xls,xlsx,mp3,wav,ogg,m4a,mp4,mov,mkv,webm,flv',
             'max:20480', // Increased to 20MB max file size
         ],
 

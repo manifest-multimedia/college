@@ -55,11 +55,34 @@
     @endif
 
     <div class="card">
-        <div class="card-header"><h3 class="card-title">Recent result-message batches</h3></div>
-        <div class="table-responsive"><table class="table table-row-dashed align-middle mb-0"><thead><tr><th>File</th><th>Status</th><th>Rows</th><th>Ready / Sent / Failed</th><th>Created</th><th></th></tr></thead><tbody>
+        <div class="card-header"><h3 class="card-title">Recent Result-Message Batches</h3></div>
+        <div class="table-responsive">
+            <table class="table table-row-dashed table-row-gray-300 align-middle gy-4 mb-0">
+                <thead class="border-gray-200 fs-7 fw-bold text-muted text-uppercase">
+                    <tr>
+                        <th class="ps-6 min-w-250px">File</th>
+                        <th class="min-w-125px">Status</th>
+                        <th class="text-end min-w-80px">Rows</th>
+                        <th class="text-center min-w-175px">Ready / Sent / Failed</th>
+                        <th class="min-w-150px">Created</th>
+                        <th class="text-end pe-6 min-w-80px">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="fw-semibold text-gray-700">
             @forelse($recentBatches as $item)
-                <tr><td>{{ $item->original_filename }}</td><td>{{ str_replace('_', ' ', ucfirst($item->status)) }}</td><td>{{ $item->total_rows }}</td><td>{{ $item->ready_rows }} / {{ $item->sent_rows }} / {{ $item->failed_rows }}</td><td>{{ $item->created_at->format('d M Y, H:i') }}</td><td><a class="btn btn-sm btn-light" href="{{ route('communication.results-sms.upload', $item->public_id) }}">View</a></td></tr>
-            @empty <tr><td colspan="6" class="text-center text-muted py-5">No results SMS uploads yet.</td></tr> @endforelse
-        </tbody></table></div>
+                <tr>
+                    <td class="ps-6"><span class="d-inline-block text-truncate mw-250px" title="{{ $item->original_filename }}">{{ $item->original_filename }}</span></td>
+                    <td><span class="badge badge-light-{{ in_array($item->status, ['completed', 'validated']) ? 'success' : ($item->status === 'failed' ? 'danger' : 'warning') }}">{{ str_replace('_', ' ', ucfirst($item->status)) }}</span></td>
+                    <td class="text-end">{{ number_format($item->total_rows) }}</td>
+                    <td class="text-center"><span class="text-success">{{ number_format($item->ready_rows) }}</span><span class="text-muted mx-1">/</span><span class="text-primary">{{ number_format($item->sent_rows) }}</span><span class="text-muted mx-1">/</span><span class="text-danger">{{ number_format($item->failed_rows) }}</span></td>
+                    <td class="text-muted text-nowrap">{{ $item->created_at->format('d M Y, H:i') }}</td>
+                    <td class="text-end pe-6"><a class="btn btn-sm btn-light-primary" href="{{ route('communication.results-sms.upload', $item->public_id) }}">View</a></td>
+                </tr>
+            @empty
+                <tr><td colspan="6" class="text-center text-muted py-8">No results SMS uploads yet.</td></tr>
+            @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
