@@ -109,7 +109,9 @@ class CallblySmsService extends AbstractSmsService
 
             return [
                 'success' => false,
-                'error_message' => data_get($data, 'message', 'Callbly returned HTTP '.$response->status()),
+                'error_message' => $response->status() === 401
+                    ? 'Callbly rejected the configured API token. In System Settings, paste the token value only (without "Bearer ") and save it again.'
+                    : data_get($data, 'message', 'Callbly returned HTTP '.$response->status()),
                 'response' => $data,
                 'status_code' => $response->status(),
             ];
@@ -134,12 +136,15 @@ class CallblySmsService extends AbstractSmsService
         }
 
         try {
-            return Crypt::decryptString($token);
+            $token = Crypt::decryptString($token);
         } catch (\Throwable) {
             // Supports a pre-existing plaintext token during a controlled
             // upgrade; saving the settings encrypts it thereafter.
-            return $token;
         }
+
+        // Laravel's withToken() adds the Bearer scheme itself. This also
+        // accepts a value pasted from documentation as "Bearer <token>".
+        return preg_replace('/^Bearer\s+/i', '', trim($token)) ?: null;
     }
 
     private function setting(string $key, ?string $default = null): ?string

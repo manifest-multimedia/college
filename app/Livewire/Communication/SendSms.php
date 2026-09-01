@@ -56,13 +56,17 @@ class SendSms extends Component
         $this->smsService = $smsService;
     }
 
-    public function mount()
+    public function mount(CallblySmsService $callbly): void
     {
         $this->loadRecipientLists();
         $this->loadSenderIds();
         $this->cohorts = Cohort::where('is_active', true)->orderBy('name')->get(['id', 'name'])->toArray();
         $this->programs = CollegeClass::where('is_deleted', false)->where('is_active', true)->orderBy('name')->get(['id', 'name'])->toArray();
         $this->refreshAudienceSummary();
+
+        if (auth()->user()?->hasAnyRole(['System', 'Super Admin'])) {
+            $this->loadBalances($callbly);
+        }
     }
 
     public function updatedAudience(): void
@@ -227,9 +231,14 @@ class SendSms extends Component
     {
         abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin']), 403);
 
+        $this->loadBalances($callbly, true);
+    }
+
+    private function loadBalances(CallblySmsService $callbly, bool $flashFailure = false): void
+    {
         $this->balance = $callbly->getBalances();
 
-        if (! $this->balance['success']) {
+        if ($flashFailure && ! $this->balance['success']) {
             session()->flash('error', $this->balance['message'] ?? 'Unable to retrieve Callbly balances.');
         }
     }

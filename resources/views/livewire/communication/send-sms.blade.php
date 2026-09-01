@@ -30,14 +30,16 @@
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 border rounded p-4 mb-5 bg-light">
                     <div>
                         <span class="fw-bold">Callbly balances</span>
-                        @if($balance)
+                        @if($balance && ($balance['success'] ?? false))
                             <span class="text-muted ms-3">SMS credits: <strong>{{ $balance['sms_balance'] ?? '—' }}</strong></span>
                             <span class="text-muted ms-3">Wallet: <strong>{{ $balance['formatted_wallet_balance'] ?? (($balance['currency'] ?? 'GHS').' '.($balance['wallet_balance'] ?? '—')) }}</strong></span>
+                        @elseif($balance)
+                            <span class="text-danger ms-3">{{ $balance['message'] ?? 'Unable to retrieve Callbly balances.' }}</span>
                         @else
-                            <span class="text-muted ms-3">Check credits before sending a campaign.</span>
+                            <span class="text-muted ms-3">Loading balances…</span>
                         @endif
                     </div>
-                    <button type="button" class="btn btn-light-primary btn-sm" wire:click="refreshBalances" wire:loading.attr="disabled">Check balances</button>
+                    <button type="button" class="btn btn-light-primary btn-sm" wire:click="refreshBalances" wire:loading.attr="disabled">Refresh balances</button>
                 </div>
             @endhasanyrole
 
