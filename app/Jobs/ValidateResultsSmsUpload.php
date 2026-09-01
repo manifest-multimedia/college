@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Throwable;
 
 class ValidateResultsSmsUpload implements ShouldQueue
@@ -29,7 +30,20 @@ class ValidateResultsSmsUpload implements ShouldQueue
     public function handle(ResultsSmsUploadService $uploads, SmsServiceInterface $sms): void
     {
         $batch = ResultsSmsUploadBatch::findOrFail($this->batchId);
-        $data = $uploads->read($batch);
+        try {
+            $data = $uploads->read($batch);
+        } catch (RuntimeException $exception) {
+            Log::warning('Results SMS upload could not be read', [
+                'batch_id' => $this->batchId,
+                'exception' => $exception->getMessage(),
+            ]);
+            $batch->update([
+                'status' => 'failed',
+                'failure_reason' => 'The protected upload could not be read. Please upload the original file again.',
+            ]);
+
+            return;
+        }
         $required = ['student id', 'sms message'];
         $headerPositions = array_flip($data['headers']);
 

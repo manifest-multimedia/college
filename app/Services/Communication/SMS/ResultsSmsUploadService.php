@@ -4,6 +4,7 @@ namespace App\Services\Communication\SMS;
 
 use App\Models\ResultsSmsUploadBatch;
 use App\Models\Student;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Process;
@@ -49,8 +50,14 @@ class ResultsSmsUploadService
     {
         $contents = file_get_contents($file->getRealPath());
         $path = 'private/results-sms/'.$batch->public_id.'.'.$file->getClientOriginalExtension().'.enc';
+        $envelope = json_encode([
+            'version' => 1,
+            'sha256' => hash('sha256', $contents),
+            // Keep the value passed to the encrypter text-safe for binary XLSX files.
+            'contents' => base64_encode($contents),
+        ], JSON_THROW_ON_ERROR);
 
-        Storage::disk('local')->put($path, Crypt::encryptString($contents));
+        Storage::disk('local')->put($path, Crypt::encryptString($envelope));
 
         $batch->update([
             'original_filename' => $file->getClientOriginalName(),
@@ -86,7 +93,13 @@ class ResultsSmsUploadService
 
     public function temporaryFile(ResultsSmsUploadBatch $batch): string
     {
-        $contents = Crypt::decryptString(Storage::disk('local')->get($batch->stored_path));
+        try {
+            $decrypted = Crypt::decryptString(Storage::disk('local')->get($batch->stored_path));
+        } catch (DecryptException $exception) {
+            throw new RuntimeException('The protected upload could not be decrypted.', previous: $exception);
+        }
+
+        $contents = $this->contentsFromEnvelope($decrypted, $batch);
         $temporaryPath = tempnam(sys_get_temp_dir(), 'results-sms-');
         $extension = $batch->file_extension === 'csv' ? '.csv' : '.xlsx';
         $target = $temporaryPath.$extension;
@@ -94,6 +107,27 @@ class ResultsSmsUploadService
         file_put_contents($target, $contents, LOCK_EX);
 
         return $target;
+    }
+
+    private function contentsFromEnvelope(string $decrypted, ResultsSmsUploadBatch $batch): string
+    {
+        try {
+            $envelope = json_decode($decrypted, true, flags: JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            // Files stored before envelope support contain the original bytes.
+            return $decrypted;
+        }
+
+        if (! is_array($envelope) || ($envelope['version'] ?? null) !== 1 || ! isset($envelope['contents'], $envelope['sha256'])) {
+            throw new RuntimeException('The protected upload has an unsupported format.');
+        }
+
+        $contents = base64_decode($envelope['contents'], true);
+        if ($contents === false || ! hash_equals($envelope['sha256'], hash('sha256', $contents)) || ! hash_equals($batch->file_hash, $envelope['sha256'])) {
+            throw new RuntimeException('The protected upload did not pass its integrity check.');
+        }
+
+        return $contents;
     }
 
     public function normaliseHeader(string $header): string
