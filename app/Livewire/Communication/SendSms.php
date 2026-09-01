@@ -2,7 +2,11 @@
 
 namespace App\Livewire\Communication;
 
+use App\Models\Cohort;
+use App\Models\CollegeClass;
 use App\Models\RecipientList;
+use App\Models\Student;
+use App\Models\User;
 use App\Services\Communication\SMS\SmsServiceInterface;
 use App\Services\Communication\SMS\CallblySmsService;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +34,18 @@ class SendSms extends Component
 
     public string $selectedSenderId = '';
 
+    public string $audience = 'all_students';
+
+    public ?int $audienceCohortId = null;
+
+    public ?int $audienceProgramId = null;
+
+    public array $cohorts = [];
+
+    public array $programs = [];
+
+    public array $audienceSummary = [];
+
     // Initialize with null to prevent "must not be accessed before initialization" error
     protected ?SmsServiceInterface $smsService = null;
 
@@ -42,6 +58,24 @@ class SendSms extends Component
     {
         $this->loadRecipientLists();
         $this->loadSenderIds();
+        $this->cohorts = Cohort::where('is_active', true)->orderBy('name')->get(['id', 'name'])->toArray();
+        $this->programs = CollegeClass::where('is_deleted', false)->where('is_active', true)->orderBy('name')->get(['id', 'name'])->toArray();
+        $this->refreshAudienceSummary();
+    }
+
+    public function updatedAudience(): void
+    {
+        $this->refreshAudienceSummary();
+    }
+
+    public function updatedAudienceCohortId(): void
+    {
+        $this->refreshAudienceSummary();
+    }
+
+    public function updatedAudienceProgramId(): void
+    {
+        $this->refreshAudienceSummary();
     }
 
     protected function loadSenderIds(): void
@@ -112,6 +146,7 @@ class SendSms extends Component
                 'single' => $this->sendSingleSms(),
                 'bulk' => $this->sendBulkSms(),
                 'group' => $this->sendGroupSms(),
+                'audience' => $this->sendAudienceSms(),
                 default => ['success' => false, 'message' => 'Invalid send type.'],
             };
 
@@ -169,6 +204,23 @@ class SendSms extends Component
         );
     }
 
+    protected function sendAudienceSms(): array
+    {
+        $this->validate($this->audienceRules());
+
+        $audience = $this->resolveAudience();
+
+        if ($audience['recipients'] === []) {
+            return ['success' => false, 'message' => 'This audience has no valid mobile numbers. Update the relevant contact records before sending.'];
+        }
+
+        return $this->smsService->sendBulk(
+            $audience['recipients'],
+            $this->message,
+            [...$this->sendOptions(), 'audience_type' => $this->audience, 'audience_label' => $audience['label']]
+        );
+    }
+
     public function refreshBalances(CallblySmsService $callbly): void
     {
         abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin']), 403);
@@ -183,6 +235,80 @@ class SendSms extends Component
     private function sendOptions(): array
     {
         return ['user_id' => auth()->id(), 'sender_name' => $this->selectedSenderId];
+    }
+
+    public function refreshAudienceSummary(): void
+    {
+        $audience = $this->resolveAudience();
+        $this->audienceSummary = $audience['summary'];
+    }
+
+    private function audienceRules(): array
+    {
+        $rules = ['audience' => ['required', Rule::in(['all_students', 'cohort', 'program', 'all_staff'])]];
+
+        if ($this->audience === 'cohort') {
+            $rules['audienceCohortId'] = ['required', 'integer', Rule::exists('cohorts', 'id')->where('is_active', true)];
+        }
+
+        if ($this->audience === 'program') {
+            $rules['audienceProgramId'] = ['required', 'integer', Rule::exists('college_classes', 'id')->where('is_active', true)->where('is_deleted', false)];
+        }
+
+        return $rules;
+    }
+
+    private function resolveAudience(): array
+    {
+        $records = collect();
+        $label = match ($this->audience) {
+            'all_students' => 'All active students',
+            'all_staff' => 'All staff',
+            'cohort' => 'Selected cohort',
+            'program' => 'Selected program',
+            default => 'Selected audience',
+        };
+
+        if ($this->audience === 'all_staff') {
+            $records = User::query()
+                ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', ['Student', 'Parent']))
+                ->orderBy('name')
+                ->get(['id', 'name', 'phone']);
+        } else {
+            $students = Student::active();
+
+            if ($this->audience === 'cohort' && $this->audienceCohortId) {
+                $students->where('cohort_id', $this->audienceCohortId);
+                $label = 'Cohort: '.(Cohort::find($this->audienceCohortId)?->name ?? 'Selected cohort');
+            }
+
+            if ($this->audience === 'program' && $this->audienceProgramId) {
+                $students->where('college_class_id', $this->audienceProgramId);
+                $label = 'Program: '.(CollegeClass::find($this->audienceProgramId)?->name ?? 'Selected program');
+            }
+
+            $records = $students->orderBy('last_name')->get(['id', 'first_name', 'last_name', 'mobile_number']);
+        }
+
+        $phoneField = $this->audience === 'all_staff' ? 'phone' : 'mobile_number';
+        $validNumbers = $records->pluck($phoneField)
+            ->filter(fn ($phone) => filled($phone))
+            ->map(fn ($phone) => preg_replace('/[\s\-()]/', '', (string) $phone))
+            ->filter(fn ($phone) => $this->smsService?->validatePhoneNumber($phone) ?? false)
+            ->values();
+        $recipients = $validNumbers->unique()->values()->all();
+
+        return [
+            'label' => $label,
+            'recipients' => $recipients,
+            'summary' => [
+                'label' => $label,
+                'total_records' => $records->count(),
+                'valid_numbers' => count($recipients),
+                'skipped_records' => $records->count() - $validNumbers->count(),
+                'duplicate_numbers' => $validNumbers->count() - count($recipients),
+            ],
+        ];
     }
 
     public function render()

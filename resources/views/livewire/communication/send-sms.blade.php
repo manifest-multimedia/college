@@ -63,6 +63,12 @@
                                 Recipient Group
                             </label>
                         </div>
+                        <div class="form-check form-check-custom form-check-solid">
+                            <input class="form-check-input" type="radio" value="audience" id="audience" wire:model.live="sendType">
+                            <label class="form-check-label" for="audience">
+                                Institution Audience
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -107,6 +113,47 @@
                             @endforeach
                         </select>
                         @error('recipientListId') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
+                @elseif ($sendType === 'audience')
+                    <div class="mb-5">
+                        <label class="form-label required">Audience</label>
+                        <select class="form-select @error('audience') is-invalid @enderror" wire:model.live="audience">
+                            <option value="all_students">All active students</option>
+                            <option value="cohort">Students in a cohort</option>
+                            <option value="program">Students in a program</option>
+                            <option value="all_staff">All staff</option>
+                        </select>
+                        @error('audience') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
+
+                    @if($audience === 'cohort')
+                        <div class="mb-5">
+                            <label class="form-label required">Cohort</label>
+                            <select class="form-select @error('audienceCohortId') is-invalid @enderror" wire:model.live="audienceCohortId">
+                                <option value="">Select a cohort</option>
+                                @foreach($cohorts as $cohort)<option value="{{ $cohort['id'] }}">{{ $cohort['name'] }}</option>@endforeach
+                            </select>
+                            @error('audienceCohortId') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+                    @elseif($audience === 'program')
+                        <div class="mb-5">
+                            <label class="form-label required">Program</label>
+                            <select class="form-select @error('audienceProgramId') is-invalid @enderror" wire:model.live="audienceProgramId">
+                                <option value="">Select a program</option>
+                                @foreach($programs as $program)<option value="{{ $program['id'] }}">{{ $program['name'] }}</option>@endforeach
+                            </select>
+                            @error('audienceProgramId') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+
+                    <div class="border rounded bg-light p-4 mb-5">
+                        <div class="fw-bold mb-2">Recipient summary: {{ $audienceSummary['label'] ?? 'Selected audience' }}</div>
+                        <div class="row g-3 small">
+                            <div class="col-sm-3"><span class="text-muted d-block">Records found</span><strong>{{ $audienceSummary['total_records'] ?? 0 }}</strong></div>
+                            <div class="col-sm-3"><span class="text-muted d-block">Valid mobile numbers</span><strong class="text-success">{{ $audienceSummary['valid_numbers'] ?? 0 }}</strong></div>
+                            <div class="col-sm-3"><span class="text-muted d-block">No/invalid contact</span><strong class="text-warning">{{ $audienceSummary['skipped_records'] ?? 0 }}</strong></div>
+                            <div class="col-sm-3"><span class="text-muted d-block">Duplicate numbers</span><strong>{{ $audienceSummary['duplicate_numbers'] ?? 0 }}</strong></div>
+                        </div>
                     </div>
                 @endif
 

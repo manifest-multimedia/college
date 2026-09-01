@@ -26,6 +26,8 @@ class CallblySmsService extends AbstractSmsService
             'sender_name' => $senderName,
         ]);
         $result['sender_name'] = $senderName;
+        $result['audience_type'] = $options['audience_type'] ?? null;
+        $result['audience_label'] = $options['audience_label'] ?? null;
 
         foreach ($recipients as $recipient) {
             $this->logSms($recipient, $message, $result, 'bulk', $options['user_id'] ?? null, $options['group_id'] ?? null);
@@ -68,6 +70,8 @@ class CallblySmsService extends AbstractSmsService
         ]);
 
         $result['sender_name'] = $senderName;
+        $result['audience_type'] = $options['audience_type'] ?? null;
+        $result['audience_label'] = $options['audience_label'] ?? null;
 
         return $result;
     }
