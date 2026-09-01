@@ -41,7 +41,7 @@
                         <div class="row mb-3">
                             <div class="col-md-3">
                                 <select wire:model.live="selectedClass" class="form-select">
-                                    <option value="">All Classes</option>
+                                    <option value="">All Programs</option>
                                     @foreach($collegeClasses as $class)
                                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                                     @endforeach
@@ -75,7 +75,7 @@
                                 <thead>
                                     <tr>
                                         <th>Fee Type</th>
-                                        <th>Class</th>
+                                        <th>Program</th>
                                         <th>Academic Year</th>
                                         <th>Semester</th>
                                         <th>Amount</th>
@@ -164,9 +164,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="college_class_id" class="form-label">Class</label>
+                            <label for="college_class_id" class="form-label">Program</label>
                             <select wire:model="college_class_id" id="college_class_id" class="form-select @error('college_class_id') is-invalid @enderror">
-                                <option value="">Select Class</option>
+                                <option value="">Select Program</option>
                                 @foreach($collegeClasses as $class)
                                     <option value="{{ $class->id }}">{{ $class->name }}</option>
                                 @endforeach

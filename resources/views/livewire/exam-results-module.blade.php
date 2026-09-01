@@ -17,9 +17,9 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="college-class-select" class="form-label">Filter By College Class</label>
+                        <label for="college-class-select" class="form-label">Filter By Program</label>
                         <select class="form-select" wire:model.live="selected_college_class_id">
-                            <option value="">Select College Class</option>
+                            <option value="">Select Program</option>
                             @foreach ($collegeClasses as $collegeClass)
                                 <option value="{{ $collegeClass->id }}">{{ $collegeClass->name }}</option>
                             @endforeach
@@ -103,7 +103,7 @@
                         @endif
                     @else
                         <div class="d-flex justify-content-center py-5 align-items-center">
-                            <p class="text-muted">Select an exam and college class to generate and view results.</p>
+                            <p class="text-muted">Select an exam and program to generate and view results.</p>
                         </div>
                     @endif
                 </div>
@@ -111,4 +111,3 @@
         @endif
     </div>
 </div>
-

@@ -111,6 +111,18 @@
                 @endif
 
                 <div class="mb-5">
+                    <label class="form-label required">Sender ID</label>
+                    <select class="form-select @error('selectedSenderId') is-invalid @enderror" wire:model="selectedSenderId">
+                        <option value="">Select an approved sender ID</option>
+                        @foreach($senderIds as $senderId)
+                            <option value="{{ $senderId }}">{{ $senderId }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">Only sender IDs approved in Callbly can be used.</div>
+                    @error('selectedSenderId') <span class="invalid-feedback">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="mb-5">
                     <label class="form-label required">Message</label>
                     <textarea class="form-control" rows="5" wire:model="message" placeholder="Type your SMS message here..."></textarea>
                     @error('message') <span class="text-danger">{{ $message }}</span> @enderror

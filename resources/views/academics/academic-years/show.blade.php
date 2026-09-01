@@ -1,3 +1,31 @@
+@push('scripts')
+    <script>
+        document.querySelectorAll('.js-set-current-academic-year').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: 'Set current Academic Year?',
+                    text: `${button.dataset.academicYearName} and its first semester will become the active academic period.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    buttonsStyling: false,
+                    confirmButtonText: 'Yes, set as current',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        confirmButton: 'btn fw-bold btn-success',
+                        cancelButton: 'btn fw-bold btn-active-light-primary'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        button.form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+@endpush
+
 <x-dashboard.default>
     <x-slot name="title">
         Academic Year Details
@@ -106,15 +134,20 @@
                                 <!-- Set as Current Year -->
                                 @if(!$academicYear->is_current)
                                     <div class="mt-4">
-                                        <form action="{{ route('academics.settings.update') }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="academic_year_id" value="{{ $academicYear->id }}">
-                                            <!-- Use the first semester of this year if available, otherwise default to any available semester -->
-                                            <input type="hidden" name="semester_id" value="{{ $academicYear->semesters->first()->id ?? \App\Models\Semester::first()->id ?? '' }}">
-                                            <button type="submit" class="btn btn-success" onclick="return confirm('Set {{ $academicYear->name }} as the current academic year? This will update system-wide defaults.')">
-                                                <i class="fas fa-check-circle me-1"></i> Set as Current Academic Year
-                                            </button>
-                                        </form>
+                                        @if($academicYear->semesters->isNotEmpty())
+                                            <form action="{{ route('academics.settings.update') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="academic_year_id" value="{{ $academicYear->id }}">
+                                                <input type="hidden" name="semester_id" value="{{ $academicYear->semesters->first()?->id }}">
+                                                <button type="submit" class="btn btn-success js-set-current-academic-year" data-academic-year-name="{{ $academicYear->name }}">
+                                                    <i class="fas fa-check-circle me-1"></i> Set as Current Academic Year
+                                                </button>
+                                            </form>
+                                        @else
+                                            <div class="alert alert-warning mb-0">
+                                                Add a semester for this Academic Year before making it current.
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
                             </div>

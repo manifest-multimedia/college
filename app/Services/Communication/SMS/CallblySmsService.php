@@ -19,11 +19,13 @@ class CallblySmsService extends AbstractSmsService
             return ['success' => false, 'message' => 'No valid recipient phone numbers were supplied.'];
         }
 
+        $senderName = $this->senderName($options);
         $result = $this->request('post', '/sms/send-bulk', [
             'recipients' => $recipients,
             'message' => $message,
-            'sender_name' => $this->senderName($options),
+            'sender_name' => $senderName,
         ]);
+        $result['sender_name'] = $senderName;
 
         foreach ($recipients as $recipient) {
             $this->logSms($recipient, $message, $result, 'bulk', $options['user_id'] ?? null, $options['group_id'] ?? null);
@@ -58,11 +60,16 @@ class CallblySmsService extends AbstractSmsService
 
     protected function send(string $recipient, string $message, array $options = []): array
     {
-        return $this->request('post', '/sms/send', [
+        $senderName = $this->senderName($options);
+        $result = $this->request('post', '/sms/send', [
             'recipient' => $recipient,
             'message' => $message,
-            'sender_name' => $this->senderName($options),
+            'sender_name' => $senderName,
         ]);
+
+        $result['sender_name'] = $senderName;
+
+        return $result;
     }
 
     protected function getProviderName(): string

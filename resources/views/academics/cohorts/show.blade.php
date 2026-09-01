@@ -84,7 +84,7 @@
                                                 <th>Student ID</th>
                                                 <th>Name</th>
                                                 <th>Program</th>
-                                                <th>Class</th>
+                                                <th>Program</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>

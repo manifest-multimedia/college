@@ -54,7 +54,7 @@
                                         <th>Course Code</th>
                                         <th>Name</th>
                                         <th>Description</th>
-                                        <th>Active Classes</th>
+                                        <th>Active Programs</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -96,7 +96,7 @@
                                                             </div>
                                                             <div class="modal-body">
                                                                 Are you sure you want to delete the course <strong>{{ $course->name }}</strong> ({{ $course->course_code }})?
-                                                                <p class="mt-3">This action cannot be undone. All related classes and data might be affected.</p>
+                                                                <p class="mt-3">This action cannot be undone. All related programs and data might be affected.</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

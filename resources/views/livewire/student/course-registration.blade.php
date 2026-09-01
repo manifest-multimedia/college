@@ -14,7 +14,7 @@
                         <div class="col-md-6">
                             <p><strong>Student ID:</strong> {{ $student->student_id }}</p>
                             <p><strong>Name:</strong> {{ $student->first_name }} {{ $student->last_name }}</p>
-                            <p><strong>Class:</strong> {{ $student->collegeClass->name ?? 'N/A' }}</p>
+                            <p><strong>Program:</strong> {{ $student->collegeClass->name ?? 'N/A' }}</p>
                         </div>
                         <div class="col-md-6">
                             <p><strong>Academic Year:</strong> {{ $currentAcademicYear->name ?? 'N/A' }}</p>

@@ -16,7 +16,7 @@
                                             <div class="text-white fw-bold">{{ $student->student_id ?? 'Not Assigned' }}</div>
                                         </div>
                                         <div class="col-md-4">
-                                            <div class="text-white-50 fw-semibold">Class</div>
+                                            <div class="text-white-50 fw-semibold">Program</div>
                                             <div class="text-white fw-bold">{{ $student->collegeClass->name ?? 'Not Assigned' }}</div>
                                         </div>
                                         <div class="col-md-4">
@@ -223,7 +223,7 @@
                                     <div class="fw-bold">{{ $student->student_id ?? 'Not Assigned' }}</div>
                                 </div>
                                 <div class="mb-3">
-                                    <span class="text-muted">Class:</span>
+                                    <span class="text-muted">Program:</span>
                                     <div class="fw-bold">{{ $student->collegeClass->name ?? 'Not Assigned' }}</div>
                                 </div>
                                 <div class="mb-3">

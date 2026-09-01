@@ -163,7 +163,7 @@ class PublicationSheetReport extends BaseReport
         return [
             [
                 'key' => 'college_class_id',
-                'label' => 'Program (Class)',
+                'label' => 'Program',
                 'type' => 'select',
                 'options' => CollegeClass::pluck('name', 'id')->toArray(),
                 'required' => true,

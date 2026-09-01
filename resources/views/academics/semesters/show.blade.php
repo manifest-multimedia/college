@@ -70,7 +70,7 @@
                                 
                                 <!-- Classes -->
                                 <div class="mt-4">
-                                    <h4>College Classes</h4>
+                                    <h4>Programs</h4>
                                     <hr>
                                     
                                     @if($semester->collegeClasses && $semester->collegeClasses->count() > 0)
@@ -107,7 +107,7 @@
                                     @endif
                                     
                                     <a href="{{ route('academics.classes.create') }}" class="btn btn-primary mt-2">
-                                        <i class="fas fa-plus me-1"></i> Add Class
+                                        <i class="fas fa-plus me-1"></i> Add Program
                                     </a>
                                 </div>
                                 

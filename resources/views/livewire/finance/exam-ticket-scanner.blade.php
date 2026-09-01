@@ -104,7 +104,7 @@
                                                 <div>
                                                     <h4 class="mb-1">{{ $verificationResult['data']['student']['full_name'] ?? 'N/A' }}</h4>
                                                     <p class="mb-1"><strong>ID:</strong> {{ $verificationResult['data']['student']['student_id'] ?? 'N/A' }}</p>
-                                                    <p class="mb-0"><strong>Class:</strong> {{ $verificationResult['data']['student']['class_name'] ?? 'N/A' }}</p>
+                                                    <p class="mb-0"><strong>Program:</strong> {{ $verificationResult['data']['student']['class_name'] ?? 'N/A' }}</p>
                                                 </div>
                                             </div>
                                         </div>

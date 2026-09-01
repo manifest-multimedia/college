@@ -51,15 +51,15 @@
                                 
                             </div>
                             <div>
-                                    {{-- Filter By Class --}}
+                                    {{-- Filter By Program --}}
                                     <select name="filter_by_class" id="class_id"
                                     wire:model.live="filter_by_class" class="form-select form-control"
                                     >
-                                        <option value="">Select Class</option>
+                                        <option value="">Select Program</option>
                                         @forelse ($classes as $class)
                                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                                             @empty
-                                            <option value="">Select an Exam with Valid Sessions to Load Classes</option>
+                                            <option value="">Select an Exam with Valid Sessions to Load Programs</option>
                                         @endforelse
                                 </select>
                             </div>

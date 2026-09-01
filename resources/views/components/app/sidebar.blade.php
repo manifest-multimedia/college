@@ -483,12 +483,11 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             @hasrole('System|Super Admin|Administrator|Academic Officer')
             <!--begin:Menu item-->
             @php
-                $academicRoutes = ['academics.dashboard', 'academics.exam-types', 'academic-officer.assessment-scores', 'assessment-scores'];
-                $isAcademicActive = in_array(request()->route()->getName(), $academicRoutes);
+                $isAcademicActive = request()->routeIs('academics.*', 'academic-officer.assessment-scores', 'assessment-scores', 'admin.course-assignments');
             @endphp
             <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isAcademicActive ? 'show' : '' }}">
                 <!--begin:Menu link-->
-                <span class="menu-link">
+                <span class="menu-link {{ $isAcademicActive ? 'active' : '' }}">
                     <span class="menu-icon">
                         <i class="ki-duotone ki-book fs-2">
                             <span class="path1"></span>

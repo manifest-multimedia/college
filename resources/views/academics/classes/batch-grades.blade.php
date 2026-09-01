@@ -13,7 +13,7 @@
                                 <i class="fas fa-star-half-alt me-2"></i>Batch Assign Grades
                             </h5>
                             <a href="{{ route('academics.classes.show', $class) }}" class="btn btn-sm btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Class
+                                <i class="fas fa-arrow-left me-1"></i> Back to Program
                             </a>
                         </div>
                     </div>
@@ -34,12 +34,12 @@
                         
                         <div class="card mb-4">
                             <div class="card-header bg-primary text-white">
-                                <h5 class="card-title mb-0">Class Information</h5>
+                                <h5 class="card-title mb-0">Program Information</h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <p><strong>Class Name:</strong> {{ $class->name }}</p>
+                                        <p><strong>Program Name:</strong> {{ $class->name }}</p>
                                         <p><strong>Course:</strong> {{ optional($class->course)->name ?? 'No course assigned' }}</p>
                                         <p><strong>Instructor:</strong> {{ optional($class->instructor)->name ?? 'No instructor assigned' }}</p>
                                     </div>
@@ -131,7 +131,7 @@
                             </form>
                         @else
                             <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-circle me-2"></i> There are no students enrolled in this class. Please add students before assigning grades.
+                                <i class="fas fa-exclamation-circle me-2"></i> There are no students enrolled in this program. Please add students before assigning grades.
                             </div>
                         @endif
                     </div>

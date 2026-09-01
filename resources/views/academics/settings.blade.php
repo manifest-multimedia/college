@@ -76,10 +76,6 @@
                                                 @enderror
                                             </div>
                                             
-                                            <div class="alert alert-warning">
-                                                <i class="fas fa-exclamation-triangle me-1"></i> This saves one Academic Year and one Semester together. The Semester must belong to the selected Academic Year and the pair affects system-wide defaults for forms, filters, and reports.
-                                            </div>
-                                            
                                             <div class="d-grid gap-2">
                                                 <button type="submit" class="btn btn-primary">
                                                     <i class="fas fa-save me-1"></i> Save Settings

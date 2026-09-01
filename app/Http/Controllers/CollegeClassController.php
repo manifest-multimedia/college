@@ -120,19 +120,19 @@ class CollegeClassController extends Controller
         // Check if the class has any student grades
         if ($class->studentGrades()->count() > 0) {
             return redirect()->route('academics.classes.index')
-                ->with('error', 'Cannot delete college class with associated student grades.');
+                ->with('error', 'Cannot delete a program with associated student grades.');
         }
 
         // Check if the class has any students assigned to it
         if ($class->students()->count() > 0) {
             return redirect()->route('academics.classes.index')
-                ->with('error', 'Cannot delete college class with assigned students.');
+                ->with('error', 'Cannot delete a program with assigned students.');
         }
 
         $class->delete();
 
         return redirect()->route('academics.classes.index')
-            ->with('success', 'College class deleted successfully.');
+            ->with('success', 'Program deleted successfully.');
     }
 
     /**

@@ -69,9 +69,9 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Class Filter</label>
+                                <label class="form-label">Program Filter</label>
                                 <select class="form-select" wire:model.live="selectedClassId">
-                                    <option value="">All Classes</option>
+                                    <option value="">All Programs</option>
                                     @foreach($collegeClasses as $class)
                                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                                     @endforeach
@@ -189,7 +189,7 @@
                                     </div>
                                 @else
                                     <div class="text-center py-4">
-                                        <p class="text-muted">Please select a class to load students for bulk entry.</p>
+                                        <p class="text-muted">Please select a program to load students for bulk entry.</p>
                                     </div>
                                 @endif
                             </div>
@@ -218,7 +218,7 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Student</th>
-                                                <th>Class</th>
+                                                <th>Program</th>
                                                 <th>Score</th>
                                                 <th>Percentage</th>
                                                 <th>Grade</th>
@@ -414,4 +414,3 @@
             </div>
         @endif
     </div>
-

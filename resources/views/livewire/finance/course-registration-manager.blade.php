@@ -107,7 +107,7 @@
                                                 <p><strong>Program:</strong> {{ $student->program->name ?? 'Not Assigned' }}</p>
                                             </div>
                                             <div class="col-md-6">
-                                                <p><strong>Class:</strong> {{ $student->collegeClass->name ?? 'Not Assigned' }}</p>
+                                                <p><strong>Program:</strong> {{ $student->collegeClass->name ?? 'Not Assigned' }}</p>
                                                 <p><strong>Level:</strong> {{ $student->level ?? 'Not Assigned' }}</p>
                                                 <p><strong>Status:</strong> {{ $student->status }}</p>
                                             </div>

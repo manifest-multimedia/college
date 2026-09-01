@@ -139,7 +139,7 @@
                     </div>
 
                     <div class="row mb-3">
-                        <label class="col-lg-4 fw-semibold text-muted">Class</label>
+                        <label class="col-lg-4 fw-semibold text-muted">Program</label>
                         <div class="col-lg-8">
                             <span class="fw-bold fs-6 text-gray-800">
                                 @if($exam->course && $exam->course->collegeClass && $exam->course->year && $exam->course->semester)

@@ -30,7 +30,7 @@
                                         <div class="col-md-4">
                                             <label for="class" class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
                                             <select class="form-select" id="class" name="class" required>
-                                                <option value="">Select Class</option>
+                                                <option value="">Select Program</option>
                                                 @foreach($classes as $class)
                                                     <option value="{{ $class->id }}">{{ $class->name }}</option>
                                                 @endforeach
@@ -68,7 +68,7 @@
                                             <option value="">Select Course</option>
                                         </select>
                                         <div class="invalid-feedback"></div>
-                                        <small class="form-text text-muted">Please select Class, Year, and Semester first</small>
+                                        <small class="form-text text-muted">Please select Program, Year, and Semester first</small>
                                     </div>
 
                                     <!-- Exam Basic Info -->

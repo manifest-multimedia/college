@@ -90,7 +90,7 @@
                                         <div class="row">
                                             <div class="col-6 mb-3">
                                                 <div class="text-center">
-                                                    <h5>Active Classes</h5>
+                                                    <h5>Active Programs</h5>
                                                     <h1 class="display-5">{{ $activeClasses->count() }}</h1>
                                                 </div>
                                             </div>
@@ -103,7 +103,7 @@
                                         </div>
                                         <div class="d-grid gap-2">
                                             <a href="{{ route('academics.classes.create', ['course_id' => $course->id]) }}" class="btn btn-outline-primary">
-                                                <i class="fas fa-plus-circle me-1"></i> Create New Class
+                                                <i class="fas fa-plus-circle me-1"></i> Create New Program
                                             </a>
                                         </div>
                                     </div>
@@ -111,10 +111,10 @@
                             </div>
                         </div>
                         
-                        <!-- Active Classes -->
+                        <!-- Active Programs -->
                         <div class="card mt-4">
                             <div class="card-header bg-success text-white">
-                                <h5 class="card-title mb-0">Active Classes</h5>
+                                <h5 class="card-title mb-0">Active Programs</h5>
                             </div>
                             <div class="card-body">
                                 @if($activeClasses->count() > 0)
@@ -122,7 +122,7 @@
                                         <table class="table table-striped table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th>Class Name</th>
+                                                    <th>Program Name</th>
                                                     <th>Semester</th>
                                                     <th>Instructor</th>
                                                     <th>Students</th>
@@ -157,7 +157,7 @@
                                     </div>
                                 @else
                                     <div class="alert alert-info">
-                                        <i class="fas fa-info-circle me-2"></i> There are no active classes for this course.
+                                        <i class="fas fa-info-circle me-2"></i> There are no active programs for this course.
                                     </div>
                                 @endif
                             </div>

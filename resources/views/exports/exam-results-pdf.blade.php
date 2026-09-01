@@ -109,7 +109,7 @@
                 <th>#</th>
                 <th>Student ID</th>
                 <th>Name</th>
-                <th>Class</th>
+                <th>Program</th>
                 <th>Date</th>
                 <th>Score</th>
                 <th>Answered</th>

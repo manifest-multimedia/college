@@ -107,7 +107,7 @@
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                Are you sure you want to delete the class <strong>{{ $class->name }}</strong>?
+                                                                Are you sure you want to delete the program <strong>{{ $class->name }}</strong>?
                                                                 <p class="mt-3">This action cannot be undone. All related data might be affected.</p>
                                                             </div>
                                                             <div class="modal-footer">

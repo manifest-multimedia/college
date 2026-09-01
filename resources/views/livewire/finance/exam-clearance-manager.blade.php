@@ -55,7 +55,7 @@
                         <tr>
                             <th>Student ID</th>
                             <th>Name</th>
-                            <th>Class</th>
+                            <th>Program</th>
                             <th>Payment Status</th>
                             <th>Payment %</th>
                             <th>Clearance Status</th>
@@ -152,7 +152,7 @@
                             <tr>
                                 <th>Student ID</th>
                                 <th>Name</th>
-                                <th>Class</th>
+                                <th>Program</th>
                                 <th>Clearance Date</th>
                                 <th>Method</th>
                             </tr>

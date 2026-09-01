@@ -39,7 +39,7 @@ class ClassPerformanceReport extends BaseReport
         return [
             [
                 'key' => 'college_class_id',
-                'label' => 'Class',
+                'label' => 'Program',
                 'type' => 'select',
                 'options' => $classes,
                 'required' => true,

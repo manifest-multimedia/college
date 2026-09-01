@@ -40,13 +40,13 @@
                         
                         <!-- Secondary Filters Row: Class, Cohort, Search, Export -->
                         <div class="row g-3 align-items-end">
-                            <!-- Class Filter -->
+                            <!-- Program Filter -->
                             <div class="col-lg-3 col-md-6">
                                 <label for="college_class_id" class="form-label text-muted small">
-                                    <i class="bi bi-funnel me-1"></i>Filter by Class
+                                    <i class="bi bi-funnel me-1"></i>Filter by Program
                                 </label>
                                 <select id="college_class_id" class="form-select">
-                                    <option value="">All Classes</option>
+                                    <option value="">All Programs</option>
                                     @foreach($collegeClasses as $class)
                                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                                     @endforeach

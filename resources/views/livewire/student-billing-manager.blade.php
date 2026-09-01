@@ -48,7 +48,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <select wire:model.live="selectedClass" class="form-select mb-3">
-                                        <option value="">All Classes</option>
+                                        <option value="">All Programs</option>
                                         @foreach($collegeClasses as $class)
                                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                                         @endforeach
@@ -87,7 +87,7 @@
                                         <tr>
                                             <th>Student ID</th>
                                             <th>Student Name</th>
-                                            <th>Class</th>
+                                            <th>Program</th>
                                             <th>Academic Year</th>
                                             <th>Semester</th>
                                             <th>Total Amount</th>
@@ -218,9 +218,9 @@
                                         <div class="card-body">
                                             <form wire:submit="generateBills">
                                                 <div class="mb-3">
-                                                    <label class="form-label">Class</label>
+                                                    <label class="form-label">Program</label>
                                                     <select wire:model="bulkBillingClass" class="form-select">
-                                                        <option value="">Select a Class</option>
+                                                        <option value="">Select a Program</option>
                                                         @foreach($collegeClasses as $class)
                                                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                                                         @endforeach
@@ -329,9 +329,9 @@
                             @error('newFeeStructure.fee_type_id') <div class="text-danger mt-1">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Class</label>
+                            <label class="form-label">Program</label>
                             <select wire:model="newFeeStructure.college_class_id" class="form-select">
-                                <option value="">Select a Class</option>
+                                <option value="">Select a Program</option>
                                 @foreach($collegeClasses as $class)
                                     <option value="{{ $class->id }}">{{ $class->name }}</option>
                                 @endforeach

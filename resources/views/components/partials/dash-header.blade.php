@@ -131,8 +131,11 @@
                             </div>
                             <!--end::Item-->
                             <!--begin::Item-->
+                            <x-academic-context />
+                            <!--end::Item-->
+                            <!--begin::Item-->
                             {{-- Notification --}}
-                          <x-notifications />
+                            <x-notifications />
                             <!--end::Item-->
                             <!--begin::Item-->
                             <div class="d-flex align-items-center me-2 me-lg-4">

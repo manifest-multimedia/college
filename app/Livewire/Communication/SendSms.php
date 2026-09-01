@@ -5,6 +5,8 @@ namespace App\Livewire\Communication;
 use App\Models\RecipientList;
 use App\Services\Communication\SMS\SmsServiceInterface;
 use App\Services\Communication\SMS\CallblySmsService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -24,6 +26,10 @@ class SendSms extends Component
 
     public ?array $balance = null;
 
+    public array $senderIds = [];
+
+    public string $selectedSenderId = '';
+
     // Initialize with null to prevent "must not be accessed before initialization" error
     protected ?SmsServiceInterface $smsService = null;
 
@@ -35,6 +41,24 @@ class SendSms extends Component
     public function mount()
     {
         $this->loadRecipientLists();
+        $this->loadSenderIds();
+    }
+
+    protected function loadSenderIds(): void
+    {
+        $senderIds = json_decode((string) DB::table('system_settings')->where('key', 'sms.callbly.sender_ids')->value('value'), true);
+        $senderIds = is_array($senderIds) ? $senderIds : [];
+        $defaultSenderId = DB::table('system_settings')->where('key', 'sms.callbly.sender_name')->value('value');
+
+        $this->senderIds = collect([...$senderIds, $defaultSenderId])
+            ->filter(fn ($senderId) => is_string($senderId) && filled($senderId))
+            ->map(fn ($senderId) => trim($senderId))
+            ->unique()
+            ->values()
+            ->all();
+        $this->selectedSenderId = $defaultSenderId && in_array($defaultSenderId, $this->senderIds, true)
+            ? $defaultSenderId
+            : ($this->senderIds[0] ?? '');
     }
 
     protected function loadRecipientLists()
@@ -80,6 +104,7 @@ class SendSms extends Component
     {
         $this->validate([
             'message' => 'required|min:3|max:160',
+            'selectedSenderId' => ['required', Rule::in($this->senderIds)],
         ]);
 
         try {
@@ -114,7 +139,7 @@ class SendSms extends Component
         return $this->smsService->sendSingle(
             $this->recipient,
             $this->message,
-            ['user_id' => auth()->id()]
+            $this->sendOptions()
         );
     }
 
@@ -127,7 +152,7 @@ class SendSms extends Component
         return $this->smsService->sendBulk(
             $this->recipients,
             $this->message,
-            ['user_id' => auth()->id()]
+            $this->sendOptions()
         );
     }
 
@@ -140,7 +165,7 @@ class SendSms extends Component
         return $this->smsService->sendToGroup(
             $this->recipientListId,
             $this->message,
-            ['user_id' => auth()->id()]
+            $this->sendOptions()
         );
     }
 
@@ -153,6 +178,11 @@ class SendSms extends Component
         if (! $this->balance['success']) {
             session()->flash('error', $this->balance['message'] ?? 'Unable to retrieve Callbly balances.');
         }
+    }
+
+    private function sendOptions(): array
+    {
+        return ['user_id' => auth()->id(), 'sender_name' => $this->selectedSenderId];
     }
 
     public function render()

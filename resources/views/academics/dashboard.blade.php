@@ -46,26 +46,30 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-secondary text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-layer-group me-1"></i> Years
+                                        <h5 class="card-title mb-0 text-dark d-flex align-items-center">
+                                            <i class="fas fa-layer-group fa-fw me-2"></i><span>Years</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        <p>Manage academic years (e.g., Year 1, Year 2, Year 3) for programs.</p>
-                                        <a href="{{ route('academics.years.index') }}" class="btn btn-outline-secondary">Manage</a>
+                                        <p>Define programme study levels, such as Year 1, Year 2, and Year 3. These are separate from Academic Years.</p>
+                                        <a href="{{ route('academics.years.index') }}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-primary text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-calendar-alt me-1"></i> Academic Years
+                                        <h5 class="card-title mb-0 text-white d-flex align-items-center">
+                                            <i class="fas fa-calendar-alt fa-fw me-2 text-white"></i><span>Academic Years</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        <p>Manage academic years and set the current year for the system.</p>
-                                        <a href="{{ route('academics.academic-years.index') }}" class="btn btn-outline-primary">Manage</a>
+                                        <p>Manage institutional calendar periods and select the current Academic Year for the system.</p>
+                                        <a href="{{ route('academics.academic-years.index') }}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -73,13 +77,15 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-success text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-clock me-1"></i> Semesters
+                                        <h5 class="card-title mb-0 text-white d-flex align-items-center">
+                                            <i class="fas fa-clock fa-fw me-2 text-white"></i><span>Semesters</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        <p>Manage semesters and set the active semester for the current academic year.</p>
-                                        <a href="{{ route('academics.semesters.index') }}" class="btn btn-outline-success">Manage</a>
+                                        <p>Manage the teaching periods within each Academic Year and select the current semester.</p>
+                                        <a href="{{ route('academics.semesters.index') }}" class="btn btn-outline-success d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -87,13 +93,15 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-info text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-chalkboard me-1"></i> Programs
+                                        <h5 class="card-title mb-0 text-white d-flex align-items-center">
+                                            <i class="fas fa-chalkboard fa-fw me-2"></i><span>Programs</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
                                         <p>Manage college classes, assign courses and instructors.</p>
-                                        <a href="{{ route('academics.classes.index') }}" class="btn btn-outline-info">Manage</a>
+                                        <a href="{{ route('academics.classes.index') }}" class="btn btn-outline-info d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -101,13 +109,15 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-warning text-dark">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-user-friends me-1"></i> Cohorts
+                                        <h5 class="card-title mb-0 text-dark d-flex align-items-center">
+                                            <i class="fas fa-user-friends fa-fw me-2"></i><span>Cohorts</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
                                         <p>Manage student cohorts and assign students to specific cohorts.</p>
-                                        <a href="{{ route('academics.cohorts.index') }}" class="btn btn-outline-warning">Manage</a>
+                                        <a href="{{ route('academics.cohorts.index') }}" class="btn btn-outline-warning d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -115,17 +125,19 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-primary text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-book me-1"></i> Courses
+                                        <h5 class="card-title mb-0 text-white d-flex align-items-center">
+                                            <i class="fas fa-book fa-fw me-2 text-white"></i><span>Courses</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
                                         <p>Create and manage courses offered by the institution.</p>
-                                        <div class="d-flex gap-2">
-                                            <a href="{{ route('academics.courses.index') }}" class="btn btn-outline-primary">Manage</a>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <a href="{{ route('academics.courses.index') }}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+                                                <i class="fas fa-cog"></i><span>Manage</span>
+                                            </a>
                                             @hasrole('Super Admin|Administrator|System')
-                                            <a href="{{ route('admin.course-assignments') }}" class="btn btn-outline-secondary">
-                                                <i class="fas fa-user-plus me-1"></i>Assign Courses
+                                            <a href="{{ route('admin.course-assignments') }}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                                                <i class="fas fa-user-plus"></i><span>Assign Courses</span>
                                             </a>
                                             @endhasrole
                                         </div>
@@ -136,13 +148,15 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-danger text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-star me-1"></i> Grade Types
+                                        <h5 class="card-title mb-0 text-white d-flex align-items-center">
+                                            <i class="fas fa-star fa-fw me-2 text-white"></i><span>Grade Types</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
                                         <p>Manage grade types used for student evaluation.</p>
-                                        <a href="{{ route('academics.grades.index') }}" class="btn btn-outline-danger">Manage</a>
+                                        <a href="{{ route('academics.grades.index') }}" class="btn btn-outline-danger d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -150,13 +164,15 @@
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header bg-secondary text-white">
-                                        <h5 class="card-title mb-0">
-                                            <i class="fas fa-graduation-cap me-1"></i> Student Grades
+                                        <h5 class="card-title mb-0 text-dark d-flex align-items-center">
+                                            <i class="fas fa-graduation-cap fa-fw me-2"></i><span>Student Grades</span>
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        <p>Assign and manage student grades for classes.</p>
-                                        <a href="{{ route('academics.student-grades.index') }}" class="btn btn-outline-secondary">Manage</a>
+                                        <p>Assign and manage student grades for programs.</p>
+                                        <a href="{{ route('academics.student-grades.index') }}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                                            <i class="fas fa-cog"></i><span>Manage</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>

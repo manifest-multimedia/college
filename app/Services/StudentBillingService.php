@@ -57,7 +57,7 @@ class StudentBillingService
             $feeStructures = $feeStructuresQuery->get();
 
             if ($feeStructures->isEmpty()) {
-                throw new \Exception('No fee structures selected or available for this class, academic year, and semester');
+                throw new \Exception('No fee structures selected or available for this program, academic year, and semester');
             }
 
             // Calculate total amount
@@ -114,7 +114,7 @@ class StudentBillingService
             ->get();
 
         if ($students->isEmpty()) {
-            throw new \Exception('No students found without existing bills for this class, academic year, and semester');
+            throw new \Exception('No students found without existing bills for this program, academic year, and semester');
         }
 
         $generatedBills = [];

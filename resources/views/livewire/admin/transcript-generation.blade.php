@@ -303,7 +303,7 @@
                                             <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student ID</th>
                                             <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Student Name</th>
                                             <th class="align-middle fw-bold text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Email</th>
-                                            <th class="align-middle fw-bold text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Class</th>
+                                            <th class="align-middle fw-bold text-uppercase" style="min-width: 200px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Program</th>
                                             <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Status</th>
                                             <th class="align-middle fw-bold text-uppercase text-end" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.06em; padding: 12px 16px; color: #1E293B;">Actions</th>
                                         </tr>
@@ -434,7 +434,7 @@
                                             <td>{{ $transcriptData['student']->full_name }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Class:</strong></td>
+                                            <td><strong>Program:</strong></td>
                                             <td>{{ $transcriptData['student']->collegeClass->name ?? 'N/A' }}</td>
                                         </tr>
                                         <tr>

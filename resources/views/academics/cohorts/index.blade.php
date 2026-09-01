@@ -8,11 +8,11 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center w-100">
                             <h1 class="card-title">
                                 <i class="fas fa-users me-2"></i>Cohorts
                             </h1>
-                            <a href="{{ route('academics.cohorts.create') }}" class="btn btn-primary">
+                            <a href="{{ route('academics.cohorts.create') }}" class="btn btn-primary ms-auto flex-shrink-0">
                                 <i class="fas fa-plus-circle me-1"></i> Create New Cohort
                             </a>
                         </div>

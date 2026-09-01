@@ -60,9 +60,9 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label for="collegeClassId" class="form-label">Class</label>
+                            <label for="collegeClassId" class="form-label">Program</label>
                             <select id="collegeClassId" class="form-select" wire:model.live="collegeClassId">
-                                <option value="">All Classes</option>
+                                <option value="">All Programs</option>
                                 @foreach($collegeClasses as $class)
                                     <option value="{{ $class->id }}">{{ $class->name }}</option>
                                 @endforeach
@@ -206,7 +206,7 @@
                                     <tr>
                                         <th>Student ID</th>
                                         <th>Student Name</th>
-                                        <th>Class</th>
+                                        <th>Program</th>
                                         <th>Academic Year</th>
                                         <th>Semester</th>
                                         <th>Total Bill</th>

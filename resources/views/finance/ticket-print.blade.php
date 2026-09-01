@@ -109,7 +109,7 @@
                     <p><strong>Name:</strong> {{ $ticket->student->full_name }}</p>
                     <p><strong>ID:</strong> {{ $ticket->student->student_id }}</p>
                     <p><strong>Program:</strong> {{ $ticket->student->program->name ?? 'Not Assigned' }}</p>
-                    <p><strong>Class:</strong> {{ $ticket->student->collegeClass->name ?? 'Not Assigned' }}</p>
+                    <p><strong>Program:</strong> {{ $ticket->student->collegeClass->name ?? 'Not Assigned' }}</p>
                 </div>
                 <div class="col-md-4 text-end">
                     <p><strong>Ticket #:</strong> {{ $ticket->ticket_number }}</p>

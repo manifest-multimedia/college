@@ -21,7 +21,9 @@ class CohortController extends Controller
      */
     public function index()
     {
-        $cohorts = Cohort::paginate(10);
+        // The index displays students_count, so calculate it in the listing
+        // query instead of loading every student's full record.
+        $cohorts = Cohort::withCount('students')->paginate(10);
 
         return view('academics.cohorts.index', compact('cohorts'));
     }
