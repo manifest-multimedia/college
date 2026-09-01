@@ -53,7 +53,14 @@ class ResultsSmsFileUpload extends Component
             'file_extension' => $extension,
             'status' => 'validating',
         ]);
-        $uploads->storeEncryptedUpload($this->upload, $batch);
+        try {
+            $uploads->storeEncryptedUpload($this->upload, $batch);
+        } catch (\RuntimeException $exception) {
+            $batch->delete();
+            $this->addError('upload', 'Secure upload storage is unavailable. Please contact your system administrator.');
+
+            return;
+        }
         ValidateResultsSmsUpload::dispatch($batch->id);
 
         $this->batchId = $batch->public_id;

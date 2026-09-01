@@ -57,7 +57,9 @@ class ResultsSmsUploadService
             'contents' => base64_encode($contents),
         ], JSON_THROW_ON_ERROR);
 
-        Storage::disk('local')->put($path, Crypt::encryptString($envelope));
+        if (! Storage::disk('local')->put($path, Crypt::encryptString($envelope))) {
+            throw new RuntimeException('The protected upload could not be stored.');
+        }
 
         $batch->update([
             'original_filename' => $file->getClientOriginalName(),

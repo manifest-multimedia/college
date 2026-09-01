@@ -1,0 +1,41 @@
+name: Repair PNMTC Results SMS Storage
+
+on:
+  workflow_dispatch:
+
+jobs:
+  repair-storage:
+    name: Configure protected upload storage
+    runs-on: ubuntu-latest
+    environment: pnmtc-production
+    env:
+      DEPLOY_HOST: 62.77.158.206
+      DEPLOY_USER: pnmtc
+      APP_PATH: /var/www/college.pnmtc.edu.gh/current
+    steps:
+      - name: Setup SSH key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Grant PHP write access to results SMS storage
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s -- '${APP_PATH}'" <<'EOF'
+          set -euo pipefail
+          app_path="$1"
+          private_path="$app_path/storage/app/private"
+          results_path="$private_path/results-sms"
+
+          mkdir -p "$results_path"
+          for path in "$app_path/storage" "$app_path/storage/app" "$private_path" "$results_path"; do
+            chmod 2770 "$path"
+            setfacl -m u:www-data:rwx,m::rwx "$path"
+            setfacl -d -m u:www-data:rwx,m::rwx "$path"
+          done
+
+          getfacl -p "$results_path" | sed -n '1,12p'
+          EOF
