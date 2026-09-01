@@ -123,7 +123,7 @@ class ValidateResultsSmsUpload implements ShouldQueue
             $counts[$status === 'ready' ? 'ready_rows' : ($status === 'pending_review' ? 'pending_review_rows' : 'skipped_rows')]++;
             $rows[] = [
                 'batch_id' => $batch->id,
-                'row_number' => $item['offset'] + 2,
+                'row_number' => ($data['header_row'] ?? 1) + $item['offset'] + 1,
                 'student_record_id' => $student?->id,
                 'student_id' => $studentId,
                 'student_id_hash' => hash('sha256', $studentId),

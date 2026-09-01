@@ -66,7 +66,7 @@ class ResultsSmsUploadService
         ]);
     }
 
-    /** @return array{headers: array<int, string>, rows: array<int, array<int, mixed>>} */
+    /** @return array{headers: array<int, string>, rows: array<int, array<int, mixed>>, header_row: int|null} */
     public function read(ResultsSmsUploadBatch $batch): array
     {
         $temporaryPath = $this->temporaryFile($batch);
@@ -82,12 +82,25 @@ class ResultsSmsUploadService
         }
 
         if ($rows === []) {
-            return ['headers' => [], 'rows' => []];
+            return ['headers' => [], 'rows' => [], 'header_row' => null];
         }
 
-        $headers = array_map(fn ($value) => $this->normaliseHeader((string) $value), array_shift($rows));
+        // Institutions commonly add a report title, a summary, or blank rows
+        // before the actual spreadsheet headings. Find the required headings
+        // near the top instead of assuming that the first row is the header.
+        foreach (array_slice($rows, 0, 25, true) as $index => $candidate) {
+            $headers = array_map(fn ($value) => $this->normaliseHeader((string) $value), $candidate);
 
-        return ['headers' => $headers, 'rows' => $rows];
+            if (in_array('student id', $headers, true) && in_array('sms message', $headers, true)) {
+                return [
+                    'headers' => $headers,
+                    'rows' => array_values(array_slice($rows, $index + 1)),
+                    'header_row' => $index + 1,
+                ];
+            }
+        }
+
+        return ['headers' => [], 'rows' => [], 'header_row' => null];
     }
 
     public function temporaryFile(ResultsSmsUploadBatch $batch): string
