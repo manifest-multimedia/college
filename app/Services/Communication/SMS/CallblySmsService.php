@@ -11,6 +11,8 @@ class CallblySmsService extends AbstractSmsService
 {
     private const BASE_URL = 'https://callbly.com/api/v1';
 
+    private ?string $tokenFailure = null;
+
     public function sendBulk(array $recipients, string $message, array $options = []): array
     {
         $recipients = array_values(array_unique(array_filter(array_map(
@@ -93,7 +95,7 @@ class CallblySmsService extends AbstractSmsService
         $token = $this->apiToken();
 
         if (blank($token)) {
-            return ['success' => false, 'error_message' => 'Callbly is not configured. Add the API token in System Settings.'];
+            return ['success' => false, 'error_message' => $this->tokenFailure ?? 'Callbly is not configured. Add the API token in System Settings.'];
         }
 
         try {
@@ -110,7 +112,7 @@ class CallblySmsService extends AbstractSmsService
             return [
                 'success' => false,
                 'error_message' => $response->status() === 401
-                    ? 'Callbly rejected the configured API token. In System Settings, paste the token value only (without "Bearer ") and save it again.'
+                    ? 'Callbly rejected the stored API token. It may have expired, been regenerated, belong to another Callbly account, or have been saved incorrectly. Re-enter a current token in System Settings and save it again.'
                     : data_get($data, 'message', 'Callbly returned HTTP '.$response->status()),
                 'response' => $data,
                 'status_code' => $response->status(),
@@ -138,6 +140,12 @@ class CallblySmsService extends AbstractSmsService
         try {
             $token = Crypt::decryptString($token);
         } catch (\Throwable) {
+            if ($this->isEncryptedPayload($token)) {
+                $this->tokenFailure = 'The saved Callbly API token cannot be decrypted by this application. Re-enter the current token in System Settings and save it again.';
+
+                return null;
+            }
+
             // Supports a pre-existing plaintext token during a controlled
             // upgrade; saving the settings encrypts it thereafter.
         }
@@ -145,6 +153,15 @@ class CallblySmsService extends AbstractSmsService
         // Laravel's withToken() adds the Bearer scheme itself. This also
         // accepts a value pasted from documentation as "Bearer <token>".
         return preg_replace('/^Bearer\s+/i', '', trim($token)) ?: null;
+    }
+
+    private function isEncryptedPayload(string $value): bool
+    {
+        $decoded = base64_decode($value, true);
+        $payload = $decoded === false ? null : json_decode($decoded, true);
+
+        return is_array($payload)
+            && isset($payload['iv'], $payload['value'], $payload['mac']);
     }
 
     private function setting(string $key, ?string $default = null): ?string

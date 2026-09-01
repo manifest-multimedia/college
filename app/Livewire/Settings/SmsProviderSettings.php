@@ -55,7 +55,7 @@ class SmsProviderSettings extends Component
             return;
         }
 
-        DB::transaction(function (): void {
+        DB::transaction(function () use ($senderIds): void {
             if (filled($this->apiToken)) {
                 $this->set('sms.callbly.api_token', Crypt::encryptString($this->apiToken), 'Callbly API bearer token', 'secret');
             }
