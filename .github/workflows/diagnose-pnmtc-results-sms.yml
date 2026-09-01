@@ -39,5 +39,6 @@ jobs:
           batch_id=$(php artisan tinker --execute="echo App\\Models\\ResultsSmsUploadBatch::where('public_id', '${batch_public_id}')->firstOrFail()->id;" | tail -n 1)
           php artisan tinker --execute="\$batch = App\\Models\\ResultsSmsUploadBatch::findOrFail(${batch_id}); dump(['status' => \$batch->status, 'created_at' => \$batch->created_at?->toDateTimeString(), 'rows' => \$batch->total_rows]);"
           php artisan tinker --execute="\$batch = App\\Models\\ResultsSmsUploadBatch::findOrFail(${batch_id}); \$raw = Illuminate\\Support\\Facades\\Storage::disk('local')->get(\$batch->stored_path); \$decoded = base64_decode(\$raw, true); \$payload = is_string(\$decoded) ? json_decode(\$decoded, true) : null; dump(['stored_bytes' => strlen(\$raw), 'has_laravel_payload_shape' => is_array(\$payload) && isset(\$payload['iv'], \$payload['value'], \$payload['mac'])]);"
+          find "$(dirname "$app_path")" -path "*results-sms/${batch_public_id}*" -type f -printf '%p %s bytes\n' 2>/dev/null || true
           grep -h -E "Results SMS upload (validation failed|could not be read)" storage/logs/laravel*.log 2>/dev/null | grep -F "\"batch_id\":${batch_id}" | tail -n 1 || true
           EOF
