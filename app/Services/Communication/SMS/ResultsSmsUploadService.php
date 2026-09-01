@@ -49,7 +49,6 @@ class ResultsSmsUploadService
     public function storeEncryptedUpload(UploadedFile $file, ResultsSmsUploadBatch $batch): void
     {
         $contents = file_get_contents($file->getRealPath());
-        $path = 'private/results-sms/'.$batch->public_id.'.'.$file->getClientOriginalExtension().'.enc';
         $envelope = json_encode([
             'version' => 1,
             'sha256' => hash('sha256', $contents),
@@ -57,13 +56,11 @@ class ResultsSmsUploadService
             'contents' => base64_encode($contents),
         ], JSON_THROW_ON_ERROR);
 
-        if (! Storage::disk('local')->put($path, Crypt::encryptString($envelope))) {
-            throw new RuntimeException('The protected upload could not be stored.');
-        }
-
         $batch->update([
             'original_filename' => $file->getClientOriginalName(),
-            'stored_path' => $path,
+            // Keep the source with its database batch. Queue workers may run
+            // from another release, where a local upload path is unavailable.
+            'encrypted_upload_contents' => Crypt::encryptString($envelope),
             'file_hash' => hash('sha256', $contents),
             'file_extension' => strtolower($file->getClientOriginalExtension()),
         ]);
@@ -95,8 +92,20 @@ class ResultsSmsUploadService
 
     public function temporaryFile(ResultsSmsUploadBatch $batch): string
     {
+        $encryptedContents = $batch->encrypted_upload_contents;
+
+        // Retain read support for batches created before encrypted payloads
+        // were stored with the database record.
+        if (! is_string($encryptedContents) || $encryptedContents === '') {
+            $encryptedContents = Storage::disk('local')->get($batch->stored_path);
+        }
+
+        if (! is_string($encryptedContents) || $encryptedContents === '') {
+            throw new RuntimeException('The protected upload is unavailable. Please upload the original file again.');
+        }
+
         try {
-            $decrypted = Crypt::decryptString(Storage::disk('local')->get($batch->stored_path));
+            $decrypted = Crypt::decryptString($encryptedContents);
         } catch (DecryptException $exception) {
             throw new RuntimeException('The protected upload could not be decrypted.', previous: $exception);
         }

@@ -15,7 +15,7 @@ class ResultsSmsUploadBatch extends Model
     use HasFactory;
 
     protected $fillable = [
-        'public_id', 'uploaded_by', 'confirmed_by', 'original_filename', 'stored_path', 'file_hash', 'file_extension',
+        'public_id', 'uploaded_by', 'confirmed_by', 'original_filename', 'stored_path', 'encrypted_upload_contents', 'file_hash', 'file_extension',
         'status', 'total_rows', 'ready_rows', 'sent_rows', 'failed_rows', 'skipped_rows', 'pending_review_rows',
         'missing_student_rows', 'missing_number_rows', 'duplicate_id_rows', 'validated_at', 'confirmed_at', 'completed_at', 'failure_reason',
     ];
@@ -25,6 +25,10 @@ class ResultsSmsUploadBatch extends Model
         'validated_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'completed_at' => 'datetime',
+    ];
+
+    protected $hidden = [
+        'encrypted_upload_contents',
     ];
 
     protected static function booted(): void

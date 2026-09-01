@@ -57,7 +57,7 @@ class ResultsSmsFileUpload extends Component
             $uploads->storeEncryptedUpload($this->upload, $batch);
         } catch (\RuntimeException $exception) {
             $batch->delete();
-            $this->addError('upload', 'Secure upload storage is unavailable. Please contact your system administrator.');
+            $this->addError('upload', 'The secure upload could not be stored. Please try again or contact your system administrator.');
 
             return;
         }
