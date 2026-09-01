@@ -85,6 +85,23 @@ class ResultsSmsFileUpload extends Component
         session()->flash('success', 'Ready result messages were queued. Sending continues safely in the background.');
     }
 
+    public function retryValidation(): void
+    {
+        $this->authorizeAccess();
+        $batch = $this->batchOrFail();
+        if ($batch->status !== 'failed') {
+            return;
+        }
+
+        $batch->update([
+            'status' => 'validating', 'failure_reason' => null, 'validated_at' => null,
+            'total_rows' => 0, 'ready_rows' => 0, 'skipped_rows' => 0, 'pending_review_rows' => 0,
+            'missing_student_rows' => 0, 'missing_number_rows' => 0, 'duplicate_id_rows' => 0,
+        ]);
+        ValidateResultsSmsUpload::dispatch($batch->id);
+        session()->flash('success', 'The batch has been queued for validation again.');
+    }
+
     public function retryFailed(): void
     {
         $this->authorizeAccess();

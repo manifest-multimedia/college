@@ -32,7 +32,8 @@
                 @if($batch->status === 'validating')
                     <div class="d-flex align-items-center gap-3"><span class="spinner-border spinner-border-sm"></span> Validating securely in the background. This preview refreshes automatically.</div>
                 @elseif($batch->status === 'failed')
-                    <div class="alert alert-danger mb-0">{{ $batch->failure_reason }}</div>
+                    <div class="alert alert-danger mb-4">{{ $batch->failure_reason }}</div>
+                    <button class="btn btn-light-warning" wire:click="retryValidation" wire:loading.attr="disabled">Retry Validation</button>
                 @else
                     <div class="row g-4 mb-5">
                         @foreach(['total_rows' => 'Total rows', 'ready_rows' => 'Ready rows', 'skipped_rows' => 'Skipped', 'pending_review_rows' => 'Pending review', 'missing_student_rows' => 'Missing students', 'missing_number_rows' => 'Missing numbers', 'duplicate_id_rows' => 'Duplicate IDs', 'sent_rows' => 'Sent', 'failed_rows' => 'Failed'] as $key => $label)

@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ValidateResultsSmsUpload implements ShouldQueue
@@ -140,9 +141,15 @@ class ValidateResultsSmsUpload implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        ResultsSmsUploadBatch::whereKey($this->batchId)->update([
+        Log::error('Results SMS upload validation failed', [
+            'batch_id' => $this->batchId,
+            'exception' => $exception->getMessage(),
+        ]);
+
+        $batch = ResultsSmsUploadBatch::find($this->batchId);
+        $batch?->update([
             'status' => 'failed',
-            'failure_reason' => 'The upload could not be validated. Download the file and try again.',
+            'failure_reason' => 'The upload could not be validated. Download the report and try again.',
         ]);
     }
 }
