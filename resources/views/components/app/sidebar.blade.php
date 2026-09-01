@@ -312,11 +312,13 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             
             <!-- Communication Module Navigation -->
-            @hasrole(['System', 'Super Admin', 'Lecturer'])
+            @hasanyrole('System|Super Admin|Administrator|Academic Officer|Lecturer')
             <!--begin:Menu item-->
             @php
                 $communicationRoutes = [
                     'communication.sms',
+                    'communication.results-sms.upload',
+                    'communication.results-sms.report',
                     'communication.contact-groups',
                     'communication.contacts',
                     'communication.sms-logs',
@@ -389,6 +391,14 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
+                    @hasanyrole('System|Super Admin|Administrator|Academic Officer')
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('communication.results-sms.*') ? 'active' : '' }}" href="{{ route('communication.results-sms.upload') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Results SMS File Upload</span>
+                        </a>
+                    </div>
+                    @endhasanyrole
                     
                     {{-- @can('send email') --}}
                     <!--begin:Menu item-->
@@ -432,7 +442,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
-            @endhasrole
+            @endhasanyrole
             
             <!--begin:Menu item-->
             @php

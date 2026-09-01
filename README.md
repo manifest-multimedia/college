@@ -76,6 +76,7 @@ Important settings include:
 | `AUTH_*`, `AUTHCENTRAL_*` | Institution-specific authentication behaviour |
 | `OPENAI_*` | Existing external AI Sensei assistant integration and file processing |
 | `NEEDLE_*` | Optional local-first AI Sensei tool routing; disabled by default |
+| `RESULTS_SMS_*` | Secure results-message upload limits, provider rate limit, retention, and optional ClamAV scanning |
 
 After changing configuration in production, refresh Laravel's cached configuration:
 
@@ -83,6 +84,19 @@ After changing configuration in production, refresh Laravel's cached configurati
 php artisan optimize:clear
 php artisan config:cache
 ```
+
+### Results SMS file uploads
+
+Authorized academic administrators can use **Communication → Results SMS File Upload** to validate `.xlsx` or `.csv` files with `Student ID`, `SMS Message`, and optional `Status` columns. Student IDs must be formatted as text in Excel to retain leading zeroes. Only `Ready` rows are eligible when `Status` is included.
+
+The upload and row-level message data are encrypted at rest. Validation and sending require a running Laravel queue worker, for example:
+
+```bash
+php artisan queue:work --queue=default --tries=3 --timeout=900
+php artisan schedule:work
+```
+
+For production malware scanning, install ClamAV, set `RESULTS_SMS_CLAMAV_BINARY` to the `clamscan` executable, and set `RESULTS_SMS_REQUIRE_MALWARE_SCAN=true`. The scheduled `results-sms:purge-expired` command removes protected uploads and logs according to `RESULTS_SMS_RETENTION_DAYS`.
 
 ## Useful commands
 

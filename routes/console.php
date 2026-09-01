@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 // Automatically update exam statuses based on dates and active sessions
 Schedule::command('exams:update-statuses')->everyMinute();
+Schedule::command('results-sms:purge-expired')->daily();

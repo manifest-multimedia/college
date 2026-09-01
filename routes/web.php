@@ -681,6 +681,8 @@ Route::middleware([
     */
     Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified'])->prefix('communication')->group(function () {
         Route::get('/sms', \App\Livewire\Communication\SendSms::class)->name('communication.sms');
+        Route::get('/sms/file-upload/{batch?}', \App\Livewire\Communication\ResultsSmsFileUpload::class)->name('communication.results-sms.upload');
+        Route::get('/sms/file-upload/{batch}/report', [\App\Http\Controllers\Communication\ResultsSmsUploadReportController::class, 'download'])->name('communication.results-sms.report');
         Route::get('/email', \App\Livewire\Communication\SendEmail::class)->name('communication.email');
         Route::get('/chat', \App\Livewire\Communication\Chat::class)->name('communication.chat');
         Route::get('/ai-sensei', \App\Livewire\Communication\AISenseiChat::class)->name('communication.ai-sensei');

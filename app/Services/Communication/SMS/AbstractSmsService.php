@@ -32,8 +32,10 @@ abstract class AbstractSmsService implements SmsServiceInterface
             // Send SMS using provider-specific implementation
             $result = $this->send($recipient, $message, $options);
 
-            // Log SMS details
-            $this->logSms($recipient, $message, $result, 'single', $options['user_id'] ?? null);
+            // Results uploads use their own encrypted, access-controlled log.
+            if (! ($options['suppress_standard_log'] ?? false)) {
+                $this->logSms($recipient, $message, $result, 'single', $options['user_id'] ?? null);
+            }
 
             if (! ($result['success'] ?? false)) {
                 return [
