@@ -1,0 +1,44 @@
+name: Start PNMTC Queue Worker
+
+on:
+  workflow_dispatch:
+
+jobs:
+  start-worker:
+    name: Start PNMTC Laravel Queue Worker
+    runs-on: ubuntu-latest
+    environment: pnmtc-production
+    env:
+      DEPLOY_HOST: 62.77.158.206
+      DEPLOY_USER: pnmtc
+      APP_PATH: /var/www/college.pnmtc.edu.gh/current
+    steps:
+      - name: Setup SSH key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Start and persist the queue worker
+        run: |
+          ssh -i ~/.ssh/id_ed25519 "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -s -- '${APP_PATH}'" <<'EOF'
+          set -euo pipefail
+          app_path="$1"
+          cd "$app_path"
+          php_binary=$(command -v php)
+          worker_command="cd $app_path && $php_binary artisan queue:work --queue=default --sleep=1 --tries=3 --timeout=900 >> $app_path/storage/logs/queue-worker.log 2>&1"
+          cron_line="* * * * * pgrep -u \$(id -u) -f '[a]rtisan queue:work --queue=default' >/dev/null || nohup sh -c '$worker_command' >/dev/null 2>&1 & # college360-queue-worker"
+
+          (crontab -l 2>/dev/null | grep -v 'college360-queue-worker' || true; echo "$cron_line") | crontab -
+          if ! pgrep -u "$(id -u)" -f '[a]rtisan queue:work --queue=default' >/dev/null; then
+            nohup sh -c "$worker_command" >/dev/null 2>&1 &
+          fi
+
+          sleep 3
+          pgrep -afu "$(id -u)" -f '[a]rtisan queue:work --queue=default'
+          php artisan queue:failed --quiet || true
+          EOF
