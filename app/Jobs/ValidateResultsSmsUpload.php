@@ -67,7 +67,15 @@ class ValidateResultsSmsUpload implements ShouldQueue
         $idCounts = [];
 
         foreach ($data['rows'] as $offset => $values) {
-            $studentId = trim((string) ($values[$studentIndex] ?? ''));
+            // PhpSpreadsheet may return an int or float for cells without a text
+            // data type (e.g. a plain number column). Cast safely: if the value is
+            // numeric convert it to an integer string to avoid float artefacts like
+            // "12345.0" or scientific notation "1.2345E+5".
+            $rawId = $values[$studentIndex] ?? '';
+            $studentId = is_int($rawId) || is_float($rawId)
+                ? (string) (int) $rawId
+                : trim((string) $rawId);
+
             $message = (string) ($values[$messageIndex] ?? '');
             $uploadedStatus = $statusIndex === null ? null : trim((string) ($values[$statusIndex] ?? ''));
             $prepared[] = compact('studentId', 'message', 'uploadedStatus', 'offset');

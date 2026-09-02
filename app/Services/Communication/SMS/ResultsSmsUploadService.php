@@ -74,9 +74,17 @@ class ResultsSmsUploadService
 
         try {
             $reader = IOFactory::createReaderForFile($temporaryPath);
-            $reader->setReadDataOnly(true);
+            // Do NOT call setReadDataOnly(true) here. That flag skips all style
+            // and number-format metadata, which means formatData=true in toArray()
+            // has nothing to apply. Student ID cells stored as numbers with a
+            // leading-zero format mask (e.g. 0012345 displayed via "0000000") would
+            // be returned as the raw integer 12345, silently failing DB lookups.
+            // Formula evaluation is disabled via the calculateFormulas argument to
+            // toArray() below, which is sufficient to prevent formula injection.
             $worksheet = $reader->load($temporaryPath)->getActiveSheet();
-            // Never evaluate spreadsheet formulas while inspecting an upload.
+            // calculateFormulas=false prevents formula evaluation (security).
+            // formatData=true applies the cell's own number format so that e.g.
+            // a student ID formatted as "0000000" is returned as "0012345", not 12345.
             $rows = $worksheet->toArray(null, false, true, false);
         } finally {
             @unlink($temporaryPath);
