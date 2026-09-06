@@ -53,8 +53,12 @@ class TranscriptGeneration extends Component
 
     public function mount()
     {
-        $this->selectedAcademicYearId = AcademicYear::where('is_current', true)->first()?->id;
-        $this->selectedSemesterId = Semester::where('is_current', true)->first()?->id;
+        $currentYear = AcademicYear::where('is_current', true)->first();
+        $this->selectedAcademicYearId = $currentYear?->id;
+        $this->selectedSemesterId = $this->selectedAcademicYearId
+            ? (Semester::where('academic_year_id', $this->selectedAcademicYearId)->where('is_current', true)->first()?->id
+                ?? Semester::where('academic_year_id', $this->selectedAcademicYearId)->orderBy('sequence')->orderBy('name')->first()?->id)
+            : null;
     }
 
     public function updatedSearch()
@@ -77,6 +81,17 @@ class TranscriptGeneration extends Component
     public function updatedSelectedAcademicYearId()
     {
         $this->selectedStudents = [];
+
+        $validSemester = $this->selectedAcademicYearId
+            ? Semester::where('academic_year_id', $this->selectedAcademicYearId)->where('id', $this->selectedSemesterId)->exists()
+            : false;
+
+        if (! $validSemester) {
+            $this->selectedSemesterId = $this->selectedAcademicYearId
+                ? (Semester::where('academic_year_id', $this->selectedAcademicYearId)->where('is_current', true)->first()?->id
+                    ?? Semester::where('academic_year_id', $this->selectedAcademicYearId)->orderBy('sequence')->orderBy('name')->first()?->id)
+                : null;
+        }
     }
 
     public function updatedSelectedSemesterId()
@@ -401,7 +416,9 @@ class TranscriptGeneration extends Component
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $cohorts = \App\Models\Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
-        $semesters = Semester::orderBy('name')->get();
+        $semesters = $this->selectedAcademicYearId
+            ? Semester::where('academic_year_id', $this->selectedAcademicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
 
         return view('livewire.admin.transcript-generation', [
             'students' => $students,

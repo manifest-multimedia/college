@@ -95,11 +95,17 @@ class StudentBillingManager extends Component
         return ['ids' => $effectiveIds, 'total' => round($total, 2)];
     }
 
-    protected $rules = [
-        'newBillStudentId' => 'required|exists:students,id',
-        'newBillAcademicYearId' => 'required|exists:academic_years,id',
-        'newBillSemesterId' => 'required|exists:semesters,id',
-    ];
+    protected function rules()
+    {
+        return [
+            'newBillStudentId' => 'required|exists:students,id',
+            'newBillAcademicYearId' => 'required|exists:academic_years,id',
+            'newBillSemesterId' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('semesters', 'id')->where('academic_year_id', $this->newBillAcademicYearId),
+            ],
+        ];
+    }
 
     // Listeners not needed in Livewire v3 for simple refresh
 
@@ -108,8 +114,11 @@ class StudentBillingManager extends Component
         $this->resetPage();
     }
 
-    public function updatingAcademicYearId()
+    public function updatingAcademicYearId($value)
     {
+        if ($value !== $this->academicYearId) {
+            $this->semesterId = '';
+        }
         $this->resetPage();
     }
 
@@ -152,6 +161,7 @@ class StudentBillingManager extends Component
 
     public function updatedNewBillAcademicYearId()
     {
+        $this->newBillSemesterId = null;
         $this->loadAvailableFees();
     }
 
@@ -228,11 +238,19 @@ class StudentBillingManager extends Component
         $this->resetValidation();
     }
 
+    public function updatedReverseAcademicYearId()
+    {
+        $this->reverseSemesterId = null;
+    }
+
     public function reverseBatchBills()
     {
         $this->validate([
             'reverseAcademicYearId' => 'required|exists:academic_years,id',
-            'reverseSemesterId' => 'required|exists:semesters,id',
+            'reverseSemesterId' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('semesters', 'id')->where('academic_year_id', $this->reverseAcademicYearId),
+            ],
             'reverseClassId' => 'required|exists:college_classes,id',
             'reverseCohortId' => 'nullable|exists:cohorts,id',
             'reversalReason' => 'required|string|min:3|max:500',
@@ -274,6 +292,7 @@ class StudentBillingManager extends Component
 
     public function updatedBatchAcademicYearId()
     {
+        $this->batchSemesterId = null;
         $this->loadBatchAvailableFees();
     }
 
@@ -341,8 +360,12 @@ class StudentBillingManager extends Component
     {
         $this->validate([
             'batchAcademicYearId' => 'required|exists:academic_years,id',
-            'batchSemesterId' => 'required|exists:semesters,id',
+            'batchSemesterId' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('semesters', 'id')->where('academic_year_id', $this->batchAcademicYearId),
+            ],
             'batchClassId' => 'required|exists:college_classes,id',
+            'batchCohortId' => 'nullable|exists:cohorts,id',
         ]);
 
         $effective = $this->getEffectiveFeeSelection($this->batchAvailableFees, $this->batchSelectedFeeIds ?? []);
@@ -430,10 +453,31 @@ class StudentBillingManager extends Component
             ? $this->getEffectiveFeeSelection($this->batchAvailableFees, $this->batchSelectedFeeIds ?? [])
             : ['ids' => [], 'total' => 0];
 
+        $academicYears = AcademicYear::orderBy('name', 'desc')->get();
+
+        $semesters = $this->academicYearId !== ''
+            ? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
+
+        $newBillSemesters = $this->newBillAcademicYearId
+            ? Semester::where('academic_year_id', $this->newBillAcademicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : collect();
+
+        $batchSemesters = $this->batchAcademicYearId
+            ? Semester::where('academic_year_id', $this->batchAcademicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : collect();
+
+        $reverseSemesters = $this->reverseAcademicYearId
+            ? Semester::where('academic_year_id', $this->reverseAcademicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : collect();
+
         return view('livewire.finance.student-billing-manager', [
             'bills' => $bills,
-            'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
-            'semesters' => Semester::orderBy('name')->get(),
+            'academicYears' => $academicYears,
+            'semesters' => $semesters,
+            'newBillSemesters' => $newBillSemesters,
+            'batchSemesters' => $batchSemesters,
+            'reverseSemesters' => $reverseSemesters,
             'classes' => CollegeClass::orderBy('name')->get(),
             'cohorts' => Cohort::orderBy('name')->get(),
             'students' => Student::select('id', 'student_id', 'first_name', 'last_name', 'other_name')->orderBy('first_name')->get(),

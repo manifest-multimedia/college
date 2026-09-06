@@ -74,9 +74,36 @@ class OfflineExamScores extends Component
 
     public function mount()
     {
-        $this->selectedAcademicYearId = AcademicYear::where('is_current', true)->first()?->id;
-        $this->selectedSemesterId = Semester::where('is_current', true)->first()?->id;
+        $currentYear = AcademicYear::where('is_current', true)->first();
+        $this->selectedAcademicYearId = $currentYear?->id;
+        $this->selectedSemesterId = $this->selectedAcademicYearId
+            ? (Semester::where('academic_year_id', $this->selectedAcademicYearId)->where('is_current', true)->first()?->id
+                ?? Semester::where('academic_year_id', $this->selectedAcademicYearId)->orderBy('sequence')->orderBy('name')->first()?->id)
+            : null;
         $this->scoreForm['exam_date'] = now()->format('Y-m-d');
+    }
+
+    public function updatedSelectedAcademicYearId()
+    {
+        $this->resetPage();
+        $this->resetBulkEntry();
+
+        $validSemester = $this->selectedAcademicYearId
+            ? Semester::where('academic_year_id', $this->selectedAcademicYearId)->where('id', $this->selectedSemesterId)->exists()
+            : false;
+
+        if (! $validSemester) {
+            $this->selectedSemesterId = $this->selectedAcademicYearId
+                ? (Semester::where('academic_year_id', $this->selectedAcademicYearId)->where('is_current', true)->first()?->id
+                    ?? Semester::where('academic_year_id', $this->selectedAcademicYearId)->orderBy('sequence')->orderBy('name')->first()?->id)
+                : null;
+        }
+    }
+
+    public function updatedSelectedSemesterId()
+    {
+        $this->resetPage();
+        $this->resetBulkEntry();
     }
 
     public function updatedSelectedExamId()
@@ -488,7 +515,9 @@ class OfflineExamScores extends Component
 
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('year', 'desc')->get();
-        $semesters = Semester::orderBy('name')->get();
+        $semesters = $this->selectedAcademicYearId
+            ? Semester::where('academic_year_id', $this->selectedAcademicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
 
         $students = [];
         if ($this->selectedClassId && $this->showForm) {

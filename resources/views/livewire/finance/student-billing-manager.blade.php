@@ -35,7 +35,9 @@
                     <select id="semester" wire:model.live="semesterId" class="form-select">
                         <option value="">All Semesters</option>
                         @foreach ($semesters as $semester)
-                            <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                            <option value="{{ $semester->id }}">
+                                {{ $semester->name }}{{ empty($academicYearId) && $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -167,7 +169,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label required">Academic Year</label>
-                            <select wire:model="reverseAcademicYearId" class="form-select @error('reverseAcademicYearId') is-invalid @enderror">
+                            <select wire:model.live="reverseAcademicYearId" class="form-select @error('reverseAcademicYearId') is-invalid @enderror">
                                 <option value="">Select academic year</option>
                                 @foreach ($academicYears as $academicYear)
                                     <option value="{{ $academicYear->id }}">{{ $academicYear->name }}</option>
@@ -177,9 +179,9 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label required">Semester</label>
-                            <select wire:model="reverseSemesterId" class="form-select @error('reverseSemesterId') is-invalid @enderror">
-                                <option value="">Select semester</option>
-                                @foreach ($semesters as $semester)
+                            <select wire:model="reverseSemesterId" class="form-select @error('reverseSemesterId') is-invalid @enderror" @if(empty($reverseAcademicYearId)) disabled @endif>
+                                <option value="">{{ empty($reverseAcademicYearId) ? 'Select academic year first' : 'Select semester' }}</option>
+                                @foreach ($reverseSemesters as $semester)
                                     <option value="{{ $semester->id }}">{{ $semester->name }}</option>
                                 @endforeach
                             </select>
@@ -250,7 +252,7 @@
 
                     <div class="mb-3">
                         <label for="academicYearSelect" class="form-label">Academic Year</label>
-                        <select id="academicYearSelect" wire:model="newBillAcademicYearId" class="form-select">
+                        <select id="academicYearSelect" wire:model.live="newBillAcademicYearId" class="form-select @error('newBillAcademicYearId') is-invalid @enderror">
                             <option value="">-- Select Academic Year --</option>
                             @foreach ($academicYears as $year)
                                 <option value="{{ $year->id }}">{{ $year->name }}</option>
@@ -263,9 +265,9 @@
 
                     <div class="mb-3">
                         <label for="semesterSelect" class="form-label">Semester</label>
-                        <select id="semesterSelect" wire:model.live="newBillSemesterId" class="form-select">
-                            <option value="">-- Select Semester --</option>
-                            @foreach ($semesters as $semester)
+                        <select id="semesterSelect" wire:model.live="newBillSemesterId" class="form-select @error('newBillSemesterId') is-invalid @enderror" @if(empty($newBillAcademicYearId)) disabled @endif>
+                            <option value="">{{ empty($newBillAcademicYearId) ? '-- Select Academic Year First --' : '-- Select Semester --' }}</option>
+                            @foreach ($newBillSemesters as $semester)
                                 <option value="{{ $semester->id }}">{{ $semester->name }}</option>
                             @endforeach
                         </select>
@@ -349,7 +351,7 @@
 
                     <div class="mb-3">
                         <label for="batchAcademicYear" class="form-label">Academic Year</label>
-                        <select id="batchAcademicYear" wire:model.live="batchAcademicYearId" class="form-select">
+                        <select id="batchAcademicYear" wire:model.live="batchAcademicYearId" class="form-select @error('batchAcademicYearId') is-invalid @enderror">
                             <option value="">-- Select Academic Year --</option>
                             @foreach ($academicYears as $year)
                                 <option value="{{ $year->id }}">{{ $year->name }}</option>
@@ -362,9 +364,9 @@
 
                     <div class="mb-3">
                         <label for="batchSemester" class="form-label">Semester</label>
-                        <select id="batchSemester" wire:model.live="batchSemesterId" class="form-select">
-                            <option value="">-- Select Semester --</option>
-                            @foreach ($semesters as $semester)
+                        <select id="batchSemester" wire:model.live="batchSemesterId" class="form-select @error('batchSemesterId') is-invalid @enderror" @if(empty($batchAcademicYearId)) disabled @endif>
+                            <option value="">{{ empty($batchAcademicYearId) ? '-- Select Academic Year First --' : '-- Select Semester --' }}</option>
+                            @foreach ($batchSemesters as $semester)
                                 <option value="{{ $semester->id }}">{{ $semester->name }}</option>
                             @endforeach
                         </select>

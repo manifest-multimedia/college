@@ -31,7 +31,7 @@
                             <option value="">Select Semester</option>
                             @foreach($semesters as $semester)
                                 <option value="{{ $semester->id }}" @if($currentSemester && $currentSemester->id == $semester->id) selected @endif>
-                                    {{ $semester->name }}
+                                    {{ $semester->name }}{{ $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}
                                 </option>
                             @endforeach
                         </select>

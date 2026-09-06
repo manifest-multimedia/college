@@ -92,7 +92,7 @@ class SubjectsManager extends Component
 
         return view('livewire.academics.subjects-manager', [
             'subjects' => $subjects,
-            'semesters' => Semester::all(),
+            'semesters' => Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get(),
             'years' => Year::all(),
             'collegeClasses' => CollegeClass::all(),
         ])->layout('components.dashboard.default', [

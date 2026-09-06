@@ -46,12 +46,35 @@ class FinancialReportsManager extends Component
 
     public function mount()
     {
-        // Set default values
-        $this->academicYearId = AcademicYear::orderBy('year', 'desc')->first()?->id;
-        $this->semesterId = Semester::where('is_current', true)->first()?->id ??
-                        Semester::orderBy('id', 'desc')->first()?->id;
+        // Set default values aligned with current academic context
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderBy('year', 'desc')->first();
+        $this->academicYearId = $currentYear?->id;
+
+        $currentSemester = $this->academicYearId
+            ? (Semester::where('academic_year_id', $this->academicYearId)->where('is_current', true)->first()
+                ?? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->first())
+            : null;
+        $this->semesterId = $currentSemester?->id;
         $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
         $this->endDate = Carbon::now()->format('Y-m-d');
+    }
+
+    public function updatedAcademicYearId()
+    {
+        $this->resetPage();
+
+        $validSemester = $this->academicYearId
+            ? Semester::where('academic_year_id', $this->academicYearId)->where('id', $this->semesterId)->exists()
+            : false;
+
+        if (! $validSemester) {
+            $defaultSemester = $this->academicYearId
+                ? (Semester::where('academic_year_id', $this->academicYearId)->where('is_current', true)->first()
+                    ?? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->first())
+                : null;
+            $this->semesterId = $defaultSemester?->id;
+        }
     }
 
     public function updatedReportType()
@@ -65,7 +88,10 @@ class FinancialReportsManager extends Component
         $rules = [
             'reportType' => 'required|in:fee_collection,outstanding_fees,payment_summary',
             'academicYearId' => 'required|exists:academic_years,id',
-            'semesterId' => 'required|exists:semesters,id',
+            'semesterId' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('semesters', 'id')->where('academic_year_id', $this->academicYearId),
+            ],
             'exportFormat' => 'required|in:excel,pdf',
             'cohortId' => 'nullable|exists:cohorts,id',
         ];
@@ -299,7 +325,9 @@ class FinancialReportsManager extends Component
 
     public function getSemestersProperty()
     {
-        return Semester::orderBy('id')->get();
+        return $this->academicYearId
+            ? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
     }
 
     public function getCollegeClassesProperty()

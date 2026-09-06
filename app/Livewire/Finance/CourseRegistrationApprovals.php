@@ -32,14 +32,19 @@ class CourseRegistrationApprovals extends Component
     public function mount()
     {
         $this->academicYears = AcademicYear::orderBy('name', 'desc')->get();
-        $this->semesters = Semester::orderBy('id')->get();
 
-        // Set current academic year and semester as defaults
         $currentAcademicYear = AcademicYear::where('is_current', true)->first();
-        $currentSemester = Semester::where('is_current', true)->first();
-
         $this->selectedAcademicYear = $currentAcademicYear?->id ?? $this->academicYears->first()?->id;
-        $this->selectedSemester = $currentSemester?->id ?? $this->semesters->first()?->id;
+
+        $this->semesters = $this->selectedAcademicYear
+            ? Semester::where('academic_year_id', $this->selectedAcademicYear)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
+
+        $currentSemester = $this->selectedAcademicYear
+            ? (Semester::where('academic_year_id', $this->selectedAcademicYear)->where('is_current', true)->first()
+                ?? $this->semesters->first())
+            : null;
+        $this->selectedSemester = $currentSemester?->id;
     }
 
     public function updatingSearch()
@@ -52,9 +57,21 @@ class CourseRegistrationApprovals extends Component
         $this->resetPage();
     }
 
-    public function updatingSelectedAcademicYear()
+    public function updatingSelectedAcademicYear($value)
     {
         $this->resetPage();
+
+        if ($value) {
+            $this->semesters = Semester::where('academic_year_id', $value)->orderBy('sequence')->orderBy('name')->get();
+            $valid = $this->semesters->contains('id', $this->selectedSemester);
+            if (! $valid) {
+                $this->selectedSemester = $this->semesters->where('is_current', true)->first()?->id
+                    ?? $this->semesters->first()?->id;
+            }
+        } else {
+            $this->semesters = Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
+            $this->selectedSemester = null;
+        }
     }
 
     public function updatingSelectedSemester()

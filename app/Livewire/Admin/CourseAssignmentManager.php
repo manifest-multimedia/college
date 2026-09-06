@@ -189,7 +189,7 @@ class CourseAssignmentManager extends Component
 
         // Get filter options
         $programs = \App\Models\CollegeClass::orderBy('name')->get();
-        $semesters = \App\Models\Semester::orderBy('name')->get();
+        $semesters = \App\Models\Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
         $years = \App\Models\Year::orderBy('name')->get();
 
         return view('livewire.admin.course-assignment-manager', [

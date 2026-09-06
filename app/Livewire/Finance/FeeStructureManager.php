@@ -43,16 +43,50 @@ class FeeStructureManager extends Component
 
     public $selectedSemester = '';
 
-    protected $rules = [
-        'fee_type_id' => 'required|exists:fee_types,id',
-        'college_class_id' => 'required|exists:college_classes,id',
-        'academic_year_id' => 'required|exists:academic_years,id',
-        'semester_id' => 'required|exists:semesters,id',
-        'amount' => 'required|numeric|min:0',
-        'is_mandatory' => 'boolean',
-        'is_active' => 'boolean',
-        'applicable_gender' => 'required|in:all,male,female',
-    ];
+    protected function rules()
+    {
+        return [
+            'fee_type_id' => 'required|exists:fee_types,id',
+            'college_class_id' => 'required|exists:college_classes,id',
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'semester_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('semesters', 'id')->where('academic_year_id', $this->academic_year_id),
+            ],
+            'amount' => 'required|numeric|min:0',
+            'is_mandatory' => 'boolean',
+            'is_active' => 'boolean',
+            'applicable_gender' => 'required|in:all,male,female',
+        ];
+    }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSelectedClass()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSelectedYear($value)
+    {
+        if ($value !== $this->selectedYear) {
+            $this->selectedSemester = '';
+        }
+        $this->resetPage();
+    }
+
+    public function updatingSelectedSemester()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedAcademicYearId()
+    {
+        $this->semester_id = '';
+    }
 
     public function render()
     {
@@ -83,14 +117,22 @@ class FeeStructureManager extends Component
         $feeTypes = FeeType::where('is_active', true)->orderBy('name')->get();
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('name')->get();
-        $semesters = Semester::orderBy('name')->get();
+
+        $filterSemesters = $this->selectedYear
+            ? Semester::where('academic_year_id', $this->selectedYear)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
+
+        $modalSemesters = $this->academic_year_id
+            ? Semester::where('academic_year_id', $this->academic_year_id)->orderBy('sequence')->orderBy('name')->get()
+            : collect();
 
         return view('livewire.finance.fee-structure-manager', [
             'feeStructures' => $feeStructures,
             'feeTypes' => $feeTypes,
             'collegeClasses' => $collegeClasses,
             'academicYears' => $academicYears,
-            'semesters' => $semesters,
+            'semesters' => $filterSemesters,
+            'modalSemesters' => $modalSemesters,
         ])
             ->layout('components.dashboard.default');
     }

@@ -17,7 +17,7 @@ class AssessmentScoreManagementController extends Controller
     {
         $collegeClasses = CollegeClass::orderBy('name')->get();
         $cohorts = Cohort::where('is_active', true)->orderBy('name', 'desc')->get();
-        $semesters = Semester::orderBy('name')->get();
+        $semesters = Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
         $academicYears = AcademicYear::query()
             ->select('id', 'name')
             ->distinct()

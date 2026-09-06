@@ -87,6 +87,26 @@ class Semester extends Model
     }
 
     /**
+     * Scope for semesters belonging to a specific academic year
+     */
+    public function scopeForYear($query, $academicYearId)
+    {
+        return $query->where('academic_year_id', $academicYearId);
+    }
+
+    /**
+     * Get a formatted display name with academic year if available
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->relationLoaded('academicYear') && $this->academicYear) {
+            return "{$this->name} ({$this->academicYear->name})";
+        }
+
+        return $this->name;
+    }
+
+    /**
      * Set this academic-period instance as the one current semester for the
      * institution. The selected period's Academic Year is made current too.
      */

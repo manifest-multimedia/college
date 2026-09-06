@@ -59,7 +59,9 @@
                                 <select wire:model.live="selectedSemester" class="form-select">
                                     <option value="">All Semesters</option>
                                     @foreach($semesters as $semester)
-                                        <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                        <option value="{{ $semester->id }}">
+                                            {{ $semester->name }}{{ empty($selectedYear) && $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -178,7 +180,7 @@
 
                         <div class="mb-3">
                             <label for="academic_year_id" class="form-label">Academic Year</label>
-                            <select wire:model="academic_year_id" id="academic_year_id" class="form-select @error('academic_year_id') is-invalid @enderror">
+                            <select wire:model.live="academic_year_id" id="academic_year_id" class="form-select @error('academic_year_id') is-invalid @enderror">
                                 <option value="">Select Academic Year</option>
                                 @foreach($academicYears as $year)
                                     <option value="{{ $year->id }}">{{ $year->name }}</option>
@@ -191,9 +193,9 @@
 
                         <div class="mb-3">
                             <label for="semester_id" class="form-label">Semester</label>
-                            <select wire:model="semester_id" id="semester_id" class="form-select @error('semester_id') is-invalid @enderror">
-                                <option value="">Select Semester</option>
-                                @foreach($semesters as $semester)
+                            <select wire:model="semester_id" id="semester_id" class="form-select @error('semester_id') is-invalid @enderror" @if(empty($academic_year_id)) disabled @endif>
+                                <option value="">{{ empty($academic_year_id) ? 'Select Academic Year First' : 'Select Semester' }}</option>
+                                @foreach($modalSemesters as $semester)
                                     <option value="{{ $semester->id }}">{{ $semester->name }}</option>
                                 @endforeach
                             </select>

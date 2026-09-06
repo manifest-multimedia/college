@@ -89,7 +89,9 @@
                         <select wire:model.live="selectedSemester" class="form-control">
                             <option value="">-- All Semesters --</option>
                             @foreach($semesters as $semester)
-                                <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                <option value="{{ $semester->id }}">
+                                    {{ $semester->name }}{{ empty($selectedAcademicYear) && $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}
+                                </option>
                             @endforeach
                         </select>
                     </div>

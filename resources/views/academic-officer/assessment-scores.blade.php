@@ -21,8 +21,9 @@
                         <option value="">Select Semester</option>
                         @foreach($semesters as $semester)
                             <option value="{{ $semester->id }}" 
+                                data-academic-year-id="{{ $semester->academic_year_id }}"
                                 {{ $currentSemester && $semester->id == $currentSemester->id ? 'selected' : '' }}>
-                                {{ $semester->name }}
+                                {{ $semester->name }}{{ $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -168,6 +169,35 @@
                     }
                 });
             });
+
+            // Filter semesters based on academic year
+            function filterSemestersByYear() {
+                const selectedYearId = $('#academicYear').val();
+                let currentValValid = false;
+                const currentVal = $('#semester').val();
+
+                $('#semester option').each(function() {
+                    if (!$(this).val()) return;
+                    const optYearId = $(this).data('academic-year-id');
+                    if (!selectedYearId || String(optYearId) === String(selectedYearId)) {
+                        $(this).show();
+                        if (String($(this).val()) === String(currentVal)) {
+                            currentValValid = true;
+                        }
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                if (selectedYearId && !currentValValid) {
+                    $('#semester').val('');
+                }
+            }
+
+            $('#academicYear').on('change', function() {
+                filterSemestersByYear();
+            });
+            filterSemestersByYear();
 
             // Enable/disable load button based on required fields
             $('#academicYear, #semester').on('change', function() {

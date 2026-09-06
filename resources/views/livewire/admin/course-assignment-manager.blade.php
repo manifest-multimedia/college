@@ -150,7 +150,7 @@
                                 <select class="form-select" wire:model.live="modalFilterSemesterId">
                                     <option value="">All Semesters</option>
                                     @foreach($semesters as $semester)
-                                        <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                        <option value="{{ $semester->id }}">{{ $semester->name }}{{ $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}</option>
                                     @endforeach
                                 </select>
                             </div>

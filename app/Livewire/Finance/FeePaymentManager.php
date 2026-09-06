@@ -76,10 +76,16 @@ class FeePaymentManager extends Component
 
     public function mount()
     {
-        // Set default values
-        $this->academicYearId = AcademicYear::orderBy('year', 'desc')->first()?->id;
-        $this->semesterId = Semester::where('is_current', true)->first()?->id ??
-                            Semester::orderBy('id', 'desc')->first()?->id;
+        // Set default values aligned with current academic context
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderBy('year', 'desc')->first();
+        $this->academicYearId = $currentYear?->id;
+
+        $currentSemester = $this->academicYearId
+            ? (Semester::where('academic_year_id', $this->academicYearId)->where('is_current', true)->first()
+                ?? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->first())
+            : null;
+        $this->semesterId = $currentSemester?->id;
 
         // Set today's date as default payment date
         $this->paymentDate = now()->format('Y-m-d');
@@ -105,6 +111,36 @@ class FeePaymentManager extends Component
     public function updatedSearch()
     {
         $this->resetPage();
+    }
+
+    public function updatedAcademicYearId()
+    {
+        $this->resetPage();
+
+        $validSemester = $this->academicYearId
+            ? Semester::where('academic_year_id', $this->academicYearId)->where('id', $this->semesterId)->exists()
+            : false;
+
+        if (! $validSemester) {
+            $defaultSemester = $this->academicYearId
+                ? (Semester::where('academic_year_id', $this->academicYearId)->where('is_current', true)->first()
+                    ?? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->first())
+                : null;
+            $this->semesterId = $defaultSemester?->id;
+        }
+
+        if ($this->loadedStudent) {
+            $this->loadStudent($this->loadedStudent->id);
+        }
+    }
+
+    public function updatedSemesterId()
+    {
+        $this->resetPage();
+
+        if ($this->loadedStudent) {
+            $this->loadStudent($this->loadedStudent->id);
+        }
     }
 
     public function updatingCohortId()
@@ -342,7 +378,9 @@ class FeePaymentManager extends Component
 
     public function getSemestersProperty()
     {
-        return Semester::orderBy('name')->get();
+        return $this->academicYearId
+            ? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
     }
 
     public function getCohortsProperty()

@@ -146,7 +146,7 @@
                                 <select wire:model="semester_id" id="semester_id" class="form-select @error('semester_id') is-invalid @enderror">
                                     <option value="">Select Semester</option>
                                     @foreach($semesters as $semester)
-                                        <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                        <option value="{{ $semester->id }}">{{ $semester->name }}{{ $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}</option>
                                     @endforeach
                                 </select>
                                 @error('semester_id') <span class="text-danger">{{ $message }}</span> @enderror

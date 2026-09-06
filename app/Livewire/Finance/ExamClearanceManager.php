@@ -46,13 +46,42 @@ class ExamClearanceManager extends Component
 
     public function mount()
     {
-        // Set default values to the most recent academic year and semester
-        $this->academicYearId = AcademicYear::orderBy('year', 'desc')->first()?->id;
-        $this->semesterId = Semester::orderBy('id', 'desc')->first()?->id;
+        // Set default values aligned with current academic context
+        $currentYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderBy('year', 'desc')->first();
+        $this->academicYearId = $currentYear?->id;
+
+        $currentSemester = $this->academicYearId
+            ? (Semester::where('academic_year_id', $this->academicYearId)->where('is_current', true)->first()
+                ?? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->first())
+            : null;
+        $this->semesterId = $currentSemester?->id;
         $this->examTypeId = ExamType::first()?->id;
     }
 
     public function updatedSearchTerm()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedAcademicYearId()
+    {
+        $this->resetPage();
+
+        $validSemester = $this->academicYearId
+            ? Semester::where('academic_year_id', $this->academicYearId)->where('id', $this->semesterId)->exists()
+            : false;
+
+        if (! $validSemester) {
+            $defaultSemester = $this->academicYearId
+                ? (Semester::where('academic_year_id', $this->academicYearId)->where('is_current', true)->first()
+                    ?? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->first())
+                : null;
+            $this->semesterId = $defaultSemester?->id;
+        }
+    }
+
+    public function updatedSemesterId()
     {
         $this->resetPage();
     }
@@ -236,7 +265,9 @@ class ExamClearanceManager extends Component
 
     public function getSemestersProperty()
     {
-        return Semester::all();
+        return $this->academicYearId
+            ? Semester::where('academic_year_id', $this->academicYearId)->orderBy('sequence')->orderBy('name')->get()
+            : Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
     }
 
     public function getExamTypesProperty()

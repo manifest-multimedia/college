@@ -54,7 +54,9 @@
                         <select wire:model.live="semesterId" class="form-control @error('semesterId') is-invalid @enderror">
                             <option value="">-- Select Semester --</option>
                             @foreach($semesters as $semester)
-                                <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                <option value="{{ $semester->id }}">
+                                    {{ $semester->name }}{{ empty($academicYearId) && $semester->academicYear ? ' (' . $semester->academicYear->name . ')' : '' }}
+                                </option>
                             @endforeach
                         </select>
                         @error('semesterId')

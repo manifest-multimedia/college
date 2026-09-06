@@ -27,8 +27,11 @@ class StudentRegistrationHistory extends Component
         $this->student = Student::where('user_id', $user->id)->first();
     }
 
-    public function updatingSelectedAcademicYear()
+    public function updatingSelectedAcademicYear($value)
     {
+        if ($value !== $this->selectedAcademicYear) {
+            $this->selectedSemester = '';
+        }
         $this->resetPage();
     }
 
@@ -62,13 +65,20 @@ class StudentRegistrationHistory extends Component
                 ->with('academicYear')
                 ->get()
                 ->pluck('academicYear')
+                ->filter()
                 ->unique('id')
                 ->sortByDesc('name');
 
-            $semesters = StudentCourseRegistrationModel::where('student_id', $this->student->id)
-                ->with('semester')
+            $semestersQuery = StudentCourseRegistrationModel::where('student_id', $this->student->id);
+            if ($this->selectedAcademicYear) {
+                $semestersQuery->where('academic_year_id', $this->selectedAcademicYear);
+            }
+
+            $semesters = $semestersQuery
+                ->with(['semester.academicYear'])
                 ->get()
                 ->pluck('semester')
+                ->filter()
                 ->unique('id')
                 ->sortBy('name');
         }

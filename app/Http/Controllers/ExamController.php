@@ -25,7 +25,7 @@ class ExamController extends Controller
     {
         $classes = CollegeClass::all();
         $years = Year::all();
-        $semesters = Semester::all();
+        $semesters = Semester::with('academicYear')->orderBy('academic_year_id')->orderBy('sequence')->orderBy('name')->get();
         $academicYears = AcademicYear::orderBy('name', 'desc')->get();
 
         // Get staff users using Spatie's role system
