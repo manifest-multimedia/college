@@ -239,6 +239,11 @@ class AuditAcademicPeriods extends Command
     }
 
     /**
+     * Cache for resolved target semester IDs to prevent redundant queries.
+     */
+    protected array $targetSemesterCache = [];
+
+    /**
      * Execute repair within an audited database transaction.
      */
     protected function executeRepair(array $auditResults): int
@@ -288,6 +293,9 @@ class AuditAcademicPeriods extends Command
 
                 $this->info("Reconciling {$data['label']} ({$data['mismatched_count']} records)...");
 
+                // Group record IDs by target semester ID for efficient batch updates
+                $updatesByTargetSemester = [];
+
                 foreach ($data['sample_mismatches'] as $row) {
                     $targetYearId = $row->row_year;
                     if (! $targetYearId) {
@@ -303,10 +311,16 @@ class AuditAcademicPeriods extends Command
                     );
 
                     if ($targetSemesterId && $targetSemesterId !== $row->semester_id) {
-                        DB::table($table)->where('id', $row->id)->update([
+                        $updatesByTargetSemester[$targetSemesterId][] = $row->id;
+                    }
+                }
+
+                foreach ($updatesByTargetSemester as $targetSemesterId => $rowIds) {
+                    foreach (array_chunk($rowIds, 1000) as $chunk) {
+                        $affected = DB::table($table)->whereIn('id', $chunk)->update([
                             'semester_id' => $targetSemesterId,
                         ]);
-                        $repairedCount++;
+                        $repairedCount += $affected;
                     }
                 }
             }
@@ -337,6 +351,11 @@ class AuditAcademicPeriods extends Command
      */
     protected function findOrCreateTargetSemester(int $targetYearId, ?string $semName, ?int $semSeq, ?int $fallbackOldSemId): int
     {
+        $cacheKey = "{$targetYearId}_" . ($semSeq ?? 'null') . '_' . ($semName ?? 'null');
+        if (isset($this->targetSemesterCache[$cacheKey])) {
+            return $this->targetSemesterCache[$cacheKey];
+        }
+
         // 1. Try matching by sequence in the target academic year
         if ($semSeq) {
             $matchBySeq = DB::table('semesters')
@@ -344,7 +363,7 @@ class AuditAcademicPeriods extends Command
                 ->where('sequence', $semSeq)
                 ->value('id');
             if ($matchBySeq) {
-                return (int) $matchBySeq;
+                return $this->targetSemesterCache[$cacheKey] = (int) $matchBySeq;
             }
         }
 
@@ -355,7 +374,7 @@ class AuditAcademicPeriods extends Command
                 ->where('name', $semName)
                 ->value('id');
             if ($matchByName) {
-                return (int) $matchByName;
+                return $this->targetSemesterCache[$cacheKey] = (int) $matchByName;
             }
         }
 
@@ -370,7 +389,7 @@ class AuditAcademicPeriods extends Command
         $academicYear = DB::table('academic_years')->where('id', $targetYearId)->first();
 
         // 4. Provision matching semester for target academic year
-        return (int) DB::table('semesters')->insertGetId([
+        $newId = (int) DB::table('semesters')->insertGetId([
             'name' => $resolvedName,
             'slug' => Str::slug($resolvedName . '-' . ($academicYear ? $academicYear->name : $targetYearId) . '-' . Str::random(5)),
             'description' => $oldSemester->description ?? "Auto-aligned {$resolvedName}",
@@ -382,6 +401,8 @@ class AuditAcademicPeriods extends Command
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        return $this->targetSemesterCache[$cacheKey] = $newId;
     }
 
     /**
