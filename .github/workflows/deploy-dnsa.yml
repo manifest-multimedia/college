@@ -36,17 +36,7 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          cp ~/.ssh/id_ed25519 ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          cat << 'EOF' > ~/.ssh/config
-          Host 204.12.203.101
-            IdentityFile ~/.ssh/id_ed25519
-            IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking accept-new
-          EOF
-          chmod 600 ~/.ssh/config
           ssh-keyscan -H 204.12.203.101 >> ~/.ssh/known_hosts
-          ssh -v -o BatchMode=yes manifest@204.12.203.101 "echo SSH_SUCCESS"
 
       - name: Write deploy.php from secret
         env:
