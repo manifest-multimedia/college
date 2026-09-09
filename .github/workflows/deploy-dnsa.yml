@@ -1,0 +1,66 @@
+name: Deploy DNSA to Production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-dnsa
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy DNSA
+    runs-on: ubuntu-latest
+    environment: dnsa-production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 204.12.203.101 >> ~/.ssh/known_hosts
+
+      - name: Write deploy.php from secret
+        env:
+          DEPLOY_PHP: ${{ secrets.DEPLOY_PHP_COLLEGE }}
+        run: |
+          python3 -c "import os; open('deploy.php','w').write(os.environ.get('DEPLOY_PHP',''))"
+          if ! grep -q "host('dnsa')" deploy.php; then
+            cat << 'EOF' >> deploy.php
+
+host('dnsa')
+    ->setHostname('204.12.203.101')
+    ->set('remote_user', 'manifest')
+    ->set('deploy_path', '/var/www/portal.dnsa.edu.gh')
+    ->set('http_user', 'www-data')
+    ->set('writable_mode', 'chmod')
+    ->set('writable_chmod_mode', '0775')
+    ->set('labels', ['stage' => 'production']);
+EOF
+          fi
+
+      - name: Deploy DNSA
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN_COLLEGE }}
+        run: |
+          sed -i "s|https://github.com/manifest-multimedia/college.git|https://x-access-token:${GITHUB_TOKEN}@github.com/manifest-multimedia/college.git|" deploy.php
+          php vendor/bin/dep deploy:unlock dnsa --no-interaction || true
+          php vendor/bin/dep deploy dnsa --no-interaction -vvv
