@@ -25,4 +25,6 @@ deployOld.php
 deploy.php
 deployGabe.php
 demoservercredentials.env
+dns-server-credentials.env
+*credentials.env
 *.xlsx
