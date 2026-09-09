@@ -34,28 +34,14 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" | tr -d '\r' > ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 204.12.203.101 >> ~/.ssh/known_hosts
 
       - name: Write deploy.php from secret
         env:
           DEPLOY_PHP: ${{ secrets.DEPLOY_PHP_COLLEGE }}
-        run: |
-          python3 -c "import os; open('deploy.php','w').write(os.environ.get('DEPLOY_PHP',''))"
-          if ! grep -q "host('dnsa')" deploy.php; then
-            cat << 'EOF' >> deploy.php
-
-host('dnsa')
-    ->setHostname('204.12.203.101')
-    ->set('remote_user', 'manifest')
-    ->set('deploy_path', '/var/www/portal.dnsa.edu.gh')
-    ->set('http_user', 'www-data')
-    ->set('writable_mode', 'chmod')
-    ->set('writable_chmod_mode', '0775')
-    ->set('labels', ['stage' => 'production']);
-EOF
-          fi
+        run: python3 -c "import os; open('deploy.php','w').write(os.environ['DEPLOY_PHP'])"
 
       - name: Deploy DNSA
         env:
