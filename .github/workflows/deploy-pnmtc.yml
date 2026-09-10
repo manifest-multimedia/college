@@ -50,3 +50,4 @@ jobs:
           sed -i "s|https://github.com/manifest-multimedia/college.git|https://x-access-token:${GITHUB_TOKEN}@github.com/manifest-multimedia/college.git|" deploy.php
           php vendor/bin/dep deploy:unlock pnmtc --no-interaction || true
           php vendor/bin/dep deploy pnmtc --no-interaction -vvv
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no pnmtc@62.77.158.206 "cd /var/www/college.pnmtc.edu.gh/current && php artisan queue:restart && /bin/bash /home/pnmtc/run-queue-worker.sh"

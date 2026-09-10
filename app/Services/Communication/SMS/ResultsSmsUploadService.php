@@ -184,15 +184,23 @@ class ResultsSmsUploadService
 
     public function findActiveStudents(array $studentIds): array
     {
+        $normalizedIds = array_values(array_unique(array_filter(
+            array_map(fn ($id) => trim((string) $id), $studentIds),
+            fn ($id) => $id !== ''
+        )));
+
         $students = [];
-        foreach (array_chunk(array_values(array_unique(array_filter($studentIds))), 1000) as $studentIdChunk) {
-            Student::active()
+        foreach (array_chunk($normalizedIds, 1000) as $studentIdChunk) {
+            $records = Student::active()
                 // Imported registration numbers can retain incidental spaces.
                 // Match them as users see them in the Students search while
                 // retaining the exact value only in protected storage.
                 ->whereIn(DB::raw('TRIM(student_id)'), $studentIdChunk)
-                ->get(['id', 'student_id', 'mobile_number'])
-                ->each(fn (Student $student) => $students[trim((string) $student->student_id)] = $student);
+                ->get(['id', 'student_id', 'mobile_number']);
+
+            foreach ($records as $student) {
+                $students[trim((string) $student->student_id)] = $student;
+            }
         }
 
         return $students;
