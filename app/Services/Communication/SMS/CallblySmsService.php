@@ -5,6 +5,7 @@ namespace App\Services\Communication\SMS;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class CallblySmsService extends AbstractSmsService
@@ -95,7 +96,7 @@ class CallblySmsService extends AbstractSmsService
         $token = $this->apiToken();
 
         if (blank($token)) {
-            return ['success' => false, 'error_message' => $this->tokenFailure ?? 'Callbly is not configured. Add the API token in System Settings.'];
+            return ['success' => false, 'error_message' => $this->tokenFailure ?? 'Callbly is not configured. Add the API token in System Settings or configure CALLBLY_API_TOKEN.'];
         }
 
         try {
@@ -109,15 +110,30 @@ class CallblySmsService extends AbstractSmsService
                 return ['success' => true, 'data' => $data['data'] ?? $data, 'response' => $data];
             }
 
+            $maskedToken = $this->maskToken($token);
+            Log::warning('Callbly SMS API rejected request', [
+                'method' => strtoupper($method),
+                'path' => $path,
+                'status' => $response->status(),
+                'response' => $data,
+                'masked_token' => $maskedToken,
+            ]);
+
             return [
                 'success' => false,
                 'error_message' => $response->status() === 401
-                    ? 'Callbly rejected the stored API token. It may have expired, been regenerated, belong to another Callbly account, or have been saved incorrectly. Re-enter a current token in System Settings and save it again.'
+                    ? 'Callbly rejected the stored API token. It may have expired, been regenerated, belong to another Callbly account, or have been saved incorrectly. Re-enter a current token in System Settings or update CALLBLY_API_TOKEN.'
                     : data_get($data, 'message', 'Callbly returned HTTP '.$response->status()),
                 'response' => $data,
                 'status_code' => $response->status(),
             ];
         } catch (\Throwable $exception) {
+            Log::error('Callbly SMS connection exception', [
+                'method' => strtoupper($method),
+                'path' => $path,
+                'error' => $exception->getMessage(),
+            ]);
+
             return ['success' => false, 'error_message' => 'Unable to connect to Callbly: '.$exception->getMessage()];
         }
     }
@@ -126,50 +142,123 @@ class CallblySmsService extends AbstractSmsService
     {
         return $options['sender_name']
             ?? $this->setting('sms.callbly.sender_name')
+            ?? config('services.callbly.sender_name')
+            ?? config('communication.callbly.sender_name')
             ?? config('branding.institution.acronym', 'College360');
     }
 
     private function apiToken(): ?string
     {
-        $token = $this->setting('sms.callbly.api_token');
+        $this->tokenFailure = null;
+        $dbToken = $this->rawSetting('sms.callbly.api_token');
+        $resolvedToken = null;
 
+        if (filled($dbToken)) {
+            try {
+                $decrypted = Crypt::decryptString($dbToken);
+                $resolvedToken = $this->sanitizeToken($decrypted);
+            } catch (\Throwable $exception) {
+                if ($this->isEncryptedPayload($dbToken)) {
+                    Log::warning('Callbly API token in database could not be decrypted with the current application key.', [
+                        'exception' => $exception->getMessage(),
+                    ]);
+                    $this->tokenFailure = 'The saved Callbly API token cannot be decrypted with the current application key (it may have been encrypted under a previous APP_KEY). Re-enter the current token in System Settings or set CALLBLY_API_TOKEN in .env.';
+                } else {
+                    // Pre-existing plaintext token support during upgrades
+                    $resolvedToken = $this->sanitizeToken($dbToken);
+                }
+            }
+        }
+
+        // Fallback to environment/config if DB token is absent or could not be decrypted
+        if (blank($resolvedToken)) {
+            $envToken = config('services.callbly.api_token') ?? config('communication.callbly.api_token');
+            if (filled($envToken)) {
+                $resolvedToken = $this->sanitizeToken((string) $envToken);
+                if (filled($resolvedToken)) {
+                    // Clear failure since env fallback succeeded
+                    $this->tokenFailure = null;
+                }
+            }
+        }
+
+        return $resolvedToken;
+    }
+
+    private function sanitizeToken(?string $token): ?string
+    {
         if (blank($token)) {
             return null;
         }
 
-        try {
-            $token = Crypt::decryptString($token);
-        } catch (\Throwable) {
-            if ($this->isEncryptedPayload($token)) {
-                $this->tokenFailure = 'The saved Callbly API token cannot be decrypted by this application. Re-enter the current token in System Settings and save it again.';
-
-                return null;
-            }
-
-            // Supports a pre-existing plaintext token during a controlled
-            // upgrade; saving the settings encrypts it thereafter.
-        }
-
+        $token = trim($token);
+        // Strip surrounding quotes if pasted with them
+        $token = preg_replace('/^(["\'])(.*)\1$/s', '$2', $token);
         // Laravel's withToken() adds the Bearer scheme itself. This also
         // accepts a value pasted from documentation as "Bearer <token>".
-        return preg_replace('/^Bearer\s+/i', '', trim($token)) ?: null;
+        $token = preg_replace('/^Bearer\s+/i', '', trim($token));
+
+        return trim($token) ?: null;
+    }
+
+    private function maskToken(?string $token): string
+    {
+        if (blank($token)) {
+            return 'empty';
+        }
+
+        $len = strlen($token);
+        if ($len <= 8) {
+            return str_repeat('*', $len);
+        }
+
+        return substr($token, 0, 4) . str_repeat('*', max(0, $len - 8)) . substr($token, -4);
     }
 
     private function isEncryptedPayload(string $value): bool
     {
-        $decoded = base64_decode($value, true);
+        $decoded = base64_decode(trim($value), true);
         $payload = $decoded === false ? null : json_decode($decoded, true);
 
         return is_array($payload)
             && isset($payload['iv'], $payload['value'], $payload['mac']);
     }
 
-    private function setting(string $key, ?string $default = null): ?string
+    private function rawSetting(string $key): ?string
     {
         if (! Schema::hasTable('system_settings')) {
-            return $default;
+            return null;
         }
 
-        return DB::table('system_settings')->where('key', $key)->where('is_active', true)->value('value') ?? $default;
+        return DB::table('system_settings')
+            ->where('key', $key)
+            ->where('is_active', true)
+            ->value('value');
+    }
+
+    private function setting(string $key, ?string $default = null): ?string
+    {
+        $value = $this->rawSetting($key);
+
+        if ($value !== null) {
+            return $value;
+        }
+
+        // Fallback to configuration for known keys
+        if ($key === 'sms.callbly.enabled') {
+            $configEnabled = config('services.callbly.enabled') ?? config('communication.callbly.enabled');
+            if ($configEnabled !== null) {
+                return $configEnabled ? 'true' : 'false';
+            }
+        }
+
+        if ($key === 'sms.callbly.sender_name') {
+            $configSender = config('services.callbly.sender_name') ?? config('communication.callbly.sender_name');
+            if (filled($configSender)) {
+                return (string) $configSender;
+            }
+        }
+
+        return $default;
     }
 }

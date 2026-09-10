@@ -162,7 +162,7 @@ jobs:
           ' "$1"
 
           composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-          if ! grep -q '^APP_KEY=base64:' .env; then
+          if ! grep -E -q '^APP_KEY=("base64:|base64:)' .env; then
             php artisan key:generate --force
           fi
           php artisan migrate --force

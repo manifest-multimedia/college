@@ -55,6 +55,13 @@ return [
         'reseller_prefix' => env('NALO_RESELLER_PREFIX', 'Resl_Nalo'),
     ],
 
+    'callbly' => [
+        'api_token' => env('CALLBLY_API_TOKEN'),
+        'sender_name' => env('CALLBLY_SENDER_NAME'),
+        'sender_ids' => env('CALLBLY_SENDER_IDS'),
+        'enabled' => env('CALLBLY_ENABLED', true),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'url' => env('OPENAI_API_URL', 'https://api.openai.com/v1/chat/completions'),

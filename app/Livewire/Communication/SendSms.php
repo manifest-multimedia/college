@@ -86,9 +86,25 @@ class SendSms extends Component
 
     protected function loadSenderIds(): void
     {
-        $senderIds = json_decode((string) DB::table('system_settings')->where('key', 'sms.callbly.sender_ids')->value('value'), true);
+        $senderIds = json_decode((string) DB::table('system_settings')->where('key', 'sms.callbly.sender_ids')->where('is_active', true)->value('value'), true);
         $senderIds = is_array($senderIds) ? $senderIds : [];
-        $defaultSenderId = DB::table('system_settings')->where('key', 'sms.callbly.sender_name')->value('value');
+
+        $envSenderIds = config('services.callbly.sender_ids') ?? config('communication.callbly.sender_ids');
+        if (is_string($envSenderIds)) {
+            $parsedEnvIds = json_decode($envSenderIds, true);
+            if (is_array($parsedEnvIds)) {
+                $senderIds = array_merge($senderIds, $parsedEnvIds);
+            } else {
+                $senderIds = array_merge($senderIds, array_map('trim', explode(',', $envSenderIds)));
+            }
+        } elseif (is_array($envSenderIds)) {
+            $senderIds = array_merge($senderIds, $envSenderIds);
+        }
+
+        $defaultSenderId = DB::table('system_settings')->where('key', 'sms.callbly.sender_name')->where('is_active', true)->value('value')
+            ?? config('services.callbly.sender_name')
+            ?? config('communication.callbly.sender_name')
+            ?? config('branding.institution.acronym', 'College360');
 
         $this->senderIds = collect([...$senderIds, $defaultSenderId])
             ->filter(fn ($senderId) => is_string($senderId) && filled($senderId))

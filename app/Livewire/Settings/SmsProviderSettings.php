@@ -14,6 +14,8 @@ class SmsProviderSettings extends Component
     public string $defaultSenderId = '';
     public bool $enabled = true;
     public bool $hasApiToken = false;
+    public bool $isConfiguredInEnv = false;
+    public bool $tokenUndecryptable = false;
     public ?array $balance = null;
 
     public function mount(): void
@@ -21,9 +23,28 @@ class SmsProviderSettings extends Component
         abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin']), 403);
 
         $this->senderIds = $this->configuredSenderIds();
-        $this->defaultSenderId = $this->setting('sms.callbly.sender_name') ?? $this->senderIds[0];
-        $this->enabled = $this->setting('sms.callbly.enabled', 'true') === 'true';
-        $this->hasApiToken = filled($this->setting('sms.callbly.api_token'));
+        $this->defaultSenderId = $this->setting('sms.callbly.sender_name')
+            ?? config('services.callbly.sender_name')
+            ?? config('communication.callbly.sender_name')
+            ?? $this->senderIds[0];
+        $this->enabled = $this->setting('sms.callbly.enabled', config('services.callbly.enabled', true) ? 'true' : 'false') === 'true';
+
+        $envToken = config('services.callbly.api_token') ?? config('communication.callbly.api_token');
+        $this->isConfiguredInEnv = filled($envToken);
+
+        $dbToken = $this->setting('sms.callbly.api_token');
+        if (filled($dbToken)) {
+            try {
+                $decrypted = Crypt::decryptString($dbToken);
+                $this->hasApiToken = filled(trim($decrypted));
+            } catch (\Throwable) {
+                $this->tokenUndecryptable = true;
+                // If env token is present, we still consider an API token available
+                $this->hasApiToken = $this->isConfiguredInEnv;
+            }
+        } else {
+            $this->hasApiToken = $this->isConfiguredInEnv;
+        }
     }
 
     public function save(): void
@@ -51,13 +72,20 @@ class SmsProviderSettings extends Component
         }
 
         if (! $this->hasApiToken && blank($this->apiToken)) {
-            $this->addError('apiToken', 'An API token is required the first time Callbly is configured.');
+            $this->addError('apiToken', 'An API token is required the first time Callbly is configured (or set CALLBLY_API_TOKEN in .env).');
             return;
         }
 
-        DB::transaction(function () use ($senderIds): void {
-            if (filled($this->apiToken)) {
-                $this->set('sms.callbly.api_token', Crypt::encryptString($this->apiToken), 'Callbly API bearer token', 'secret');
+        $cleanToken = null;
+        if (filled($this->apiToken)) {
+            $cleanToken = trim($this->apiToken);
+            $cleanToken = preg_replace('/^(["\'])(.*)\1$/s', '$2', $cleanToken);
+            $cleanToken = preg_replace('/^Bearer\s+/i', '', trim($cleanToken));
+        }
+
+        DB::transaction(function () use ($senderIds, $cleanToken): void {
+            if (filled($cleanToken)) {
+                $this->set('sms.callbly.api_token', Crypt::encryptString($cleanToken), 'Callbly API bearer token', 'secret');
             }
             // sender_name remains the provider-compatible default while the
             // JSON setting preserves the approved choices for message senders.
@@ -66,6 +94,9 @@ class SmsProviderSettings extends Component
             $this->set('sms.callbly.enabled', $this->enabled ? 'true' : 'false', 'Enable Callbly SMS sending', 'boolean');
         });
 
+        if (filled($cleanToken)) {
+            $this->tokenUndecryptable = false;
+        }
         $this->hasApiToken = true;
         $this->apiToken = '';
         session()->flash('success', 'Callbly SMS settings saved.');
@@ -102,7 +133,10 @@ class SmsProviderSettings extends Component
 
     private function setting(string $key, mixed $default = null): mixed
     {
-        return DB::table('system_settings')->where('key', $key)->value('value') ?? $default;
+        return DB::table('system_settings')
+            ->where('key', $key)
+            ->where('is_active', true)
+            ->value('value') ?? $default;
     }
 
     private function set(string $key, string $value, string $description, string $type): void
@@ -123,7 +157,22 @@ class SmsProviderSettings extends Component
         $senderIds = json_decode((string) $this->setting('sms.callbly.sender_ids', '[]'), true);
         $senderIds = is_array($senderIds) ? $senderIds : [];
 
-        $legacySenderId = $this->setting('sms.callbly.sender_name') ?? config('branding.institution.acronym', 'College360');
+        $envSenderIds = config('services.callbly.sender_ids') ?? config('communication.callbly.sender_ids');
+        if (is_string($envSenderIds)) {
+            $parsedEnvIds = json_decode($envSenderIds, true);
+            if (is_array($parsedEnvIds)) {
+                $senderIds = array_merge($senderIds, $parsedEnvIds);
+            } else {
+                $senderIds = array_merge($senderIds, array_map('trim', explode(',', $envSenderIds)));
+            }
+        } elseif (is_array($envSenderIds)) {
+            $senderIds = array_merge($senderIds, $envSenderIds);
+        }
+
+        $legacySenderId = $this->setting('sms.callbly.sender_name')
+            ?? config('services.callbly.sender_name')
+            ?? config('communication.callbly.sender_name')
+            ?? config('branding.institution.acronym', 'College360');
 
         return collect([...$senderIds, $legacySenderId])
             ->filter(fn ($senderId) => is_string($senderId) && filled($senderId))

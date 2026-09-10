@@ -53,6 +53,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Callbly SMS Configuration Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Fallback configuration used when settings are not present in the database.
+    |
+    */
+    'callbly' => [
+        'api_token' => env('CALLBLY_API_TOKEN'),
+        'sender_name' => env('CALLBLY_SENDER_NAME'),
+        'sender_ids' => env('CALLBLY_SENDER_IDS'),
+        'enabled' => env('CALLBLY_ENABLED', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AI Assistant (OpenAI) Rate Limiting & Batch Processing
     |--------------------------------------------------------------------------
     |
