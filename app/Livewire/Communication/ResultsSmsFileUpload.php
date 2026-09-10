@@ -253,6 +253,29 @@ class ResultsSmsFileUpload extends Component
         session()->flash('success', 'Failed messages were queued for an explicit retry. Sent rows will not be sent again.');
     }
 
+    public function resumeSending(): void
+    {
+        $this->authorizeAccess();
+        $batch = $this->batchOrFail();
+
+        $queuedRows = ResultsSmsUploadRow::where('batch_id', $batch->id)
+            ->where('status', 'queued')
+            ->pluck('id');
+
+        if ($queuedRows->isEmpty()) {
+            session()->flash('error', 'There are no pending queued messages to send.');
+
+            return;
+        }
+
+        $batch->update(['status' => 'processing', 'completed_at' => null]);
+        foreach ($queuedRows as $rowId) {
+            \App\Jobs\SendResultsSmsRow::dispatch($rowId);
+        }
+
+        session()->flash('success', "Resumed sending for {$queuedRows->count()} pending messages. Sending continues safely in the background.");
+    }
+
     public function render()
     {
         $batch = $this->batchId

@@ -19,12 +19,22 @@ class SendResultsSmsRow implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    public int $tries = 0;
+    public int $maxExceptions = 3;
     public int $timeout = 120;
 
     public function __construct(public int $rowId)
     {
         $this->onQueue(config('results_sms.queue', 'default'));
+    }
+
+    /**
+     * Keep retrying rate-limited releases for up to 2 hours without
+     * failing due to attempt limits.
+     */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(2);
     }
 
     public function backoff(): array { return [30, 120, 300]; }
@@ -92,13 +102,13 @@ class SendResultsSmsRow implements ShouldQueue
             $error = (string) ($result['message'] ?? 'The SMS provider did not accept the message.');
             $transient = str_contains(mb_strtolower($error), 'unable to connect') || str_contains(mb_strtolower($error), 'http 5');
             $row->update([
-                'status' => $transient && $this->attempts() < $this->tries ? 'queued' : 'failed',
+                'status' => $transient && $row->attempt_count < 3 ? 'queued' : 'failed',
                 'safe_reason' => 'Provider delivery failed. Use Retry failed messages to try again.',
                 'provider_response' => $result['data'] ?? $result,
                 'processed_at' => now(),
             ]);
-            if ($transient && $this->attempts() < $this->tries) {
-                $this->release($this->backoff()[$this->attempts() - 1] ?? 300);
+            if ($transient && $row->attempt_count < 3) {
+                $this->release($this->backoff()[$row->attempt_count - 1] ?? 300);
 
                 return;
             }

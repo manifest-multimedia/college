@@ -78,6 +78,20 @@
                         @endforeach
                     </div>
 
+                    @php
+                        $queuedCount = \App\Models\ResultsSmsUploadRow::where('batch_id', $batch->id)->where('status', 'queued')->count();
+                    @endphp
+
+                    @if($batch->status === 'processing')
+                        <div class="alert alert-info d-flex align-items-center mb-4">
+                            <span class="spinner-border spinner-border-sm me-3"></span>
+                            <div>
+                                Sending is currently active: <strong>{{ number_format($batch->sent_rows) }}</strong> sent, <strong>{{ number_format($queuedCount) }}</strong> queued in background.
+                                Rate-limited to ensure reliable delivery without provider rejection.
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
                         <a class="btn btn-light-primary" href="{{ route('communication.results-sms.report', $batch->public_id) }}">
                             <i class="fas fa-download me-1"></i> Download validation / delivery report
@@ -86,9 +100,15 @@
                             <button class="btn btn-light-warning" wire:click="retryValidation" wire:loading.attr="disabled">
                                 <i class="fas fa-sync-alt me-1"></i> Revalidate Preview
                             </button>
-                        @elseif($batch->failed_rows > 0 && in_array($batch->status, ['completed', 'processing'], true))
+                        @endif
+                        @if($queuedCount > 0 && in_array($batch->status, ['processing', 'queued', 'validated', 'completed'], true))
+                            <button class="btn btn-primary" wire:click="resumeSending" wire:loading.attr="disabled">
+                                <i class="fas fa-play me-1"></i> Resume Sending ({{ $queuedCount }} remaining)
+                            </button>
+                        @endif
+                        @if($batch->failed_rows > 0 && in_array($batch->status, ['completed', 'processing'], true))
                             <button class="btn btn-warning" wire:click="retryFailed" wire:loading.attr="disabled">
-                                <i class="fas fa-redo me-1"></i> Retry Failed Messages
+                                <i class="fas fa-redo me-1"></i> Retry Failed Messages ({{ $batch->failed_rows }})
                             </button>
                         @endif
                     </div>
