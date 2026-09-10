@@ -6,23 +6,146 @@ use App\Jobs\DispatchResultsSmsRows;
 use App\Jobs\ValidateResultsSmsUpload;
 use App\Models\ResultsSmsUploadBatch;
 use App\Models\ResultsSmsUploadRow;
+use App\Models\Student;
 use App\Services\Communication\SMS\ResultsSmsUploadService;
+use App\Services\Communication\SMS\SmsServiceInterface;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class ResultsSmsFileUpload extends Component
 {
     use WithFileUploads;
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
 
     public $upload;
     public ?string $batchId = null;
     public bool $confirmed = false;
 
+    // Filter and search state for batch rows
+    public string $rowFilter = 'all';
+    public string $rowSearch = '';
+    public int $perPage = 25;
+
+    // Modal state for rectifying contact
+    public bool $showRectifyModal = false;
+    public ?int $rectifyingRowId = null;
+    public ?int $rectifyingStudentDbId = null;
+    public string $rectifyingStudentId = '';
+    public string $rectifyingStudentName = '';
+    public ?string $rectifyingClassName = null;
+    public string $rectifyingCurrentPhone = '';
+    public string $newMobileNumber = '';
+    public string $rectifyReason = '';
+
     public function mount(?string $batch = null): void
     {
         $this->authorizeAccess();
         $this->batchId = $batch;
+    }
+
+    public function updatingRowFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRowSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function filterBy(string $filter): void
+    {
+        $this->rowFilter = $filter;
+        $this->resetPage();
+    }
+
+    public function openRectifyModal(int $rowId): void
+    {
+        $this->authorizeAccess();
+        $batch = $this->batchOrFail();
+        $row = ResultsSmsUploadRow::where('batch_id', $batch->id)->with('student.collegeClass')->findOrFail($rowId);
+
+        $this->rectifyingRowId = $row->id;
+        $this->rectifyingStudentDbId = $row->student_record_id;
+        $this->rectifyingStudentId = (string) $row->student_id;
+        $this->rectifyingStudentName = $row->student?->full_name ?? ($row->student?->name ?? 'Unknown Student');
+        $this->rectifyingClassName = $row->student?->collegeClass?->name;
+        $this->rectifyingCurrentPhone = (string) ($row->student?->mobile_number ?? '');
+        $this->newMobileNumber = $this->rectifyingCurrentPhone;
+        $this->rectifyReason = (string) ($row->safe_reason ?? 'Contact needs attention');
+        $this->resetErrorBag();
+        $this->showRectifyModal = true;
+    }
+
+    public function closeRectifyModal(): void
+    {
+        $this->showRectifyModal = false;
+        $this->rectifyingRowId = null;
+        $this->rectifyingStudentDbId = null;
+        $this->newMobileNumber = '';
+        $this->resetErrorBag();
+    }
+
+    public function saveRectifiedContact(ResultsSmsUploadService $uploads, SmsServiceInterface $sms): void
+    {
+        $this->authorizeAccess();
+        $this->validate([
+            'newMobileNumber' => 'required|string|min:9|max:20',
+        ]);
+
+        $normalized = $sms->normalizePhoneNumber($this->newMobileNumber);
+        if ($normalized === null || ! $sms->validatePhoneNumber($normalized)) {
+            $this->addError('newMobileNumber', 'Please enter a valid Ghanaian mobile phone number (e.g., 0244123456 or 0598036772).');
+
+            return;
+        }
+
+        if (! $this->rectifyingStudentDbId) {
+            $this->addError('newMobileNumber', 'No linked student record found to update.');
+
+            return;
+        }
+
+        $student = Student::findOrFail($this->rectifyingStudentDbId);
+        $student->update(['mobile_number' => $this->newMobileNumber]);
+
+        $batch = $this->batchOrFail();
+
+        // Update the specific row directly so the preview flips immediately to ready
+        if ($this->rectifyingRowId) {
+            $row = ResultsSmsUploadRow::where('batch_id', $batch->id)->find($this->rectifyingRowId);
+            if ($row) {
+                $row->update([
+                    'status' => 'ready',
+                    'safe_reason' => null,
+                    'masked_recipient' => $uploads->maskPhone($normalized),
+                ]);
+            }
+        }
+
+        // Recalculate batch counts
+        $ready = ResultsSmsUploadRow::where('batch_id', $batch->id)->where('status', 'ready')->count();
+        $skipped = ResultsSmsUploadRow::where('batch_id', $batch->id)->where('status', 'skipped')->count();
+        $missingNumber = ResultsSmsUploadRow::where('batch_id', $batch->id)->where('status', 'skipped')->where('safe_reason', 'like', '%mobile number%')->count();
+        $missingStudent = ResultsSmsUploadRow::where('batch_id', $batch->id)->where('status', 'skipped')->where('safe_reason', 'like', '%matches this Student ID%')->count();
+        $pendingReview = ResultsSmsUploadRow::where('batch_id', $batch->id)->where('status', 'pending_review')->count();
+        $total = ResultsSmsUploadRow::where('batch_id', $batch->id)->count();
+
+        $batch->update([
+            'ready_rows' => $ready,
+            'skipped_rows' => $skipped,
+            'missing_number_rows' => $missingNumber,
+            'missing_student_rows' => $missingStudent,
+            'pending_review_rows' => $pendingReview,
+            'total_rows' => $total,
+        ]);
+
+        $this->closeRectifyModal();
+        session()->flash('success', "Contact number for {$student->full_name} was updated and the row is now Ready!");
     }
 
     public function validateUpload(ResultsSmsUploadService $uploads): void
@@ -136,8 +259,53 @@ class ResultsSmsFileUpload extends Component
             ? ResultsSmsUploadBatch::where('public_id', $this->batchId)->first()
             : null;
 
+        $rows = null;
+        if ($batch) {
+            $query = ResultsSmsUploadRow::where('batch_id', $batch->id)
+                ->with(['student.collegeClass']);
+
+            if ($this->rowFilter === 'ready') {
+                $query->where('status', 'ready');
+            } elseif ($this->rowFilter === 'skipped') {
+                $query->where('status', 'skipped');
+            } elseif ($this->rowFilter === 'missing_number') {
+                $query->where('status', 'skipped')->where('safe_reason', 'like', '%mobile number%');
+            } elseif ($this->rowFilter === 'missing_student') {
+                $query->where('status', 'skipped')->where('safe_reason', 'like', '%matches this Student ID%');
+            } elseif ($this->rowFilter === 'duplicate_id') {
+                $query->where('status', 'skipped')->where('safe_reason', 'like', '%Duplicate%');
+            } elseif ($this->rowFilter === 'pending_review') {
+                $query->where('status', 'pending_review');
+            }
+
+            if (filled($this->rowSearch)) {
+                $search = trim($this->rowSearch);
+                $query->where(function ($q) use ($search) {
+                    if (is_numeric($search)) {
+                        $q->where('row_number', (int) $search);
+                    }
+                    $q->orWhereHas('student', function ($sq) use ($search) {
+                        $sq->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('student_id', 'like', "%{$search}%")
+                            ->orWhere('mobile_number', 'like', "%{$search}%");
+                    });
+                });
+            }
+
+            if ($this->rowFilter === 'all') {
+                $query->orderByRaw("CASE WHEN status IN ('skipped', 'pending_review', 'failed') THEN 0 ELSE 1 END")
+                    ->orderBy('row_number');
+            } else {
+                $query->orderBy('row_number');
+            }
+
+            $rows = $query->paginate($this->perPage);
+        }
+
         return view('livewire.communication.results-sms-file-upload', [
             'batch' => $batch,
+            'rows' => $rows,
             'recentBatches' => ResultsSmsUploadBatch::latest()->limit(12)->get(),
         ])->layout('components.dashboard.default', ['title' => 'Results SMS File Upload']);
     }
@@ -152,3 +320,4 @@ class ResultsSmsFileUpload extends Component
         abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']), 403);
     }
 }
+
