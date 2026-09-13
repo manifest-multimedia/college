@@ -58,8 +58,11 @@ class StudentCourseRegistration extends Component
         }
 
         // Get current academic year and semester
-        $this->currentAcademicYear = AcademicYear::where('is_current', true)->first();
-        $this->currentSemester = Semester::where('is_current', true)->first();
+        $this->currentAcademicYear = AcademicYear::where('is_current', true)->first()
+            ?? AcademicYear::orderBy('start_date', 'desc')->first();
+        $this->currentSemester = Semester::where('is_current', true)->first()
+            ?? ($this->currentAcademicYear ? Semester::where('academic_year_id', $this->currentAcademicYear->id)->orderBy('sequence')->first() : null)
+            ?? Semester::orderBy('start_date', 'desc')->first();
 
         if (! $this->currentAcademicYear || ! $this->currentSemester) {
             session()->flash('error', 'No active academic year or semester found. Please contact the administration.');
@@ -115,11 +118,44 @@ class StudentCourseRegistration extends Component
 
         $profile = $profileService->getProfile($this->student);
 
-        $query = Subject::where('semester_id', $this->currentSemester->id)
-            ->where('college_class_id', $this->student->college_class_id);
+        // Resolve candidate semester IDs corresponding to the current semester's term/position.
+        // Handles cases where catalog courses hold a semester_id from another academic year or initial import.
+        $targetSequence = $this->currentSemester->sequence;
+        $targetName = strtolower(trim((string) $this->currentSemester->name));
+
+        $matchingSemesterIds = Semester::query()
+            ->where('id', $this->currentSemester->id)
+            ->when($targetSequence, function ($q) use ($targetSequence) {
+                $q->orWhere('sequence', $targetSequence);
+            })
+            ->when($targetName, function ($q) use ($targetName) {
+                $q->orWhereRaw('LOWER(name) = ?', [$targetName]);
+                if (str_contains($targetName, '1') || str_contains($targetName, 'first')) {
+                    $q->orWhereRaw('LOWER(name) LIKE ?', ['%1%'])
+                      ->orWhereRaw('LOWER(name) LIKE ?', ['%first%']);
+                } elseif (str_contains($targetName, '2') || str_contains($targetName, 'second')) {
+                    $q->orWhereRaw('LOWER(name) LIKE ?', ['%2%'])
+                      ->orWhereRaw('LOWER(name) LIKE ?', ['%second%']);
+                }
+            })
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($matchingSemesterIds)) {
+            $matchingSemesterIds = [$this->currentSemester->id];
+        }
+
+        $query = Subject::whereIn('semester_id', $matchingSemesterIds)
+            ->where(function ($q) {
+                $q->where('college_class_id', $this->student->college_class_id)
+                  ->orWhereNull('college_class_id');
+            });
 
         if ($profile->yearOfStudy) {
-            $query->where('year_id', $profile->yearOfStudy->id);
+            $query->where(function ($q) use ($profile) {
+                $q->where('year_id', $profile->yearOfStudy->id)
+                  ->orWhereNull('year_id');
+            });
         }
 
         $this->availableSubjects = $query
