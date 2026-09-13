@@ -26,6 +26,8 @@ class StudentsTableWidget extends Component
 
     public $cohortFilter = '';
 
+    public $genderFilter = '';
+
     public $confirmingStudentDeletion = false;
 
     public $studentToDelete = null;
@@ -62,11 +64,19 @@ class StudentsTableWidget extends Component
         $this->selectAll = false;
     }
 
+    public function updatingGenderFilter()
+    {
+        $this->resetPage();
+        $this->selectedStudents = [];
+        $this->selectAll = false;
+    }
+
     public function resetFilters()
     {
         $this->search = '';
         $this->programFilter = '';
         $this->cohortFilter = '';
+        $this->genderFilter = '';
         $this->resetPage();
         $this->selectedStudents = [];
         $this->selectAll = false;
@@ -107,6 +117,9 @@ class StudentsTableWidget extends Component
             })
             ->when($this->cohortFilter, function ($query) {
                 return $query->where('cohort_id', $this->cohortFilter);
+            })
+            ->when($this->genderFilter, function ($query) {
+                return $query->whereRaw('LOWER(gender) = ?', [strtolower($this->genderFilter)]);
             });
     }
 
@@ -141,26 +154,12 @@ class StudentsTableWidget extends Component
         try {
             if ($this->exportFormat == 'excel') {
                 return Excel::download(
-                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter),
+                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter, $this->genderFilter),
                     'students_export_'.date('Y-m-d_H-i-s').'.xlsx'
                 );
             } elseif ($this->exportFormat == 'pdf') {
                 // Get filtered students data
-                $students = Student::query()
-                    ->when($this->search, function ($query) {
-                        return $query->where(function ($q) {
-                            $q->where('student_id', 'like', '%'.$this->search.'%')
-                                ->orWhere('first_name', 'like', '%'.$this->search.'%')
-                                ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                                ->orWhere('email', 'like', '%'.$this->search.'%');
-                        });
-                    })
-                    ->when($this->programFilter, function ($query) {
-                        return $query->where('college_class_id', $this->programFilter);
-                    })
-                    ->when($this->cohortFilter, function ($query) {
-                        return $query->where('cohort_id', $this->cohortFilter);
-                    })
+                $students = $this->getFilteredStudentsQuery()
                     ->with(['collegeClass', 'cohort'])
                     ->get();
 
@@ -351,21 +350,7 @@ class StudentsTableWidget extends Component
         $cohorts = Cohort::has('students')->orderBy('name')->get();
 
         // Build the query with filters
-        $studentsQuery = Student::query()
-            ->when($this->search, function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('student_id', 'like', '%'.$this->search.'%')
-                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('email', 'like', '%'.$this->search.'%');
-                });
-            })
-            ->when($this->programFilter, function ($query) {
-                return $query->where('college_class_id', $this->programFilter);
-            })
-            ->when($this->cohortFilter, function ($query) {
-                return $query->where('cohort_id', $this->cohortFilter);
-            });
+        $studentsQuery = $this->getFilteredStudentsQuery();
 
         // Count total students
         $studentsTotal = $studentsQuery->count();

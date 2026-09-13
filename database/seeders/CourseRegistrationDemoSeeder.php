@@ -360,7 +360,7 @@ class CourseRegistrationDemoSeeder extends Seeder
                         'user_id' => $user->id,
                         'first_name' => $data['first'],
                         'last_name' => $data['last'],
-                        'gender' => 'Female',
+                        'gender' => in_array($data['first'], ['Kwame', 'Kofi', 'Yaw']) ? 'Male' : 'Female',
                         'date_of_birth' => '2004-05-15',
                         'nationality' => 'Ghanaian',
                         'email' => $data['email'],

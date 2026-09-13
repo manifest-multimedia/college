@@ -82,6 +82,7 @@
             <tr>
                 <th>Student ID</th>
                 <th>Student Name</th>
+                <th>Gender</th>
                 <th>Email</th>
                 <th>Program</th>
                 <th>Cohort</th>
@@ -93,6 +94,7 @@
                 <tr>
                     <td>{{ $student->student_id }}</td>
                     <td>{{ $student->last_name }} {{ $student->first_name }} {{ $student->other_name }}</td>
+                    <td>{{ ucfirst(strtolower($student->gender ?? 'N/A')) }}</td>
                     <td>{{ $student->email }}</td>
                     <td>{{ $student->collegeClass->name ?? 'N/A' }}</td>
                     <td>{{ $student->cohort->name ?? 'N/A' }}</td>
@@ -110,7 +112,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="text-align: center;">No students found.</td>
+                    <td colspan="7" style="text-align: center;">No students found.</td>
                 </tr>
             @endforelse
         </tbody>

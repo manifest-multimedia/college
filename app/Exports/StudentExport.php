@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Student;
+use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -17,14 +18,17 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
 
     protected $cohortFilter;
 
-    public function __construct($search = '', $programFilter = '', $cohortFilter = '')
+    protected $genderFilter;
+
+    public function __construct($search = '', $programFilter = '', $cohortFilter = '', $genderFilter = '')
     {
         $this->search = $search;
         $this->programFilter = $programFilter;
         $this->cohortFilter = $cohortFilter;
+        $this->genderFilter = $genderFilter;
     }
 
-    public function collection()
+    public function collection(): Enumerable
     {
         return Student::query()
             ->when($this->search, function ($query) {
@@ -41,6 +45,9 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
             ->when($this->cohortFilter, function ($query) {
                 return $query->where('cohort_id', $this->cohortFilter);
             })
+            ->when($this->genderFilter, function ($query) {
+                return $query->whereRaw('LOWER(gender) = ?', [strtolower($this->genderFilter)]);
+            })
             ->with(['collegeClass', 'cohort'])
             ->get();
     }
@@ -52,6 +59,7 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
             'Last Name',
             'First Name',
             'Other Name',
+            'Gender',
             'Email',
             'Program',
             'Cohort',
@@ -66,6 +74,7 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
             $student->last_name,
             $student->first_name,
             $student->other_name ?? '',
+            $student->gender ?? 'N/A',
             $student->email,
             $student->collegeClass->name ?? 'N/A',
             $student->cohort->name ?? 'N/A',

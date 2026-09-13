@@ -96,6 +96,18 @@
                         </select>
                     </div>
 
+                    <!-- Gender Filter (130-160px) -->
+                    <div style="min-width: 130px; max-width: 160px;" class="flex-grow-1 flex-sm-grow-0">
+                        <select class="form-select form-select-solid" 
+                                style="height: 42px; border-radius: 8px; font-size: 0.875rem;" 
+                                wire:model.live="genderFilter">
+                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
                     <!-- Tertiary Export & Actions -->
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
                         <button type="button" 
@@ -231,6 +243,7 @@
                             </th>
                             <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Student ID</th>
                             <th class="align-middle fw-bold text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Student Name</th>
+                            <th class="align-middle fw-bold text-uppercase" style="width: 100px; min-width: 100px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Gender</th>
                             <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Programme</th>
                             <th class="align-middle fw-bold text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Cohort</th>
                             <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Status</th>
@@ -276,6 +289,11 @@
                                             </div>
                                         </div>
                                     </div>
+                                </td>
+                                <td class="align-middle" style="padding: 14px 16px;">
+                                    <span class="text-gray-700 fs-7">
+                                        {{ ucfirst(strtolower($student->gender ?? 'N/A')) }}
+                                    </span>
                                 </td>
                                 <td class="align-middle" style="padding: 14px 16px;">
                                     <span class="text-gray-800 fw-normal fs-7">
@@ -325,9 +343,9 @@
                         @endforeach
                         
                         <!-- Empty State A: Filter/Search returns no matches -->
-                        @if(count($students) == 0 && ($search != '' || $programFilter != '' || $cohortFilter != ''))
+                        @if(count($students) == 0 && ($search != '' || $programFilter != '' || $cohortFilter != '' || $genderFilter != ''))
                             <tr>
-                                <td colspan="7" class="p-0 border-0">
+                                <td colspan="8" class="p-0 border-0">
                                     <div class="d-flex flex-column align-items-center justify-content-center text-center py-12 px-4" style="min-height: 220px;">
                                         <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px; background-color: #EFF6FF; border: 1px solid #BFDBFE;">
                                             <i class="fas fa-search fs-3 text-primary"></i>
@@ -346,9 +364,9 @@
                         @endif
 
                         <!-- Empty State B: No students exist in the system at all -->
-                        @if(count($students) == 0 && $search == '' && $programFilter == '' && $cohortFilter == '')
+                        @if(count($students) == 0 && $search == '' && $programFilter == '' && $cohortFilter == '' && $genderFilter == '')
                             <tr>
-                                <td colspan="7" class="p-0 border-0">
+                                <td colspan="8" class="p-0 border-0">
                                     <div class="d-flex flex-column align-items-center justify-content-center text-center py-12 px-4" style="min-height: 240px;">
                                         <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 52px; height: 52px; background-color: #EFF6FF; border: 1px solid #BFDBFE;">
                                             <i class="fas fa-user-graduate fs-3 text-primary"></i>
