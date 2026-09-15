@@ -43,7 +43,7 @@
                     <span class="badge bg-light text-gray-700 fw-semibold fs-7 px-2.5 py-1 border border-gray-300 rounded-2" style="font-variant-numeric: tabular-nums;">
                         {{ number_format($studentsTotal) }}
                     </span>
-                    @if(count($selectedStudents) > 0)
+                    @if(!empty($selectedStudents) && count($selectedStudents) > 0)
                         <span class="badge bg-light-primary text-primary fw-semibold fs-7 px-2.5 py-1 border border-primary border-opacity-25 rounded-2 ms-1">
                             {{ count($selectedStudents) }} selected
                         </span>
@@ -134,7 +134,7 @@
             </div>
 
             <!-- Contextual Selected Action Bar -->
-            @if(count($selectedStudents) > 0)
+            @if(!empty($selectedStudents) && count($selectedStudents) > 0)
                 <div class="mt-3 pt-3 border-top border-gray-200 d-flex align-items-center justify-content-between bg-light-primary rounded-2 px-3 py-2">
                     <div class="d-flex align-items-center gap-2">
                         <i class="fas fa-check-circle text-primary fs-6"></i>
@@ -449,6 +449,79 @@
                 <div class="modal-footer bg-light py-3 px-4 border-0">
                     <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="$set('confirmingIdRegeneration', false)">Cancel</button>
                     <button type="button" class="btn btn-sm btn-warning text-dark fw-semibold px-4" wire:click="regenerateIds">Regenerate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Export Format Selection Modal -->
+    @if($showingExportModal)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white py-3 px-4">
+                    <h5 class="modal-title text-white fw-bold fs-6">
+                        <i class="fas fa-file-export me-2"></i>
+                        Export Students
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" wire:click="cancelExport" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="fs-6 text-gray-800 mb-4">
+                        Please select your preferred export format:
+                    </p>
+                    
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Excel Option -->
+                        <div class="form-check form-check-custom form-check-solid p-3 rounded-2 border border-gray-200 cursor-pointer" onclick="document.getElementById('export_excel').click()">
+                            <input class="form-check-input me-3" type="radio" value="excel" id="export_excel" wire:model.live="exportFormat">
+                            <label class="form-check-label d-flex align-items-center w-100 cursor-pointer" for="export_excel">
+                                <span class="me-3">
+                                    <i class="fas fa-file-excel text-success fs-2"></i>
+                                </span>
+                                <div>
+                                    <span class="fw-bold text-gray-900 d-block">Excel (.xlsx)</span>
+                                    <span class="text-muted fs-7">Export to Microsoft Excel spreadsheet format</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <!-- PDF Option -->
+                        <div class="form-check form-check-custom form-check-solid p-3 rounded-2 border border-gray-200 cursor-pointer" onclick="document.getElementById('export_pdf').click()">
+                            <input class="form-check-input me-3" type="radio" value="pdf" id="export_pdf" wire:model.live="exportFormat">
+                            <label class="form-check-label d-flex align-items-center w-100 cursor-pointer" for="export_pdf">
+                                <span class="me-3">
+                                    <i class="fas fa-file-pdf text-danger fs-2"></i>
+                                </span>
+                                <div>
+                                    <span class="fw-bold text-gray-900 d-block">PDF (.pdf)</span>
+                                    <span class="text-muted fs-7">Export to Portable Document Format</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4 mb-0 py-3 px-4 d-flex align-items-center">
+                        <i class="fas fa-info-circle fs-4 me-3 text-info"></i>
+                        <div class="fs-7 text-gray-800">
+                            @if(!empty($selectedStudents) && count($selectedStudents) > 0)
+                                The export will include <strong>{{ count($selectedStudents) }}</strong> selected student record(s).
+                            @else
+                                The export will include <strong>{{ number_format($studentsTotal) }}</strong> student record(s) based on your current filters.
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-3 px-4 border-0">
+                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="cancelExport">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary fw-semibold px-4" wire:click="processExport" wire:loading.attr="disabled" @if(!$exportFormat) disabled @endif>
+                        <i class="fas fa-file-export me-1.5 fs-7"></i>
+                        <span wire:loading.remove wire:target="processExport">Export</span>
+                        <span wire:loading wire:target="processExport">Exporting...</span>
+                    </button>
                 </div>
             </div>
         </div>

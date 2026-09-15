@@ -20,18 +20,24 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
 
     protected $genderFilter;
 
-    public function __construct($search = '', $programFilter = '', $cohortFilter = '', $genderFilter = '')
+    protected $selectedIds;
+
+    public function __construct($search = '', $programFilter = '', $cohortFilter = '', $genderFilter = '', array $selectedIds = [])
     {
         $this->search = $search;
         $this->programFilter = $programFilter;
         $this->cohortFilter = $cohortFilter;
         $this->genderFilter = $genderFilter;
+        $this->selectedIds = $selectedIds;
     }
 
     public function collection(): Enumerable
     {
         return Student::query()
-            ->when($this->search, function ($query) {
+            ->when(!empty($this->selectedIds), function ($query) {
+                return $query->whereIn('id', $this->selectedIds);
+            })
+            ->when(empty($this->selectedIds) && $this->search, function ($query) {
                 return $query->where(function ($q) {
                     $q->where('student_id', 'like', '%'.$this->search.'%')
                         ->orWhere('first_name', 'like', '%'.$this->search.'%')
@@ -39,13 +45,13 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
                         ->orWhere('email', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->programFilter, function ($query) {
+            ->when(empty($this->selectedIds) && $this->programFilter, function ($query) {
                 return $query->where('college_class_id', $this->programFilter);
             })
-            ->when($this->cohortFilter, function ($query) {
+            ->when(empty($this->selectedIds) && $this->cohortFilter, function ($query) {
                 return $query->where('cohort_id', $this->cohortFilter);
             })
-            ->when($this->genderFilter, function ($query) {
+            ->when(empty($this->selectedIds) && $this->genderFilter, function ($query) {
                 return $query->whereRaw('LOWER(gender) = ?', [strtolower($this->genderFilter)]);
             })
             ->with(['collegeClass', 'cohort'])

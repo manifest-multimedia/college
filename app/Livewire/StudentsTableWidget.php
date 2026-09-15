@@ -152,20 +152,28 @@ class StudentsTableWidget extends Component
     public function processExport()
     {
         try {
+            $selected = !empty($this->selectedStudents) ? $this->selectedStudents : [];
+
             if ($this->exportFormat == 'excel') {
+                $this->showingExportModal = false;
+
                 return Excel::download(
-                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter, $this->genderFilter),
+                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter, $this->genderFilter, $selected),
                     'students_export_'.date('Y-m-d_H-i-s').'.xlsx'
                 );
             } elseif ($this->exportFormat == 'pdf') {
                 // Get filtered students data
-                $students = $this->getFilteredStudentsQuery()
-                    ->with(['collegeClass', 'cohort'])
-                    ->get();
+                $query = $this->getFilteredStudentsQuery();
+                if (!empty($selected)) {
+                    $query->whereIn('id', $selected);
+                }
+                $students = $query->with(['collegeClass', 'cohort'])->get();
 
                 $pdf = PDF::loadView('exports.students-pdf', [
                     'students' => $students,
                 ]);
+
+                $this->showingExportModal = false;
 
                 return response()->streamDownload(function () use ($pdf) {
                     echo $pdf->output();
