@@ -127,6 +127,35 @@
                                 Regenerate IDs
                             </button>
                         @endif
+
+                        @if(auth()->user() && auth()->user()->hasRole('System'))
+                            <div class="dropdown">
+                                <button class="btn btn-light-warning border border-warning border-opacity-50 text-warning-dark fw-medium d-inline-flex align-items-center px-3" 
+                                        type="button" 
+                                        id="dropdownPasswordReset" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false" 
+                                        style="height: 42px; border-radius: 8px; font-size: 0.875rem;">
+                                    <i class="fas fa-key me-1.5 fs-7"></i>
+                                    Reset Passwords
+                                    <i class="fas fa-chevron-down ms-1 fs-8"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-gray-200 fs-7" aria-labelledby="dropdownPasswordReset">
+                                    @if($cohortFilter)
+                                        <li>
+                                            <a class="dropdown-item py-2" href="#" wire:click.prevent="openStudentPasswordReset('cohort')">
+                                                <i class="fas fa-users-cog me-2 text-warning fs-7"></i>Reset for Current Cohort
+                                            </a>
+                                        </li>
+                                    @endif
+                                    <li>
+                                        <a class="dropdown-item py-2 text-danger" href="#" wire:click.prevent="openStudentPasswordReset('all')">
+                                            <i class="fas fa-user-shield me-2 fs-7"></i>Reset for All Active Students
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        @endif
                     </div>
 
                 </div>
@@ -143,6 +172,11 @@
                         </span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        @if(auth()->user() && auth()->user()->hasRole('System'))
+                            <button type="button" class="btn btn-sm btn-warning py-1 px-3 fs-7 fw-semibold text-dark" wire:click="openStudentPasswordReset('selected')">
+                                <i class="fas fa-key me-1"></i> Reset Passwords
+                            </button>
+                        @endif
                         <button type="button" class="btn btn-sm btn-primary py-1 px-3 fs-7 fw-semibold" wire:click="exportStudents">
                             Export Selected
                         </button>
@@ -329,6 +363,14 @@
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm border-gray-200 fs-7" aria-labelledby="dropdownMenuButton{{ $student->id }}">
                                             <li><a class="dropdown-item py-2" href="{{ route('students.show', $student->id) }}"><i class="fas fa-eye me-2 text-info fs-7"></i>View Details</a></li>
                                             <li><a class="dropdown-item py-2" href="{{ route('students.edit', $student->id) }}"><i class="fas fa-edit me-2 text-primary fs-7"></i>Edit Student</a></li>
+                                            @if(auth()->user() && auth()->user()->hasRole('System'))
+                                                <li>
+                                                    <a class="dropdown-item py-2 text-warning-dark" href="#" 
+                                                       wire:click.prevent="openStudentPasswordReset('individual', {{ $student->id }})">
+                                                       <i class="fas fa-key me-2 text-warning fs-7"></i>Reset Password
+                                                    </a>
+                                                </li>
+                                            @endif
                                             <li><hr class="dropdown-divider my-1"></li>
                                             <li>
                                                 <a class="dropdown-item py-2 text-danger" href="#" 
@@ -522,6 +564,181 @@
                         <span wire:loading.remove wire:target="processExport">Export</span>
                         <span wire:loading wire:target="processExport">Exporting...</span>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Student Password Reset Modal -->
+    @if($showPasswordResetModal)
+    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.55); z-index: 1060;" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+                <div class="modal-header bg-warning py-3 px-4 text-dark border-0">
+                    <h5 class="modal-title fw-bold fs-5 d-flex align-items-center">
+                        <i class="fas fa-key me-2 text-dark"></i>
+                        @if($resetScope === 'individual')
+                            Reset Password: {{ $resetTargetStudentName }} ({{ $resetTargetStudentCode }})
+                        @elseif($resetScope === 'selected')
+                            Reset Passwords for {{ $resetTargetCount }} Selected Students
+                        @elseif($resetScope === 'cohort')
+                            Reset Passwords for Cohort: {{ $resetTargetStudentName }} ({{ $resetTargetCount }} students)
+                        @elseif($resetScope === 'all')
+                            Reset Passwords for All Active Students ({{ $resetTargetCount }} students)
+                        @endif
+                    </h5>
+                    <button type="button" class="btn-close" wire:click="closeStudentPasswordReset"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    @if($resetSummary)
+                        <!-- Summary View after execution -->
+                        <div class="alert alert-success d-flex align-items-center mb-4">
+                            <i class="fas fa-check-circle fs-2 me-3 text-success"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Password Reset Completed</h6>
+                                <p class="mb-0 fs-7 text-muted">Summary of the credential reset operation:</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light p-3 rounded-2 text-center border">
+                                    <span class="fs-8 text-muted d-block text-uppercase fw-semibold">Targeted</span>
+                                    <span class="fs-4 fw-bold text-gray-900">{{ $resetSummary['total'] ?? 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light-success p-3 rounded-2 text-center border border-success border-opacity-25">
+                                    <span class="fs-8 text-success d-block text-uppercase fw-semibold">Processed</span>
+                                    <span class="fs-4 fw-bold text-success">{{ $resetSummary['processed'] ?? 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light-primary p-3 rounded-2 text-center border border-primary border-opacity-25">
+                                    <span class="fs-8 text-primary d-block text-uppercase fw-semibold">Emails Sent</span>
+                                    <span class="fs-4 fw-bold text-primary">{{ $resetSummary['emails_sent'] ?? 0 }}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="bg-light-info p-3 rounded-2 text-center border border-info border-opacity-25">
+                                    <span class="fs-8 text-info d-block text-uppercase fw-semibold">SMS Sent</span>
+                                    <span class="fs-4 fw-bold text-info">{{ $resetSummary['sms_sent'] ?? 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <!-- Form Configuration View -->
+                        <div class="alert alert-light-warning border border-warning border-opacity-50 p-3 mb-4 rounded-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shield-alt text-warning fs-3 me-3"></i>
+                                <div class="fs-7 text-gray-800">
+                                    <strong>System Administrator Privilege:</strong> You are about to reset student account credentials. This will overwrite existing passwords. If a student does not yet have a user account, one will automatically be provisioned for them.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Generation Option -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-gray-800 fs-7">Temporary Password Setting</label>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="student_pwd_random" value="random" wire:model.live="resetPasswordMode">
+                                    <label class="form-check-label fs-7 fw-medium" for="student_pwd_random">
+                                        Auto-generate secure random temporary password <span class="badge bg-light text-muted ms-1">Recommended</span>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="student_pwd_custom" value="custom" wire:model.live="resetPasswordMode">
+                                    <label class="form-check-label fs-7 fw-medium" for="student_pwd_custom">
+                                        Specify a uniform temporary password
+                                    </label>
+                                </div>
+                            </div>
+
+                            @if($resetPasswordMode === 'custom')
+                                <div class="mt-2" style="max-width: 320px;">
+                                    <input type="text" class="form-control form-control-sm @error('resetCustomPassword') is-invalid @enderror" 
+                                           placeholder="Enter temporary password (min 8 chars)" 
+                                           wire:model="resetCustomPassword">
+                                    @error('resetCustomPassword')
+                                        <div class="text-danger fs-8 mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Notification Channel Option -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-gray-800 fs-7">Credential Notification Channel</label>
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <div class="form-check border p-2.5 rounded-2 @if($resetChannel === 'both') bg-light-primary border-primary @endif">
+                                        <input class="form-check-input me-2" type="radio" id="channel_both" value="both" wire:model.live="resetChannel">
+                                        <label class="form-check-label fs-7 fw-semibold cursor-pointer w-100" for="channel_both">
+                                            <i class="fas fa-paper-plane text-primary me-1"></i> Both Email & SMS
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-check border p-2.5 rounded-2 @if($resetChannel === 'email') bg-light-primary border-primary @endif">
+                                        <input class="form-check-input me-2" type="radio" id="channel_email" value="email" wire:model.live="resetChannel">
+                                        <label class="form-check-label fs-7 fw-semibold cursor-pointer w-100" for="channel_email">
+                                            <i class="fas fa-envelope text-primary me-1"></i> Email Only
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-check border p-2.5 rounded-2 @if($resetChannel === 'sms') bg-light-primary border-primary @endif">
+                                        <input class="form-check-input me-2" type="radio" id="channel_sms" value="sms" wire:model.live="resetChannel">
+                                        <label class="form-check-label fs-7 fw-semibold cursor-pointer w-100" for="channel_sms">
+                                            <i class="fas fa-comment-dots text-info me-1"></i> SMS Only
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-check border p-2.5 rounded-2 @if($resetChannel === 'none') bg-light-secondary @endif">
+                                        <input class="form-check-input me-2" type="radio" id="channel_none" value="none" wire:model.live="resetChannel">
+                                        <label class="form-check-label fs-7 fw-semibold cursor-pointer w-100" for="channel_none">
+                                            <i class="fas fa-bell-slash text-muted me-1"></i> Do Not Send (Manual)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Force Password Change Toggle -->
+                        <div class="mb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="student_force_change" wire:model="resetRequirePasswordChange">
+                                <label class="form-check-label fs-7 fw-bold text-gray-800" for="student_force_change">
+                                    Require password change upon initial login
+                                </label>
+                            </div>
+                            <div class="text-muted fs-8 ms-6">
+                                When enabled, recipients will be locked from navigating the portal until they choose their own personal password.
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="modal-footer bg-light py-3 px-4 border-0">
+                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="closeStudentPasswordReset">
+                        {{ $resetSummary ? 'Close' : 'Cancel' }}
+                    </button>
+                    @if(! $resetSummary)
+                        <button type="button" class="btn btn-warning text-dark fw-bold px-4" 
+                                wire:click="executeStudentPasswordReset" 
+                                wire:loading.attr="disabled">
+                            <i class="fas fa-check-circle me-1.5" wire:loading.remove wire:target="executeStudentPasswordReset"></i>
+                            <span wire:loading.remove wire:target="executeStudentPasswordReset">Confirm & Reset Passwords</span>
+                            <span wire:loading wire:target="executeStudentPasswordReset">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Processing...
+                            </span>
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>

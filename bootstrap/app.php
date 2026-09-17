@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             SyncUserRoles::class,
+            \App\Http\Middleware\EnsurePasswordIsChanged::class,
         ]);
 
         // Register Spatie middleware aliases

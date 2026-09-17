@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Settings;
 
+use App\Jobs\ProcessBatchPasswordResetJob;
 use App\Models\User;
+use App\Services\PasswordResetManagementService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -23,6 +25,33 @@ class UserManagement extends Component
     public $sortField = 'name';
 
     public $sortDirection = 'asc';
+
+    public $selectedUsers = [];
+
+    public $selectAllUsers = false;
+
+    // Staff Password Reset properties
+    public $showPasswordResetModal = false;
+
+    public $resetScope = 'individual'; // 'individual', 'selected', 'all'
+
+    public $resetTargetUserId = null;
+
+    public $resetTargetUserName = '';
+
+    public $resetTargetUserEmail = '';
+
+    public $resetTargetCount = 0;
+
+    public $resetPasswordMode = 'random'; // 'random', 'custom'
+
+    public $resetCustomPassword = '';
+
+    public $resetChannel = 'both'; // 'both', 'email', 'sms', 'none'
+
+    public $resetRequirePasswordChange = true;
+
+    public $resetSummary = null;
 
     // Form properties for add/edit user
     public $userId = null;
@@ -269,6 +298,153 @@ class UserManagement extends Component
         } catch (\Exception $e) {
             Log::error('Error deleting user: '.$e->getMessage());
             session()->flash('error', 'Failed to delete user. Please try again later.');
+        }
+    }
+
+    public function updatedSelectAllUsers($value)
+    {
+        if ($value) {
+            $this->selectedUsers = $this->getFilteredUsersQuery()->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+        } else {
+            $this->selectedUsers = [];
+        }
+    }
+
+    public function updatedSelectedUsers()
+    {
+        $allIds = $this->getFilteredUsersQuery()->pluck('id')->map(fn ($id) => (string) $id)->toArray();
+        if (count($allIds) > 0 && count(array_intersect($allIds, $this->selectedUsers)) === count($allIds)) {
+            $this->selectAllUsers = true;
+        } else {
+            $this->selectAllUsers = false;
+        }
+    }
+
+    private function getFilteredUsersQuery()
+    {
+        return User::query()
+            ->when($this->search, function ($query) {
+                return $query->where(function ($q) {
+                    $q->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
+                });
+            })
+            ->when($this->roleFilter, function ($query) {
+                return $query->whereHas('roles', function ($q) {
+                    $q->where('id', $this->roleFilter);
+                });
+            });
+    }
+
+    /**
+     * Open the password reset modal for staff.
+     */
+    public function openStaffPasswordReset(string $scope, ?int $userId = null)
+    {
+        if (! auth()->user() || ! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized. Only System users can reset passwords.');
+        }
+
+        $this->resetScope = $scope;
+        $this->resetPasswordMode = 'random';
+        $this->resetCustomPassword = '';
+        $this->resetChannel = 'both';
+        $this->resetRequirePasswordChange = true;
+        $this->resetSummary = null;
+
+        if ($scope === 'individual' && $userId) {
+            $user = User::findOrFail($userId);
+            $this->resetTargetUserId = $user->id;
+            $this->resetTargetUserName = $user->name;
+            $this->resetTargetUserEmail = $user->email;
+            $this->resetTargetCount = 1;
+        } elseif ($scope === 'selected') {
+            $this->resetTargetCount = count($this->selectedUsers);
+            if ($this->resetTargetCount === 0) {
+                session()->flash('error', 'Please select at least one staff user.');
+                return;
+            }
+        } elseif ($scope === 'all') {
+            $this->resetTargetCount = User::whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['Student', 'Parent']))->count();
+        }
+
+        $this->showPasswordResetModal = true;
+    }
+
+    /**
+     * Close the password reset modal for staff.
+     */
+    public function closeStaffPasswordReset()
+    {
+        $this->showPasswordResetModal = false;
+        $this->resetScope = 'individual';
+        $this->resetTargetUserId = null;
+        $this->resetTargetUserName = '';
+        $this->resetTargetUserEmail = '';
+        $this->resetSummary = null;
+    }
+
+    /**
+     * Execute staff password reset.
+     */
+    public function executeStaffPasswordReset(PasswordResetManagementService $service)
+    {
+        if (! auth()->user() || ! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized. Only System users can reset passwords.');
+        }
+
+        if ($this->resetPasswordMode === 'custom') {
+            $this->validate([
+                'resetCustomPassword' => 'required|string|min:8',
+            ]);
+        }
+
+        $options = [
+            'channel' => $this->resetChannel,
+            'require_change' => $this->resetRequirePasswordChange,
+            'custom_password' => $this->resetPasswordMode === 'custom' ? $this->resetCustomPassword : null,
+            'initiated_by' => auth()->id(),
+        ];
+
+        try {
+            if ($this->resetScope === 'individual') {
+                $user = User::findOrFail($this->resetTargetUserId);
+                $result = $service->resetStaff($user, $options);
+
+                if ($result['success']) {
+                    $channelText = match ($this->resetChannel) {
+                        'both' => 'via Email & SMS',
+                        'email' => 'via Email',
+                        'sms' => 'via SMS',
+                        default => 'without notification',
+                    };
+                    session()->flash('success', "Password for {$this->resetTargetUserName} reset successfully {$channelText}. Temporary password: {$result['temporary_password']}");
+                    $this->closeStaffPasswordReset();
+                } else {
+                    session()->flash('error', $result['message'] ?? 'Failed to reset password.');
+                }
+            } elseif ($this->resetScope === 'selected') {
+                $count = count($this->selectedUsers);
+                if ($count > 10) {
+                    ProcessBatchPasswordResetJob::dispatch('staff_bulk', $this->selectedUsers, $options);
+                    session()->flash('success', "Password reset for {$count} selected staff members has been queued in the background.");
+                    $this->closeStaffPasswordReset();
+                } else {
+                    $summary = $service->resetStaffBulk($this->selectedUsers, $options);
+                    $this->resetSummary = $summary;
+                    session()->flash('success', "Successfully processed password resets for {$summary['processed']} of {$summary['total']} staff members.");
+                }
+            } elseif ($this->resetScope === 'all') {
+                ProcessBatchPasswordResetJob::dispatch('all_staff', null, $options);
+                session()->flash('success', "Password reset for all staff members ({$this->resetTargetCount}) has been queued in the background.");
+                $this->closeStaffPasswordReset();
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error executing staff password reset: '.$e->getMessage(), [
+                'scope' => $this->resetScope,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            session()->flash('error', 'An error occurred while resetting passwords: '.$e->getMessage());
         }
     }
 

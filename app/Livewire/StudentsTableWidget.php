@@ -4,9 +4,11 @@ namespace App\Livewire;
 
 use App\Exports\StudentExport;
 use App\Jobs\GenerateCohortStudentIds;
+use App\Jobs\ProcessBatchPasswordResetJob;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Student;
+use App\Services\PasswordResetManagementService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +43,31 @@ class StudentsTableWidget extends Component
     public $selectedStudents = [];
 
     public $selectAll = false;
+
+    // Password reset properties
+    public $showPasswordResetModal = false;
+
+    public $resetScope = 'individual'; // 'individual', 'selected', 'cohort', 'all'
+
+    public $resetTargetStudentId = null;
+
+    public $resetTargetStudentName = '';
+
+    public $resetTargetStudentCode = '';
+
+    public $resetTargetCount = 0;
+
+    public $resetPasswordMode = 'random'; // 'random', 'custom'
+
+    public $resetCustomPassword = '';
+
+    public $resetChannel = 'both'; // 'both', 'email', 'sms', 'none'
+
+    public $resetRequirePasswordChange = true;
+
+    public $resetProcessing = false;
+
+    public $resetSummary = null;
 
     // Reset pagination when filters change
     public function updatingSearch()
@@ -349,6 +376,138 @@ class StudentsTableWidget extends Component
 
         $this->confirmingStudentDeletion = false;
         $this->studentToDelete = null;
+    }
+
+    /**
+     * Open the password reset modal.
+     */
+    public function openStudentPasswordReset(string $scope, ?int $studentId = null)
+    {
+        if (! auth()->user() || ! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized. Only System users can reset passwords.');
+        }
+
+        $this->resetScope = $scope;
+        $this->resetPasswordMode = 'random';
+        $this->resetCustomPassword = '';
+        $this->resetChannel = 'both';
+        $this->resetRequirePasswordChange = true;
+        $this->resetSummary = null;
+
+        if ($scope === 'individual' && $studentId) {
+            $student = Student::findOrFail($studentId);
+            $this->resetTargetStudentId = $student->id;
+            $this->resetTargetStudentName = $student->full_name ?: $student->name;
+            $this->resetTargetStudentCode = $student->student_id;
+            $this->resetTargetCount = 1;
+        } elseif ($scope === 'selected') {
+            $this->resetTargetCount = count($this->selectedStudents);
+            if ($this->resetTargetCount === 0) {
+                session()->flash('error', 'Please select at least one student.');
+                return;
+            }
+        } elseif ($scope === 'cohort') {
+            if (! $this->cohortFilter) {
+                session()->flash('error', 'Please select a cohort filter first.');
+                return;
+            }
+            $cohort = Cohort::find($this->cohortFilter);
+            $this->resetTargetStudentName = $cohort ? $cohort->name : 'Selected Cohort';
+            $this->resetTargetCount = Student::where('cohort_id', $this->cohortFilter)->active()->count();
+        } elseif ($scope === 'all') {
+            $this->resetTargetCount = Student::active()->count();
+        }
+
+        $this->showPasswordResetModal = true;
+    }
+
+    /**
+     * Close the password reset modal.
+     */
+    public function closeStudentPasswordReset()
+    {
+        $this->showPasswordResetModal = false;
+        $this->resetScope = 'individual';
+        $this->resetTargetStudentId = null;
+        $this->resetTargetStudentName = '';
+        $this->resetTargetStudentCode = '';
+        $this->resetSummary = null;
+    }
+
+    /**
+     * Execute password reset for students.
+     */
+    public function executeStudentPasswordReset(PasswordResetManagementService $service)
+    {
+        if (! auth()->user() || ! auth()->user()->hasRole('System')) {
+            abort(403, 'Unauthorized. Only System users can reset passwords.');
+        }
+
+        if ($this->resetPasswordMode === 'custom') {
+            $this->validate([
+                'resetCustomPassword' => 'required|string|min:8',
+            ]);
+        }
+
+        $options = [
+            'channel' => $this->resetChannel,
+            'require_change' => $this->resetRequirePasswordChange,
+            'custom_password' => $this->resetPasswordMode === 'custom' ? $this->resetCustomPassword : null,
+            'initiated_by' => auth()->id(),
+        ];
+
+        try {
+            if ($this->resetScope === 'individual') {
+                $student = Student::findOrFail($this->resetTargetStudentId);
+                $result = $service->resetStudent($student, $options);
+
+                if ($result['success']) {
+                    $channelText = match ($this->resetChannel) {
+                        'both' => 'via Email & SMS',
+                        'email' => 'via Email',
+                        'sms' => 'via SMS',
+                        default => 'without notification',
+                    };
+                    session()->flash('success', "Password for {$this->resetTargetStudentName} reset successfully {$channelText}. Temporary password: {$result['temporary_password']}");
+                    $this->closeStudentPasswordReset();
+                } else {
+                    session()->flash('error', $result['message'] ?? 'Failed to reset password.');
+                }
+            } elseif ($this->resetScope === 'selected') {
+                $count = count($this->selectedStudents);
+                if ($count > 10) {
+                    ProcessBatchPasswordResetJob::dispatch('students_bulk', $this->selectedStudents, $options);
+                    session()->flash('success', "Password reset for {$count} selected students has been queued in the background.");
+                    $this->closeStudentPasswordReset();
+                } else {
+                    $summary = $service->resetStudentsBulk($this->selectedStudents, $options);
+                    $this->resetSummary = $summary;
+                    session()->flash('success', "Successfully processed password resets for {$summary['processed']} of {$summary['total']} students.");
+                }
+            } elseif ($this->resetScope === 'cohort') {
+                $cohortId = (int) $this->cohortFilter;
+                $count = Student::where('cohort_id', $cohortId)->active()->count();
+                if ($count > 10) {
+                    ProcessBatchPasswordResetJob::dispatch('cohort', $cohortId, $options);
+                    session()->flash('success', "Password reset for cohort {$this->resetTargetStudentName} ({$count} students) has been queued in the background.");
+                    $this->closeStudentPasswordReset();
+                } else {
+                    $summary = $service->resetCohort($cohortId, $options);
+                    $this->resetSummary = $summary;
+                    session()->flash('success', "Successfully processed password resets for {$summary['processed']} of {$summary['total']} students in this cohort.");
+                }
+            } elseif ($this->resetScope === 'all') {
+                ProcessBatchPasswordResetJob::dispatch('all_students', null, $options);
+                session()->flash('success', "Password reset for all active students ({$this->resetTargetCount}) has been queued in the background.");
+                $this->closeStudentPasswordReset();
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error executing student password reset: '.$e->getMessage(), [
+                'scope' => $this->resetScope,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            session()->flash('error', 'An error occurred while resetting passwords: '.$e->getMessage());
+        }
     }
 
     public function render()

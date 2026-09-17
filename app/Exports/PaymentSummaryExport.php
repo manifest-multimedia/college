@@ -42,7 +42,7 @@ class PaymentSummaryExport implements FromQuery, WithHeadings, WithMapping, With
         $this->endDate = $endDate ?? now()->format('Y-m-d');
     }
 
-    public function query()
+    public function query(): \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Relations\Relation
     {
         return FeePayment::query()
             ->select(

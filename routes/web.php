@@ -66,6 +66,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'reset'])->name('password.update');
 });
 
+// Force Password Change Routes (required for accounts reset by System User)
+Route::middleware('auth')->group(function () {
+    Route::get('/force-password-change', [App\Http\Controllers\ForcePasswordChangeController::class, 'show'])->name('password.force-change');
+    Route::post('/force-password-change', [App\Http\Controllers\ForcePasswordChangeController::class, 'update'])->name('password.force-change.update');
+});
+
 // Link to Tutor Assessment Form:
 Route::get('/tutor-assessment', function () {
     return redirect()->away('https://forms.gle/9EpmJY9fTDT6QaUw9');
