@@ -45,6 +45,13 @@ class ForcePasswordChangeController extends Controller
         $user->force_password_change = false;
         $user->save();
 
+        // Also synchronize the updated password to AuthCentral so SSO credentials match
+        try {
+            app(\App\Services\AuthCentralSyncBridgeService::class)->syncCollegeUser($user, $request->password);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to sync updated personal password to AuthCentral: ' . $e->getMessage());
+        }
+
         Log::info('User successfully completed initial forced password change', [
             'user_id' => $user->id,
             'email' => $user->email,

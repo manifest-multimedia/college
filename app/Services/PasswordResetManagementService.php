@@ -6,6 +6,7 @@ use App\Mail\AccountCredentialsMailable;
 use App\Models\Cohort;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\AuthCentralSyncBridgeService;
 use App\Services\Communication\SMS\SmsServiceInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
@@ -17,10 +18,14 @@ use Spatie\Permission\Models\Role;
 class PasswordResetManagementService
 {
     protected ?SmsServiceInterface $smsService;
+    protected AuthCentralSyncBridgeService $authCentralBridge;
 
-    public function __construct(?SmsServiceInterface $smsService = null)
-    {
+    public function __construct(
+        ?SmsServiceInterface $smsService = null,
+        ?AuthCentralSyncBridgeService $authCentralBridge = null
+    ) {
         $this->smsService = $smsService ?? (app()->bound(SmsServiceInterface::class) ? app(SmsServiceInterface::class) : null);
+        $this->authCentralBridge = $authCentralBridge ?? app(AuthCentralSyncBridgeService::class);
     }
 
     /**
@@ -90,15 +95,24 @@ class PasswordResetManagementService
         $user->force_password_change = $forceChange;
         $user->save();
 
+        // 3. Synchronize credentials to AuthCentral if available
+        $authCentralSync = null;
+        try {
+            $authCentralSync = $this->authCentralBridge->syncStudent($student, $plainPassword);
+        } catch (\Throwable $e) {
+            Log::warning('AuthCentral synchronization warning during student reset: ' . $e->getMessage());
+        }
+
         Log::info('System User reset password for student', [
             'student_id' => $student->student_id,
             'user_id' => $user->id,
             'email' => $user->email,
             'reset_by' => auth()->id(),
             'force_change' => $forceChange,
+            'authcentral_sync' => $authCentralSync['action'] ?? 'skipped',
         ]);
 
-        // 3. Dispatch credentials
+        // 4. Dispatch credentials
         $delivery = $this->dispatchCredentials(
             recipientName: $student->full_name ?: $student->name,
             email: $user->email,
@@ -119,6 +133,7 @@ class PasswordResetManagementService
             'phone' => $student->mobile_number,
             'temporary_password' => $plainPassword,
             'delivery' => $delivery,
+            'authcentral_sync' => $authCentralSync,
         ];
     }
 
@@ -214,11 +229,20 @@ class PasswordResetManagementService
         $user->force_password_change = $forceChange;
         $user->save();
 
+        // Synchronize credentials to AuthCentral if available
+        $authCentralSync = null;
+        try {
+            $authCentralSync = $this->authCentralBridge->syncCollegeUser($user, $plainPassword, 'Staff');
+        } catch (\Throwable $e) {
+            Log::warning('AuthCentral synchronization warning during staff reset: ' . $e->getMessage());
+        }
+
         Log::info('System User reset password for staff member', [
             'user_id' => $user->id,
             'email' => $user->email,
             'reset_by' => auth()->id(),
             'force_change' => $forceChange,
+            'authcentral_sync' => $authCentralSync['action'] ?? 'skipped',
         ]);
 
         $delivery = $this->dispatchCredentials(
@@ -239,6 +263,7 @@ class PasswordResetManagementService
             'phone' => $user->phone,
             'temporary_password' => $plainPassword,
             'delivery' => $delivery,
+            'authcentral_sync' => $authCentralSync,
         ];
     }
 
