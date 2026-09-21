@@ -60,9 +60,12 @@ class SemesterController extends Controller
             ],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+            'registration_starts_at' => 'nullable|date',
+            'registration_deadline' => 'nullable|date'.($request->filled('registration_starts_at') ? '|after:registration_starts_at' : ''),
         ], [
             'name.unique' => 'A semester with this name already exists.',
             'sequence.unique' => 'This semester position already exists in the selected Academic Year.',
+            'registration_deadline.after' => 'The registration deadline must be a date and time after the registration start date.',
         ]);
 
         // Check if the dates fall within the academic year dates
@@ -89,11 +92,13 @@ class SemesterController extends Controller
         $semester = Semester::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
-            'description' => $validated['description'],
+            'description' => $validated['description'] ?? null,
             'academic_year_id' => $validated['academic_year_id'],
             'sequence' => $validated['sequence'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
+            'registration_starts_at' => $validated['registration_starts_at'] ?? null,
+            'registration_deadline' => $validated['registration_deadline'] ?? null,
         ]);
 
         return redirect()->route('academics.semesters.index')
@@ -142,9 +147,12 @@ class SemesterController extends Controller
             ],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+            'registration_starts_at' => 'nullable|date',
+            'registration_deadline' => 'nullable|date'.($request->filled('registration_starts_at') ? '|after:registration_starts_at' : ''),
         ], [
             'name.unique' => 'A semester with this name already exists.',
             'sequence.unique' => 'This semester position already exists in the selected Academic Year.',
+            'registration_deadline.after' => 'The registration deadline must be a date and time after the registration start date.',
         ]);
 
         // Check if the dates fall within the academic year dates
@@ -171,11 +179,13 @@ class SemesterController extends Controller
         $semester->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
-            'description' => $validated['description'],
+            'description' => $validated['description'] ?? null,
             'academic_year_id' => $validated['academic_year_id'],
             'sequence' => $validated['sequence'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
+            'registration_starts_at' => $validated['registration_starts_at'] ?? null,
+            'registration_deadline' => $validated['registration_deadline'] ?? null,
         ]);
 
         return redirect()->route('academics.semesters.index')

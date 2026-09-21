@@ -172,9 +172,69 @@ runTest('Scenario 6: student.year2 - Sees Year 2 Semester 1 courses', function (
     }
 });
 
+// TEST 7: Deadline Expired Blocks Registration
+runTest('Scenario 7: Deadline Expired - student.eligible is blocked from registering', function () {
+    $currentSemester = \App\Models\Semester::where('is_current', true)->firstOrFail();
+    $originalDeadline = $currentSemester->registration_deadline;
+
+    try {
+        // Set deadline 1 hour in past
+        $currentSemester->update(['registration_deadline' => now()->subHour()]);
+
+        $user = User::where('email', 'student.eligible@college.test')->firstOrFail();
+        Auth::login($user);
+
+        $component = new StudentCourseRegistration();
+        $component->mount();
+
+        if ($component->registrationAllowed !== false) {
+            throw new \Exception("Expected registrationAllowed to be false after deadline, got true");
+        }
+
+        if ($component->deadlineExpired !== true) {
+            throw new \Exception("Expected deadlineExpired to be true after deadline, got false");
+        }
+
+        if (!str_contains(strtolower($component->registrationMessage), 'deadline')) {
+            throw new \Exception("Expected registrationMessage to mention deadline, got: {$component->registrationMessage}");
+        }
+    } finally {
+        // Restore original deadline
+        $currentSemester->update(['registration_deadline' => $originalDeadline]);
+    }
+});
+
+// TEST 8: Deadline in Future Allows Registration
+runTest('Scenario 8: Open Deadline - student.eligible can register when deadline is in future', function () {
+    $currentSemester = \App\Models\Semester::where('is_current', true)->firstOrFail();
+    $originalDeadline = $currentSemester->registration_deadline;
+
+    try {
+        // Set deadline 5 days in future
+        $currentSemester->update(['registration_deadline' => now()->addDays(5)]);
+
+        $user = User::where('email', 'student.eligible@college.test')->firstOrFail();
+        Auth::login($user);
+
+        $component = new StudentCourseRegistration();
+        $component->mount();
+
+        if ($component->registrationAllowed !== true) {
+            throw new \Exception("Expected registrationAllowed to be true when deadline in future, got false");
+        }
+
+        if ($component->deadlineExpired !== false) {
+            throw new \Exception("Expected deadlineExpired to be false when deadline in future, got true");
+        }
+    } finally {
+        // Restore original deadline
+        $currentSemester->update(['registration_deadline' => $originalDeadline]);
+    }
+});
+
 echo "\n========================================================\n";
 if ($allPassed) {
-    echo "🎉 ALL 6 SCENARIOS PASSED SUCCESSFULLY!\n";
+    echo "🎉 ALL 8 SCENARIOS PASSED SUCCESSFULLY!\n";
 } else {
     echo "⚠️ SOME SCENARIOS FAILED!\n";
     exit(1);

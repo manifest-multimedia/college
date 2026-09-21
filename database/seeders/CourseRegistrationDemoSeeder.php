@@ -355,8 +355,9 @@ class CourseRegistrationDemoSeeder extends Seeder
 
                 // Student
                 $student = Student::updateOrCreate(
-                    ['student_id' => $data['student_id']],
+                    ['email' => $data['email']],
                     [
+                        'student_id' => $data['student_id'],
                         'user_id' => $user->id,
                         'first_name' => $data['first'],
                         'last_name' => $data['last'],
@@ -379,18 +380,18 @@ class CourseRegistrationDemoSeeder extends Seeder
 
                     StudentFeeBill::updateOrCreate(
                         [
+                            'bill_reference' => 'BILL-'.$student->student_id.'-'.$semCurrent1->id,
+                        ],
+                        [
                             'student_id' => $student->id,
                             'academic_year_id' => $ayCurrent->id,
                             'semester_id' => $semCurrent1->id,
-                        ],
-                        [
                             'total_amount' => $data['total_amount'],
                             'amount_paid' => $data['paid_amount'],
                             'balance' => $bal,
                             'payment_percentage' => $pct,
                             'status' => $data['bill_status'],
                             'billing_date' => now(),
-                            'bill_reference' => 'BILL-'.$student->student_id.'-'.$semCurrent1->id,
                             'public_reference' => 'PB-'.Str::upper(Str::random(8)),
                         ]
                     );

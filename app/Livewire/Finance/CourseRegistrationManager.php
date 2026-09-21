@@ -250,6 +250,11 @@ class CourseRegistrationManager extends Component
         return Year::orderBy('name')->get();
     }
 
+    public function getSelectedSemesterProperty()
+    {
+        return $this->semesterId ? Semester::find($this->semesterId) : null;
+    }
+
     public function render()
     {
         return view('livewire.finance.course-registration-manager', [

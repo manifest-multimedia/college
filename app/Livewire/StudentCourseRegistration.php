@@ -32,6 +32,10 @@ class StudentCourseRegistration extends Component
 
     public $registrationMessageType = 'danger';
 
+    public $deadlineExpired = false;
+
+    public $deadlineNotice = '';
+
     public $paymentPercentage = 0;
 
     /** Balance display: 'credit' | 'debit' | 'zero' */
@@ -71,6 +75,7 @@ class StudentCourseRegistration extends Component
         }
 
         $this->checkPaymentStatus();
+        $this->checkRegistrationDeadline();
         $this->loadAvailableSubjects();
         $this->loadExistingRegistrations();
     }
@@ -106,6 +111,35 @@ class StudentCourseRegistration extends Component
             $this->registrationAllowed = false;
             $this->registrationMessage = 'You need to pay at least '.self::PAYMENT_THRESHOLD.'% of your fees to register for courses. Current payment: '.number_format($this->paymentPercentage, 1).'%. Please contact the Finance Department.';
             $this->registrationMessageType = 'warning';
+        }
+    }
+
+    public function checkRegistrationDeadline()
+    {
+        if (! $this->currentSemester) {
+            return;
+        }
+
+        if (! $this->currentSemester->isRegistrationStarted()) {
+            $this->registrationAllowed = false;
+            $this->deadlineExpired = false;
+            $this->registrationMessage = 'Course registration for this semester opens on '.$this->currentSemester->registration_starts_at->format('M d, Y \a\t h:i A').'.';
+            $this->registrationMessageType = 'info';
+
+            return;
+        }
+
+        if ($this->currentSemester->isRegistrationExpired()) {
+            $this->registrationAllowed = false;
+            $this->deadlineExpired = true;
+            $this->registrationMessage = 'The course registration deadline for this semester passed on '.$this->currentSemester->registration_deadline->format('M d, Y \a\t h:i A').'. Registration is now closed. Please contact the Academic Office if you require assistance.';
+            $this->registrationMessageType = 'danger';
+
+            return;
+        }
+
+        if ($this->currentSemester->hasRegistrationDeadline()) {
+            $this->deadlineNotice = 'Registration Deadline: '.$this->currentSemester->registration_deadline->format('M d, Y \a\t h:i A');
         }
     }
 
@@ -192,8 +226,20 @@ class StudentCourseRegistration extends Component
 
     public function submitRegistration()
     {
+        if ($this->currentSemester && ! $this->currentSemester->isRegistrationStarted()) {
+            session()->flash('error', 'Course registration for this semester has not opened yet.');
+
+            return;
+        }
+
+        if ($this->currentSemester && $this->currentSemester->isRegistrationExpired()) {
+            session()->flash('error', 'The course registration deadline for this semester has passed ('.$this->currentSemester->formatted_registration_deadline.'). Registration is closed.');
+
+            return;
+        }
+
         if (! $this->registrationAllowed) {
-            session()->flash('error', 'Course registration is not allowed due to insufficient fee payment.');
+            session()->flash('error', 'Course registration is not allowed due to eligibility or deadline constraints.');
 
             return;
         }

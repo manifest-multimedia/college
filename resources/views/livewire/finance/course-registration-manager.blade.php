@@ -1,12 +1,18 @@
 <div>
     <div class="card">
         <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="card-title">
-                    <i class="fas fa-book"></i> Course Registration Management (Admin)
+            <div class="card-title">
+                <h1 class="card-title mb-0 d-flex align-items-center">
+                    <i class="fas fa-book me-3 text-primary"></i> Course Registration Management
                 </h1>
+            </div>
+            <div class="card-toolbar">
                 <p class="card-subtitle text-muted mb-0">
-                    Administrative interface for managing student course registrations
+                    @if(auth()->check() && (auth()->user()->hasRole('Student') || auth()->user()->role === 'student'))
+                        Register and manage your course enrollments for the semester
+                    @else
+                        Manage and review student course registrations for the semester
+                    @endif
                 </p>
             </div>
         </div>
@@ -80,13 +86,30 @@
                     </div>
                 </div>
             </div>
+
+            @if($this->selectedSemester && $this->selectedSemester->hasRegistrationDeadline())
+                <div class="alert alert-{{ $this->selectedSemester->isRegistrationExpired() ? 'warning' : 'info' }} d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <i class="fas {{ $this->selectedSemester->isRegistrationExpired() ? 'fa-lock' : 'fa-clock' }} me-2"></i>
+                        <strong>Semester Registration Deadline:</strong> {{ $this->selectedSemester->formatted_registration_deadline }}
+                        @if($this->selectedSemester->isRegistrationExpired())
+                            <span class="badge bg-danger ms-2">Deadline Passed</span>
+                        @else
+                            <span class="badge bg-success ms-2">Open</span>
+                            <span class="ms-2 text-muted small">({{ now()->diffForHumans($this->selectedSemester->registration_deadline, ['syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW]) }})</span>
+                        @endif
+                    </div>
+                </div>
+            @endif
             
             @if($student)
                 <div class="row mb-4">
                     <div class="col-md-12">
                         <div class="card">
                             <div class="card-header bg-light">
-                                <h5 class="card-title mb-0">Student Information</h5>
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-user-graduate me-2 text-primary"></i>Student Information
+                                </h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -151,7 +174,9 @@
                             <div class="col-md-12">
                                 <div class="card">
                                     <div class="card-header bg-light">
-                                        <h5 class="card-title mb-0">Available Courses for Registration</h5>
+                                        <h5 class="card-title mb-0">
+                                            <i class="fas fa-book-open me-2 text-primary"></i>Available Courses for Registration
+                                        </h5>
                                     </div>
                                     <div class="card-body">
                                         @if(empty($yearId))
@@ -230,7 +255,9 @@
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header bg-light">
-                                    <h5 class="card-title mb-0">Current Course Registrations</h5>
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-history me-2 text-primary"></i>Current Course Registrations
+                                    </h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">

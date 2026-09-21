@@ -87,6 +87,37 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="card bg-light border-0 mb-3 mt-2">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-primary mb-2">
+                                                <i class="fas fa-calendar-alt me-1"></i> Course Registration Window (Optional)
+                                            </h6>
+                                            <p class="text-muted small mb-3">Set when students can begin registering for courses and the deadline after which registration closes.</p>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="registration_starts_at" class="form-label">Registration Opens At</label>
+                                                        <input type="datetime-local" class="form-control @error('registration_starts_at') is-invalid @enderror" id="registration_starts_at" name="registration_starts_at" value="{{ old('registration_starts_at', $semester->registration_starts_at ? $semester->registration_starts_at->format('Y-m-d\TH:i') : '') }}">
+                                                        <small class="form-text text-muted">Leave blank for registration to open immediately upon semester start.</small>
+                                                        @error('registration_starts_at')
+                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="registration_deadline" class="form-label">Registration Deadline</label>
+                                                        <input type="datetime-local" class="form-control @error('registration_deadline') is-invalid @enderror" id="registration_deadline" name="registration_deadline" value="{{ old('registration_deadline', $semester->registration_deadline ? $semester->registration_deadline->format('Y-m-d\TH:i') : '') }}">
+                                                        <small class="form-text text-muted">Leave blank if there is no deadline cutoff.</small>
+                                                        @error('registration_deadline')
+                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     
                                     <div class="d-grid gap-2 mt-4">
                                         <button type="submit" class="btn btn-primary">

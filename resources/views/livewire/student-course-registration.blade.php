@@ -43,16 +43,56 @@
                             <i class="fas fa-exclamation-triangle me-2"></i>No active academic year or semester found. Please contact the administration.
                         </div>
                     @else
+                        <!-- Registration Deadline Status Banner -->
+                        @if($currentSemester)
+                            @if($currentSemester->isRegistrationExpired())
+                                <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                                    <i class="fas fa-lock fa-2x me-3"></i>
+                                    <div>
+                                        <h5 class="alert-heading mb-1">Registration Closed</h5>
+                                        <p class="mb-0">
+                                            The course registration deadline for <strong>{{ $currentSemester->name }}</strong> was <strong>{{ $currentSemester->formatted_registration_deadline }}</strong>.
+                                            New registrations or course changes can no longer be submitted through the student portal. If you need special clearance or late registration, please contact the Academic Office.
+                                        </p>
+                                    </div>
+                                </div>
+                            @elseif(! $currentSemester->isRegistrationStarted())
+                                <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                                    <i class="fas fa-calendar-alt fa-2x me-3"></i>
+                                    <div>
+                                        <h5 class="alert-heading mb-1">Registration Not Yet Open</h5>
+                                        <p class="mb-0">
+                                            Course registration for <strong>{{ $currentSemester->name }}</strong> will officially open on <strong>{{ $currentSemester->registration_starts_at->format('M d, Y \a\t h:i A') }}</strong>.
+                                        </p>
+                                    </div>
+                                </div>
+                            @elseif($currentSemester->hasRegistrationDeadline())
+                                <div class="alert alert-primary d-flex align-items-center justify-content-between mb-4" role="alert">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-hourglass-half fa-2x me-3 text-primary"></i>
+                                        <div>
+                                            <h6 class="alert-heading mb-0 fw-bold">Course Registration Window Open</h6>
+                                            <span class="text-muted small">
+                                                Registration Deadline: <strong>{{ $currentSemester->formatted_registration_deadline }}</strong>
+                                                ({{ now()->diffForHumans($currentSemester->registration_deadline, ['syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW]) }})
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-primary">Open</span>
+                                </div>
+                            @endif
+                        @endif
+
                         <!-- Payment Status Card -->
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <div class="card border-left-{{ $registrationMessageType === 'success' ? 'success' : 'warning' }}">
+                                <div class="card border-left-{{ $registrationMessageType === 'success' ? 'success' : ($registrationMessageType === 'danger' ? 'danger' : 'warning') }}">
                                     <div class="card-body">
                                         <h5 class="card-title">
-                                            <i class="fas fa-credit-card me-2"></i>Payment Status
+                                            <i class="fas fa-credit-card me-2"></i>Registration Status
                                         </h5>
                                         <div class="alert alert-{{ $registrationMessageType }} mb-0">
-                                            <i class="fas fa-{{ $registrationMessageType === 'success' ? 'check-circle' : 'exclamation-triangle' }} me-2"></i>
+                                            <i class="fas fa-{{ $registrationMessageType === 'success' ? 'check-circle' : ($registrationMessageType === 'danger' ? 'times-circle' : 'exclamation-triangle') }} me-2"></i>
                                             {{ $registrationMessage }}
                                         </div>
                                     </div>
@@ -142,6 +182,16 @@
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 No subjects are available for registration in your class for this semester. Please contact the Academic Office.
+                            </div>
+                        @elseif($currentSemester && $currentSemester->isRegistrationExpired())
+                            <div class="alert alert-danger">
+                                <i class="fas fa-lock me-2"></i>
+                                Course registration for this semester is closed as the deadline has passed ({{ $currentSemester->formatted_registration_deadline }}).
+                            </div>
+                        @elseif($currentSemester && ! $currentSemester->isRegistrationStarted())
+                            <div class="alert alert-info">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Course registration will open on {{ $currentSemester->registration_starts_at->format('M d, Y \a\t h:i A') }}.
                             </div>
                         @else
                             <div class="alert alert-warning">

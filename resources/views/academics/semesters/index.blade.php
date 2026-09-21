@@ -45,6 +45,7 @@
                                         <th>Position</th>
                                         <th>Academic Year</th>
                                         <th>Duration</th>
+                                        <th>Reg. Deadline</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -68,6 +69,20 @@
                                                     {{ $semester->start_date->format('M d, Y') }} - {{ $semester->end_date->format('M d, Y') }}
                                                 @else
                                                     <span class="text-muted">No dates set</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($semester->registration_deadline)
+                                                    <div class="small fw-semibold">{{ $semester->registration_deadline->format('M d, Y h:i A') }}</div>
+                                                    @if($semester->isRegistrationExpired())
+                                                        <span class="badge bg-danger">Closed</span>
+                                                    @elseif(! $semester->isRegistrationStarted())
+                                                        <span class="badge bg-info">Opens {{ $semester->registration_starts_at->format('M d, Y') }}</span>
+                                                    @else
+                                                        <span class="badge bg-success">Open</span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted small">No deadline</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -129,7 +144,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">No semesters found.</td>
+                                            <td colspan="7" class="text-center">No semesters found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

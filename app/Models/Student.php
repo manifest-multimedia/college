@@ -325,6 +325,23 @@ class Student extends Model
     }
 
     /**
+     * Check if course registration window is currently open for a given semester
+     *
+     * @param  int|null  $semesterId
+     * @return bool
+     */
+    public function isRegistrationWindowOpen($semesterId = null)
+    {
+        $semester = $semesterId ? Semester::find($semesterId) : Semester::where('is_current', true)->first();
+
+        if (! $semester) {
+            return false;
+        }
+
+        return $semester->isRegistrationOpen();
+    }
+
+    /**
      * Check if student is eligible for exam clearance based on exam type
      *
      * @param  int  $academicYearId

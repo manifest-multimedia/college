@@ -97,17 +97,48 @@
             <div class="row g-5 mb-5">
                 <div class="col-lg-6">
                     <div class="card h-100">
-                        <div class="card-header">
-                            <h3 class="card-title">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title mb-0">
                                 <i class="fas fa-book-open me-2"></i>Course Registration
                             </h3>
+                            @if(isset($currentSemester) && $currentSemester->hasRegistrationDeadline())
+                                @if($currentSemester->isRegistrationExpired())
+                                    <span class="badge bg-danger">Closed</span>
+                                @elseif(! $currentSemester->isRegistrationStarted())
+                                    <span class="badge bg-info">Upcoming</span>
+                                @else
+                                    <span class="badge bg-success">Open</span>
+                                @endif
+                            @endif
                         </div>
                         <div class="card-body">
-                            @if($paymentPercentage >= 60)
+                            @if(isset($currentSemester) && $currentSemester->isRegistrationExpired())
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-lock me-2"></i>
+                                    Registration closed on {{ $currentSemester->formatted_registration_deadline }}.
+                                </div>
+                                <p class="text-muted small">New course registrations for this semester are no longer accepted.</p>
+                                <a href="{{ route('courseregistration') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-eye me-2"></i>View Registered Courses
+                                </a>
+                            @elseif(isset($currentSemester) && ! $currentSemester->isRegistrationStarted())
+                                <div class="alert alert-info">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Registration opens on {{ $currentSemester->registration_starts_at->format('M d, Y \a\t h:i A') }}.
+                                </div>
+                                <p class="text-muted small">Course registration will become available once the registration window opens.</p>
+                            @elseif($paymentPercentage >= 60)
                                 <div class="alert alert-success">
                                     <i class="fas fa-check-circle me-2"></i>
                                     You are eligible for course registration ({{ number_format($paymentPercentage, 1) }}% fees paid)@if(($balanceDisplayType ?? 'zero') === 'credit') — credit (GH₵{{ number_format($balanceDisplayAmount ?? 0, 2) }})@endif
                                 </div>
+                                @if(isset($currentSemester) && $currentSemester->hasRegistrationDeadline())
+                                    <p class="text-muted small mb-3">
+                                        <i class="fas fa-clock me-1 text-warning"></i>
+                                        Deadline: <strong>{{ $currentSemester->formatted_registration_deadline }}</strong>
+                                        ({{ now()->diffForHumans($currentSemester->registration_deadline, ['syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW]) }})
+                                    </p>
+                                @endif
                                 <a href="{{ route('courseregistration') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>Register for Courses
                                 </a>
@@ -198,8 +229,9 @@
                                 <div class="text-center py-5">
                                     <i class="fas fa-book-open text-muted" style="font-size: 3rem;"></i>
                                     <h5 class="text-muted mt-3">No courses registered yet</h5>
-                                    <p class="text-muted">Register for courses to see them here</p>
-                                    @if($paymentPercentage >= 60)
+                                    @if(isset($currentSemester) && $currentSemester->isRegistrationExpired())
+                                        <span class="badge bg-danger fs-7 mt-2 p-2">Registration Closed</span>
+                                    @elseif($paymentPercentage >= 60)
                                         <a href="{{ route('courseregistration') }}" class="btn btn-primary">Register Now</a>
                                     @endif
                                 </div>

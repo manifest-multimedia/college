@@ -19,6 +19,8 @@ class Semester extends Model
         'sequence',
         'start_date',
         'end_date',
+        'registration_starts_at',
+        'registration_deadline',
         'is_current',
         'description',
     ];
@@ -26,6 +28,8 @@ class Semester extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'registration_starts_at' => 'datetime',
+        'registration_deadline' => 'datetime',
         'is_current' => 'boolean',
         'sequence' => 'integer',
     ];
@@ -140,5 +144,77 @@ class Semester extends Model
 
             return false;
         }
+    }
+
+    /**
+     * Check if this semester has a registration deadline specified.
+     */
+    public function hasRegistrationDeadline(): bool
+    {
+        return ! is_null($this->registration_deadline);
+    }
+
+    /**
+     * Check if registration has opened for this semester.
+     */
+    public function isRegistrationStarted(): bool
+    {
+        if (is_null($this->registration_starts_at)) {
+            return true;
+        }
+
+        return now()->gte($this->registration_starts_at);
+    }
+
+    /**
+     * Check if the registration deadline has passed for this semester.
+     */
+    public function isRegistrationExpired(): bool
+    {
+        if (is_null($this->registration_deadline)) {
+            return false;
+        }
+
+        return now()->gt($this->registration_deadline);
+    }
+
+    /**
+     * Check if course registration is currently open for this semester.
+     */
+    public function isRegistrationOpen(): bool
+    {
+        return $this->isRegistrationStarted() && ! $this->isRegistrationExpired();
+    }
+
+    /**
+     * Get registration window status key: 'not_started' | 'open' | 'closed' | 'no_deadline'
+     */
+    public function getRegistrationStatusAttribute(): string
+    {
+        if (! $this->isRegistrationStarted()) {
+            return 'not_started';
+        }
+
+        if ($this->isRegistrationExpired()) {
+            return 'closed';
+        }
+
+        if ($this->hasRegistrationDeadline()) {
+            return 'open';
+        }
+
+        return 'no_deadline';
+    }
+
+    /**
+     * Get user-friendly formatted registration deadline string.
+     */
+    public function getFormattedRegistrationDeadlineAttribute(): ?string
+    {
+        if (! $this->registration_deadline) {
+            return null;
+        }
+
+        return $this->registration_deadline->format('M d, Y h:i A');
     }
 }

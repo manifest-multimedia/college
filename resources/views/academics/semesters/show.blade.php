@@ -56,6 +56,34 @@
                                             <td>{{ $semester->end_date ? $semester->end_date->format('F d, Y') : 'Not set' }}</td>
                                         </tr>
                                         <tr>
+                                            <th>Registration Opens</th>
+                                            <td>
+                                                @if($semester->registration_starts_at)
+                                                    {{ $semester->registration_starts_at->format('F d, Y h:i A') }}
+                                                    @if(! $semester->isRegistrationStarted())
+                                                        <span class="badge bg-info ms-2">Upcoming</span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted">Immediately upon start</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Registration Deadline</th>
+                                            <td>
+                                                @if($semester->registration_deadline)
+                                                    {{ $semester->registration_deadline->format('F d, Y h:i A') }}
+                                                    @if($semester->isRegistrationExpired())
+                                                        <span class="badge bg-danger ms-2">Closed / Passed</span>
+                                                    @else
+                                                        <span class="badge bg-success ms-2">Open</span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted">No deadline set</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        <tr>
                                             <th>Status</th>
                                             <td>
                                                 @if($semester->is_current)

@@ -106,6 +106,25 @@ class CourseRegistrationForm extends Component
             return;
         }
 
+        // Check registration window deadline
+        if ($this->currentSemester) {
+            if (! $this->currentSemester->isRegistrationStarted()) {
+                $this->registrationAllowed = false;
+                $this->registrationMessage = 'Course registration for this semester opens on '.$this->currentSemester->registration_starts_at->format('M d, Y \a\t h:i A').'.';
+                $this->registrationMessageType = 'info';
+
+                return;
+            }
+
+            if ($this->currentSemester->isRegistrationExpired()) {
+                $this->registrationAllowed = false;
+                $this->registrationMessage = 'The course registration deadline for this semester passed on '.$this->currentSemester->registration_deadline->format('M d, Y \a\t h:i A').'. Registration is closed.';
+                $this->registrationMessageType = 'danger';
+
+                return;
+            }
+        }
+
         // Load existing registrations for this semester
         $existingRegistrations = CourseRegistrationModel::where('student_id', $this->student->id)
             ->where('academic_year_id', $this->currentAcademicYear->id)
@@ -118,8 +137,20 @@ class CourseRegistrationForm extends Component
 
     public function submitRegistration()
     {
+        if ($this->currentSemester && ! $this->currentSemester->isRegistrationStarted()) {
+            session()->flash('error', 'Course registration for this semester has not opened yet.');
+
+            return;
+        }
+
+        if ($this->currentSemester && $this->currentSemester->isRegistrationExpired()) {
+            session()->flash('error', 'The course registration deadline for this semester has passed. Registration is closed.');
+
+            return;
+        }
+
         if (! $this->registrationAllowed) {
-            session()->flash('error', 'Course registration is not allowed due to insufficient fee payment.');
+            session()->flash('error', 'Course registration is not allowed due to eligibility or deadline constraints.');
 
             return;
         }

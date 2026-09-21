@@ -101,6 +101,7 @@ class StudentDashboardController extends Controller
 
             return view('students.dashboard', [
                 'student' => $student,
+                'currentSemester' => $currentSemester,
                 'enrolledCourses' => $enrolledCourses,
                 'paymentPercentage' => $paymentPercentage,
                 'examsTaken' => $examsTaken,
