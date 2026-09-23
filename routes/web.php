@@ -431,7 +431,7 @@ Route::middleware([
     | Finance Management & Fee Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:Super Admin|Administrator|Finance Officer|Finance Manager|System'])->prefix('finance')->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Super Admin|Finance Manager'])->prefix('finance')->group(function () {
         Route::get('/billing', function () {
             return view('finance.billing');
         })->name('finance.billing');
@@ -527,7 +527,7 @@ Route::middleware([
     | Finance Officer Course Registration Approvals
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth:sanctum', 'role:System|Finance Officer|Super Admin|Administrator'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:System|Super Admin|Finance Manager'])->group(function () {
         Route::get('/finance/course-registration-approvals', function () {
             return view('finance.course-registration-approvals');
         })->name('finance.course.registration.approvals');

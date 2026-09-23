@@ -902,7 +902,8 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             @endhasanyrole
             
-            {{-- @canany(['view finance', 'create invoices', 'process payments', 'generate financial reports']) --}}
+            @hasanyrole(['System', 'Super Admin', 'Finance Manager'])
+            {{-- Finance Module menu (restricted to System, Super Admin, Finance Manager) --}}
             <!--begin:Menu item-->
             @php
                 $financeRoutes = [
@@ -1010,7 +1011,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     @endhasrole
-                    @hasrole('System|Finance Officer|Super Admin|Administrator')
+                    @hasanyrole(['System', 'Super Admin', 'Finance Manager'])
                     <!--begin:Menu item-->
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('finance.course.registration.approvals') ? 'active' : '' }}" href="{{ route('finance.course.registration.approvals') }}">
@@ -1042,7 +1043,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                 <!--end:Menu sub-->
             </div>
             <!--end:Menu item-->
-            {{-- @endcanany --}}
+            @endhasanyrole
             
             @hasrole('System')
             <!--begin:Menu item-->
