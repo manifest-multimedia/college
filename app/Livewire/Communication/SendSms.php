@@ -120,7 +120,10 @@ class SendSms extends Component
     protected function loadRecipientLists()
     {
         try {
-            $this->recipientLists = RecipientList::where('is_active', true)
+            $this->recipientLists = RecipientList::withCount(['items' => function ($query) {
+                    $query->where('is_active', true)->whereNotNull('phone');
+                }])
+                ->where('is_active', true)
                 ->where(function ($query) {
                     $query->where('type', 'sms')
                         ->orWhere('type', 'both');
@@ -159,7 +162,7 @@ class SendSms extends Component
     public function sendSms()
     {
         $this->validate([
-            'message' => 'required|min:3|max:160',
+            'message' => 'required|string|min:1',
             'selectedSenderId' => ['required', Rule::in($this->senderIds)],
         ]);
 
@@ -337,6 +340,46 @@ class SendSms extends Component
                 'duplicate_numbers' => $validNumbers->count() - count($recipients),
             ],
         ];
+    }
+
+    public function getPageCountProperty(): int
+    {
+        $length = mb_strlen(trim($this->message));
+
+        return $length > 0 ? (int) ceil($length / 160) : 1;
+    }
+
+    public function getCharacterCountProperty(): int
+    {
+        return mb_strlen($this->message);
+    }
+
+    public function getRemainingCharactersInPageProperty(): int
+    {
+        $length = mb_strlen($this->message);
+        if ($length === 0) {
+            return 160;
+        }
+
+        $remainder = $length % 160;
+
+        return $remainder === 0 ? 0 : (160 - $remainder);
+    }
+
+    public function getEstimatedRecipientsCountProperty(): int
+    {
+        return match ($this->sendType) {
+            'single' => filled($this->recipient) ? 1 : 0,
+            'bulk' => count($this->recipients),
+            'group' => $this->recipientListId ? (int) (collect($this->recipientLists)->firstWhere('id', (int) $this->recipientListId)['items_count'] ?? 0) : 0,
+            'audience' => (int) ($this->audienceSummary['valid_numbers'] ?? 0),
+            default => 0,
+        };
+    }
+
+    public function getEstimatedCreditsProperty(): int
+    {
+        return $this->estimatedRecipientsCount * $this->pageCount;
     }
 
     public function render()
