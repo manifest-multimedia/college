@@ -1,4 +1,10 @@
 <div>
+    @if(session()->has('warning'))
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ session('warning') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
     @if(session()->has('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -100,6 +106,66 @@
                             <small class="text-muted">Select the academic year for student ID generation. If not selected, the current academic year will be used.</small>
                         </div>
                         
+                        @if(in_array('date_of_birth', $columnMapping, true))
+                            @php
+                                $dateParser = new \App\Services\StudentImportDateParser;
+                                $dateAnalysis = $dateFormatAnalysis ?: $dateParser->inspect([]);
+                                $dateStatus = $dateFormatAnalysis === [] ? 'unavailable' : $dateParser->status($dateAnalysis);
+                            @endphp
+                            <div class="mb-4">
+                                <label for="dateFormat" class="form-label">Date of Birth Format</label>
+                                <select id="dateFormat" class="form-select @error('dateFormat') is-invalid @enderror" wire:model.live="dateFormat">
+                                    <option value="auto">Detect from the date column</option>
+                                    <option value="dmy">Day / Month / Year (DD/MM/YYYY)</option>
+                                    <option value="mdy">Month / Day / Year (MM/DD/YYYY)</option>
+                                </select>
+                                @error('dateFormat')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="alert {{ in_array($dateStatus, ['ambiguous', 'mixed'], true) ? 'alert-warning' : 'alert-info' }} mt-2 mb-2" role="status">
+                                    @if($dateStatus === 'unavailable')
+                                        Date preview is unavailable. Confirm the mapping or re-upload the file; import will recheck the column before proceeding.
+                                    @elseif($dateStatus === 'detected')
+                                        Detected <strong>{{ $dateAnalysis['dmy'] > 0 ? 'day/month/year' : 'month/day/year' }}</strong>
+                                        from {{ $dateAnalysis['dmy'] + $dateAnalysis['mdy'] }} unambiguous numeric dates in the full column.
+                                    @elseif($dateStatus === 'ambiguous')
+                                        Both day-first and month-first interpretations are possible. Choose a format using the examples below; automatic import is blocked.
+                                    @elseif($dateStatus === 'mixed')
+                                        Conflicting day-first and month-first dates were found. Correct the column or choose one format consistently; incompatible rows will be reported as invalid.
+                                    @elseif($dateStatus === 'empty')
+                                        No dates supplied in the mapped column. Dates of birth will remain optional.
+                                    @elseif($dateStatus === 'invalid')
+                                        No valid dates were recognized in this column. Check the mapping and source values before importing.
+                                    @else
+                                        No day/month choice is needed for the recognized year-first, named-month or Excel dates.
+                                    @endif
+                                    @if($dateFormat !== 'auto')
+                                        <div class="mt-1"><strong>Your selection:</strong> {{ $dateFormat === 'dmy' ? 'day/month/year' : 'month/day/year' }}. Numeric dates will use this order consistently.</div>
+                                    @endif
+                                    @if($dateAnalysis['invalid'] > 0)
+                                        <div class="mt-1">{{ $dateAnalysis['invalid'] }} invalid dates found. Review the row errors after import.</div>
+                                    @endif
+                                </div>
+                                @if($dateAnalysis['examples'])
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-1">
+                                            <thead><tr><th>File value</th><th>Day-first meaning</th><th>Month-first meaning</th></tr></thead>
+                                            <tbody>
+                                                @foreach($dateAnalysis['examples'] as $example)
+                                                    <tr>
+                                                        <td>{{ $example['value'] }}</td>
+                                                        <td>{{ $example['dmy'] ? (new \DateTimeImmutable($example['dmy']))->format('j M Y') : 'Invalid' }}</td>
+                                                        <td>{{ $example['mdy'] ? (new \DateTimeImmutable($example['mdy']))->format('j M Y') : 'Invalid' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                                <small class="text-muted">The full mapped column is checked before import. Year-first and Excel dates retain their meaning; valid dates are saved as YYYY-MM-DD.</small>
+                            </div>
+                        @endif
+
                         <div class="alert alert-info mb-4">
                             <i class="fas fa-user-check me-2"></i>
                             <strong>Student portal accounts are created automatically.</strong>
@@ -158,7 +224,7 @@
                                         <td class="fw-semibold">{{ $header['label'] }}</td>
                                         <td class="text-muted text-truncate" style="max-width: 220px;">{{ $header['sample'] ?: '—' }}</td>
                                         <td>
-                                            <select class="form-select form-select-sm" wire:model="columnMapping.{{ $header['key'] }}">
+                                            <select class="form-select form-select-sm" wire:model.live="columnMapping.{{ $header['key'] }}">
                                                 <option value="">-- Not Mapped --</option>
                                                 @foreach ($availableFields as $fieldKey => $fieldName)
                                                     <option value="{{ $fieldKey }}">{{ $fieldName }}</option>
@@ -184,7 +250,7 @@
             <!-- Import Results -->
             @if ($importResults)
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">
+                    <div class="card-header {{ $importResults['skipped'] > 0 || $importResults['failed'] > 0 ? 'bg-warning text-dark' : 'bg-success text-white' }}">
                         <div class="card-title">
                             <h3 class="card-title fw-bold">
                                 <i class="fas fa-check-circle me-2"></i>Import Results
@@ -241,7 +307,7 @@
                             <div class="mt-3">
                                 <h6>Validation Errors:</h6>
                                 <div class="alert alert-warning" style="max-height: 200px; overflow-y: auto;">
-                                    @foreach(array_slice($importResults['validation_errors'], 0, 10) as $error)
+                                    @foreach($importResults['validation_errors'] as $error)
                                         <div class="mb-2">
                                             <strong>Row {{ $error['row'] }}:</strong>
                                             <ul class="mb-0">
@@ -251,11 +317,6 @@
                                             </ul>
                                         </div>
                                     @endforeach
-                                    @if(count($importResults['validation_errors']) > 10)
-                                        <div class="text-muted">
-                                            ... and {{ count($importResults['validation_errors']) - 10 }} more validation errors
-                                        </div>
-                                    @endif
                                 </div>
                             </div>
                         @endif
@@ -295,6 +356,7 @@
                         <li><strong>Other Name(s)</strong>: Middle names or other names</li>
                         <li><strong>Email</strong>: Required and must be unique for student account creation</li>
                         <li><strong>Mobile Number</strong>: Contact number</li>
+                        <li><strong>Date of Birth</strong>: The format is detected from the full column. Choose day-first or month-first when ambiguous; YYYY-MM-DD and Excel date cells are also supported.</li>
                         <li>... and other demographic information</li>
                     </ul>
                     

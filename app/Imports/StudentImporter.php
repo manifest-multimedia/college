@@ -5,16 +5,17 @@ namespace App\Imports;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\StudentIdGenerationService;
+use App\Services\StudentImportDateParser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\Models\Role;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Spatie\Permission\Models\Role;
 
 class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReading, WithHeadingRow, WithValidation
 {
@@ -31,6 +32,10 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
     protected $createAccounts;
 
     protected $headingRow;
+
+    protected string $dateFormat;
+
+    protected string $effectiveDateFormat;
 
     /** @var array<string, int> */
     protected $processedEmails = [];
@@ -59,13 +64,15 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
      * @param  bool  $createAccounts  Whether student portal accounts must be provisioned
      * @param  int  $headingRow  The row that contains the mapped spreadsheet headings
      */
-    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null, $createAccounts = true, $headingRow = 1)
+    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null, $createAccounts = true, $headingRow = 1, $dateFormat = 'auto')
     {
         $this->programId = $programId;
         $this->cohortId = $cohortId;
         $this->academicYearId = $academicYearId;
         $this->createAccounts = $createAccounts;
         $this->headingRow = max(1, (int) $headingRow);
+        $this->dateFormat = $dateFormat;
+        $this->effectiveDateFormat = $dateFormat;
         $this->studentIdService = new StudentIdGenerationService;
 
         // Default column mapping (Excel column => Database field)
@@ -96,6 +103,13 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
 
     public function collection(Collection $rows): void
     {
+        // Direct callers also resolve the entire supplied collection before
+        // writes. File uploads pass the result of the complete-file preflight.
+        $dateColumn = array_search('date_of_birth', $this->columnMapping, true);
+        $parser = new StudentImportDateParser;
+        $this->effectiveDateFormat = $parser->resolve($parser->inspect(
+            $dateColumn === false ? [] : $rows->map(fn ($row) => $row[strtolower(str_replace(' ', '_', $dateColumn))] ?? null)
+        ), $this->dateFormat);
         $this->importStats['total'] = count($rows);
 
         foreach ($rows as $rowIndex => $row) {
@@ -142,6 +156,19 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                 $studentData['cohort_id'] = $this->cohortId;
                 $studentData['status'] = $studentData['status'] ?? 'active'; // Default status
 
+                // Resolve an existing record before generating an ID. A retry
+                // without an ID column must not renumber students matched by email.
+                $existingStudent = null;
+                if (! empty($studentData['student_id'])) {
+                    $existingStudent = Student::where('student_id', $studentData['student_id'])->first();
+                }
+                if (! $existingStudent) {
+                    $existingStudent = Student::where('email', $studentData['email'])->first();
+                }
+                if ($existingStudent && empty($studentData['student_id'])) {
+                    $studentData['student_id'] = $existingStudent->student_id;
+                }
+
                 // Generate student ID if not provided
                 if (empty($studentData['student_id']) &&
                     ! empty($studentData['first_name']) &&
@@ -175,16 +202,6 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
 
                         continue;
                     }
-                }
-
-                // Check if student exists (by student ID or email)
-                $existingStudent = null;
-                if (! empty($studentData['student_id'])) {
-                    $existingStudent = Student::where('student_id', $studentData['student_id'])->first();
-                }
-
-                if (! $existingStudent && ! empty($studentData['email'])) {
-                    $existingStudent = Student::where('email', $studentData['email'])->first();
                 }
 
                 if ($existingStudent && Student::where('email', $studentData['email'])
@@ -267,16 +284,9 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                     $value = str_replace(' ', '', $value);
                 }
 
-                // Convert Excel date serial number to proper date format
+                // Apply the column's detected/selected format consistently.
                 if ($dbField === 'date_of_birth' && ! is_null($value)) {
-                    // Check if value is numeric (Excel serial date)
-                    if (is_numeric($value)) {
-                        try {
-                            $value = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d');
-                        } catch (\Exception $e) {
-                            Log::warning("Failed to convert Excel date: {$value}");
-                        }
-                    }
+                    $value = $this->normalizeDateOfBirth($value) ?? $value;
                 }
 
                 // Normalize gender to lowercase for consistency
@@ -289,6 +299,11 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         }
 
         return $studentData;
+    }
+
+    protected function normalizeDateOfBirth(mixed $value): ?string
+    {
+        return (new StudentImportDateParser)->normalize($value, $this->effectiveDateFormat);
     }
 
     /**
@@ -320,10 +335,10 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         }
 
         // Validate date of birth if provided
-        if (! empty($studentData['date_of_birth'])) {
+        if (isset($studentData['date_of_birth']) && $studentData['date_of_birth'] !== '') {
             $dob = $studentData['date_of_birth'];
-            if (! strtotime($dob)) {
-                $errors[] = 'Invalid date of birth format: '.$dob;
+            if ($this->normalizeDateOfBirth($dob) === null) {
+                $errors[] = 'Invalid date of birth: '.$dob.'. Check the selected date format and use a valid calendar date (or YYYY-MM-DD).';
                 $valid = false;
             }
         }

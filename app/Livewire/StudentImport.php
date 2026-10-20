@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Imports\StudentDateFormatInspector;
 use App\Imports\StudentImporter;
 use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
+use App\Services\StudentImportDateParser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -13,6 +15,7 @@ use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 
 class StudentImport extends Component
 {
@@ -42,6 +45,10 @@ class StudentImport extends Component
      * administrator may select that heading row after upload.
      */
     public $headingRow = 1;
+
+    public $dateFormat = 'auto';
+
+    public $dateFormatAnalysis = [];
 
     public $importResults = null;
 
@@ -95,6 +102,7 @@ class StudentImport extends Component
         'programId' => 'required|exists:college_classes,id',
         'cohortId' => 'required|exists:cohorts,id',
         'academicYearId' => 'nullable|exists:academic_years,id',
+        'dateFormat' => 'required|in:auto,dmy,mdy',
     ];
 
     protected $messages = [
@@ -131,7 +139,10 @@ class StudentImport extends Component
     {
         $this->uploadedHeaders = [];
         $this->columnMapping = [];
+        $this->dateFormat = 'auto';
+        $this->dateFormatAnalysis = [];
         $this->resetValidation('file');
+        $this->resetValidation('dateFormat');
 
         if (! $this->file) {
             return;
@@ -148,6 +159,37 @@ class StudentImport extends Component
         }
     }
 
+    public function updatedColumnMapping(): void
+    {
+        $this->detectDateFormat();
+    }
+
+    public function updatedDateFormat(): void
+    {
+        $this->resetValidation('dateFormat');
+    }
+
+    protected function detectDateFormat(): void
+    {
+        $this->dateFormatAnalysis = [];
+        $this->resetValidation('dateFormat');
+        $parser = new StudentImportDateParser;
+        $column = array_search('date_of_birth', $this->columnMapping, true);
+        if (! $this->file || $column === false) {
+            $this->dateFormatAnalysis = $parser->inspect([]);
+
+            return;
+        }
+        try {
+            $inspector = new StudentDateFormatInspector($column, (int) $this->headingRow);
+            Excel::import($inspector, $this->file);
+            $this->dateFormatAnalysis = $inspector->analysis;
+        } catch (\Throwable $exception) {
+            Log::warning('Student import date inspection failed', ['error' => $exception->getMessage()]);
+            $this->addError('dateFormat', 'The date column could not be checked. Re-upload the file and confirm its mapping.');
+        }
+    }
+
     protected function detectUploadedHeaders(): void
     {
         try {
@@ -156,11 +198,9 @@ class StudentImport extends Component
 
             $reader = IOFactory::createReaderForFile($this->file->getRealPath());
             $reader->setReadDataOnly(true);
-            $reader->setReadFilter(new class($headingRow) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
+            $reader->setReadFilter(new class($headingRow) implements IReadFilter
             {
-                public function __construct(private readonly int $lastRow)
-                {
-                }
+                public function __construct(private readonly int $lastRow) {}
 
                 public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
                 {
@@ -180,7 +220,7 @@ class StudentImport extends Component
             )[0] ?? [];
 
             $samples = $worksheet->rangeToArray(
-                "A".($headingRow + 1).":{$lastColumn}".($headingRow + 3),
+                'A'.($headingRow + 1).":{$lastColumn}".($headingRow + 3),
                 null,
                 false,
                 false,
@@ -227,6 +267,7 @@ class StudentImport extends Component
             $this->uploadedHeaders = $detectedHeaders;
             $this->columnMapping = $mapping;
             $spreadsheet->disconnectWorksheets();
+            $this->detectDateFormat();
         } catch (\Throwable $exception) {
             Log::warning('Student import header detection failed', ['error' => $exception->getMessage()]);
             $this->uploadedHeaders = [];
@@ -294,10 +335,26 @@ class StudentImport extends Component
         }
     }
 
+    protected function resolveDateFormatForImport(): string
+    {
+        // Never trust a preview retained in Livewire state: re-read the complete
+        // mapped column before any ID generation, student or account writes.
+        $this->detectDateFormat();
+        if ($this->dateFormatAnalysis === []) {
+            throw ValidationException::withMessages(['dateFormat' => 'The date column could not be checked. Re-upload the file and confirm its mapping.']);
+        }
+        try {
+            return (new StudentImportDateParser)->resolve($this->dateFormatAnalysis, $this->dateFormat);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages(['dateFormat' => $exception->getMessage()]);
+        }
+    }
+
     public function import()
     {
         $this->validate();
         $this->validateColumnMapping();
+        $resolvedDateFormat = $this->resolveDateFormatForImport();
 
         try {
             $this->isProcessing = true;
@@ -313,7 +370,8 @@ class StudentImport extends Component
                 $this->columnMapping,
                 $this->academicYearId,
                 true,
-                $this->headingRow
+                $this->headingRow,
+                $resolvedDateFormat
             );
 
             Excel::import($importer, $this->file);
@@ -321,7 +379,8 @@ class StudentImport extends Component
             // Get import results
             $this->importResults = $importer->getImportStats();
 
-            $message = 'Students imported successfully: '.
+            $hasIssues = $this->importResults['skipped'] > 0 || $this->importResults['failed'] > 0;
+            $message = ($hasIssues ? 'Student import completed with issues: ' : 'Students imported successfully: ').
                 $this->importResults['created'].' created, '.
                 $this->importResults['updated'].' updated';
 
@@ -341,7 +400,7 @@ class StudentImport extends Component
                 $message .= ', '.$this->importResults['accounts_created'].' student accounts created';
             }
 
-            session()->flash('success', $message.'.');
+            session()->flash($hasIssues ? 'warning' : 'success', $message.'.');
 
             Log::channel('daily')->info('Student import completed', $this->importResults);
 
@@ -355,7 +414,7 @@ class StudentImport extends Component
 
     public function resetForm()
     {
-        $this->reset(['file', 'importResults', 'academicYearId', 'uploadedHeaders', 'headingRow']);
+        $this->reset(['file', 'importResults', 'academicYearId', 'uploadedHeaders', 'headingRow', 'dateFormat', 'dateFormatAnalysis']);
         $this->columnMapping = $this->defaultColumnMapping;
 
         // Reset to current academic year
