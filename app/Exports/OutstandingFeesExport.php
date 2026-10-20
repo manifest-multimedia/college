@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\StudentFeeBill;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -29,10 +30,7 @@ class OutstandingFeesExport implements FromQuery, WithHeadings, WithMapping, Wit
         $this->cohortId = $cohortId;
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function query()
+    public function query(): EloquentBuilder
     {
         return StudentFeeBill::active()
             ->with(['student', 'academicYear', 'semester'])

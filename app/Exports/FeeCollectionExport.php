@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\FeePayment;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -38,10 +39,7 @@ class FeeCollectionExport implements FromQuery, WithHeadings, WithMapping, WithT
         $this->endDate = $endDate ?? now()->format('Y-m-d');
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function query()
+    public function query(): EloquentBuilder
     {
         return FeePayment::query()
             ->with(['student', 'studentFeeBill.feeType', 'recordedBy'])
