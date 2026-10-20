@@ -3,14 +3,15 @@
 namespace App\Exports;
 
 use App\Models\FeePayment;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
-class PaymentSummaryExport implements FromQuery, WithHeadings, WithMapping, WithTitle
+class PaymentSummaryExport implements FromCollection, WithHeadings, WithMapping, WithTitle
 {
     use Exportable;
 
@@ -42,7 +43,7 @@ class PaymentSummaryExport implements FromQuery, WithHeadings, WithMapping, With
         $this->endDate = $endDate ?? now()->format('Y-m-d');
     }
 
-    public function query(): \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Relations\Relation
+    public function collection(): Collection
     {
         return FeePayment::query()
             ->select(
@@ -72,7 +73,8 @@ class PaymentSummaryExport implements FromQuery, WithHeadings, WithMapping, With
             })
             ->whereBetween('payment_date', [$this->startDate, $this->endDate])
             ->groupBy(DB::raw('DATE(payment_date)'))
-            ->orderBy('payment_date', 'desc');
+            ->orderBy('payment_date', 'desc')
+            ->get();
     }
 
     public function map($summary): array
