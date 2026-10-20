@@ -30,6 +30,8 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
 
     protected $createAccounts;
 
+    protected $headingRow;
+
     /** @var array<string, int> */
     protected $processedEmails = [];
 
@@ -55,13 +57,15 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
      * @param  array  $columnMapping  Custom column mapping if provided
      * @param  int|null  $academicYearId  The academic year ID for student ID generation
      * @param  bool  $createAccounts  Whether student portal accounts must be provisioned
+     * @param  int  $headingRow  The row that contains the mapped spreadsheet headings
      */
-    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null, $createAccounts = true)
+    public function __construct($programId, $cohortId, $columnMapping = [], $academicYearId = null, $createAccounts = true, $headingRow = 1)
     {
         $this->programId = $programId;
         $this->cohortId = $cohortId;
         $this->academicYearId = $academicYearId;
         $this->createAccounts = $createAccounts;
+        $this->headingRow = max(1, (int) $headingRow);
         $this->studentIdService = new StudentIdGenerationService;
 
         // Default column mapping (Excel column => Database field)
@@ -85,8 +89,9 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
             'marital_status' => 'marital_status',
         ];
 
-        // Merge provided mapping with default mapping
-        $this->columnMapping = array_merge($defaultMapping, $columnMapping);
+        // A confirmed upload mapping is authoritative. Falling back to the
+        // template mapping keeps existing programmatic imports compatible.
+        $this->columnMapping = empty($columnMapping) ? $defaultMapping : $columnMapping;
     }
 
     public function collection(Collection $rows): void
@@ -421,6 +426,15 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         return [
             '*.student_id' => 'nullable|string',
         ];
+    }
+
+    /**
+     * Laravel Excel should begin data processing immediately after the header
+     * row chosen by the administrator during the import preview.
+     */
+    public function headingRow(): int
+    {
+        return $this->headingRow;
     }
 
     /**

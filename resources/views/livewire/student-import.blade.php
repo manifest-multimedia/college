@@ -27,13 +27,30 @@
                 <div class="card-body">
                     <form wire:submit="import">
                         <div class="mb-3">
-                            <label for="file" class="form-label">Excel File <span class="text-danger">*</span></label>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <label for="file" class="form-label mb-0">Excel File <span class="text-danger">*</span></label>
+                                <a href="{{ route('students.import.template') }}" class="btn btn-sm btn-light-primary">
+                                    <i class="fas fa-download me-1"></i> Student Import Template
+                                </a>
+                            </div>
                             <input type="file" class="form-control @error('file') is-invalid @enderror" id="file" wire:model="file">
                             @error('file')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Accepted formats: Excel (.xlsx, .xls) or CSV</small>
+                            <small class="text-muted">Upload an Excel (.xlsx, .xls) or CSV file. After upload, map its actual headings to student fields.</small>
                         </div>
+
+                        @if ($file)
+                            <div class="mb-3">
+                                <label for="headingRow" class="form-label">Heading Row</label>
+                                <select id="headingRow" class="form-select" wire:model.live="headingRow">
+                                    @for ($row = 1; $row <= 10; $row++)
+                                        <option value="{{ $row }}">Row {{ $row }}</option>
+                                    @endfor
+                                </select>
+                                <small class="text-muted">Choose a later row only when the spreadsheet has a title or notes above its column headings.</small>
+                            </div>
+                        @endif
                         
                         <div class="row">
                             <div class="col-md-6">
@@ -93,7 +110,7 @@
                             <button type="button" class="btn btn-light" wire:click="resetForm">
                                 <i class="fas fa-redo me-1"></i> Reset
                             </button>
-                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="import">
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="import" @disabled(empty($uploadedHeaders))>
                                 <span wire:loading.remove wire:target="import">
                                     <i class="fas fa-file-import me-1"></i> Import Students
                                 </span>
@@ -108,6 +125,7 @@
             </div>
             
             <!-- Column Mapping -->
+            @if ($file)
             <div class="card shadow-sm mt-4">
                 <div class="card-header">
                     <div class="card-title">
@@ -117,22 +135,30 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <p>The system will attempt to automatically map Excel columns to the database fields. You can adjust the mapping below if needed:</p>
+                    @if (empty($uploadedHeaders))
+                        <div class="alert alert-light-warning mb-0">
+                            <i class="fas fa-circle-notch fa-spin me-2" wire:loading wire:target="file,headingRow"></i>
+                            We could not yet identify the headings. Choose the row containing your field names, or upload a file with headings.
+                        </div>
+                    @else
+                    <p>The columns below are from the uploaded file. Suggested matches are selected automatically; confirm or adjust them before import.</p>
                     
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Excel Column</th>
+                                    <th>Spreadsheet Column</th>
+                                    <th>Sample Value</th>
                                     <th>Database Field</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($defaultColumnMapping as $excelColumn => $dbField)
+                                @foreach ($uploadedHeaders as $header)
                                     <tr>
-                                        <td>{{ $excelColumn }}</td>
+                                        <td class="fw-semibold">{{ $header['label'] }}</td>
+                                        <td class="text-muted text-truncate" style="max-width: 220px;">{{ $header['sample'] ?: '—' }}</td>
                                         <td>
-                                            <select class="form-select form-select-sm" wire:model="columnMapping.{{ $excelColumn }}">
+                                            <select class="form-select form-select-sm" wire:model="columnMapping.{{ $header['key'] }}">
                                                 <option value="">-- Not Mapped --</option>
                                                 @foreach ($availableFields as $fieldKey => $fieldName)
                                                     <option value="{{ $fieldKey }}">{{ $fieldName }}</option>
@@ -144,8 +170,13 @@
                             </tbody>
                         </table>
                     </div>
+                    @error('columnMapping')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                    @endif
                 </div>
             </div>
+            @endif
         </div>
         
         <!-- Instructions and Results -->
@@ -252,13 +283,13 @@
                     <h5>File Format Requirements</h5>
                     <ul>
                         <li>Upload an Excel (.xlsx, .xls) or CSV file</li>
-                        <li>First row should contain column headers</li>
-                        <li>Headers should match the column names in the mapping section</li>
+                        <li>The file may use its own column names; select the heading row and map the detected columns after upload</li>
+                        <li>Every import requires First Name, Last Name, and Email because student portal accounts are created automatically</li>
                     </ul>
                     
                     <h5>Expected Excel Columns</h5>
                     <ul>
-                        <li><strong>Student ID</strong>: Unique identifier (optional - will be auto-generated if missing)</li>
+                        <li><strong>Student ID</strong>: Unique identifier (optional — the system generates one when it is not supplied)</li>
                         <li><strong>First Name</strong>: Student's first name (required for ID generation)</li>
                         <li><strong>Last Name</strong>: Student's last name (required for ID generation)</li>
                         <li><strong>Other Name(s)</strong>: Middle names or other names</li>
@@ -269,7 +300,7 @@
                     
                     <div class="alert alert-info">
                         <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Automatic ID Generation:</strong> If Student ID is missing, the system will automatically generate one using the configured format (e.g., COLLEGE/DEPT/PROGRAM/YEAR/NUMBER) based on the selected program, academic year, and alphabetical ordering.
+                        <strong>Automatic ID Generation:</strong> If Student ID is not mapped or is empty for a valid row, the system automatically generates one using the configured format based on the selected Program and Academic Year.
                     </div>
                     
                     <div class="alert alert-warning">

@@ -7,9 +7,12 @@ use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class StudentImport extends Component
 {
@@ -30,6 +33,15 @@ class StudentImport extends Component
     public $syncUsers = true;
 
     public $columnMapping = [];
+
+    /** @var array<int, array{key: string, label: string, sample: string|null}> */
+    public $uploadedHeaders = [];
+
+    /**
+     * Some institution spreadsheets include a title above the headings. The
+     * administrator may select that heading row after upload.
+     */
+    public $headingRow = 1;
 
     public $importResults = null;
 
@@ -111,9 +123,181 @@ class StudentImport extends Component
         $this->validateOnly($propertyName);
     }
 
+    /**
+     * Inspect only the first few rows of the uploaded workbook so that the
+     * mapping UI reflects the institution's actual column labels.
+     */
+    public function updatedFile(): void
+    {
+        $this->uploadedHeaders = [];
+        $this->columnMapping = [];
+        $this->resetValidation('file');
+
+        if (! $this->file) {
+            return;
+        }
+
+        $this->validateOnly('file');
+        $this->detectUploadedHeaders();
+    }
+
+    public function updatedHeadingRow(): void
+    {
+        if ($this->file) {
+            $this->detectUploadedHeaders();
+        }
+    }
+
+    protected function detectUploadedHeaders(): void
+    {
+        try {
+            $headingRow = min(10, max(1, (int) $this->headingRow));
+            $this->headingRow = $headingRow;
+
+            $reader = IOFactory::createReaderForFile($this->file->getRealPath());
+            $reader->setReadDataOnly(true);
+            $reader->setReadFilter(new class($headingRow) implements \PhpOffice\PhpSpreadsheet\Reader\IReadFilter
+            {
+                public function __construct(private readonly int $lastRow)
+                {
+                }
+
+                public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
+                {
+                    return $row <= $this->lastRow + 3;
+                }
+            });
+
+            $spreadsheet = $reader->load($this->file->getRealPath());
+            $worksheet = $spreadsheet->getActiveSheet();
+            $lastColumn = $worksheet->getHighestDataColumn($headingRow);
+            $headers = $worksheet->rangeToArray(
+                "A{$headingRow}:{$lastColumn}{$headingRow}",
+                null,
+                false,
+                false,
+                false
+            )[0] ?? [];
+
+            $samples = $worksheet->rangeToArray(
+                "A".($headingRow + 1).":{$lastColumn}".($headingRow + 3),
+                null,
+                false,
+                false,
+                false
+            );
+
+            $seen = [];
+            $detectedHeaders = [];
+            $mapping = [];
+
+            foreach ($headers as $index => $header) {
+                $label = trim((string) $header);
+                if ($label === '') {
+                    continue;
+                }
+
+                $key = HeadingRowFormatter::format([$label])[0];
+                if ($key === '' || isset($seen[$key])) {
+                    throw new \RuntimeException("Duplicate or unsupported column heading: {$label}");
+                }
+
+                $seen[$key] = true;
+                $sample = null;
+                foreach ($samples as $sampleRow) {
+                    $value = $sampleRow[$index] ?? null;
+                    if ($value !== null && $value !== '') {
+                        $sample = trim((string) $value);
+                        break;
+                    }
+                }
+
+                $detectedHeaders[] = [
+                    'key' => $key,
+                    'label' => $label,
+                    'sample' => $sample,
+                ];
+                $mapping[$key] = $this->suggestFieldForHeading($key);
+            }
+
+            if (empty($detectedHeaders)) {
+                throw new \RuntimeException("No headings were found on row {$headingRow}.");
+            }
+
+            $this->uploadedHeaders = $detectedHeaders;
+            $this->columnMapping = $mapping;
+            $spreadsheet->disconnectWorksheets();
+        } catch (\Throwable $exception) {
+            Log::warning('Student import header detection failed', ['error' => $exception->getMessage()]);
+            $this->uploadedHeaders = [];
+            $this->columnMapping = [];
+            $this->addError('file', 'The file headings could not be read: '.$exception->getMessage());
+        }
+    }
+
+    protected function suggestFieldForHeading(string $heading): string
+    {
+        $aliases = [
+            'index_number' => 'student_id',
+            'index_no' => 'student_id',
+            'student_number' => 'student_id',
+            'student_no' => 'student_id',
+            'id_number' => 'student_id',
+            'firstname' => 'first_name',
+            'given_name' => 'first_name',
+            'surname' => 'last_name',
+            'family_name' => 'last_name',
+            'other_names' => 'other_name',
+            'middle_name' => 'other_name',
+            'sex' => 'gender',
+            'dob' => 'date_of_birth',
+            'birth_date' => 'date_of_birth',
+            'phone' => 'mobile_number',
+            'telephone' => 'mobile_number',
+            'contact' => 'mobile_number',
+            'contact_number' => 'mobile_number',
+            'phone_number' => 'mobile_number',
+            'mobile' => 'mobile_number',
+            'email_address' => 'email',
+            'e_mail' => 'email',
+            'country_of_residence' => 'country_of_residence',
+        ];
+
+        return $this->defaultColumnMapping[$heading]
+            ?? $aliases[$heading]
+            ?? (array_key_exists($heading, $this->availableFields) ? $heading : '');
+    }
+
+    protected function validateColumnMapping(): void
+    {
+        if (empty($this->uploadedHeaders)) {
+            throw ValidationException::withMessages([
+                'file' => 'Upload a readable spreadsheet before importing students.',
+            ]);
+        }
+
+        $mappedFields = array_values(array_filter($this->columnMapping));
+        $errors = [];
+
+        foreach (['first_name', 'last_name', 'email'] as $requiredField) {
+            if (! in_array($requiredField, $mappedFields, true)) {
+                $errors[] = $this->availableFields[$requiredField].' must be mapped.';
+            }
+        }
+
+        if (count($mappedFields) !== count(array_unique($mappedFields))) {
+            $errors[] = 'Each student field can be mapped to only one spreadsheet column.';
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages(['columnMapping' => $errors]);
+        }
+    }
+
     public function import()
     {
         $this->validate();
+        $this->validateColumnMapping();
 
         try {
             $this->isProcessing = true;
@@ -128,7 +312,8 @@ class StudentImport extends Component
                 $this->cohortId,
                 $this->columnMapping,
                 $this->academicYearId,
-                true
+                true,
+                $this->headingRow
             );
 
             Excel::import($importer, $this->file);
@@ -170,7 +355,7 @@ class StudentImport extends Component
 
     public function resetForm()
     {
-        $this->reset(['file', 'importResults', 'academicYearId']);
+        $this->reset(['file', 'importResults', 'academicYearId', 'uploadedHeaders', 'headingRow']);
         $this->columnMapping = $this->defaultColumnMapping;
 
         // Reset to current academic year

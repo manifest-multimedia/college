@@ -280,6 +280,7 @@ Route::middleware([
 
         // Student Import Route (must be before {student} route)
         Route::get('/students/import', [App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
+        Route::get('/students/import/template', [App\Http\Controllers\StudentImportController::class, 'downloadTemplate'])->name('students.import.template');
 
         // Student Create Route (must be before {student} route)
         Route::get('/students/create', function () {
