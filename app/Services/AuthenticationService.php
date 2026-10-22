@@ -206,11 +206,22 @@ class AuthenticationService
             ]
         );
 
-        // Sync roles from AuthCentral
-        $this->syncUserRoles($user, $roles, 'authcentral');
+        // AuthCentral is deliberately an identity provider only. College360 is
+        // the source of truth for authorization, so roles received in an SSO
+        // payload must never replace roles assigned by College administrators.
+        // A first-time SSO user without a College360 role receives a local
+        // default role; the AuthCentral role payload is intentionally ignored.
+        if (! $user->roles()->exists()) {
+            $defaultRole = $user->student()->exists()
+                ? ($this->getRoleConfig()['student_default'] ?? 'Student')
+                : ($this->getRoleConfig()['staff_default'] ?? 'Staff');
+
+            $this->syncUserRoles($user, [$defaultRole], 'college-default');
+        }
 
         Log::info("AuthCentral user created/updated: {$user->email}", [
-            'roles' => $roles,
+            'authcentral_roles_ignored' => $roles,
+            'college_roles' => $user->getRoleNames()->values()->all(),
             'user_id' => $user->id,
         ]);
 

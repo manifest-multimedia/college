@@ -7,7 +7,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\Response;
 
 class SyncUserRoles
@@ -31,73 +30,27 @@ class SyncUserRoles
         if ($user && empty($user->roles->toArray())) {
             Log::info("Middleware: Syncing roles for user {$user->email} with no assigned roles");
 
-            // Determine authentication method for this user
-            $authMethod = $user->isAuthCentralUser() ? 'authcentral' : 'regular';
-
-            if ($authMethod === 'authcentral') {
-                // Handle AuthCentral users with legacy role field
-                $this->handleAuthCentralUserRoles($user);
-            } else {
-                // Handle regular authentication users
-                $this->handleRegularUserRoles($user);
-            }
+            // Roles are always owned by College360. The legacy users.role field
+            // may contain stale AuthCentral data and must not be used here.
+            $this->handleCollegeDefaultRole($user);
         }
 
         return $next($request);
     }
 
     /**
-     * Handle role assignment for AuthCentral users.
+     * Give a roleless account a College360-owned default role.
      *
      * @param  \App\Models\User  $user
      */
-    protected function handleAuthCentralUserRoles($user): void
+    protected function handleCollegeDefaultRole($user): void
     {
-        $authCentralRole = $user->role ?? 'Staff';
+        $roleConfig = $this->authService->getRoleConfig();
+        $defaultRole = $user->student()->exists()
+            ? ($roleConfig['student_default'] ?? 'Student')
+            : ($roleConfig['staff_default'] ?? 'Staff');
 
-        // Handle if role is stored as an array or JSON string
-        if (is_string($authCentralRole) && (str_starts_with($authCentralRole, '[') || str_starts_with($authCentralRole, '{'))) {
-            try {
-                $roleData = json_decode($authCentralRole, true);
-                if (is_array($roleData)) {
-                    // Extract role names from complex objects if needed
-                    $authCentralRoles = [];
-                    foreach ($roleData as $role) {
-                        if (is_array($role) && isset($role['name'])) {
-                            $authCentralRoles[] = $role['name'];
-                        } elseif (is_string($role)) {
-                            $authCentralRoles[] = $role;
-                        }
-                    }
-
-                    // If we got valid roles, assign them using the service
-                    if (! empty($authCentralRoles)) {
-                        $this->authService->syncUserRoles($user, $authCentralRoles, 'authcentral');
-
-                        return;
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::error("Middleware: Error parsing AuthCentral role data for user {$user->email}: ".$e->getMessage());
-                // Continue with normal role assignment below
-            }
-        }
-
-        // Simple string case - use the service for consistent role assignment
-        $this->authService->syncUserRoles($user, [$authCentralRole], 'authcentral');
-    }
-
-    /**
-     * Handle role assignment for regular authentication users.
-     *
-     * @param  \App\Models\User  $user
-     */
-    protected function handleRegularUserRoles($user): void
-    {
-        // For regular users, assign the default role from configuration
-        $defaultRole = $this->authService->getRegularConfig()['default_role'] ?? 'Staff';
-        $this->authService->syncUserRoles($user, [$defaultRole], 'regular');
-
-        Log::info("Middleware: Assigned default role '{$defaultRole}' to regular user {$user->email}");
+        $this->authService->syncUserRoles($user, [$defaultRole], 'college-default');
+        Log::warning("Middleware: Assigned College360 default role '{$defaultRole}' to roleless user {$user->email}");
     }
 }

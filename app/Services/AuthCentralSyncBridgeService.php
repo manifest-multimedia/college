@@ -199,7 +199,13 @@ class AuthCentralSyncBridgeService
             'date_of_birth' => $student->date_of_birth,
         ];
 
-        return $this->syncUserCredentials($email, $plainPassword, $attributes, 'Student');
+        $result = $this->syncUserCredentials($email, $plainPassword, $attributes, 'Student');
+
+        if (($result['success'] ?? false) && $user) {
+            $this->syncRoleAssignments($user);
+        }
+
+        return $result;
     }
 
     /**
@@ -221,8 +227,67 @@ class AuthCentralSyncBridgeService
         }
 
         $effectiveRole = $roleName ?? ($user->roles->first()?->name ?? 'Staff');
+        $result = $this->syncUserCredentials($user->email, $plainPassword, $attributes, $effectiveRole);
 
-        return $this->syncUserCredentials($user->email, $plainPassword, $attributes, $effectiveRole);
+        if ($result['success'] ?? false) {
+            $this->syncRoleAssignments($user);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Mirror the College360 role set to AuthCentral.
+     *
+     * AuthCentral is an authentication provider for College360; this is a
+     * one-way projection and is never used to decide College360 access.
+     */
+    public function syncRoleAssignments(User $user): array
+    {
+        if (! $this->isAvailable()) {
+            return ['success' => false, 'action' => 'skipped', 'message' => 'AuthCentral is unavailable.'];
+        }
+
+        try {
+            $authCentralUser = DB::connection('authcentral')->table('users')
+                ->where('email', strtolower(trim($user->email)))
+                ->first();
+
+            if (! $authCentralUser) {
+                return ['success' => false, 'action' => 'skipped', 'message' => 'User has not been provisioned in AuthCentral.'];
+            }
+
+            $collegeRoleNames = $user->getRoleNames()->values()->all();
+            $remoteRoles = DB::connection('authcentral')->table('roles')
+                ->whereIn('name', $collegeRoleNames)
+                ->pluck('id', 'name');
+
+            DB::connection('authcentral')->table('model_has_roles')
+                ->where('model_id', $authCentralUser->id)
+                ->where('model_type', User::class)
+                ->delete();
+
+            foreach ($remoteRoles as $roleId) {
+                DB::connection('authcentral')->table('model_has_roles')->insert([
+                    'role_id' => $roleId,
+                    'model_type' => User::class,
+                    'model_id' => $authCentralUser->id,
+                ]);
+            }
+
+            $unmappedRoles = array_values(array_diff($collegeRoleNames, $remoteRoles->keys()->all()));
+            Log::info("Mirrored College360 roles to AuthCentral: {$user->email}", [
+                'college_user_id' => $user->id,
+                'roles' => $collegeRoleNames,
+                'unmapped_roles' => $unmappedRoles,
+            ]);
+
+            return ['success' => true, 'action' => 'synced', 'unmapped_roles' => $unmappedRoles];
+        } catch (\Throwable $e) {
+            Log::warning("Failed to mirror College360 roles to AuthCentral for {$user->email}: {$e->getMessage()}");
+
+            return ['success' => false, 'action' => 'error', 'message' => 'Role synchronization failed.'];
+        }
     }
 
     /**

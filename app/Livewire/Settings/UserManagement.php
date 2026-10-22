@@ -4,6 +4,7 @@ namespace App\Livewire\Settings;
 
 use App\Jobs\ProcessBatchPasswordResetJob;
 use App\Models\User;
+use App\Services\AuthCentralSyncBridgeService;
 use App\Services\PasswordResetManagementService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -227,6 +228,17 @@ class UserManagement extends Component
                 $roles = Role::whereIn('id', $this->selectedRoles)->get();
                 $user->syncRoles($roles);
 
+                // College360 owns authorization. Mirror the current role set
+                // outward to AuthCentral; never import roles from it. When an
+                // administrator also changes a password, synchronize that
+                // credential in the same outbound operation.
+                $authCentral = app(AuthCentralSyncBridgeService::class);
+                if ($this->password) {
+                    $authCentral->syncCollegeUser($user, $this->password);
+                } else {
+                    $authCentral->syncRoleAssignments($user);
+                }
+
                 // Sync direct permissions - only get valid permission objects
                 $permissions = Permission::whereIn('id', $this->selectedPermissions)->get();
                 $user->syncPermissions($permissions);
@@ -249,6 +261,10 @@ class UserManagement extends Component
                 // Use the Role class to ensure we're assigning by ID correctly
                 $roles = Role::whereIn('id', $this->selectedRoles)->get();
                 $user->syncRoles($roles);
+
+                // Provision the new account and its College360-owned role set
+                // in AuthCentral when the integration is available.
+                app(AuthCentralSyncBridgeService::class)->syncCollegeUser($user, $this->password);
 
                 // Sync direct permissions - only get valid permission objects
                 if (! empty($this->selectedPermissions)) {
