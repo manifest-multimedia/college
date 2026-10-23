@@ -282,6 +282,11 @@ Route::middleware([
         Route::get('/students/import', [App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import');
         Route::get('/students/import/template', [App\Http\Controllers\StudentImportController::class, 'downloadTemplate'])->name('students.import.template');
 
+        // Private student identification evidence. This must be declared before
+        // the generic /students/{student} route below.
+        Route::get('/students/{student}/identifications/{identification}/image', [App\Http\Controllers\StudentIdentificationImageController::class, 'show'])
+            ->name('students.identifications.image');
+
         // Student Create Route (must be before {student} route)
         Route::get('/students/create', function () {
             return view('students.create');

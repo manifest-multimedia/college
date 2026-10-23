@@ -134,6 +134,10 @@
             </div>
         </div>
     </div>
+
+    @if(auth()->user()->hasRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
+        <livewire:student-identification-manager :studentId="$student->id" />
+    @endif
     
     <!-- Exams Taken -->
     @if(auth()->user()->hasRole(['Super Admin', 'System User']))
