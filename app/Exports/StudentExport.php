@@ -20,15 +20,18 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
 
     protected $genderFilter;
 
+    protected $statusFilter;
+
     protected $selectedIds;
 
-    public function __construct($search = '', $programFilter = '', $cohortFilter = '', $genderFilter = '', array $selectedIds = [])
+    public function __construct($search = '', $programFilter = '', $cohortFilter = '', $genderFilter = '', array $selectedIds = [], $statusFilter = '')
     {
         $this->search = $search;
         $this->programFilter = $programFilter;
         $this->cohortFilter = $cohortFilter;
         $this->genderFilter = $genderFilter;
         $this->selectedIds = $selectedIds;
+        $this->statusFilter = $statusFilter;
     }
 
     public function collection(): Enumerable
@@ -53,6 +56,9 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
             })
             ->when(empty($this->selectedIds) && $this->genderFilter, function ($query) {
                 return $query->whereRaw('LOWER(gender) = ?', [strtolower($this->genderFilter)]);
+            })
+            ->when(empty($this->selectedIds) && $this->statusFilter, function ($query) {
+                return $query->whereRaw('LOWER(status) = ?', [strtolower($this->statusFilter)]);
             })
             ->with(['collegeClass', 'cohort'])
             ->get();

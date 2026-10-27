@@ -30,6 +30,8 @@ class StudentsTableWidget extends Component
 
     public $genderFilter = '';
 
+    public $statusFilter = '';
+
     public $confirmingStudentDeletion = false;
 
     public $studentToDelete = null;
@@ -98,12 +100,20 @@ class StudentsTableWidget extends Component
         $this->selectAll = false;
     }
 
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+        $this->selectedStudents = [];
+        $this->selectAll = false;
+    }
+
     public function resetFilters()
     {
         $this->search = '';
         $this->programFilter = '';
         $this->cohortFilter = '';
         $this->genderFilter = '';
+        $this->statusFilter = '';
         $this->resetPage();
         $this->selectedStudents = [];
         $this->selectAll = false;
@@ -147,6 +157,9 @@ class StudentsTableWidget extends Component
             })
             ->when($this->genderFilter, function ($query) {
                 return $query->whereRaw('LOWER(gender) = ?', [strtolower($this->genderFilter)]);
+            })
+            ->when($this->statusFilter, function ($query) {
+                return $query->whereRaw('LOWER(status) = ?', [strtolower($this->statusFilter)]);
             });
     }
 
@@ -185,7 +198,7 @@ class StudentsTableWidget extends Component
                 $this->showingExportModal = false;
 
                 return Excel::download(
-                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter, $this->genderFilter, $selected),
+                    new StudentExport($this->search, $this->programFilter, $this->cohortFilter, $this->genderFilter, $selected, $this->statusFilter),
                     'students_export_'.date('Y-m-d_H-i-s').'.xlsx'
                 );
             } elseif ($this->exportFormat == 'pdf') {

@@ -108,6 +108,19 @@
                         </select>
                     </div>
 
+                    <!-- Status Filter -->
+                    <div style="min-width: 140px; max-width: 170px;" class="flex-grow-1 flex-sm-grow-0">
+                        <select class="form-select form-select-solid"
+                                style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
+                                wire:model.live="statusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="graduated">Graduated</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+
                     <!-- Tertiary Export & Actions -->
                     <div class="d-flex align-items-center gap-2 flex-shrink-0">
                         <button type="button" 
@@ -385,7 +398,7 @@
                         @endforeach
                         
                         <!-- Empty State A: Filter/Search returns no matches -->
-                        @if(count($students) == 0 && ($search != '' || $programFilter != '' || $cohortFilter != '' || $genderFilter != ''))
+                        @if(count($students) == 0 && ($search != '' || $programFilter != '' || $cohortFilter != '' || $genderFilter != '' || $statusFilter != ''))
                             <tr>
                                 <td colspan="8" class="p-0 border-0">
                                     <div class="d-flex flex-column align-items-center justify-content-center text-center py-12 px-4" style="min-height: 220px;">
@@ -406,7 +419,7 @@
                         @endif
 
                         <!-- Empty State B: No students exist in the system at all -->
-                        @if(count($students) == 0 && $search == '' && $programFilter == '' && $cohortFilter == '' && $genderFilter == '')
+                        @if(count($students) == 0 && $search == '' && $programFilter == '' && $cohortFilter == '' && $genderFilter == '' && $statusFilter == '')
                             <tr>
                                 <td colspan="8" class="p-0 border-0">
                                     <div class="d-flex flex-column align-items-center justify-content-center text-center py-12 px-4" style="min-height: 240px;">
