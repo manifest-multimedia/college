@@ -131,9 +131,7 @@ class StudentFeeBillingManager extends Component
         return StudentFeeBill::active()->with(['student.collegeClass', 'academicYear', 'semester'])
             ->when($this->search, function ($query) {
                 return $query->whereHas('student', function ($q) {
-                    $q->where('first_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('student_id', 'like', '%'.$this->search.'%');
+                    $q->search($this->search);
                 });
             })
             ->when($this->selectedClass, function ($query) {

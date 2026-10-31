@@ -172,7 +172,9 @@ return [
         'enable_alphabetical_ordering' => env('STUDENT_ID_ALPHABETICAL_ORDERING', true), // Maintain alphabetical order in sequence
 
         // Placeholder Configuration
-        'institution_prefix' => env('STUDENT_ID_INSTITUTION_PREFIX', 'COLLEGE/DEPT'), // Institution prefix (replaces school_name_prefix)
+        // Managed by Student ID settings through BrandingSettingsService.
+        // Older installations may still use settings.school_name_prefix.
+        'institution_prefix' => 'COLLEGE/DEPT',
         'institution_simple' => env('STUDENT_ID_INSTITUTION_SIMPLE', 'COLLEGE'), // Simple institution code
 
         // Academic Year Configuration

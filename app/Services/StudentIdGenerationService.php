@@ -255,11 +255,11 @@ class StudentIdGenerationService
      * Get the institution prefix from student ID configuration
      * Uses new dedicated student ID settings instead of general settings
      */
-    private function getInstitutionPrefix(): string
+    public function configuredInstitutionPrefix(): ?string
     {
         // Primary source: Student ID specific configuration
-        $prefix = config('branding.student_id.institution_prefix');
-        if ($prefix && $prefix !== 'COLLEGE/DEPT') {
+        $prefix = trim((string) config('branding.student_id.institution_prefix', ''));
+        if ($prefix !== '' && strtoupper($prefix) !== 'COLLEGE/DEPT') {
             return $prefix;
         }
 
@@ -269,14 +269,26 @@ class StudentIdGenerationService
                 ->where('key', 'school_name_prefix')
                 ->value('value');
 
-            if ($legacyPrefix) {
+            $legacyPrefix = trim((string) $legacyPrefix);
+            if ($legacyPrefix !== '' && strtoupper($legacyPrefix) !== 'COLLEGE/DEPT') {
                 return $legacyPrefix;
             }
         } catch (\Exception $e) {
             Log::info('Settings table not available, using configuration fallback');
         }
 
-        // Final fallback: Use institution configuration
+        return null;
+    }
+
+    /** Resolve the configured prefix, preserving the generator's setup fallback. */
+    public function getInstitutionPrefix(): string
+    {
+        $prefix = $this->configuredInstitutionPrefix();
+        if ($prefix !== null) {
+            return $prefix;
+        }
+
+        // Final fallback for ID generation only, never an import authorization.
         $institutionName = config('branding.institution.short_name', 'COLLEGE');
 
         return $institutionName.'/DEPT';

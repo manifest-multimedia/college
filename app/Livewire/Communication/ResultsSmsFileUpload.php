@@ -308,10 +308,7 @@ class ResultsSmsFileUpload extends Component
                         $q->where('row_number', (int) $search);
                     }
                     $q->orWhereHas('student', function ($sq) use ($search) {
-                        $sq->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('student_id', 'like', "%{$search}%")
-                            ->orWhere('mobile_number', 'like', "%{$search}%");
+                        $sq->search($search);
                     });
                 });
             }

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Services\StudentIdGenerationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -93,7 +94,7 @@ class GeneralSettings extends Component
 
             // Set component properties
             $this->schoolName = $dbSettings['school_name'] ?? config('app.name');
-            $this->schoolNamePrefix = $dbSettings['school_name_prefix'] ?? 'PNMTC/DA';
+            $this->schoolNamePrefix = app(StudentIdGenerationService::class)->configuredInstitutionPrefix() ?? 'STU';
             $this->schoolEmail = $dbSettings['school_email'] ?? '';
             $this->schoolPhone = $dbSettings['school_phone'] ?? '';
             $this->schoolAddress = $dbSettings['school_address'] ?? '';
@@ -121,7 +122,7 @@ class GeneralSettings extends Component
     {
         // Set default values for first-time setup
         $this->schoolName = config('app.name');
-        $this->schoolNamePrefix = 'STU';
+        $this->schoolNamePrefix = app(StudentIdGenerationService::class)->configuredInstitutionPrefix() ?? 'STU';
         $this->schoolEmail = '';
         $this->schoolPhone = '';
         $this->schoolAddress = '';
@@ -177,6 +178,7 @@ class GeneralSettings extends Component
             $this->updateSetting('exam_portal_theme', $this->examPortalTheme);
 
             app(\App\Services\BrandingSettingsService::class)->update([
+                'STUDENT_ID_INSTITUTION_PREFIX' => strtoupper($this->schoolNamePrefix),
                 'EXAM_PORTAL_THEME' => $this->examPortalTheme,
             ]);
 

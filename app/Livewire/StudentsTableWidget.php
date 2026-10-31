@@ -12,6 +12,7 @@ use App\Services\PasswordResetManagementService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -141,14 +142,7 @@ class StudentsTableWidget extends Component
     private function getFilteredStudentsQuery()
     {
         return Student::query()
-            ->when($this->search, function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('student_id', 'like', '%'.$this->search.'%')
-                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('email', 'like', '%'.$this->search.'%');
-                });
-            })
+            ->search($this->search)
             ->when($this->programFilter, function ($query) {
                 return $query->where('college_class_id', $this->programFilter);
             })
@@ -199,7 +193,7 @@ class StudentsTableWidget extends Component
 
                 return Excel::download(
                     new StudentExport($this->search, $this->programFilter, $this->cohortFilter, $this->genderFilter, $selected, $this->statusFilter),
-                    'students_export_'.date('Y-m-d_H-i-s').'.xlsx'
+                    $this->studentExportFilename('xlsx')
                 );
             } elseif ($this->exportFormat == 'pdf') {
                 // Get filtered students data
@@ -217,7 +211,7 @@ class StudentsTableWidget extends Component
 
                 return response()->streamDownload(function () use ($pdf) {
                     echo $pdf->output();
-                }, 'students_export_'.date('Y-m-d_H-i-s').'.pdf');
+                }, $this->studentExportFilename('pdf'));
             } else {
                 session()->flash('error', 'Please select a valid export format.');
                 $this->showingExportModal = false;
@@ -231,6 +225,21 @@ class StudentsTableWidget extends Component
 
             return null;
         }
+    }
+
+    /**
+     * Build a meaningful export name when the results are scoped to one cohort.
+     */
+    private function studentExportFilename(string $extension): string
+    {
+        $prefix = '';
+
+        if ($this->cohortFilter) {
+            $cohortName = Cohort::query()->whereKey($this->cohortFilter)->value('name');
+            $prefix = $cohortName ? Str::slug($cohortName, '_').'_' : '';
+        }
+
+        return $prefix.'students_export_'.date('Y-m-d_H-i-s').'.'.$extension;
     }
 
     /**

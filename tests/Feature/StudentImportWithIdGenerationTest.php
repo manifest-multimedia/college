@@ -120,7 +120,7 @@ class StudentImportWithIdGenerationTest extends TestCase
         $this->assertNotNull($charlie);
 
         // Alice and Bob should have generated IDs following the active institution prefix and a valid format
-        $prefix = config('branding.student_id.institution_prefix', 'PNMTC/DA');
+        $prefix = app(StudentIdGenerationService::class)->getInstitutionPrefix();
         $escapedPrefix = preg_quote($prefix, '/');
         $pattern = '/^'.$escapedPrefix.'\/[A-Z]+\/\d{2}\/\d{2}\/\d{3}$/';
 

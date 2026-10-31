@@ -542,9 +542,7 @@ class OfflineExamScores extends Component
 
             if ($this->search) {
                 $query->whereHas('student', function ($q) {
-                    $q->where('student_id', 'like', '%'.$this->search.'%')
-                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->search.'%');
+                    $q->search($this->search);
                 });
             }
 
