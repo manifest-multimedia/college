@@ -23,3 +23,19 @@ if (is_readable($auth.'/.env')) {
     unset($env, $key, $match);
 }
 echo json_encode($result, JSON_PRETTY_PRINT).PHP_EOL;
+
+$logs = glob($auth.'/storage/logs/laravel*.log');
+usort($logs, fn ($a, $b) => filemtime($b) <=> filemtime($a));
+if ($logs) {
+    $handle = fopen($logs[0], 'r');
+    fseek($handle, max(0, filesize($logs[0]) - 100000));
+    $tail = stream_get_contents($handle); fclose($handle);
+    preg_match_all('/^.*?production\.ERROR: (.*?) \{/m', $tail, $errors);
+    foreach (array_slice($errors[1], -3) as $error) {
+        $error = preg_replace('/([\"\']).*?\1/', '[redacted]', $error);
+        echo 'Recent AuthCentral error category: '.substr($error, 0, 350).PHP_EOL;
+    }
+}
+$response = Illuminate\Support\Facades\Http::acceptJson()->timeout(15)->post('https://auth.pnmtc.edu.gh/api/v1/college/verify-credentials', ['username'=>'deployment-probe@example.invalid','password'=>'invalid']);
+echo 'Public endpoint status without service key: '.$response->status().PHP_EOL;
+echo 'Platform requirement error: '.(str_contains($response->body(), 'Composer detected issues') ? 'yes' : 'no').PHP_EOL;
