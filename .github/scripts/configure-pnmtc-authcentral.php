@@ -108,7 +108,8 @@ try {
     }
     pnmtcCacheConfiguration($auth);
     pnmtcCacheConfiguration($college);
-    throw $error;
+    fwrite(STDERR, "AuthCentral connection setup failed; prior private configuration restored. ".$error->getMessage().PHP_EOL);
+    exit(1);
 } finally {
     unset($key,$old);
 }
