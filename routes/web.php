@@ -130,6 +130,13 @@ Route::middleware([
         Route::get('/{id}/source', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'source'])->whereNumber('id')->name('source');
     });
 
+    Route::middleware('can:manage-canteen-meals')->prefix('canteen/meals')->name('canteen.meals.')->group(function () {
+        Route::post('/assignments', [\App\Http\Controllers\Admin\Canteen\MealSettingsController::class, 'assignments'])->name('assignments');
+        Route::get('/activity', [\App\Http\Controllers\Admin\Canteen\MealSettingsController::class, 'activity'])->name('activity');
+        Route::get('/settings', [\App\Http\Controllers\Admin\Canteen\MealSettingsController::class, 'index'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\Admin\Canteen\MealSettingsController::class, 'update'])->middleware('throttle:10,1')->name('update');
+    });
+
     // Impersonation Routes
     Route::post('/impersonate/{user}', [\App\Http\Controllers\ImpersonationController::class, 'start'])
         ->middleware('role:System')

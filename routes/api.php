@@ -211,6 +211,10 @@ Route::prefix('v1/canteen')->group(function () {
     Route::post('/login', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'login'])->middleware('throttle:5,1');
 
     Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCanteenAccess::class, 'throttle:120,1'])->group(function () {
+        Route::post('/meals/register-device', [\App\Http\Controllers\Api\Canteen\MealController::class, 'register'])->middleware('throttle:10,1');
+        Route::post('/meals/prepare', [\App\Http\Controllers\Api\Canteen\MealController::class, 'prepare']);
+        Route::post('/meals/redeem', [\App\Http\Controllers\Api\Canteen\MealController::class, 'redeem']);
+        Route::post('/meals/sync', [\App\Http\Controllers\Api\Canteen\MealController::class, 'sync']);
         Route::get('/session', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'session']);
         Route::post('/logout', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'logout']);
         Route::post('/verify', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'verify']);

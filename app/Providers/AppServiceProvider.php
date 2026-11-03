@@ -48,6 +48,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('manage-canteen-qualifications', fn (User $user) => $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Finance Manager'])
             || $user->checkPermissionTo('canteen.manage qualifications'));
 
+        Gate::define('manage-canteen-meals', fn (User $user) => $user->hasAnyRole(['System', 'Super Admin', 'Administrator'])
+            || $user->checkPermissionTo('canteen.manage meals'));
+
         // Register Role and Permission observers for AuthCentral sync
         Role::observe(RoleObserver::class);
         Permission::observe(PermissionObserver::class);

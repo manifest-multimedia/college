@@ -91,6 +91,9 @@ class CanteenController extends Controller
      */
     public function verify(Request $request): JsonResponse
     {
+        if (app(\App\Services\Canteen\CanteenMealPolicy::class)->isEnabled()) {
+            return response()->json(['message' => 'Update Smart Canteen to the meal-redemption version before serving.'], 426);
+        }
         $data = Validator::make($request->all(), [
             'index_number' => ['required', 'string', 'max:64'],
             'verification_method' => ['required', Rule::in([CanteenVerification::METHOD_OCR, CanteenVerification::METHOD_MANUAL])],
@@ -208,6 +211,9 @@ class CanteenController extends Controller
      */
     public function sync(Request $request): JsonResponse
     {
+        if (app(\App\Services\Canteen\CanteenMealPolicy::class)->isEnabled()) {
+            return response()->json(['message' => 'Use meal-redemption sync. Clearance-only records cannot redeem meals.'], 426);
+        }
         $data = Validator::make($request->all(), [
             'verifications' => ['required', 'array', 'min:1', 'max:'.config('canteen.verification_batch_size', 500)],
             'verifications.*.client_request_id' => ['required', 'uuid'],
