@@ -621,7 +621,7 @@ class StudentIdReassignmentService
         }
 
         // Get institution codes
-        $institutionPrefix = config('branding.student_id.institution_prefix', 'COLLEGE');
+        $institutionPrefix = app(StudentIdGenerationService::class)->getInstitutionPrefix();
         $institutionSimple = config('branding.student_id.institution_simple', 'MHIAF');
 
         // Replace placeholders in pattern

@@ -160,11 +160,12 @@ class ExamClearances extends Component
         $clearancesQuery = ExamClearance::query()
             ->with(['student', 'clearable'])
             ->when($this->search, function ($query) {
-                $query->whereHas('student', function (Builder $query) {
-                    $query->where('name', 'like', '%'.$this->search.'%')
-                        ->orWhere('student_id', 'like', '%'.$this->search.'%');
-                })->orWhereHas('clearable', function (Builder $query) {
-                    $query->where('title', 'like', '%'.$this->search.'%');
+                $query->where(function ($sub) {
+                    $sub->whereHas('student', function (Builder $query) {
+                        $query->search($this->search);
+                    })->orWhereHas('clearable', function (Builder $query) {
+                        $query->where('title', 'like', '%'.$this->search.'%');
+                    });
                 });
             })
             ->when($this->examFilter, function ($query) {

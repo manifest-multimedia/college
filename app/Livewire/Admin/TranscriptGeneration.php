@@ -398,12 +398,7 @@ class TranscriptGeneration extends Component
         }
 
         if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('student_id', 'like', '%'.$this->search.'%')
-                    ->orWhere('first_name', 'like', '%'.$this->search.'%')
-                    ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                    ->orWhere('email', 'like', '%'.$this->search.'%');
-            });
+            $query->search($this->search);
         }
 
         return $query->orderBy('student_id');

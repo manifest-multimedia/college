@@ -158,4 +158,35 @@ class User extends Authenticatable
     {
         return $this->hasRole('System');
     }
+
+    /**
+     * Scope a query to search users across name (order-independent), email, and phone.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string|null  $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeSearch($query, ?string $search)
+    {
+        $search = trim((string) $search);
+
+        if ($search === '') {
+            return $query;
+        }
+
+        $terms = array_filter(preg_split('/\s+/', $search));
+
+        return $query->where(function ($q) use ($terms, $search) {
+            $q->where('email', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%");
+
+            if (! empty($terms)) {
+                $q->orWhere(function ($subQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $subQuery->where('name', 'like', "%{$term}%");
+                    }
+                });
+            }
+        });
+    }
 }

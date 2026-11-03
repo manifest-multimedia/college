@@ -174,13 +174,13 @@ class CourseRegistrationApprovals extends Component
 
         // Search functionality
         if ($this->search) {
-            $query->whereHas('student', function ($q) {
-                $q->where('first_name', 'like', '%'.$this->search.'%')
-                    ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                    ->orWhere('student_id', 'like', '%'.$this->search.'%');
-            })->orWhereHas('subject', function ($q) {
-                $q->where('name', 'like', '%'.$this->search.'%')
-                    ->orWhere('course_code', 'like', '%'.$this->search.'%');
+            $query->where(function ($groupedQuery) {
+                $groupedQuery->whereHas('student', function ($q) {
+                    $q->search($this->search);
+                })->orWhereHas('subject', function ($q) {
+                    $q->where('name', 'like', '%'.$this->search.'%')
+                        ->orWhere('course_code', 'like', '%'.$this->search.'%');
+                });
             });
         }
 

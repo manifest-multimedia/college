@@ -902,6 +902,15 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             @endhasanyrole
             
+            @can('manage-canteen-qualifications')
+            <div class="menu-item">
+                <a class="menu-link {{ request()->routeIs('canteen.lists.*') ? 'active' : '' }}" href="{{ route('canteen.lists.index') }}">
+                    <span class="menu-icon"><i class="ki-duotone ki-document fs-2"><span class="path1"></span><span class="path2"></span></i></span>
+                    <span class="menu-title">Canteen qualification lists</span>
+                </a>
+            </div>
+            @endcan
+
             @hasanyrole(['System', 'Super Admin', 'Finance Manager'])
             {{-- Finance Module menu (restricted to System, Super Admin, Finance Manager) --}}
             <!--begin:Menu item-->

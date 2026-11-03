@@ -3,10 +3,15 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Observers\PermissionObserver;
+use App\Observers\RoleObserver;
+use App\Services\Communication\Chat\MCP\ExamManagementMCPService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Register MCP Service
-        $this->app->singleton(\App\Services\Communication\Chat\MCP\ExamManagementMCPService::class);
+        $this->app->singleton(ExamManagementMCPService::class);
     }
 
     /**
@@ -40,8 +45,11 @@ class AppServiceProvider extends ServiceProvider
             return $user->isSystemUser() ? true : null;
         });
 
+        Gate::define('manage-canteen-qualifications', fn (User $user) => $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Finance Manager'])
+            || $user->checkPermissionTo('canteen.manage qualifications'));
+
         // Register Role and Permission observers for AuthCentral sync
-        \Spatie\Permission\Models\Role::observe(\App\Observers\RoleObserver::class);
-        \Spatie\Permission\Models\Permission::observe(\App\Observers\PermissionObserver::class);
+        Role::observe(RoleObserver::class);
+        Permission::observe(PermissionObserver::class);
     }
 }

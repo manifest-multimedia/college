@@ -240,13 +240,7 @@ class ExamClearanceManager extends Component
     public function getStudentsProperty()
     {
         return Student::query()
-            ->when($this->searchTerm, function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('first_name', 'like', '%'.$this->searchTerm.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->searchTerm.'%')
-                        ->orWhere('student_id', 'like', '%'.$this->searchTerm.'%');
-                });
-            })
+            ->search($this->searchTerm)
             ->with(['examClearances' => function ($query) {
                 $query->where('academic_year_id', $this->academicYearId)
                     ->where('semester_id', $this->semesterId)

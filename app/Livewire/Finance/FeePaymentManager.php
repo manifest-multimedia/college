@@ -400,11 +400,7 @@ class FeePaymentManager extends Component
 
     public function render()
     {
-        $students = Student::when($this->search, function ($query) {
-            $query->where('first_name', 'like', '%'.$this->search.'%')
-                ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                ->orWhere('student_id', 'like', '%'.$this->search.'%');
-        })
+        $students = Student::search($this->search)
             ->when($this->cohortId !== '', function ($query) {
                 return $query->where('cohort_id', $this->cohortId);
             })

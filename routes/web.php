@@ -120,6 +120,16 @@ Route::middleware([
     'auth:sanctum',
 ])->group(function () {
 
+    Route::middleware('can:manage-canteen-qualifications')->prefix('canteen/qualification-lists')->name('canteen.lists.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'index'])->name('index');
+        Route::post('/preview', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'upload'])->middleware('throttle:10,1')->name('upload');
+        Route::get('/preview/{token}', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'preview'])->whereUuid('token')->name('preview');
+        Route::post('/preview/{token}/confirm', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'confirm'])->whereUuid('token')->name('confirm');
+        Route::get('/{id}/withdraw', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'withdrawal'])->whereNumber('id')->name('withdrawal');
+        Route::post('/{id}/withdraw', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'revoke'])->whereNumber('id')->name('revoke');
+        Route::get('/{id}/source', [\App\Http\Controllers\Admin\Canteen\QualificationListController::class, 'source'])->whereNumber('id')->name('source');
+    });
+
     // Impersonation Routes
     Route::post('/impersonate/{user}', [\App\Http\Controllers\ImpersonationController::class, 'start'])
         ->middleware('role:System')

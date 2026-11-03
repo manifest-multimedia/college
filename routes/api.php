@@ -198,3 +198,23 @@ Route::prefix('offline-exam-delivery')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::post('/v1/payments/webhook/{provider}', [PaymentCallbackController::class, 'handleWebhook']);
+
+/*
+|--------------------------------------------------------------------------
+| Canteen App API (Version 1)
+|--------------------------------------------------------------------------
+| Staff authenticate with college credentials and receive a 12-hour token.
+| Clearance decisions are computed here; the app only renders them and may
+| serve a cached copy while offline.
+*/
+Route::prefix('v1/canteen')->group(function () {
+    Route::post('/login', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'login'])->middleware('throttle:5,1');
+
+    Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureCanteenAccess::class, 'throttle:120,1'])->group(function () {
+        Route::get('/session', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'session']);
+        Route::post('/logout', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'logout']);
+        Route::post('/verify', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'verify']);
+        Route::get('/roster', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'roster']);
+        Route::post('/verifications/sync', [\App\Http\Controllers\Api\Canteen\CanteenController::class, 'sync']);
+    });
+});

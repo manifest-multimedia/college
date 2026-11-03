@@ -2,6 +2,7 @@
 
 use App\Models\ExamSession;
 use App\Models\Student;
+use App\Services\StudentIdGenerationService;
 use Illuminate\Support\Str;
 
 if (! function_exists('getAge')) {
@@ -140,7 +141,7 @@ if (! function_exists('generateStudentIdPrefix')) {
 
     function generateStudentIdPrefix($class, $academic_year)
     {
-        $school_prefix = config('school.prefix');
+        $school_prefix = app(StudentIdGenerationService::class)->getInstitutionPrefix();
 
         return "$school_prefix/$class/$academic_year/";
     }

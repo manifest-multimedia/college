@@ -41,12 +41,7 @@ class StudentExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
                 return $query->whereIn('id', $this->selectedIds);
             })
             ->when(empty($this->selectedIds) && $this->search, function ($query) {
-                return $query->where(function ($q) {
-                    $q->where('student_id', 'like', '%'.$this->search.'%')
-                        ->orWhere('first_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('email', 'like', '%'.$this->search.'%');
-                });
+                return $query->search($this->search);
             })
             ->when(empty($this->selectedIds) && $this->programFilter, function ($query) {
                 return $query->where('college_class_id', $this->programFilter);

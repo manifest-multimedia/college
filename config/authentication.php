@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'method' => env('AUTH_METHOD', 'authcentral'),
+    'method' => env('AUTH_METHOD', 'regular'),
 
     /*
     |--------------------------------------------------------------------------
@@ -29,6 +29,9 @@ return [
     'authcentral' => [
         'login_url' => env('AUTHCENTRAL_LOGIN_URL', 'https://auth.example.edu/login'),
         'api_url' => env('AUTHCENTRAL_API_URL', 'https://auth.example.edu/api/user'),
+        'credential_verify_url' => env('AUTHCENTRAL_CREDENTIAL_VERIFY_URL'),
+        'service_key' => env('AUTHCENTRAL_SERVICE_KEY'),
+        'ca_file' => env('AUTHCENTRAL_CA_FILE'),
         'signup_url' => env('AUTHCENTRAL_SIGNUP_URL', 'https://auth.example.edu/sign-up'),
         'student_registration_url' => env('AUTHCENTRAL_STUDENT_REGISTRATION_URL', 'https://auth.example.edu/student/register'),
     ],

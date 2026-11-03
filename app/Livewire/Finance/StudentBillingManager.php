@@ -438,9 +438,7 @@ class StudentBillingManager extends Component
             })
             ->when($this->search !== '', function ($query) {
                 return $query->whereHas('student', function ($q) {
-                    $q->where('first_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('last_name', 'like', '%'.$this->search.'%')
-                        ->orWhere('student_id', 'like', '%'.$this->search.'%');
+                    $q->search($this->search);
                 });
             })
             ->latest()

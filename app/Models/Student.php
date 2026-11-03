@@ -60,6 +60,47 @@ class Student extends Model
         return $query->whereRaw("LOWER(TRIM(COALESCE(status, ''))) = ?", ['active']);
     }
 
+    /**
+     * Scope a query to search students across names, student ID, email, and phone number,
+     * regardless of name order.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string|null  $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeSearch($query, ?string $search)
+    {
+        $search = trim((string) $search);
+
+        if ($search === '') {
+            return $query;
+        }
+
+        // Split search into individual terms/words
+        $terms = array_filter(preg_split('/\s+/', $search));
+
+        return $query->where(function ($q) use ($terms, $search) {
+            // Direct matches for exact identifiers (ID, email, phone)
+            $q->where('student_id', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('mobile_number', 'like', "%{$search}%");
+
+            // Multi-term, order-independent search across all name fields
+            if (! empty($terms)) {
+                $q->orWhere(function ($subQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $subQuery->where(function ($wordQuery) use ($term) {
+                            $wordQuery->where('first_name', 'like', "%{$term}%")
+                                ->orWhere('last_name', 'like', "%{$term}%")
+                                ->orWhere('other_name', 'like', "%{$term}%")
+                                ->orWhere('student_id', 'like', "%{$term}%");
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     protected function dateOfBirth(): Attribute
     {
         return Attribute::make(
@@ -140,6 +181,7 @@ class Student extends Model
     {
         return $this->hasMany(Document::class);
     }
+
 
     public function contacts()
     {

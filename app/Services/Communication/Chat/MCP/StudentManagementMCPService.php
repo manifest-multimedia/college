@@ -3,6 +3,7 @@
 namespace App\Services\Communication\Chat\MCP;
 
 use App\Models\Student;
+use App\Services\StudentIdGenerationService;
 use App\Services\StudentIdReassignmentService;
 use Illuminate\Support\Facades\Log;
 
@@ -262,7 +263,7 @@ class StudentManagementMCPService
             $config = [
                 'format' => config('branding.student_id.format', 'structured'),
                 'custom_pattern' => config('branding.student_id.custom_pattern'),
-                'institution_prefix' => config('branding.student_id.institution_prefix'),
+                'institution_prefix' => app(StudentIdGenerationService::class)->getInstitutionPrefix(),
                 'institution_simple' => config('branding.student_id.institution_simple'),
                 'alphabetical_ordering' => config('branding.student_id.enable_alphabetical_ordering', true),
                 'use_academic_year' => config('branding.student_id.use_academic_year', true),

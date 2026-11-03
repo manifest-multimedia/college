@@ -322,11 +322,12 @@ Inform relevant departments:
 
 ## Configuration
 
-Update `.env` file:
+Manage the institution prefix in the college administration Student ID settings (or School Name Prefix in General Settings). Both use the saved branding setting, with the older `settings.school_name_prefix` retained as a fallback. No prefix environment variable is required.
+
+Deployment defaults for the remaining format options can still be set in `.env`:
 ```env
 STUDENT_ID_FORMAT=structured  # simple, structured, or custom
 STUDENT_ID_CUSTOM_PATTERN={INSTITUTION}/{PROGRAM}/{YEAR_SIMPLE}/{SEQUENCE_4}
-STUDENT_ID_INSTITUTION_PREFIX=COLLEGE/DEPT
 STUDENT_ID_INSTITUTION_SIMPLE=MHIAF
 STUDENT_ID_ALPHABETICAL_ORDERING=true
 STUDENT_ID_USE_ACADEMIC_YEAR=true

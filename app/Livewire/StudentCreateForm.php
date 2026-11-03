@@ -7,7 +7,6 @@ use App\Models\CollegeClass;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\StudentIdGenerationService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -220,10 +219,7 @@ class StudentCreateForm extends Component
     {
         $year = now()->year;
 
-        // Get prefix from settings, default to 'STU'
-        $prefix = DB::table('settings')
-            ->where('key', 'school_name_prefix')
-            ->value('value') ?? 'STU';
+        $prefix = app(StudentIdGenerationService::class)->getInstitutionPrefix();
 
         // Get the last student ID for this year
         $lastStudent = Student::where('student_id', 'like', $prefix.$year.'%')

@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Canteen\PortalQualificationImports;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -11,3 +12,5 @@ Artisan::command('inspire', function () {
 // Automatically update exam statuses based on dates and active sessions
 Schedule::command('exams:update-statuses')->everyMinute();
 Schedule::command('results-sms:purge-expired')->daily();
+
+Schedule::call(fn () => app(PortalQualificationImports::class)->purgeExpired())->daily()->name('canteen-purge-upload-previews');

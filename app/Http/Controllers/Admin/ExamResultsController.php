@@ -133,12 +133,11 @@ class ExamResultsController extends Controller
             if ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->whereHas('student', function ($q) use ($search) {
-                        $q->where('name', 'like', '%'.$search.'%')
-                            ->orWhere('email', 'like', '%'.$search.'%');
+                        $q->search($search);
                     });
 
                     $query->orWhereHas('student.student', function ($q) use ($search) {
-                        $q->where('student_id', 'like', '%'.$search.'%');
+                        $q->search($search);
                     });
                 });
             }
@@ -475,12 +474,11 @@ class ExamResultsController extends Controller
         if ($search) {
             $query->where(function ($query) use ($search) {
                 $query->whereHas('student', function ($q) use ($search) {
-                    $q->where('name', 'like', '%'.$search.'%')
-                        ->orWhere('email', 'like', '%'.$search.'%');
+                    $q->search($search);
                 });
 
                 $query->orWhereHas('student.student', function ($q) use ($search) {
-                    $q->where('student_id', 'like', '%'.$search.'%');
+                    $q->search($search);
                 });
             });
         }
