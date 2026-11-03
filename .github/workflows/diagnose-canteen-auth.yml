@@ -1,0 +1,26 @@
+name: Diagnose PNMTC canteen authentication
+on:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/diagnose-canteen-auth.yml
+      - .github/scripts/canteen-auth-diagnostics.php
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    environment: pnmtc-production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deployment connection
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 62.77.158.206 >> ~/.ssh/known_hosts
+      - name: Read authentication configuration without secrets
+        run: ssh -i ~/.ssh/id_ed25519 pnmtc@62.77.158.206 php < .github/scripts/canteen-auth-diagnostics.php
