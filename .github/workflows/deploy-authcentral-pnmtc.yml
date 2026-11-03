@@ -1,0 +1,64 @@
+name: Deploy and connect PNMTC AuthCentral
+on:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/deploy-authcentral-pnmtc.yml
+      - .github/deploy/authcentral.php
+      - .github/scripts/authcentral-preflight.php
+      - .github/scripts/configure-pnmtc-authcentral.php
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: production-pnmtc
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: pnmtc-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: college
+      - uses: actions/checkout@v4
+        with:
+          repository: manifest-multimedia/authcentral
+          ref: master
+          path: authcentral-source
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: authcentral-source/package-lock.json
+      - name: Build reviewed AuthCentral frontend
+        working-directory: authcentral-source
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Install Deployer from the College lockfile
+        working-directory: college
+        run: composer install --prefer-dist --optimize-autoloader --no-interaction
+      - name: Set up existing PNMTC deployment connection
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY_COLLEGE }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 62.77.158.206 >> ~/.ssh/known_hosts
+      - name: Check access and save private database/environment backups
+        run: ssh -i ~/.ssh/id_ed25519 pnmtc@62.77.158.206 php < college/.github/scripts/authcentral-preflight.php
+      - name: Deploy AuthCentral using PHP Deployer
+        working-directory: college
+        env:
+          AUTHCENTRAL_BUILD_ASSETS_PATH: ${{ github.workspace }}/authcentral-source/public/build
+        run: |
+          AUTHCENTRAL_SHA=$(git -C ../authcentral-source rev-parse HEAD)
+          php vendor/bin/dep -f .github/deploy/authcentral.php deploy authcentral --revision="$AUTHCENTRAL_SHA" --no-interaction
+      - name: Configure and verify the College to AuthCentral connection
+        run: ssh -i ~/.ssh/id_ed25519 pnmtc@62.77.158.206 php < college/.github/scripts/configure-pnmtc-authcentral.php
