@@ -23,22 +23,20 @@
         <!-- Import Form -->
         <div class="col-lg-7">
             <div class="card shadow-sm">
-                <div class="card-header">
-                    <div class="card-title">
-                        <h3 class="card-title fw-bold text-gray-800">
-                            <i class="fas fa-file-import me-2"></i>Import Students
-                        </h3>
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3 py-3">
+                    <h3 class="card-title fw-bold text-gray-800 mb-0">
+                        <i class="fas fa-file-import me-2"></i>Import Students
+                    </h3>
+                    <div class="card-toolbar m-0">
+                        <a href="{{ route('students.import.template') }}" class="btn btn-sm btn-light-primary">
+                            <i class="fas fa-download me-1" aria-hidden="true"></i> Download Template
+                        </a>
                     </div>
                 </div>
                 <div class="card-body">
                     <form wire:submit="import">
                         <div class="mb-3">
-                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                                <label for="file" class="form-label mb-0">Excel File <span class="text-danger">*</span></label>
-                                <a href="{{ route('students.import.template') }}" class="btn btn-sm btn-light-primary">
-                                    <i class="fas fa-download me-1"></i> Student Import Template
-                                </a>
-                            </div>
+                            <label for="file" class="form-label">Excel or CSV File <span class="text-danger">*</span></label>
                             <input type="file" class="form-control @error('file') is-invalid @enderror" id="file" wire:model="file">
                             @error('file')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -116,6 +114,7 @@
                                 <label for="dateFormat" class="form-label">Date of Birth Format</label>
                                 <select id="dateFormat" class="form-select @error('dateFormat') is-invalid @enderror" wire:model.live="dateFormat">
                                     <option value="auto">Detect from the date column</option>
+                                    <option value="ymd">Year / Month / Day (YYYY-MM-DD)</option>
                                     <option value="dmy">Day / Month / Year (DD/MM/YYYY)</option>
                                     <option value="mdy">Month / Day / Year (MM/DD/YYYY)</option>
                                 </select>
@@ -140,7 +139,7 @@
                                         No day/month choice is needed for the recognized year-first, named-month or Excel dates.
                                     @endif
                                     @if($dateFormat !== 'auto')
-                                        <div class="mt-1"><strong>Your selection:</strong> {{ $dateFormat === 'dmy' ? 'day/month/year' : 'month/day/year' }}. Numeric dates will use this order consistently.</div>
+                                        <div class="mt-1"><strong>Your selection:</strong> {{ ['ymd' => 'year/month/day', 'dmy' => 'day/month/year', 'mdy' => 'month/day/year'][$dateFormat] }}. {{ $dateFormat === 'ymd' ? 'Year-first, named-month and Excel dates are accepted; day-first or month-first numeric text must use the matching option.' : 'Numeric dates will use this order consistently.' }}</div>
                                     @endif
                                     @if($dateAnalysis['invalid'] > 0)
                                         <div class="mt-1">{{ $dateAnalysis['invalid'] }} invalid dates found. Review the row errors after import.</div>
@@ -162,7 +161,7 @@
                                         </table>
                                     </div>
                                 @endif
-                                <small class="text-muted">The full mapped column is checked before import. Year-first and Excel dates retain their meaning; valid dates are saved as YYYY-MM-DD.</small>
+                                <small class="text-muted">The full mapped column is checked before import. Year-first dates such as 1994-12-27 and Excel date cells are supported automatically. Valid dates are saved as YYYY-MM-DD.</small>
                             </div>
                         @endif
 

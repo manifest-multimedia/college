@@ -12,6 +12,13 @@ class StudentImportDateParser
     public function normalize(mixed $value, string $format = 'auto'): ?string
     {
         $candidates = $this->candidates($value);
+        if ($format === 'ymd') {
+            if (is_string($value) && preg_match('/^\d{1,2}[-\/.]\d{1,2}[-\/.]\d{4}$/D', trim($value))) {
+                return null;
+            }
+
+            return $candidates['dmy'] === $candidates['mdy'] ? $candidates['dmy'] : null;
+        }
         if ($format === 'dmy' || $format === 'mdy') {
             return $candidates[$format];
         }
@@ -72,8 +79,8 @@ class StudentImportDateParser
 
     public function resolve(array $analysis, string $selection = 'auto'): string
     {
-        if (! in_array($selection, ['auto', 'dmy', 'mdy'], true)) {
-            throw new InvalidArgumentException('Choose automatic detection, day/month/year or month/day/year.');
+        if (! in_array($selection, ['auto', 'ymd', 'dmy', 'mdy'], true)) {
+            throw new InvalidArgumentException('Choose automatic detection, year/month/day, day/month/year or month/day/year.');
         }
         if ($selection !== 'auto') {
             return $selection;

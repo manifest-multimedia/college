@@ -255,6 +255,27 @@ class StudentImportDateParsingTest extends TestCase
         $this->assertLessThanOrEqual(3, count($inspector->analysis['examples']));
     }
 
+    public function test_explicit_year_first_choice_preserves_iso_and_excel_dates_and_rejects_other_numeric_orders(): void
+    {
+        $parser = new StudentImportDateParser;
+        $this->assertSame('ymd', $parser->resolve($parser->inspect(['1994-12-27', 38580]), 'ymd'));
+        foreach (['2005-08-16', '2005/8/16', 38580, '16 August 2005'] as $input) {
+            $this->assertSame('2005-08-16', $parser->normalize($input, 'ymd'));
+        }
+        foreach (['16/8/2005', '8/16/2005', '5/4/2005', '11/11/2005', '2005-02-29'] as $input) {
+            $this->assertNull($parser->normalize($input, 'ymd'));
+        }
+
+        $importer = new InspectableDateStudentImporter('ymd');
+        $importer->collection(new Collection([
+            ['first_name' => 'Example', 'last_name' => 'Student', 'email' => 'yearfirst@example.com', 'date_of_birth' => '1994-12-27'],
+            ['first_name' => 'Example', 'last_name' => 'Invalid', 'email' => 'wrongorder@example.com', 'date_of_birth' => '27/12/1994'],
+        ]));
+        $this->assertSame('1994-12-27', Student::firstOrFail()->getRawOriginal('date_of_birth'));
+        $this->assertSame(1, $importer->getImportStats()['created']);
+        $this->assertSame(1, $importer->getImportStats()['skipped']);
+    }
+
     public function test_year_first_named_excel_and_symmetric_dates_need_no_order_guess(): void
     {
         $parser = new StudentImportDateParser;

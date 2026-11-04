@@ -102,7 +102,7 @@ class StudentImport extends Component
         'programId' => 'required|exists:college_classes,id',
         'cohortId' => 'required|exists:cohorts,id',
         'academicYearId' => 'nullable|exists:academic_years,id',
-        'dateFormat' => 'required|in:auto,dmy,mdy',
+        'dateFormat' => 'required|in:auto,ymd,dmy,mdy',
     ];
 
     protected $messages = [

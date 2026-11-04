@@ -121,6 +121,18 @@ class StudentImportDateDetectionTest extends TestCase
         $this->assertSame(3, $component->dateFormatAnalysis['independent']);
         $this->assertSame('auto', $component->resolveDates());
     }
+
+    public function test_year_first_selection_resolves_and_renders_in_the_import_form(): void
+    {
+        $component = $this->upload(['1994-12-27', 38580]);
+        $component->dateFormat = 'ymd';
+        $this->assertSame('ymd', $component->resolveDates());
+        $html = view('livewire.student-import', array_merge(get_object_vars($component), [
+            'programs' => collect(), 'cohorts' => collect(), 'academicYears' => collect(), 'errors' => new ViewErrorBag,
+        ]))->render();
+        $this->assertStringContainsString('Year / Month / Day (YYYY-MM-DD)', $html);
+        $this->assertStringContainsString('year/month/day', $html);
+    }
 }
 
 class InspectableDateImportComponent extends StudentImport
