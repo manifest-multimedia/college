@@ -2,18 +2,23 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\HasNewStudentEmergencyContacts;
+use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\StudentIdGenerationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Spatie\Permission\Models\Role;
 
 class StudentCreateForm extends Component
 {
+    use HasNewStudentEmergencyContacts;
     use WithFileUploads;
 
     // Personal Details
@@ -114,11 +119,11 @@ class StudentCreateForm extends Component
         try {
             $this->classes = CollegeClass::orderBy('name')->get();
             $this->cohorts = Cohort::orderBy('name')->get();
-            $this->academicYears = \App\Models\AcademicYear::orderBy('name')->get();
+            $this->academicYears = AcademicYear::orderBy('name')->get();
 
             // Set current academic year as default if not set
             if (empty($this->academic_year_id)) {
-                $currentAcademicYear = \App\Models\AcademicYear::where('is_current', true)->first();
+                $currentAcademicYear = AcademicYear::where('is_current', true)->first();
                 if ($currentAcademicYear) {
                     $this->academic_year_id = $currentAcademicYear->id;
                 }
@@ -131,6 +136,7 @@ class StudentCreateForm extends Component
     public function createStudent()
     {
         $this->validate();
+        $this->validateEmergencyContacts();
 
         try {
             // Auto-generate student ID if not provided
@@ -178,7 +184,10 @@ class StudentCreateForm extends Component
                 $student->profile_photo_path = $photoPath;
             }
 
-            $student->save();
+            DB::transaction(function () use ($student) {
+                $student->save();
+                $this->saveEmergencyContacts($student);
+            });
 
             // Create a user account for the student
             try {
@@ -190,7 +199,7 @@ class StudentCreateForm extends Component
 
                 // Assign student role if it exists
                 if ($user && class_exists('\Spatie\Permission\Models\Role')) {
-                    $studentRole = \Spatie\Permission\Models\Role::where('name', 'Student')->first();
+                    $studentRole = Role::where('name', 'Student')->first();
                     if ($studentRole) {
                         $user->assignRole($studentRole);
                     }

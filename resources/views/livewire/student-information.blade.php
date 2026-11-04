@@ -118,6 +118,8 @@
             </div>
         </div>
 
+        <livewire:student-emergency-contacts :studentId="$student->id" />
+
         <!-- Course Registrations -->
         @if($courseRegistrations->count() > 0)
             <div class="card mt-6">

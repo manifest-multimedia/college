@@ -4,12 +4,14 @@ namespace App\Imports;
 
 use App\Models\Student;
 use App\Models\User;
+use App\Services\StudentEmergencyContactService;
 use App\Services\StudentIdGenerationService;
 use App\Services\StudentImportDateParser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -52,6 +54,7 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
         'accounts_created' => 0,
         'accounts_linked' => 0,
         'accounts_failed' => 0,
+        'emergency_contacts_imported' => 0,
     ];
 
     /**
@@ -96,6 +99,18 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
             'marital_status' => 'marital_status',
         ];
 
+        foreach (StudentEmergencyContactService::importFields() as $key => $label) {
+            $defaultMapping[$key] = $key;
+            $defaultMapping[strtolower(str_replace(' ', '_', $label))] = $key;
+        }
+        $defaultMapping += [
+            'emergency_name' => 'emergency_full_name',
+            'emergency_mobile' => 'emergency_mobile_number',
+            'emergency_alt_phone' => 'emergency_alternate_phone',
+            'emergency_gps' => 'emergency_gps_address',
+            'emergency_residential' => 'emergency_residential_address',
+        ];
+
         // A confirmed upload mapping is authoritative. Falling back to the
         // template mapping keeps existing programmatic imports compatible.
         $this->columnMapping = empty($columnMapping) ? $defaultMapping : $columnMapping;
@@ -117,8 +132,21 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                 // Prepare student data from mapped columns
                 $studentData = $this->mapRowToStudentData($row);
 
+                $contactService = new StudentEmergencyContactService;
+                $emergencyContacts = $contactService->extractImportedContacts($studentData);
+
                 // Validate required fields before processing
                 $validationResult = $this->validateStudentData($studentData, $rowIndex + 2); // +2 for header and 0-based index
+
+                foreach ($emergencyContacts as $slot => $contact) {
+                    $validator = Validator::make($contact, StudentEmergencyContactService::rules());
+                    if ($validator->fails()) {
+                        $validationResult['valid'] = false;
+                        foreach ($validator->errors()->all() as $message) {
+                            $validationResult['errors'][] = 'Emergency contact '.$slot.': '.$message;
+                        }
+                    }
+                }
 
                 if (! $validationResult['valid']) {
                     $this->importStats['skipped']++;
@@ -210,7 +238,7 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                     throw new \RuntimeException("Email {$studentData['email']} is already assigned to another student.");
                 }
 
-                DB::transaction(function () use ($existingStudent, $studentData) {
+                DB::transaction(function () use ($existingStudent, $studentData, $emergencyContacts, $contactService) {
                     if ($existingStudent) {
                         // Update existing student with non-empty values only.
                         $updateData = array_filter($studentData, function ($value) {
@@ -218,7 +246,6 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                         });
                         $existingStudent->update($updateData);
                         $student = $existingStudent->fresh();
-                        $this->importStats['updated']++;
 
                         Log::info('Updated existing student during import', [
                             'student_id' => $student->student_id,
@@ -226,7 +253,6 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                         ]);
                     } else {
                         $student = Student::create($studentData);
-                        $this->importStats['created']++;
 
                         Log::info('Created new student during import', [
                             'student_id' => $student->student_id,
@@ -234,10 +260,14 @@ class StudentImporter implements ToCollection, WithBatchInserts, WithChunkReadin
                         ]);
                     }
 
+                    $contactService->import($student, $emergencyContacts);
+
                     if ($this->createAccounts) {
                         $this->provisionStudentAccount($student);
                     }
                 });
+                $this->importStats[$existingStudent ? 'updated' : 'created']++;
+                $this->importStats['emergency_contacts_imported'] += count($emergencyContacts);
             } catch (\Exception $e) {
                 $this->importStats['failed']++;
                 Log::error('Student import error: '.$e->getMessage(), [

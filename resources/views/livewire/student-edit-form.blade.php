@@ -157,4 +157,6 @@
             </div>
         </div>
     </form>
+
+    <livewire:student-emergency-contacts :studentId="$studentId" />
 </div>

@@ -172,6 +172,11 @@ class Student extends Model
         return $this->belongsTo(AcademicYear::class);
     }
 
+    public function emergencyContacts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StudentEmergencyContact::class);
+    }
+
     public function guardians()
     {
         return $this->belongsToMany(Guardian::class);

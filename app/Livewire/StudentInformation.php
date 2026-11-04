@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\AcademicYear;
 use App\Models\CourseRegistration;
 use App\Models\Student;
+use App\Services\StudentAcademicProfile;
 use App\Services\StudentAcademicProfileService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -21,7 +22,8 @@ class StudentInformation extends Component
         $user = Auth::user();
 
         // Find the student record associated with this user
-        $this->student = Student::where('email', $user->email)->first();
+        $this->student = Student::where('user_id', $user->id)->first()
+            ?? Student::whereNull('user_id')->where('email', $user->email)->first();
     }
 
     public function toggleEdit()
@@ -58,7 +60,7 @@ class StudentInformation extends Component
     /**
      * Resolve "Year Enrolled" from the academic_years table's name/year columns.
      */
-    protected function resolveYearEnrolledFromAcademicYear(?\App\Services\StudentAcademicProfile $profile = null): ?string
+    protected function resolveYearEnrolledFromAcademicYear(?StudentAcademicProfile $profile = null): ?string
     {
         $student = $this->student;
         if (! $student) {

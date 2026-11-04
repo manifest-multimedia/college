@@ -320,6 +320,10 @@
                             </div>
                         @endif
                         
+                        @if(isset($importResults['emergency_contacts_imported']))
+                            <div class="mt-3">Emergency contacts saved: <strong>{{ $importResults['emergency_contacts_imported'] }}</strong></div>
+                        @endif
+
                         @if(isset($importResults['sync_output']))
                             <div class="mt-3">
                                 <h6>User Account Sync Results:</h6>
@@ -347,6 +351,9 @@
                         <li>Every import requires First Name, Last Name, and Email because student portal accounts are created automatically</li>
                     </ul>
                     
+                    <h5>Emergency Contacts (Optional)</h5>
+                    <p>Map emergency contact columns when available. Each contact needs a full name, relationship, and mobile number. Alternate phone, email, GPS address, and residential address are optional.</p>
+                    <p>The template includes two contacts. You can map up to five contacts per student, and add more from the student record. Re-importing updates the corresponding imported contacts. Blank or unmapped contact columns leave saved contacts unchanged.</p>
                     <h5>Expected Excel Columns</h5>
                     <ul>
                         <li><strong>Student ID</strong>: Unique identifier (optional — the system generates one when it is not supplied)</li>

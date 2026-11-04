@@ -139,6 +139,8 @@
         <livewire:student-identification-manager :studentId="$student->id" />
     @endif
     
+    <livewire:student-emergency-contacts :studentId="$student->id" />
+
     <!-- Exams Taken -->
     @if(auth()->user()->hasRole(['Super Admin', 'System User']))
     <div class="card shadow-sm mb-5">

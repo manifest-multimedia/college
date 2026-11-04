@@ -363,6 +363,26 @@
             </div>
         </div>
 
+        <div class="card shadow-sm mb-5">
+            <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3 py-3">
+                <h3 class="card-title fw-bold mb-0">Emergency Contacts <span class="text-muted fs-7 ms-2">Optional</span></h3>
+                <button type="button" class="btn btn-sm btn-light-primary" wire:click="addEmergencyContact">Add Contact</button>
+            </div>
+            <div class="card-body">
+                @forelse($emergencyContacts as $key => $entry)
+                    <div class="border rounded p-4 mb-4" wire:key="new-emergency-contact-{{ $key }}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Emergency Contact</h4>
+                            <button type="button" class="btn btn-sm btn-light-danger" wire:click="removeEmergencyContact('{{ $key }}')">Remove</button>
+                        </div>
+                        @include('livewire.partials.emergency-contact-fields', ['prefix' => 'emergencyContacts.'.$key, 'inputId' => 'new-emergency-'.$key])
+                    </div>
+                @empty
+                    <p class="text-muted mb-0">No emergency contacts added. You can add them now or after admission.</p>
+                @endforelse
+            </div>
+        </div>
+
         <div class="d-flex justify-content-end gap-2 mt-5">
             <a href="{{ route('students') }}" class="btn btn-light me-3">
                 <i class="fas fa-times me-2"></i>Cancel

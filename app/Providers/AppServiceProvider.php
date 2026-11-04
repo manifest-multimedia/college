@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Student;
 use App\Models\User;
 use App\Observers\PermissionObserver;
 use App\Observers\RoleObserver;
@@ -50,6 +51,13 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage-canteen-meals', fn (User $user) => $user->hasAnyRole(['System', 'Super Admin', 'Administrator'])
             || $user->checkPermissionTo('canteen.manage meals'));
+
+        Gate::define('manage-student-emergency-contacts', function (User $user, Student $student): bool {
+            return $user->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer', 'Finance Manager'])
+                || ($student->user_id !== null
+                    ? (int) $student->user_id === (int) $user->id
+                    : ($student->email && strcasecmp($student->email, $user->email) === 0));
+        });
 
         // Register Role and Permission observers for AuthCentral sync
         Role::observe(RoleObserver::class);

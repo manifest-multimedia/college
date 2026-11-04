@@ -7,6 +7,7 @@ use App\Imports\StudentImporter;
 use App\Models\AcademicYear;
 use App\Models\Cohort;
 use App\Models\CollegeClass;
+use App\Services\StudentEmergencyContactService;
 use App\Services\StudentImportDateParser;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -117,6 +118,7 @@ class StudentImport extends Component
 
     public function mount()
     {
+        $this->availableFields += StudentEmergencyContactService::importFields();
         $this->columnMapping = $this->defaultColumnMapping;
 
         // Set current academic year as default
@@ -304,9 +306,25 @@ class StudentImport extends Component
             'country_of_residence' => 'country_of_residence',
         ];
 
+        $emergencyAliases = [
+            'emergency_name' => 'full_name', 'emergency_full_name' => 'full_name',
+            'emergency_mobile' => 'mobile_number', 'emergency_alt_phone' => 'alternate_phone',
+            'emergency_gps' => 'gps_address', 'emergency_residential' => 'residential_address',
+        ];
+        if (isset($emergencyAliases[$heading])) {
+            return StudentEmergencyContactService::importKey(1, $emergencyAliases[$heading]);
+        }
+        if (preg_match('/^emergency_contact(?:_([1-5]))?_(.+)$/', $heading, $parts)) {
+            $slot = (int) ($parts[1] ?: 1);
+            $field = $parts[2];
+            if (array_key_exists($field, StudentEmergencyContactService::FIELDS)) {
+                return StudentEmergencyContactService::importKey($slot, $field);
+            }
+        }
+
         return $this->defaultColumnMapping[$heading]
             ?? $aliases[$heading]
-            ?? (array_key_exists($heading, $this->availableFields) ? $heading : '');
+            ?? (array_key_exists($heading, $this->availableFields + StudentEmergencyContactService::importFields()) ? $heading : '');
     }
 
     protected function validateColumnMapping(): void
