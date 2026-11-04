@@ -231,14 +231,14 @@ class StudentIdGenerationService
             '{PROGRAM_SIMPLE}' => $this->getSimpleProgramCode($collegeClassId),
             '{YEAR_FULL}' => $academicYear,
             '{YEAR_SIMPLE}' => $this->getSimpleAcademicYear($academicYearId),
-            // Critically: scope sequence generation to the same institution/program/year to avoid duplicates
-            '{SEQUENCE_3}' => $this->generateSequenceNumber($firstName, $lastName, $institutionPrefix, $programCode, $academicYear),
-            '{SEQUENCE_4}' => $this->generateSimpleSequenceNumber($firstName, $lastName, $this->getSimpleInstitutionPrefix(), $this->getSimpleProgramCode($collegeClassId), $this->getSimpleAcademicYear($academicYearId)),
             '{FIRST_NAME}' => strtoupper(substr($firstName, 0, 2)),
             '{LAST_NAME}' => strtoupper(substr($lastName, 0, 2)),
         ];
 
-        $studentId = str_replace(array_keys($replacements), array_values($replacements), $customPattern);
+        // Resolve fixed parts first, then allocate against the actual custom
+        // pattern. Structured/simple patterns may not match these identifiers.
+        $template = str_replace(array_keys($replacements), array_values($replacements), $customPattern);
+        $studentId = $this->fillCustomSequence($template, $firstName, $lastName);
 
         Log::info('Generated Custom Student ID', [
             'student_id' => $studentId,
@@ -249,6 +249,53 @@ class StudentIdGenerationService
         ]);
 
         return $studentId;
+    }
+
+    private function fillCustomSequence(string $template, string $firstName, string $lastName): string
+    {
+        if (! preg_match('/\{SEQUENCE_[34]\}/', $template, $token, PREG_OFFSET_CAPTURE)) {
+            return $template;
+        }
+
+        $prefix = substr($template, 0, $token[0][1]);
+        $regex = '/^'.str_replace(
+            [preg_quote('{SEQUENCE_3}', '/'), preg_quote('{SEQUENCE_4}', '/')],
+            ['([0-9]{3,})', '([0-9]{4,})'],
+            preg_quote($template, '/')
+        ).'$/D';
+        $existing = Student::where('student_id', 'like', $prefix.'%')
+            ->lockForUpdate()->orderBy('last_name')->orderBy('first_name')
+            ->get(['student_id', 'first_name', 'last_name'])
+            ->filter(fn ($student) => preg_match($regex, $student->student_id));
+
+        $start = max(1, (int) config('branding.student_id.sequence_start', 1));
+        if (config('branding.student_id.enable_alphabetical_ordering', true)) {
+            $position = $start;
+            foreach ($existing as $student) {
+                $last = strcasecmp($lastName, (string) $student->last_name);
+                if ($last < 0 || ($last === 0 && strcasecmp($firstName, (string) $student->first_name) < 0)) {
+                    break;
+                }
+                $position++;
+            }
+        } else {
+            $position = $start;
+            foreach ($existing as $student) {
+                preg_match($regex, $student->student_id, $parts);
+                $position = max($position, (int) $parts[1] + 1);
+            }
+        }
+
+        do {
+            $candidate = str_replace(
+                ['{SEQUENCE_3}', '{SEQUENCE_4}'],
+                [str_pad($position, 3, '0', STR_PAD_LEFT), str_pad($position, 4, '0', STR_PAD_LEFT)],
+                $template
+            );
+            $position++;
+        } while (Student::where('student_id', $candidate)->exists());
+
+        return $candidate;
     }
 
     /**
