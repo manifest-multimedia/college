@@ -64,6 +64,13 @@ class Question extends Model
         return $this->hasMany(QuestionAttachment::class)->orderBy('display_order');
     }
 
+    public function mediaAttachments(): array
+    {
+        return $this->attachments
+            ->whereIn('attachment_type', ['image', 'video', 'audio'])
+            ->map(fn ($attachment) => $attachment->mediaData())->values()->all();
+    }
+
     /**
      * Get only image attachments for this question.
      */

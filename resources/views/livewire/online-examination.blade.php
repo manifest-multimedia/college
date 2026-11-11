@@ -125,6 +125,10 @@
                                             @endif
                                         </div>
                                         <ul class="list-unstyled">
+                                            <x-question-media :items="$question['media'] ?? []" />
+                                            @if($question['table_data'] ?? null)
+                                                <x-question-table :data="$question['table_data']" />
+                                            @endif
                                             @foreach ($question['options'] as $option)
                                                 <li class="mb-3">
                                                     <label class="form-check-label d-flex align-items-center">

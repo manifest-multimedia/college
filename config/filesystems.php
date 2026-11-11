@@ -53,6 +53,13 @@ return [
             'throw' => false,
         ],
 
+        'question_media' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/question-media'),
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
         'exams' => [
             'driver' => 'local',
             'root' => storage_path('app/exams'),

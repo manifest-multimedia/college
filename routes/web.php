@@ -884,3 +884,6 @@ Route::get('/take-exam', function () {
 Route::get('/extra-time', function () {
     return view('exams.extra-time');
 })->name('extra-time');
+
+Route::get('/question-media/{attachment}', [\App\Http\Controllers\QuestionMediaController::class, 'show'])
+    ->whereNumber('attachment')->name('question-media.show');

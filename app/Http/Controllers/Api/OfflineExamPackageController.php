@@ -96,6 +96,8 @@ class OfflineExamPackageController extends Controller
             // Generate session questions for the exam
             $questions = $exam->generateSessionQuestions(false); // Don't shuffle for package
 
+            $questions = \Illuminate\Database\Eloquent\Collection::make($questions->all())->loadMissing('attachments');
+
             $package = [
                 'exam' => [
                     'id' => $exam->id,
@@ -116,6 +118,11 @@ class OfflineExamPackageController extends Controller
                         'correct_option' => $question->correct_option,
                         'mark' => $question->mark,
                         'explanation' => $question->explanation,
+                        'media' => collect($question->mediaAttachments())->map(function ($media) {
+                            $media['url'] = route('offline-exam-media.show', $media['id']);
+                            return $media;
+                        })->all(),
+                        'table_data' => $question->attachments->firstWhere('attachment_type', 'table')?->metadata,
                         'options' => $question->options->map(function ($option) {
                             return [
                                 'id' => $option->id,

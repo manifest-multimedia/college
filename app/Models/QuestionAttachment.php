@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class QuestionAttachment extends Model
 {
     protected $fillable = [
         'question_id',
+        'disk',
         'attachment_type',
         'file_path',
         'original_filename',
@@ -41,7 +41,26 @@ class QuestionAttachment extends Model
             return null;
         }
 
-        return Storage::disk('exams')->url($this->file_path);
+        return route('question-media.show', $this);
+    }
+
+    public function storageDisk(): string
+    {
+        return $this->disk ?: 'exams';
+    }
+
+    public function mediaData(): array
+    {
+        return [
+            'id' => $this->id,
+            'type' => $this->attachment_type,
+            'url' => $this->url,
+            'filename' => $this->original_filename,
+            'mime_type' => $this->mime_type,
+            'size' => $this->formatted_size,
+            'file_size' => $this->file_size,
+            'display_order' => $this->display_order,
+        ];
     }
 
     /**

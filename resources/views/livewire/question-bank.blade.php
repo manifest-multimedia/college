@@ -87,25 +87,19 @@
                         </div>
                     @endif
 
-                    {{-- Display attached images if any --}}
-                    @if(isset($question['attachments']) && count($question['attachments']) > 0)
-                        @php
-                            $images = array_filter($question['attachments'], fn($attachment) => $attachment['attachment_type'] === 'image');
-                        @endphp
-                        @if(count($images) > 0)
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Question Images:</label>
-                                <div class="d-flex flex-wrap gap-2">
-                                    @foreach($images as $image)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::disk('exams')->url($image['file_path']) }}" 
-                                             alt="Question image" 
-                                             class="img-thumbnail" 
-                                             style="max-height: 150px; object-fit: contain;">
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    @endif
+                    {{-- Display attached media --}}
+                    @php
+                        $mediaItems = collect($question['attachments'] ?? [])
+                            ->whereIn('attachment_type', ['image', 'audio', 'video'])
+                            ->map(fn ($attachment) => [
+                                'id' => $attachment['id'],
+                                'type' => $attachment['attachment_type'],
+                                'url' => route('question-media.show', $attachment['id']),
+                                'filename' => $attachment['original_filename'],
+                                'mime_type' => $attachment['mime_type'],
+                            ])->all();
+                    @endphp
+                    <x-question-media :items="$mediaItems" />
 
                     <div class="row">
                         <div class="mb-3 col-md-6">

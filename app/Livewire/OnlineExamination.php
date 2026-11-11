@@ -548,6 +548,8 @@ class OnlineExamination extends Component
                 return [
                     'id' => $question->id,
                     'question' => $question->question_text,
+                    'media' => $question->mediaAttachments(),
+                    'table_data' => $question->tables->first()?->metadata,
                     'options' => $question->options()->get()->toArray(),
                     'marks' => $question->mark,
                 ];
@@ -576,6 +578,8 @@ class OnlineExamination extends Component
                     return [
                         'id' => $question->id,
                         'question' => $question->question_text,
+                    'media' => $question->mediaAttachments(),
+                    'table_data' => $question->tables->first()?->metadata,
                         'options' => $question->options->toArray(),
                         'marks' => $question->mark,
                     ];

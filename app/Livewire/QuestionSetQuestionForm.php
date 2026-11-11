@@ -9,7 +9,9 @@ use App\Models\QuestionSet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -17,8 +19,10 @@ class QuestionSetQuestionForm extends Component
 {
     use WithFileUploads;
 
+    #[Locked]
     public $questionSetId;
 
+    #[Locked]
     public $questionId = null;
 
     public $questionSet;
@@ -46,17 +50,18 @@ class QuestionSetQuestionForm extends Component
     public $correctOptions = [];
 
     // File uploads
-    public $questionImages = [];
+    public $questionMedia = [];
 
-    public $existingImages = [];
+    public $existingMedia = [];
 
-    public $imagesToDelete = [];
+    public $mediaToDelete = [];
 
     public $tableData = null;
 
     public $existingTableData = null;
 
     // UI state
+    #[Locked]
     public $isEditing = false;
 
     public $isSaving = false;
@@ -78,7 +83,8 @@ class QuestionSetQuestionForm extends Component
         'options.*' => 'required|string|min:1',
         'correctOptions' => 'required|array|min:1',
         'correctOptions.*' => 'required|integer|min:0',
-        'questionImages.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        'questionMedia' => 'array|max:10',
+        'questionMedia.*' => 'file|mimes:jpg,jpeg,png,webp,mp4,webm,mp3,wav,ogg,m4a|max:20480',
         'tableData' => 'nullable|json',
     ];
 
@@ -130,7 +136,9 @@ class QuestionSetQuestionForm extends Component
         $this->hasResponses = $this->question->responses()->exists();
 
         $this->questionText = $this->question->question_text;
-        $this->questionType = $this->question->type ?? 'multiple_choice';
+        $this->questionType = match ($this->question->type) {
+            'TF' => 'true_false', 'ESSAY' => 'short_answer', default => 'multiple_choice',
+        };
         $this->difficultyLevel = $this->question->difficulty_level ?? 'medium';
         $this->marks = $this->question->mark ?? 1;
         $this->explanation = $this->question->explanation ?? '';
@@ -162,15 +170,8 @@ class QuestionSetQuestionForm extends Component
             return;
         }
 
-        // Load existing images
-        $this->existingImages = $this->question->images()->get()->map(function ($attachment) {
-            return [
-                'id' => $attachment->id,
-                'url' => $attachment->url,
-                'filename' => $attachment->original_filename,
-                'size' => $attachment->formatted_size,
-            ];
-        })->toArray();
+        // Load existing media
+        $this->existingMedia = $this->question->mediaAttachments();
 
         // Load existing table data
         $tableAttachment = $this->question->tables()->first();
@@ -210,23 +211,23 @@ class QuestionSetQuestionForm extends Component
         }
     }
 
-    public function removeNewImage($index)
+    public function removeNewMedia($index)
     {
-        if (isset($this->questionImages[$index])) {
-            array_splice($this->questionImages, $index, 1);
+        if (isset($this->questionMedia[$index])) {
+            array_splice($this->questionMedia, $index, 1);
         }
     }
 
-    public function removeExistingImage($imageId)
+    public function removeExistingMedia($imageId)
     {
         // Mark for deletion
-        $this->imagesToDelete[] = $imageId;
+        $this->mediaToDelete[] = $imageId;
 
-        // Remove from existing images array
-        $this->existingImages = array_filter($this->existingImages, function ($img) use ($imageId) {
+        // Remove from the displayed media list
+        $this->existingMedia = array_filter($this->existingMedia, function ($img) use ($imageId) {
             return $img['id'] !== $imageId;
         });
-        $this->existingImages = array_values($this->existingImages);
+        $this->existingMedia = array_values($this->existingMedia);
     }
 
     public function clearTableData()
@@ -269,7 +270,7 @@ class QuestionSetQuestionForm extends Component
 
     private function mapQuestionTypeToDatabase($type)
     {
-        return match($type) {
+        return match ($type) {
             'multiple_choice' => 'MCQ',
             'true_false' => 'TF',
             'short_answer' => 'ESSAY',
@@ -279,8 +280,11 @@ class QuestionSetQuestionForm extends Component
 
     public function save()
     {
+        if (! $this->isEditing && count($this->questions)) {
+            return $this->createAllQuestions();
+        }
         // Prevent editing questions that have been answered
-        if ($this->isEditing && $this->hasResponses) {
+        if ($this->isEditing && Question::findOrFail($this->questionId)->responses()->exists()) {
             session()->flash('error', 'This question cannot be edited because it has already been answered by students. Create a new question instead.');
 
             return;
@@ -323,6 +327,7 @@ class QuestionSetQuestionForm extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->cleanFailedUploads();
             Log::error('Question save error: '.$e->getMessage());
             session()->flash('error', 'Error saving question: '.$e->getMessage());
         } finally {
@@ -380,30 +385,7 @@ class QuestionSetQuestionForm extends Component
 
     private function saveAttachments($question)
     {
-        // Save image attachments
-        if (! empty($this->questionImages)) {
-            foreach ($this->questionImages as $index => $image) {
-                try {
-                    $filename = $this->generateSecureFilename($image, $question->id);
-                    $path = $image->storeAs('questions/images', $filename, 'exams');
-
-                    QuestionAttachment::create([
-                        'question_id' => $question->id,
-                        'attachment_type' => 'image',
-                        'file_path' => $path,
-                        'original_filename' => $image->getClientOriginalName(),
-                        'mime_type' => $image->getMimeType(),
-                        'file_size' => $image->getSize(),
-                        'display_order' => $index,
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Error saving image attachment', [
-                        'question_id' => $question->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-        }
+        $this->storeMedia($question);
 
         // Save table data as attachment
         if (! empty($this->tableData)) {
@@ -427,42 +409,17 @@ class QuestionSetQuestionForm extends Component
 
     private function updateAttachments($question)
     {
-        // Delete marked images
-        if (! empty($this->imagesToDelete)) {
-            foreach ($this->imagesToDelete as $imageId) {
-                $attachment = QuestionAttachment::find($imageId);
-                if ($attachment && $attachment->file_path) {
-                    Storage::disk('exams')->delete($attachment->file_path);
-                    $attachment->delete();
-                }
-            }
-        }
-
-        // Save new images
-        if (! empty($this->questionImages)) {
-            $existingImageCount = count($this->existingImages);
-            foreach ($this->questionImages as $index => $image) {
+        foreach ($question->attachments()->whereIn('id', $this->mediaToDelete)->whereIn('attachment_type', ['image', 'video', 'audio'])->get() as $attachment) {
+            $attachment->delete();
+            DB::afterCommit(function () use ($attachment) {
                 try {
-                    $filename = $this->generateSecureFilename($image, $question->id);
-                    $path = $image->storeAs('questions/images', $filename, 'exams');
-
-                    QuestionAttachment::create([
-                        'question_id' => $question->id,
-                        'attachment_type' => 'image',
-                        'file_path' => $path,
-                        'original_filename' => $image->getClientOriginalName(),
-                        'mime_type' => $image->getMimeType(),
-                        'file_size' => $image->getSize(),
-                        'display_order' => $existingImageCount + $index,
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Error updating image attachment', [
-                        'question_id' => $question->id,
-                        'error' => $e->getMessage(),
-                    ]);
+                    Storage::disk($attachment->storageDisk())->delete($attachment->file_path);
+                } catch (\Throwable $exception) {
+                    Log::warning('Could not remove detached question media', ['attachment_id' => $attachment->id, 'error' => $exception->getMessage()]);
                 }
-            }
+            });
         }
+        $this->storeMedia($question);
 
         // Update table data
         if ($this->tableData !== null || $this->existingTableData === null) {
@@ -490,19 +447,45 @@ class QuestionSetQuestionForm extends Component
         }
     }
 
-    private function generateSecureFilename($file, $questionId)
-    {
-        $extension = $file->getClientOriginalExtension();
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeName = Str::slug($originalName);
+    private array $storedMediaPaths = [];
 
-        return "question_{$questionId}_{$safeName}_".time().'.'.$extension;
+    private function storeMedia(Question $question): void
+    {
+        $order = (int) $question->attachments()->max('display_order') + 1;
+        foreach ($this->questionMedia as $file) {
+            $mime = $file->getMimeType();
+            $type = str_starts_with($mime, 'image/') ? 'image'
+                : (str_starts_with($mime, 'video/') ? 'video' : 'audio');
+            $path = $file->storeAs('questions/'.$question->id, Str::uuid().'.'.$file->guessExtension(), 'question_media');
+            $this->storedMediaPaths[] = $path;
+            $question->attachments()->create([
+                'disk' => 'question_media',
+                'attachment_type' => $type,
+                'file_path' => $path,
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $mime,
+                'file_size' => $file->getSize(),
+                'display_order' => $order++,
+            ]);
+        }
+    }
+
+    private function cleanFailedUploads(): void
+    {
+        Storage::disk('question_media')->delete($this->storedMediaPaths);
+        $this->storedMediaPaths = [];
     }
 
     public function addAnotherQuestion()
     {
+        abort_if($this->isEditing, 403);
+        $this->options = array_values(array_filter($this->options, fn ($option) => ! empty(trim($option))));
+        $this->rules['correctOptions.*'] = 'required|integer|min:0|lt:'.count($this->options);
+        $this->validate();
         // Save current question state
         $this->questions[] = [
+            'questionMedia' => $this->questionMedia,
+            'tableData' => $this->tableData,
             'questionText' => $this->questionText,
             'questionType' => $this->questionType,
             'difficultyLevel' => $this->difficultyLevel,
@@ -519,6 +502,8 @@ class QuestionSetQuestionForm extends Component
 
     private function resetQuestionForm()
     {
+        $this->questionMedia = [];
+        $this->tableData = null;
         $this->questionText = '';
         $this->questionType = 'multiple_choice';
         $this->difficultyLevel = 'medium';
@@ -537,25 +522,33 @@ class QuestionSetQuestionForm extends Component
 
     public function createAllQuestions()
     {
+        abort_if($this->isEditing, 403);
+        if (! empty(trim($this->questionText))) {
+            $this->addAnotherQuestion();
+        }
+        foreach ($this->questions as $data) {
+            $rules = $this->rules;
+            $rules['correctOptions.*'] = 'required|integer|min:0|lt:'.count($data['options'] ?? []);
+            Validator::make($data, $rules)->validate();
+        }
         try {
             DB::beginTransaction();
-
-            // Save current question first
-            if (! empty(trim($this->questionText))) {
-                $this->addAnotherQuestion();
-            }
 
             // Create all saved questions
             foreach ($this->questions as $questionData) {
                 $question = Question::create([
                     'question_set_id' => $this->questionSetId,
                     'question_text' => $questionData['questionText'],
-                    'type' => $questionData['questionType'],
+                    'type' => $this->mapQuestionTypeToDatabase($questionData['questionType']),
                     'difficulty_level' => $questionData['difficultyLevel'],
                     'mark' => $questionData['marks'],
                     'explanation' => $questionData['explanation'],
                     'exam_section' => $questionData['examSection'],
                 ]);
+
+                $this->questionMedia = $questionData['questionMedia'] ?? [];
+                $this->tableData = $questionData['tableData'] ?? null;
+                $this->saveAttachments($question);
 
                 // Create options for the question
                 foreach ($questionData['options'] as $index => $optionText) {
@@ -577,6 +570,7 @@ class QuestionSetQuestionForm extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->cleanFailedUploads();
             Log::error('Question save error: '.$e->getMessage());
             session()->flash('error', 'Error saving questions: '.$e->getMessage());
         }
@@ -584,6 +578,9 @@ class QuestionSetQuestionForm extends Component
 
     public function resetForm()
     {
+        $this->questionMedia = [];
+        $this->mediaToDelete = [];
+        $this->resetValidation();
         if ($this->isEditing) {
             $this->loadQuestion();
         } else {

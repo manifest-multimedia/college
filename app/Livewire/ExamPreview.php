@@ -100,6 +100,7 @@ class ExamPreview extends Component
                 $examQuestions = $examQuestions->take($questionsPerSession);
             }
 
+            $examQuestions = \Illuminate\Database\Eloquent\Collection::make($examQuestions->all())->loadMissing('attachments');
             $this->questions = $examQuestions->map(function ($question) {
                 return [
                     'id' => $question->id,
@@ -108,8 +109,8 @@ class ExamPreview extends Component
                     'marks' => $question->mark,
                     'selected_answer' => $this->responses[$question->id] ?? null,
                     'is_flagged' => in_array($question->id, $this->flaggedQuestions),
-                    'images' => [],
-                    'table_data' => null,
+                    'media' => $question->mediaAttachments(),
+                    'table_data' => $question->attachments->firstWhere('attachment_type', 'table')?->metadata,
                 ];
             })->values()->toArray();
 

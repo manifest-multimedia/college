@@ -176,6 +176,8 @@ Route::prefix('offline-exam-delivery')->group(function () {
     // Exam package endpoints (requires Bearer token)
     Route::middleware('auth.offline.api')->group(function () {
         Route::get('/exams/available', [OfflineExamPackageController::class, 'available']);
+        Route::get('/media/{attachment}', [\App\Http\Controllers\QuestionMediaController::class, 'offline'])
+            ->whereNumber('attachment')->name('offline-exam-media.show');
         Route::get('/exams/package/{id}', [OfflineExamPackageController::class, 'package']);
     });
 

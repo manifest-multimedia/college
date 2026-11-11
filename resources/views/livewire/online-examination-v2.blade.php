@@ -154,18 +154,7 @@
                                         @endif
                                     </div>
 
-                                    {{-- Display question images if present --}}
-                                    @if(isset($question['images']) && count($question['images']) > 0)
-                                        <div class="question-images mb-3">
-                                            @foreach($question['images'] as $image)
-                                                <img src="{{ Storage::disk('exams')->url($image['file_path']) }}" 
-                                                     alt="{{ $image['filename'] ?? 'Question image' }}" 
-                                                     class="img-fluid rounded mb-2" 
-                                                     style="max-width: 100%; max-height: 400px; object-fit: contain;"
-                                                     loading="lazy">
-                                            @endforeach
-                                        </div>
-                                    @endif
+                                    <x-question-media :items="$question['media'] ?? []" />
 
                                     {{-- Display question table if present --}}
                                     @if(isset($question['table_data']) && $question['table_data'])

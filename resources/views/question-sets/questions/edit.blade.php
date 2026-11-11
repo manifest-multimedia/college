@@ -20,7 +20,7 @@
                             </a>
                         </li>
                         <li class="breadcrumb-item">
-                            <a href="{{ route('question.sets.questions', $id) }}" class="text-decoration-none">
+                            <a href="{{ route('question.sets.questions', $questionSetId) }}" class="text-decoration-none">
                                 <i class="bi bi-list me-1"></i>Questions
                             </a>
                         </li>
@@ -44,10 +44,10 @@
                             <p class="text-muted mb-0">Modify existing question in the question set</p>
                         </div>
                         <div>
-                            <a href="{{ route('question.sets.questions', $id) }}" class="btn btn-outline-secondary me-2">
+                            <a href="{{ route('question.sets.questions', $questionSetId) }}" class="btn btn-outline-secondary me-2">
                                 <i class="bi bi-arrow-left me-1"></i>Back to Questions
                             </a>
-                            <a href="{{ route('question.sets.questions.create', $id) }}" class="btn btn-success">
+                            <a href="{{ route('question.sets.questions.create', $questionSetId) }}" class="btn btn-success">
                                 <i class="bi bi-plus-circle me-1"></i>Add New Question
                             </a>
                         </div>
@@ -59,7 +59,7 @@
         <!-- Question Form -->
         <div class="row">
             <div class="col-12">
-                @livewire('question-set-question-form', ['questionSetId' => $id, 'questionId' => $questionId])
+                @livewire('question-set-question-form', ['questionSetId' => $questionSetId, 'questionId' => $questionId])
             </div>
         </div>
     </div>

@@ -235,6 +235,8 @@ class OnlineExaminationV2 extends Component
             'flagged_questions' => $this->flaggedQuestions,
         ]);
 
+        $examQuestions = \Illuminate\Database\Eloquent\Collection::make($examQuestions->all())->loadMissing('attachments');
+
         // Build questions array with responses
         foreach ($examQuestions as $question) {
             $response = Response::where('exam_session_id', $this->examSession->id)
@@ -245,23 +247,7 @@ class OnlineExaminationV2 extends Component
             $selectedAnswer = $response ? (int) $response->selected_option : null;
             $isFlagged = in_array($question->id, $this->flaggedQuestions);
 
-            // Extract images and table data from attachments
-            $images = [];
-            $tableData = null;
-
-            if ($question->attachments) {
-                foreach ($question->attachments as $attachment) {
-                    if ($attachment->attachment_type === 'image') {
-                        $images[] = [
-                            'file_path' => $attachment->file_path,
-                            'url' => $attachment->url,
-                            'filename' => $attachment->original_filename,
-                        ];
-                    } elseif ($attachment->attachment_type === 'table') {
-                        $tableData = $attachment->metadata;
-                    }
-                }
-            }
+            $tableData = $question->attachments->firstWhere('attachment_type', 'table')?->metadata;
 
             $this->questions[] = [
                 'id' => $question->id,
@@ -270,7 +256,7 @@ class OnlineExaminationV2 extends Component
                 'options' => $question->options->toArray(),
                 'selected_answer' => $selectedAnswer,
                 'is_flagged' => $isFlagged,
-                'images' => $images,
+                'media' => $question->mediaAttachments(),
                 'table_data' => $tableData,
             ];
 

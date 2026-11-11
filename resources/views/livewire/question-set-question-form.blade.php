@@ -81,30 +81,31 @@
                             <small class="text-muted">Provide a clear and concise question</small>
                         </div>
 
-                        <!-- Question Images -->
+                        <!-- Question Media -->
                         <div class="mb-4">
                             <label class="form-label">
-                                Question Images <span class="text-muted">(Optional)</span>
+                                Question Media <span class="text-muted">(Optional)</span>
                             </label>
-                            <input type="file" wire:model="questionImages" multiple accept="image/*" 
-                                   class="form-control @error('questionImages.*') is-invalid @enderror">
-                            @error('questionImages.*')
+                            <input type="file" wire:model="questionMedia" multiple accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.mp3,.wav,.ogg,.m4a"
+                                   class="form-control @error('questionMedia.*') is-invalid @enderror">
+                            @error('questionMedia') <div class="text-danger">{{ $message }}</div> @enderror
+                            <div wire:loading wire:target="questionMedia" class="text-muted">Uploading media…</div>
+                            @error('questionMedia.*')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Upload images for this question (JPG, PNG, WebP, max 2MB each)</small>
+                            <small class="text-muted">Upload images (JPG, PNG, WebP), video (MP4, WebM), or audio (MP3, WAV, OGG, M4A). Maximum 20 MB each, 10 files per upload.</small>
 
                             {{-- Preview new images --}}
-                            @if(!empty($questionImages) && is_array($questionImages) && count($questionImages) > 0)
+                            @if(!empty($questionMedia) && is_array($questionMedia) && count($questionMedia) > 0)
                                 <div class="d-flex flex-wrap gap-2 mt-3">
-                                    @foreach($questionImages as $index => $image)
+                                    @foreach($questionMedia as $index => $image)
                                         @if($image && is_object($image))
                                             <div class="position-relative">
-                                                <img src="{{ $image->temporaryUrl() }}" 
-                                                     alt="Preview" 
-                                                     class="img-thumbnail" 
-                                                     style="max-height: 150px; object-fit: cover;">
+                                                @if(in_array(strtolower($image->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm', 'mp3', 'wav', 'ogg', 'm4a']))
+                                                <x-question-media :items="[['type' => str_starts_with($image->getMimeType(), 'image/') ? 'image' : (str_starts_with($image->getMimeType(), 'video/') ? 'video' : 'audio'), 'url' => $image->temporaryUrl(), 'filename' => $image->getClientOriginalName(), 'mime_type' => $image->getMimeType()]]" />
+                                            @endif
                                                 <button type="button" 
-                                                        wire:click="removeNewImage({{ $index }})" 
+                                                        wire:click="removeNewMedia({{ $index }})"
                                                         class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
                                                         style="padding: 0.15rem 0.4rem; line-height: 1;">
                                                     ×
@@ -116,18 +117,15 @@
                             @endif
 
                             {{-- Display existing images when editing --}}
-                            @if($isEditing && !empty($existingImages) && count($existingImages) > 0)
+                            @if($isEditing && !empty($existingMedia) && count($existingMedia) > 0)
                                 <div class="mt-3">
-                                    <label class="form-label fw-semibold">Current Images:</label>
+                                    <label class="form-label fw-semibold">Current Media:</label>
                                     <div class="d-flex flex-wrap gap-2">
-                                        @foreach($existingImages as $image)
+                                        @foreach($existingMedia as $image)
                                             <div class="position-relative">
-                                                <img src="{{ $image['url'] }}" 
-                                                     alt="{{ $image['filename'] }}" 
-                                                     class="img-thumbnail" 
-                                                     style="max-height: 150px; object-fit: cover;">
+                                                <x-question-media :items="[$image]" />
                                                 <button type="button" 
-                                                        wire:click="removeExistingImage({{ $image['id'] }})" 
+                                                        wire:click="removeExistingMedia({{ $image['id'] }})"
                                                         class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
                                                         style="padding: 0.15rem 0.4rem; line-height: 1;">
                                                     ×
@@ -334,23 +332,23 @@
                                     <button type="button" class="btn btn-outline-primary" 
                                             wire:click="addAnotherQuestion"
                                             wire:loading.attr="disabled" 
-                                            wire:target="addAnotherQuestion">
-                                        <span wire:loading.remove wire:target="addAnotherQuestion">
+                                            wire:target="addAnotherQuestion,questionMedia">
+                                        <span wire:loading.remove wire:target="addAnotherQuestion,questionMedia">
                                             <i class="bi bi-plus-lg me-1"></i>Add Another Question
                                         </span>
-                                        <span wire:loading wire:target="addAnotherQuestion">
+                                        <span wire:loading wire:target="addAnotherQuestion,questionMedia">
                                             <i class="bi bi-hourglass-split me-1"></i>Adding...
                                         </span>
                                     </button>
                                 @endif
                                 <button type="submit" class="btn btn-primary" 
-                                        wire:loading.attr="disabled" wire:target="save,createAllQuestions"
+                                        wire:loading.attr="disabled" wire:target="save,createAllQuestions,questionMedia"
                                         @if($isEditing && $hasResponses) disabled title="Cannot edit questions that have been answered" @endif>
-                                    <span wire:loading.remove wire:target="save,createAllQuestions">
+                                    <span wire:loading.remove wire:target="save,createAllQuestions,questionMedia">
                                         <i class="bi bi-{{ $isEditing ? 'check-lg' : 'plus-lg' }} me-1"></i>
                                         {{ $isEditing ? 'Update Question' : 'Save All Questions' }}
                                     </span>
-                                    <span wire:loading wire:target="save,createAllQuestions">
+                                    <span wire:loading wire:target="save,createAllQuestions,questionMedia">
                                         <i class="bi bi-hourglass-split me-1"></i>
                                         {{ $isEditing ? 'Updating...' : 'Saving...' }}
                                     </span>
@@ -478,26 +476,22 @@
                             <h6>{{ $questionText }}</h6>
                             
                             {{-- Preview images --}}
-                            @if(!empty($questionImages) && is_array($questionImages) && count($questionImages) > 0)
+                            @if(!empty($questionMedia) && is_array($questionMedia) && count($questionMedia) > 0)
                                 <div class="d-flex flex-wrap gap-2 mb-3">
-                                    @foreach($questionImages as $image)
+                                    @foreach($questionMedia as $image)
                                         @if($image && is_object($image))
-                                            <img src="{{ $image->temporaryUrl() }}" 
-                                                 alt="Question image" 
-                                                 class="img-fluid rounded" 
-                                                 style="max-height: 200px; object-fit: contain;">
+                                            @if(in_array(strtolower($image->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'webm', 'mp3', 'wav', 'ogg', 'm4a']))
+                                                <x-question-media :items="[['type' => str_starts_with($image->getMimeType(), 'image/') ? 'image' : (str_starts_with($image->getMimeType(), 'video/') ? 'video' : 'audio'), 'url' => $image->temporaryUrl(), 'filename' => $image->getClientOriginalName(), 'mime_type' => $image->getMimeType()]]" />
+                                            @endif
                                         @endif
                                     @endforeach
                                 </div>
                             @endif
 
-                            @if(!empty($existingImages) && count($existingImages) > 0)
+                            @if(!empty($existingMedia) && count($existingMedia) > 0)
                                 <div class="d-flex flex-wrap gap-2 mb-3">
-                                    @foreach($existingImages as $image)
-                                        <img src="{{ $image['url'] }}" 
-                                             alt="Question image" 
-                                             class="img-fluid rounded" 
-                                             style="max-height: 200px; object-fit: contain;">
+                                    @foreach($existingMedia as $image)
+                                        <x-question-media :items="[$image]" />
                                     @endforeach
                                 </div>
                             @endif
