@@ -14,7 +14,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "league/commonmark": "*",
-        "livewire/livewire": "^3.0",
+        "livewire/livewire": "3.8.3",
         "maatwebsite/excel": "4.x-dev",
         "matomo/device-detector": "^6.4",
         "phpoffice/phpspreadsheet": "^5.7",
