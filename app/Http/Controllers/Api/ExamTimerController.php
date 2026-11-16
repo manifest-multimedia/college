@@ -115,6 +115,8 @@ class ExamTimerController extends Controller
         try {
             $examSession = ExamSession::findOrFail($request->exam_session_id);
 
+            abort_unless($request->user() && (int) $examSession->student_id === (int) $request->user()->id, 403);
+
             // Check if the exam is actually expired
             if ($examSession->adjustedCompletionTime->gt(now())) {
                 return response()->json([
@@ -124,16 +126,9 @@ class ExamTimerController extends Controller
                 ], 400);
             }
 
-            // Calculate score based on responses
-            $score = 0;
+            // Use the same scoring engine as manual Livewire submissions.
+            $score = app(\App\Services\ResultsService::class)->calculateOnlineExamScore($examSession)['correct_answers'];
             $responses = $examSession->responses;
-
-            foreach ($responses as $response) {
-                $question = $response->question;
-                if ($question && $response->selected_option == $question->correct_option) {
-                    $score += $question->mark;
-                }
-            }
 
             // Update the session with completion info
             $examSession->update([
@@ -152,7 +147,6 @@ class ExamTimerController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Exam submitted successfully',
-                'score' => $score,
                 'submittedAt' => now()->toIso8601String(),
             ]);
         } catch (\Exception $e) {

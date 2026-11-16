@@ -25,7 +25,7 @@ class ExportToExcel implements FromCollection, ShouldAutoSize, WithHeadings
         $this->columnNames = $columnNames;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
 
         return collect($this->data)->map(function ($item) {

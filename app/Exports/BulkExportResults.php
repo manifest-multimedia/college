@@ -20,7 +20,7 @@ class BulkExportResults implements FromCollection, WithHeadings
     /**
      * @return \Illuminate\Support\Collection
      */
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         $exam = Exam::find($this->exam_id);
         if (! $exam) {

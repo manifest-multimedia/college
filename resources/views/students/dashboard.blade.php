@@ -34,6 +34,11 @@
                 </div>
             </div>
 
+            <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <span><strong>Tutor Evaluation:</strong> Review your lecturers anonymously during an open semester evaluation.</span>
+                <a class="btn btn-primary btn-sm" href="{{ route('student.tutor-evaluations') }}">View Tutor Evaluations</a>
+            </div>
+
             <!-- Quick Stats -->
             <div class="row g-5 mb-5">
                 <div class="col-xl-3 col-md-6">

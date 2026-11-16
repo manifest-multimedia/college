@@ -82,11 +82,15 @@ class RegularAuthController extends Controller
 
         // Generic authentication failure message for security
         // Don't reveal whether user exists or password is wrong
+        $message = 'Authentication failed. Please check your credentials and try again.';
+
+        if ($this->authService->isAuthCentral()
+            && config('branding.theme_settings.show_auth_central_button', true)) {
+            $message .= ' If your account was created with AuthCentral, you may also use the "Sign In with AuthCentral" option above.';
+        }
+
         throw ValidationException::withMessages([
-            'email' => [
-                'Authentication failed. Please check your credentials and try again. '.
-                'If your account was created with AuthCentral, you may also use the "Sign In with AuthCentral" option above.',
-            ],
+            'email' => [$message],
         ]);
     }
 

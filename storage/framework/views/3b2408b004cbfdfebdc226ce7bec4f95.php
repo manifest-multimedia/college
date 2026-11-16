@@ -1,0 +1,22 @@
+<?php if (isset($component)) { $__componentOriginal78458ab11901cb5e12c9728346766652 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal78458ab11901cb5e12c9728346766652 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.dashboard.default','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('dashboard.default'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?><div class="container-fluid py-5"><h1>Student Answer Review</h1><p class="text-muted">Review completed attempts for examinations you are authorised to access. Device information is not available here.</p>
+<form method="GET" class="card card-body mb-5"><label class="form-label" for="exam">Examination</label><div class="d-flex gap-3"><select class="form-select" id="exam" name="exam" required><option value="">Select examination</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $exams; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $exam): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($exam->id); ?>" <?php if($selectedExam?->id === $exam->id): echo 'selected'; endif; ?>><?php echo e($exam->display_title); ?> — <?php echo e($exam->course?->name); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></select><button class="btn btn-primary">View attempts</button></div></form>
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($sessions): ?><div class="card"><div class="card-body"><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Student</th><th>Completed</th><th>Submission</th><th>Review</th></tr></thead><tbody><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $sessions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $session): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><tr><td><?php echo e($session->student?->name ?? 'Unknown student'); ?></td><td><?php echo e($session->completed_at?->format('d M Y, H:i')); ?></td><td><?php echo e($session->auto_submitted ? 'Automatic' : 'Manual'); ?></td><td><a class="btn btn-sm btn-primary" href="<?php echo e(route('exams.answer-review.show', $session)); ?>">Review answers</a></td></tr><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><tr><td colspan="4">No completed attempts found.</td></tr><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></tbody></table></div><?php echo e($sessions->links()); ?></div></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></div> <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal78458ab11901cb5e12c9728346766652)): ?>
+<?php $attributes = $__attributesOriginal78458ab11901cb5e12c9728346766652; ?>
+<?php unset($__attributesOriginal78458ab11901cb5e12c9728346766652); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal78458ab11901cb5e12c9728346766652)): ?>
+<?php $component = $__componentOriginal78458ab11901cb5e12c9728346766652; ?>
+<?php unset($__componentOriginal78458ab11901cb5e12c9728346766652); ?>
+<?php endif; ?>
+<?php /**PATH /home/johnsonsebire/www/college/resources/views/exams/student-answer-review-index.blade.php ENDPATH**/ ?>

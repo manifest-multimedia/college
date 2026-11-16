@@ -26,7 +26,7 @@ class OfflineExamScoresExport implements FromCollection, ShouldAutoSize, WithHea
         $this->classId = $classId;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         $query = OfflineExamScore::with(['student.collegeClass', 'offlineExam.course', 'recordedBy'])
             ->where('offline_exam_id', $this->examId);

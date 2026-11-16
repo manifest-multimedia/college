@@ -1,0 +1,1611 @@
+<!--begin::Aside-->
+<div id="kt_aside" class="aside" data-kt-drawer="true" data-kt-drawer-name="aside"
+data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true"
+data-kt-drawer-width="{default:'200px', '300px': '250px'}" data-kt-drawer-direction="start"
+data-kt-drawer-toggle="#kt_aside_toggle">
+    <!-- Collapsible Sidebar Styles -->
+    <style>
+        /*
+         * The theme reserves 330px for the 300px desktop aside and its 30px
+         * outer gutter. Keep that reservation in sync with the sidebar state
+         * so the workspace, rather than just the aside, collapses.
+         */
+        @media (min-width: 992px) {
+            #kt_wrapper {
+                min-width: 0;
+                transition: padding-left 0.2s ease;
+            }
+
+            body.sidebar-collapsed #kt_wrapper {
+                padding-left: 102px !important; /* 72px icon rail + 30px gutter */
+            }
+
+            #kt_content,
+            #kt_content_container {
+                min-width: 0;
+            }
+        }
+
+        /* Collapsed Aside Base */
+        body.sidebar-collapsed #kt_aside {
+            width: 72px !important;
+            min-width: 72px !important;
+            transition: width 0.2s ease;
+        }
+        /* Hover-to-reveal temporary expansion */
+        body.sidebar-collapsed #kt_aside:hover {
+            width: 250px !important;
+            min-width: 250px !important;
+            z-index: 70; /* above content when sliding over */
+        }
+        /* Hide text and arrows when collapsed */
+        body.sidebar-collapsed #kt_aside .menu-title,
+        body.sidebar-collapsed #kt_aside .menu-arrow,
+        body.sidebar-collapsed #kt_aside .menu-heading,
+        body.sidebar-collapsed #kt_aside .menu-badge,
+        body.sidebar-collapsed #kt_aside .badge { display: none !important; }
+        /* Show text while hovered in collapsed state */
+        body.sidebar-collapsed #kt_aside:hover .menu-title,
+        body.sidebar-collapsed #kt_aside:hover .menu-arrow,
+        body.sidebar-collapsed #kt_aside:hover .menu-heading,
+        body.sidebar-collapsed #kt_aside:hover .menu-badge,
+        body.sidebar-collapsed #kt_aside:hover .badge { display: inline-flex !important; }
+
+        /* Center icons */
+        body.sidebar-collapsed #kt_aside .menu-link { justify-content: center; padding-left: 0.75rem; padding-right: 0.75rem; }
+        body.sidebar-collapsed #kt_aside .menu-icon { margin-right: 0 !important; }
+        /* Restore alignment on hover */
+        body.sidebar-collapsed #kt_aside:hover .menu-link { justify-content: flex-start; }
+
+        /* Footer compaction */
+        body.sidebar-collapsed #kt_aside .aside-footer { display: none; }
+
+        /*
+         * Keep the control outside the navigation flow. The header remains
+         * visible while the separately scrollable menu contains long lists.
+         */
+        .aside-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 0 0 56px;
+            min-height: 56px;
+            padding: 0 1rem;
+            border-bottom: 1px solid var(--bs-gray-200);
+        }
+
+        #sidebarCollapseToggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            color: var(--bs-gray-700);
+            background: var(--bs-gray-100);
+            border: 1px solid var(--bs-gray-200);
+            border-radius: 9px;
+            box-shadow: none;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+        #sidebarCollapseToggle:hover { color: var(--bs-primary); background: var(--bs-primary-light); border-color: var(--bs-primary-light); }
+        #sidebarCollapseToggle:active { transform: scale(0.96); }
+        #sidebarCollapseToggle:focus-visible { outline: 3px solid rgba(var(--bs-primary-rgb), 0.3); outline-offset: 2px; }
+        body.sidebar-collapsed #sidebarCollapseToggle .fa-chevron-left { transform: rotate(180deg); }
+
+        body.sidebar-collapsed #kt_aside .aside-header,
+        body.sidebar-collapsed #kt_aside .aside-menu {
+            width: 100%;
+        }
+        body.sidebar-collapsed #kt_aside .aside-header { justify-content: center; padding: 0; }
+        body.sidebar-collapsed #kt_aside .aside-menu {
+            padding: 1rem 0.5rem 0.75rem !important;
+            margin-bottom: 0 !important;
+        }
+        /*
+         * The expanded menu has an asymmetric right-padding utility (pe-2).
+         * A rail must remove that inherited geometry and center its children
+         * from the full 72px width.
+         */
+        body.sidebar-collapsed #kt_aside_menu_wrapper {
+            display: flex;
+            width: 100%;
+            padding-inline: 0 !important;
+            justify-content: center;
+            /* Avoid a right-only scrollbar shifting rail controls left. */
+            scrollbar-width: none;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper::-webkit-scrollbar { width: 0; height: 0; }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            width: 100%;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            min-height: 44px;
+            padding: 0 !important;
+            margin: 0.25rem auto;
+            border-radius: 10px;
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link.active,
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item.here > .menu-link {
+            background: rgba(var(--bs-primary-rgb), 0.12);
+        }
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link.active .menu-icon,
+        body.sidebar-collapsed #kt_aside_menu_wrapper > .menu > .menu-item.here > .menu-link .menu-icon {
+            color: var(--bs-primary);
+        }
+        /*
+         * The rail is icon-centered, but temporary hover expansion is a normal
+         * sidebar: restore full-width, left-aligned navigation items.
+         */
+        body.sidebar-collapsed #kt_aside:hover .aside-menu { padding: 0.75rem 1rem !important; }
+        body.sidebar-collapsed #kt_aside:hover #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link {
+            justify-content: flex-start;
+            width: 100%;
+            padding: 0.65rem 0.75rem !important;
+            margin-right: 0;
+            margin-left: 0;
+        }
+        body.sidebar-collapsed #kt_aside:hover #kt_aside_menu_wrapper > .menu > .menu-item > .menu-link .menu-icon {
+            margin-right: 0.75rem !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #kt_wrapper,
+            body.sidebar-collapsed #kt_aside { transition: none !important; }
+        }
+    </style>
+    <div class="aside-header">
+        <button id="sidebarCollapseToggle" type="button" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">
+            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+        </button>
+    </div>
+    <!--begin::Aside menu-->
+<div class="mb-7 aside-menu flex-column-fluid ps-5 pe-3" id="kt_aside_menu">
+    <!--begin::Aside Menu-->
+    <div class="w-100 hover-scroll-y d-flex pe-2" id="kt_aside_menu_wrapper" data-kt-scroll="true"
+        data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-height="auto"
+        data-kt-scroll-dependencies="#kt_aside_footer, #kt_header"
+        data-kt-scroll-wrappers="#kt_aside, #kt_aside_menu, #kt_aside_menu_wrapper"
+        data-kt-scroll-offset="102">
+        <!--begin::Menu-->
+        <div class="my-auto menu menu-column menu-rounded menu-sub-indention menu-active-bg fw-semibold"
+            id="#kt_aside_menu" data-kt-menu="true">
+            <div class="pt-5 menu-item">
+                <!--begin:Menu content-->
+                <div class="menu-content">
+                    <span class="menu-heading fw-bold text-uppercase fs-7">Navigation</span>
+                </div>
+                <!--end:Menu content-->
+            </div>
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item here show menu-accordion">
+                <!--begin:Menu link-->
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'Student')): ?>
+                    <a href="<?php echo e(route('student.dashboard')); ?>" class="menu-link">
+                <?php else: ?>
+                    <a href="<?php echo e(route('dashboard')); ?>" class="menu-link">
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-element-11 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Dashboard</span>
+                  
+                </a>
+                <!--end:Menu link-->
+            
+            </div>
+            <!--end:Menu item-->
+
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'Student')): ?>
+            <!--begin:Student Menu Items-->
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="<?php echo e(route('student.information')); ?>" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-profile-circle fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">My Information</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="<?php echo e(route('courseregistration')); ?>" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-book fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Course Registration</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="<?php echo e(route('courseregistration.history')); ?>" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-calendar fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Registration History</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="<?php echo e(route('elections.active')); ?>" class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-vote fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Elections</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a href="<?php echo e(route('student.assessment-scores')); ?>" class="menu-link <?php echo e(request()->routeIs('student.assessment-scores') ? 'active' : ''); ?>">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-line fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">My Results</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+            <!--end:Student Menu Items-->
+            <?php else: ?>
+           
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view students')): ?>    
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
+            data-kt-menu-placement="right-start"
+            class="menu-item menu-lg-down-accordion menu-sub-lg-down-indention">
+            <!--begin:Menu link-->
+            <a href=<?php echo e(route('students')); ?> class="menu-link">
+                <span class="menu-icon">
+                    <i class="ki-duotone ki-file fs-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                </span>
+                <span class="menu-title">Students</span>
+               
+            </a>
+            <!--end:Menu link-->
+            </div>
+            <?php endif; ?>
+            <!--end:Menu item-->
+            
+            <!-- Communication Module Navigation -->
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator|Academic Officer|Lecturer')): ?>
+            <!--begin:Menu item-->
+            <?php
+                $communicationRoutes = [
+                    'communication.sms',
+                    'communication.results-sms.upload',
+                    'communication.results-sms.report',
+                    'communication.contact-groups',
+                    'communication.contacts',
+                    'communication.sms-logs',
+                    'communication.email',
+                    'communication.chat',
+                    'communication.ai-sensei'
+                ];
+                $isCommunicationActive = in_array(request()->route()->getName(), $communicationRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isCommunicationActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-message-text-2 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Communication</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isCommunicationActive ? 'show' : ''); ?>">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', ['System', 'Super Admin'])): ?>
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.sms') ? 'active' : ''); ?>" href="<?php echo e(route('communication.sms')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Send SMS</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.contact-groups') ? 'active' : ''); ?>" href="<?php echo e(route('communication.contact-groups')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Contact Groups</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.contacts') ? 'active' : ''); ?>" href="<?php echo e(route('communication.contacts')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Manage Contacts</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.sms-logs') ? 'active' : ''); ?>" href="<?php echo e(route('communication.sms-logs')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">SMS Logs</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator|Academic Officer')): ?>
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.results-sms.*') ? 'active' : ''); ?>" href="<?php echo e(route('communication.results-sms.upload')); ?>">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Results SMS File Upload</span>
+                        </a>
+                    </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.email') ? 'active' : ''); ?>" href="<?php echo e(route('communication.email')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Send Email</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    
+                    
+                    
+                    
+                    
+                    <!-- AI Sensei Assistant with File Capabilities -->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('communication.ai-sensei') ? 'active' : ''); ?>" href="<?php echo e(route('communication.ai-sensei')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">AI Sensei Assistant</span>
+                            <span class="badge badge-light-primary">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <!--begin:Menu item-->
+            <?php
+                $memoRoutes = ['memos', 'memo.create'];
+                $isMemoActive = in_array(request()->route()->getName(), $memoRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isMemoActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-document fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Memo Management</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isMemoActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('memos') ? 'active' : ''); ?>" href="<?php echo e(route('memos')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">All Memos</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('memo.create') ? 'active' : ''); ?>" href="<?php echo e(route('memo.create')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Create Memo</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'System|Super Admin|Administrator|Academic Officer')): ?>
+            <!--begin:Menu item-->
+            <?php
+                $isAcademicActive = request()->routeIs('academics.*', 'academic-officer.assessment-scores', 'assessment-scores', 'admin.course-assignments');
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isAcademicActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link <?php echo e($isAcademicActive ? 'active' : ''); ?>">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-book fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Academic Module</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isAcademicActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('academics.dashboard') ? 'active' : ''); ?>" href="<?php echo e(route('academics.dashboard')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Manage Academics</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('academics.exam-types') ? 'active' : ''); ?>" href="<?php echo e(route('academics.exam-types')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Types</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'Super Admin|Administrator|System')): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.course-assignments') ? 'active' : ''); ?>" href="<?php echo e(route('admin.course-assignments')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                               Course Assignments
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['System', 'Academic Officer', 'Super Admin'])): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('academic-officer.assessment-scores') ? 'active' : ''); ?>" href="<?php echo e(route('academic-officer.assessment-scores')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Assessment Dashboard</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <!-- Asset Management Module -->
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['Auditor', 'System', 'Super Admin'])): ?>
+            <!--begin:Menu item-->
+            <?php
+                $assetRoutes = [
+                    'admin.assets.index', 'admin.assets.create', 'admin.assets.edit', 
+                    'admin.assets.show', 'admin.asset-categories.index', 'admin.asset-categories.create',
+                    'admin.asset-categories.edit', 'admin.asset-categories.show', 'admin.asset-settings.index'
+                ];
+                $isAssetActive = in_array(request()->route()->getName(), $assetRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isAssetActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link <?php echo e($isAssetActive ? 'active' : ''); ?>">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-simple-3 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Asset Management</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isAssetActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs(['admin.assets.index', 'admin.assets.show']) ? 'active' : ''); ?>" href="<?php echo e(route('admin.assets.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-element-11 fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                </i>All Assets
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->routeIs('admin.assets.show')): ?>
+                                    <span class="badge badge-light-primary badge-sm ms-2">Viewing</span>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs(['admin.assets.create', 'admin.assets.edit']) ? 'active' : ''); ?>" href="<?php echo e(route('admin.assets.create')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-plus fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>Add New Asset
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->routeIs('admin.assets.edit')): ?>
+                                    <span class="badge badge-light-warning badge-sm ms-2">Editing</span>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs(['admin.asset-categories.index', 'admin.asset-categories.show', 'admin.asset-categories.create', 'admin.asset-categories.edit']) ? 'active' : ''); ?>" href="<?php echo e(route('admin.asset-categories.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-category fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                </i>Asset Categories
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->routeIs('admin.asset-categories.show')): ?>
+                                    <span class="badge badge-light-info badge-sm ms-2">Viewing</span>
+                                <?php elseif(request()->routeIs('admin.asset-categories.edit')): ?>
+                                    <span class="badge badge-light-warning badge-sm ms-2">Editing</span>
+                                <?php elseif(request()->routeIs('admin.asset-categories.create')): ?>
+                                    <span class="badge badge-light-success badge-sm ms-2">Creating</span>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.asset-settings.index') ? 'active' : ''); ?>" href="<?php echo e(route('admin.asset-settings.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                                <i class="ki-duotone ki-setting-3 fs-4 me-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                    <span class="path3"></span>
+                                    <span class="path4"></span>
+                                    <span class="path5"></span>
+                                </i>Asset Settings
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            
+            <!--begin:Menu item-->
+            <?php
+                $examRoutes = [
+                    'examcenter', 'questionbank', 'exams.results', 'exams.answer-review.index', 'exams.answer-review.show', 'academics.online-exam-result-policy', 'admin.exam-devices.index',
+                    'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
+                    'exams.create', 'exams.edit', 'admin.exams.offline', 'admin.exams.offline-scores',
+                    'admin.transcripts.generation', 'question.sets', 'question.sets.create', 
+                    'question.sets.show', 'question.sets.edit', 'question.sets.questions', 
+                    'question.import.export'
+                ];
+                $isExamActive = in_array(request()->route()->getName(), $examRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isExamActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-address-book fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Exam Center</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isExamActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('examcenter') ? 'active' : ''); ?>" href="<?php echo e(route('examcenter')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Dashboard</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('questionbank') || request()->routeIs('questionbank.with.slug') ? 'active' : ''); ?>" href="<?php echo e(route('questionbank')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Question Bank</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('question.sets*') ? 'active' : ''); ?>" href="<?php echo e(route('question.sets')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Question Sets</span>
+                            <span class="badge badge-light-success">Enhanced</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('question.import.export') ? 'active' : ''); ?>" href="<?php echo e(route('question.import.export')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Import/Export</span>
+                            <span class="badge badge-light-info">CSV</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('exams.results') ? 'active' : ''); ?>" href="<?php echo e(route('exams.results')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Results</span>
+                            <span class="badge badge-light-primary">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator|Academic Officer|Lecturer')): ?>
+                    <div class="menu-item"><a class="menu-link <?php echo e(request()->routeIs('exams.answer-review.*') ? 'active' : ''); ?>" href="<?php echo e(route('exams.answer-review.index')); ?>"><span class="menu-bullet"><span class="bullet bullet-dot"></span></span><span class="menu-title">Student Answer Review</span></a></div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator|Academic Officer')): ?>
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('academics.online-exam-result-policy*') ? 'active' : ''); ?>" href="<?php echo e(route('academics.online-exam-result-policy')); ?>">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Exam Results Visibility</span>
+                        </a>
+                    </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'System|Super Admin')): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('exam.response.tracker') ? 'active' : ''); ?>" href="<?php echo e(route('exam.response.tracker')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Audit</span>
+                            <span class="badge badge-light-primary">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['System', 'IT Manager', 'Administrator', 'Super Admin'])): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.exam-devices.*') ? 'active' : ''); ?>" href="<?php echo e(route('admin.exam-devices.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Devices</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['System', 'Lecturer', 'Super Admin'])): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.exam-extra-time') ? 'active' : ''); ?>" href="<?php echo e(route('admin.exam-extra-time')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Extra Time Manager</span>
+                            <span class="badge badge-light-primary">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['Administrator', 'Super Admin', 'Academic Officer', 'System', 'Finance Manager', 'Lecturer'])): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('assessment-scores') ? 'active' : ''); ?>" href="<?php echo e(route('assessment-scores')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Assessment Scores</span>
+                            <span class="badge badge-light-primary">Simplified</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'Student')): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('student.assessment-scores') ? 'active' : ''); ?>" href="<?php echo e(route('student.assessment-scores')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">My Assessment Scores</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('view exams')): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.exams.offline') ? 'active' : ''); ?>" href="<?php echo e(route('admin.exams.offline')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Offline Exams (Legacy)</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.exams.offline-scores') ? 'active' : ''); ?>" href="<?php echo e(route('admin.exams.offline-scores')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Offline Exam Scores (Legacy)</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.transcripts.generation') ? 'active' : ''); ?>" href="<?php echo e(route('admin.transcripts.generation')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Student Transcripts</span>
+                            <span class="badge badge-light-success">New</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?>
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            
+
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['Administrator', 'Super Admin', 'Academic Officer', 'System', 'Finance Manager'])): ?>
+            <!--begin:Menu item-->
+            <div class="menu-item">
+                <a class="menu-link <?php echo e(request()->routeIs('reports.index') ? 'active' : ''); ?>" href="<?php echo e(route('reports.index')); ?>">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-pie-3 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Reports Module</span>
+                </a>
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <?php echo $__env->make('components.app.canteen-menu', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['System', 'Super Admin', 'Finance Manager'])): ?>
+            
+            <!--begin:Menu item-->
+            <?php
+                $financeRoutes = [
+                    'finance.billing', 'finance.fee.types', 'finance.fee.structure', 
+                    'finance.payments', 'finance.exam.clearance', 'finance.exam.tickets.manager', 
+                    'finance.exam.scanner', 'finance.course.registration', 'finance.reports'
+                ];
+                $isFinanceActive = in_array(request()->route()->getName(), $financeRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isFinanceActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-dollar fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Finance Module</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isFinanceActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.billing') ? 'active' : ''); ?>" href="<?php echo e(route('finance.billing')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Student Billing</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.fee.types') ? 'active' : ''); ?>" href="<?php echo e(route('finance.fee.types')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Fee Types</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.fee.structure') ? 'active' : ''); ?>" href="<?php echo e(route('finance.fee.structure')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Fee Structure</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.payments') ? 'active' : ''); ?>" href="<?php echo e(route('finance.payments')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Fee Payments</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.exam.clearance') ? 'active' : ''); ?>" href="<?php echo e(route('finance.exam.clearance')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Clearance</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.exam.tickets.manager') ? 'active' : ''); ?>" href="<?php echo e(route('finance.exam.tickets.manager')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Exam Tickets</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.exam.scanner') ? 'active' : ''); ?>" href="<?php echo e(route('finance.exam.scanner')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">QR Scanner</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'System')): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.course.registration') ? 'active' : ''); ?>" href="<?php echo e(route('finance.course.registration')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Course Registration</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', ['System', 'Super Admin', 'Finance Manager'])): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.course.registration.approvals') ? 'active' : ''); ?>" href="<?php echo e(route('finance.course.registration.approvals')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Course Registration Approvals</span>
+                            <?php
+                                $pendingCount = \App\Models\CourseRegistration::where('is_approved', false)->whereNull('rejected_at')->count();
+                            ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($pendingCount > 0): ?>
+                                <span class="badge badge-warning ms-2"><?php echo e($pendingCount); ?></span>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('finance.reports') ? 'active' : ''); ?>" href="<?php echo e(route('finance.reports')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Financial Reports</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'System')): ?>
+            <!--begin:Menu item-->
+            <?php
+                $courseRegRoutes = [
+                    'courseregistration', 'courseregistration.history', 'courseregistration.approvals'
+                ];
+                $isCourseRegActive = in_array(request()->route()->getName(), $courseRegRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isCourseRegActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-book-open fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Course Registration</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isCourseRegActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('courseregistration') ? 'active' : ''); ?>" href="<?php echo e(route('courseregistration')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Register Courses</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('courseregistration.history') ? 'active' : ''); ?>" href="<?php echo e(route('courseregistration.history')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Registration History</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('courseregistration.approvals') ? 'active' : ''); ?>" href="<?php echo e(route('courseregistration.approvals')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Registration Approvals</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator|Academic Officer')): ?>
+            <?php $assessmentMenuActive = request()->routeIs('academics.tutor-evaluations', 'academics.tutor-evaluation-reports*'); ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($assessmentMenuActive ? 'show' : ''); ?>">
+                <span class="menu-link <?php echo e($assessmentMenuActive ? 'active' : ''); ?>"><span class="menu-icon"><i class="ki-duotone ki-notepad-edit fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">Tutor Assessment</span><span class="menu-arrow"></span></span>
+                <div class="menu-sub menu-sub-accordion <?php echo e($assessmentMenuActive ? 'show' : ''); ?>">
+                    <div class="menu-item"><a class="menu-link <?php echo e(request()->routeIs('academics.tutor-evaluations') ? 'active' : ''); ?>" href="<?php echo e(route('academics.tutor-evaluations')); ?>"><span class="menu-bullet"><span class="bullet bullet-dot"></span></span><span class="menu-title">Forms & Campaigns</span></a></div>
+                    <div class="menu-item"><a class="menu-link <?php echo e(request()->routeIs('academics.tutor-evaluation-reports*') ? 'active' : ''); ?>" href="<?php echo e(route('academics.tutor-evaluation-reports')); ?>"><span class="menu-bullet"><span class="bullet bullet-dot"></span></span><span class="menu-title">Reports & Analytics</span></a></div>
+                </div>
+            </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator|Academic Officer')): ?>
+            <div class="menu-item"><a class="menu-link <?php echo e(request()->routeIs('hostels.*') ? 'active' : ''); ?>" href="<?php echo e(route('hostels.index')); ?>"><span class="menu-icon"><i class="ki-duotone ki-home-2 fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">Hostel Management</span></a></div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'Student')): ?>
+            <div class="menu-item"><a class="menu-link <?php echo e(request()->routeIs('student.hostel.*') ? 'active' : ''); ?>" href="<?php echo e(route('student.hostel.applications')); ?>"><span class="menu-icon"><i class="ki-duotone ki-home fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">Hostel Applications</span></a></div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'Hostel Warden|Hostel Officer')): ?>
+            <div class="menu-item"><a class="menu-link <?php echo e(request()->routeIs('warden.hostels.*') ? 'active' : ''); ?>" href="<?php echo e(route('warden.hostels.index')); ?>"><span class="menu-icon"><i class="ki-duotone ki-home fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">My Hostel Occupancy</span></a></div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+            <?php
+            $electionRoutes = [
+                'elections', 'elections.active', 'election.results', 'elections.results.archive', 'admin.election.voter-integrity.index', 'admin.election.voter-integrity', 'admin.elections.ip-blacklist.index'
+            ];
+            $isElectionActive = in_array(request()->route()->getName(), $electionRoutes);
+        ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator')): ?>
+            <!--begin:Menu item-->
+           
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isElectionActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-chart-pie-3 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Election System</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isElectionActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('elections') ? 'active' : ''); ?>" href="<?php echo e(route('elections')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Manage Elections</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('elections.active') ? 'active' : ''); ?>" href="<?php echo e(route('elections.active')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Active Elections</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('elections.results.archive') ? 'active' : ''); ?>" href="<?php echo e(route('elections.results.archive')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Election Results</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.election.voter-integrity.index') || request()->routeIs('admin.election.voter-integrity') ? 'active' : ''); ?>" href="<?php echo e(route('admin.election.voter-integrity.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Voting Integrity</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.elections.ip-blacklist.index') ? 'active' : ''); ?>" href="<?php echo e(route('admin.elections.ip-blacklist.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">IP Blacklist</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+
+            
+            <!--begin:Menu item-->
+            <?php
+                $supportRoutes = [
+                    'support.tickets', 'support.knowledgebase', 'support.kb-admin'
+                ];
+                $isSupportActive = in_array(request()->route()->getName(), $supportRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isSupportActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-question fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Support Center</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isSupportActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('support.tickets') ? 'active' : ''); ?>" href="<?php echo e(route('support.tickets')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Support Tickets</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('support.knowledgebase') ? 'active' : ''); ?>" href="<?php echo e(route('support.knowledgebase')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Knowledge Base</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item - KB Admin (restricted to System, IT Manager, Super Admin)-->
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|IT Manager|Super Admin')): ?>
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('support.kb-admin') ? 'active' : ''); ?>" href="<?php echo e(route('support.kb-admin')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">KB Admin</span>
+                        </a>
+                    </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <!--end:Menu item-->
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+
+            <!--begin:Menu item - Office Management (restricted to System, IT Manager, Super Admin)-->
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|IT Manager|Super Admin')): ?>
+            <div class="menu-item">
+                <a class="menu-link <?php echo e(request()->routeIs('offices') ? 'active' : ''); ?>" href="<?php echo e(route('offices')); ?>">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-office-bag fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Office Management</span>
+                </a>
+            </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <!--end:Menu item-->
+            
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin|Administrator')): ?>
+            <!--begin:Menu item-->
+            <?php
+                $settingsRoutes = [
+                    'settings.general', 'settings.users', 'settings.roles', 
+                    'settings.permissions', 'settings.backup', 'settings.departments',
+                    'settings.user-departments', 'admin.branding.index', 'settings.api',
+                    'settings.assessment-settings', 'settings.sms-provider', 'admin.payment-providers'
+                ];
+                $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
+            ?>
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion <?php echo e($isSettingsActive ? 'show' : ''); ?>">
+                <!--begin:Menu link-->
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-setting-2 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">System Settings</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <!--end:Menu link-->
+                <!--begin:Menu sub-->
+                <div class="menu-sub menu-sub-accordion <?php echo e($isSettingsActive ? 'show' : ''); ?>">
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.general') ? 'active' : ''); ?>" href="<?php echo e(route('settings.general')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">General Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.users') ? 'active' : ''); ?>" href="<?php echo e(route('settings.users')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">User Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.roles') ? 'active' : ''); ?>" href="<?php echo e(route('settings.roles')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Roles & Permissions</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.permissions') ? 'active' : ''); ?>" href="<?php echo e(route('settings.permissions')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Permissions Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.backup') ? 'active' : ''); ?>" href="<?php echo e(route('settings.backup')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Backup & Restore</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'System')): ?>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.branding.index') ? 'active' : ''); ?>" href="<?php echo e(route('admin.branding.index')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">
+                               Branding
+                            </span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.departments') ? 'active' : ''); ?>" href="<?php echo e(route('settings.departments')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Department Management</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.user-departments') ? 'active' : ''); ?>" href="<?php echo e(route('settings.user-departments')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">User Departments</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.assessment-settings') ? 'active' : ''); ?>" href="<?php echo e(route('settings.assessment-settings')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Assessment Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasanyrole', 'System|Super Admin')): ?>
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.sms-provider') ? 'active' : ''); ?>" href="<?php echo e(route('settings.sms-provider')); ?>">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">SMS Provider</span>
+                        </a>
+                    </div>
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('settings.api') ? 'active' : ''); ?>" href="<?php echo e(route('settings.api')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">API Settings</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    
+                    <!--begin:Menu item-->
+                    <div class="menu-item">
+                        <a class="menu-link <?php echo e(request()->routeIs('admin.payment-providers') ? 'active' : ''); ?>" href="<?php echo e(route('admin.payment-providers')); ?>">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Payment Gateways</span>
+                        </a>
+                    </div>
+                    <!--end:Menu item-->
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+                <!--end:Menu sub-->
+            </div>
+            <!--end:Menu item-->
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+          
+            <!--begin:Menu item-->
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
+                <!--begin:Menu link-->
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (\Illuminate\Support\Facades\Blade::check('hasrole', 'Student')): ?>
+                <!-- Students don't need staff mail access -->
+                <?php else: ?>
+                <a href="<?php echo e(config('branding.institution.staff_mail_url', 'https://mail.google.com')); ?>" class="menu-link" target="_blank">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-sms fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Staff Mail</span>
+                </a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <!--end:Menu link-->
+                
+            </div>
+            <!--end:Menu item-->
+            
+        </div>
+        <!--end::Menu-->
+    </div>
+    <!--end::Aside Menu-->
+    <script>
+        (function(){
+            const key = 'cis.sidebar.collapsed';
+            const body = document.body;
+            const toggleBtn = document.getElementById('sidebarCollapseToggle');
+            function updateToggleAccessibility(){
+                const isCollapsed = body.classList.contains('sidebar-collapsed');
+                toggleBtn?.setAttribute('aria-expanded', String(!isCollapsed));
+                toggleBtn?.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+                toggleBtn?.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            }
+            // Apply saved state
+            if(localStorage.getItem(key) === '1'){
+                body.classList.add('sidebar-collapsed');
+            }
+            updateToggleAccessibility();
+            // Toggle handler
+            toggleBtn?.addEventListener('click', function(e){
+                e.preventDefault();
+                body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem(key, body.classList.contains('sidebar-collapsed') ? '1' : '0');
+                updateToggleAccessibility();
+            });
+
+            // Add native title tooltips to menu items from their text labels (for collapsed mode)
+            const links = document.querySelectorAll('#kt_aside_menu .menu-link');
+            links.forEach(link => {
+                const textEl = link.querySelector('.menu-title');
+                if(textEl && textEl.textContent.trim().length){
+                    const label = textEl.textContent.trim();
+                    if(!link.getAttribute('title')){
+                        link.setAttribute('title', label);
+                    }
+                    if(!link.getAttribute('aria-label')){
+                        link.setAttribute('aria-label', label);
+                    }
+                }
+            });
+        })();
+    </script>
+</div>
+<!--end::Aside menu-->
+<!--begin::Footer-->
+<div class="px-9 aside-footer flex-column-auto" id="kt_aside_menu">
+    <!--begin::User panel-->
+    <div class="d-flex flex-stack">
+        <!--begin::Wrapper-->
+        <div class="d-flex align-items-center">
+            <!--begin::Avatar-->
+            <div class="symbol symbol-circle symbol-40px">
+                <img src="<?php echo e(Auth::user()?->profile_photo_url ?? asset('images/default-avatar.png')); ?>" alt="photo" />
+            </div>
+            <!--end::Avatar-->
+            <!--begin::User info-->
+            <div class="ms-2">
+                <!--begin::Name-->
+                <a href="#" class="text-gray-800 text-hover-primary fs-6 fw-bold lh-1"><?php echo e(Auth::user()?->name ?? 'Guest'); ?></a>
+                <!--end::Name-->
+                <!--begin::Roles-->
+                <span class="text-muted fw-semibold d-block fs-7 lh-1">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(Auth::user()->roles->count() > 0): ?>
+                        <?php echo e(Auth::user()->roles->pluck('name')->first()); ?>
+
+                    <?php else: ?>
+                        <?php echo e(Auth::user()->role); ?>
+
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </span>
+                <!--end::Roles-->
+            </div>
+            <!--end::User info-->
+        </div>
+        <!--end::Wrapper-->
+        <!--begin::User menu-->
+        <div class="ms-1">
+            <div class="btn btn-sm btn-icon btn-active-color-primary position-relative me-n2"
+                data-kt-menu-trigger="click" data-kt-menu-overflow="true"
+                data-kt-menu-placement="top-end">
+                <i class="ki-duotone ki-setting-2 fs-1">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                </i>
+            </div>
+            <!--begin::User account menu-->
+            <div class="py-4 menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold fs-6 w-275px"
+                data-kt-menu="true">
+                <!--begin::Menu item-->
+                <div class="px-3 menu-item">
+                    <div class="px-3 menu-content d-flex align-items-center">
+                        <!--begin::Avatar-->
+                        <div class="symbol symbol-50px me-5">
+                            <img alt="Avatar" src="<?php echo e(Auth::user()?->profile_photo_url ?? asset('images/default-avatar.png')); ?>" />
+                        </div>
+                        <!--end::Avatar-->
+                        <!--begin::Username-->
+                        <div class="d-flex flex-column">
+                            <div class="fw-bold d-flex align-items-center fs-5"><?php echo e(Auth::user()?->name ?? 'Guest'); ?>
+
+                                <span class="px-2 py-1 badge badge-light-success fw-bold fs-8 ms-2">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(Auth::user()?->roles?->count() > 0): ?>
+                                        <?php echo e(Auth::user()->roles->pluck('name')->first()); ?>
+
+                                    <?php else: ?>
+                                        <?php echo e(Auth::user()?->role ?? 'User'); ?>
+
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </span>
+                            </div>
+                            <a href="#"
+                                class="fw-semibold text-muted text-hover-primary fs-7"><?php echo e(Auth::user()->email); ?></a>
+                        </div>
+                        <!--end::Username-->
+                    </div>
+                </div>
+                <!--end::Menu item-->
+                <!--begin::Menu separator-->
+                <div class="my-2 separator"></div>
+                <!--end::Menu separator-->
+                <!--begin::Menu item-->
+                <div class="px-5 menu-item">
+                    
+                    <form action="<?php echo e(route('logout')); ?>" method="POST">
+                        <?php echo csrf_field(); ?>
+                        <buttom type="submit" onclick="event.preventDefault(); this.closest('form').submit();"
+                            class="px-5 menu-link">Sign Out</buttom>
+                    </form>
+                </div>
+                <!--end::Menu item-->
+            </div>
+            <!--end::User account menu-->
+        </div>
+        <!--end::User menu-->
+    </div>
+    <!--end::User panel-->
+</div>
+<!--end::Footer-->
+</div>
+<!--end::Aside-->
+<?php /**PATH /home/johnsonsebire/www/college/resources/views/components/app/sidebar.blade.php ENDPATH**/ ?>

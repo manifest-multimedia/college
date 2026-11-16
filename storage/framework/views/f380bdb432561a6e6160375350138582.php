@@ -1,0 +1,521 @@
+<div>
+    <div 
+        x-data="electionVotingApp()"
+        x-init="initialize()"
+        @voteSubmitted.window="handleVoteSubmitted()"
+        class="voting-interface"
+    >
+        <div class="container-fluid py-4">
+            <!-- Header with Timer -->
+            <div class="row justify-content-between sticky-top bg-white py-2 shadow-sm mb-4">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-0"><?php echo e($election->name); ?></h1>
+                    <p class="text-muted mb-0">Welcome, <?php echo e($student->name ?? 'Student'); ?></p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div id="timer" class="bg-info text-white py-2 px-3 rounded-lg d-inline-block">
+                        <i class="fas fa-clock me-2"></i>
+                        Time Remaining: <strong x-text="formattedTime"></strong>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="progress" style="height: 8px;">
+                        <div 
+                            class="progress-bar bg-primary" 
+                            role="progressbar" 
+                            x-bind:style="`width: ${(currentPositionIndex + 1) / positions.length * 100}%`"
+                            aria-valuemin="0" 
+                        ></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <small>Position <span x-text="currentPositionIndex + 1"></span> of <span x-text="positions.length"></span></small>
+                        <small x-text="Math.round((currentPositionIndex + 1) / positions.length * 100) + '% complete'"></small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error Message -->
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($errorMessage): ?>
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <?php echo e($errorMessage); ?>
+
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <!-- Position-specific error message -->
+            <div class="row mb-4" id="position-error-container" style="display: none;" x-show="positionError">
+                <div class="col-12">
+                    <div id="position-error" class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span x-text="positionError"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Voting Content -->
+            <div class="row">
+                <div class="col-12">
+                    <template x-for="(position, index) in positions" :key="position.id">
+                        <div x-show="currentPositionIndex === index" class="position-card">
+                            <div class="card shadow-sm border-0 mb-4">
+                                <div class="card-header bg-light py-3">
+                                    <h2 class="h4 mb-0" x-text="position.name"></h2>
+                                </div>
+                                <div class="card-body">
+                                    <p x-text="position.description" class="text-muted mb-3"></p>
+                                    
+                                    <!-- Multiple candidates case -->
+                                    <template x-if="hasSingleCandidate(position) === false">
+                                        <div>
+                                            <div class="alert alert-info">
+                                                <small>
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Select <strong x-text="position.max_votes_allowed"></strong> candidate(s) for this position
+                                                </small>
+                                            </div>
+                                            
+                                            <!-- Candidates -->
+                                            <div class="row">
+                                                <template x-for="candidate in position.candidates" :key="candidate.id">
+                                                    <div class="col-md-6 mb-3">
+                                                        <div 
+                                                            class="card h-100 candidate-card"
+                                                            x-bind:class="{'selected': isSelectedCandidate(position.id, candidate.id)}"
+                                                            x-on:click="selectCandidate(position.id, candidate.id)"
+                                                        >
+                                                            <div class="position-relative">
+                                                                <template x-if="candidate.image_path">
+                                                                    <img 
+                                                                        x-bind:src="'/storage/' + candidate.image_path"
+                                                                        x-bind:alt="candidate.name"
+                                                                        class="card-img-top"
+                                                                        style="height: 180px; object-fit: cover;"
+                                                                    >
+                                                                </template>
+                                                                <template x-if="!candidate.image_path">
+                                                                    <div class="bg-secondary text-white d-flex justify-content-center align-items-center" style="height: 180px;">
+                                                                        <i class="fas fa-user fa-3x"></i>
+                                                                    </div>
+                                                                </template>
+                                                                
+                                                                <div 
+                                                                    class="position-absolute top-0 end-0 p-2"
+                                                                    x-show="isSelectedCandidate(position.id, candidate.id)"
+                                                                >
+                                                                    <div class="badge bg-success">
+                                                                        <i class="fas fa-check-circle"></i> Selected
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="card-body">
+                                                                <h5 class="card-title" x-text="candidate.name"></h5>
+                                                                <p class="card-text small" x-text="candidate.bio"></p>
+                                                            </div>
+                                                            <div class="card-footer bg-transparent text-center">
+                                                                <template x-if="isSelectedCandidate(position.id, candidate.id)">
+                                                                    <button class="btn btn-outline-danger btn-sm">
+                                                                        <i class="fas fa-times me-1"></i> Unselect
+                                                                    </button>
+                                                                </template>
+                                                                <template x-if="!isSelectedCandidate(position.id, candidate.id)">
+                                                                    <button class="btn btn-outline-primary btn-sm">
+                                                                        <i class="fas fa-check me-1"></i> Select
+                                                                    </button>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Single candidate case (YES/NO vote) -->
+                                    <template x-if="hasSingleCandidate(position) === true">
+                                        <div>
+                                            <div class="alert alert-warning">
+                                                <small>
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    This position has only one candidate. Please vote YES or NO to approve or reject this candidate.
+                                                </small>
+                                            </div>
+                                            
+                                            <!-- Single Candidate Card -->
+                                            <div class="row mb-4">
+                                                <div class="col-md-6 mx-auto">
+                                                    <div class="card h-100">
+                                                        <div class="position-relative">
+                                                            <template x-if="position.candidates[0].image_path">
+                                                                <img 
+                                                                    x-bind:src="'/storage/' + position.candidates[0].image_path"
+                                                                    x-bind:alt="position.candidates[0].name"
+                                                                    class="card-img-top"
+                                                                    style="height: 200px; object-fit: cover;"
+                                                                >
+                                                            </template>
+                                                            <template x-if="!position.candidates[0].image_path">
+                                                                <div class="bg-secondary text-white d-flex justify-content-center align-items-center" style="height: 200px;">
+                                                                    <i class="fas fa-user fa-3x"></i>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                        
+                                                        <div class="card-body">
+                                                            <h5 class="card-title text-center" x-text="position.candidates[0].name"></h5>
+                                                            <p class="card-text" x-text="position.candidates[0].bio"></p>
+                                                            
+                                                            <!-- YES/NO Voting Buttons -->
+                                                            <div class="d-flex justify-content-center mt-3">
+                                                                <div class="btn-group w-100">
+                                                                    <button 
+                                                                        class="btn btn-lg" 
+                                                                        x-bind:class="hasYesNoVote(position.id, 'yes') ? 'btn-success' : 'btn-outline-success'"
+                                                                        x-on:click="selectYesNo(position.id, 'yes')"
+                                                                    >
+                                                                        <i class="fas fa-check-circle me-2"></i> YES
+                                                                    </button>
+                                                                    <button 
+                                                                        class="btn btn-lg" 
+                                                                        x-bind:class="hasYesNoVote(position.id, 'no') ? 'btn-danger' : 'btn-outline-danger'"
+                                                                        x-on:click="selectYesNo(position.id, 'no')"
+                                                                    >
+                                                                        <i class="fas fa-times-circle me-2"></i> NO
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Navigation buttons -->
+                                    <div class="d-flex justify-content-between mt-3">
+                                        <button 
+                                            class="btn btn-outline-secondary" 
+                                            x-show="!isFirstPosition()" 
+                                            x-on:click="prevPosition()"
+                                        >
+                                            <i class="fas fa-arrow-left me-2"></i> Previous Position
+                                        </button>
+                                        
+                                        <template x-if="!isLastPosition()">
+                                            <button 
+                                                class="btn btn-primary ms-auto" 
+                                                x-on:click="nextPosition()"
+                                            >
+                                                Next Position <i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </template>
+                                        
+                                        <template x-if="isLastPosition()">
+                                            <button 
+                                                class="btn btn-success ms-auto" 
+                                                wire:click="confirmSubmit"
+                                            >
+                                                <i class="fas fa-check-double me-2"></i> Review & Submit Ballot
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vote Confirmation Modal -->
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($confirmingSubmission): ?>
+            <div class="modal fade show" tabindex="-1" style="display: block;">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-light">
+                            <h5 class="modal-title">
+                                <i class="fas fa-vote-yea me-2"></i>
+                                Confirm Your Ballot
+                            </h5>
+                            <button wire:click="cancelSubmit" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 alert-heading">Please review your selections carefully</h6>
+                                        <p class="mb-0">Once you submit your ballot, it cannot be changed and you will not be able to vote again in this election.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Your Selection</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $positions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $position): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <tr>
+                                                <td><?php echo e($position->name); ?></td>
+                                                <td>
+                                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($position->candidates->where('is_active', true)->count() === 1): ?>
+                                                        <?php
+                                                            $singleCandidate = $position->candidates->first();
+                                                        ?>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(isset($yesNoVotes[$position->id]) && $yesNoVotes[$position->id]): ?>
+                                                            <div class="d-flex align-items-center">
+                                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($singleCandidate->image_path): ?>
+                                                                    <img src="<?php echo e(Storage::url($singleCandidate->image_path)); ?>" alt="<?php echo e($singleCandidate->name); ?>" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                                <?php else: ?>
+                                                                    <div class="bg-secondary rounded-circle me-2 d-flex justify-content-center align-items-center" style="width: 30px; height: 30px;">
+                                                                        <i class="fas fa-user text-white small"></i>
+                                                                    </div>
+                                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                                <?php echo e($singleCandidate->name); ?>: 
+                                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($yesNoVotes[$position->id] === 'yes'): ?>
+                                                                    <span class="badge bg-success ms-2">YES</span>
+                                                                <?php else: ?>
+                                                                    <span class="badge bg-danger ms-2">NO</span>
+                                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <span class="text-danger">No selection made</span>
+                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                    <?php else: ?>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(isset($votes[$position->id]) && $votes[$position->id]): ?>
+                                                            <?php
+                                                                $selectedCandidate = $position->candidates->firstWhere('id', $votes[$position->id]);
+                                                            ?>
+                                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($selectedCandidate): ?>
+                                                                <div class="d-flex align-items-center">
+                                                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($selectedCandidate->image_path): ?>
+                                                                        <img src="<?php echo e(Storage::url($selectedCandidate->image_path)); ?>" alt="<?php echo e($selectedCandidate->name); ?>" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                                    <?php else: ?>
+                                                                        <div class="bg-secondary rounded-circle me-2 d-flex justify-content-center align-items-center" style="width: 30px; height: 30px;">
+                                                                            <i class="fas fa-user text-white small"></i>
+                                                                        </div>
+                                                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                                    <?php echo e($selectedCandidate->name); ?>
+
+                                                                </div>
+                                                            <?php else: ?>
+                                                                <span class="text-danger">Invalid selection</span>
+                                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                        <?php else: ?>
+                                                            <span class="text-danger">No selection made</span>
+                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" wire:click="cancelSubmit" class="btn btn-outline-secondary">
+                                <i class="fas fa-edit me-1"></i> Change Selections
+                            </button>
+                            <button type="button" wire:click="submit" class="btn btn-success" wire:loading.attr="disabled">
+                                <i wire:loading class="fas fa-spinner fa-spin me-1"></i>
+                                <i wire:loading.remove class="fas fa-check-circle me-1"></i>
+                                Submit Ballot
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        
+        <!-- Thank You Modal (after successful vote) -->
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($voteSubmitted): ?>
+            <div class="modal fade show" tabindex="-1" style="display: block;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body text-center py-5">
+                            <div class="d-flex justify-content-center">
+                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-check-circle fa-3x"></i>
+                                </div>
+                            </div>
+                            <h4>Thank You for Voting!</h4>
+                            <p class="mb-0">Your ballot has been successfully submitted.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    </div>
+    
+    <?php $__env->startPush('styles'); ?>
+    <style>
+        [x-cloak] { display: none !important; }
+        .candidate-card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .candidate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+        .candidate-card.selected {
+            border: 3px solid #198754;
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+    </style>
+    <?php $__env->stopPush(); ?>
+    
+    <script>
+        function electionVotingApp() {
+            return {
+                positions: <?php echo \Illuminate\Support\Js::from($positions)->toHtml() ?>,
+                currentPositionIndex: 0,
+                confirmationShown: false,
+                timeRemaining: <?php echo \Illuminate\Support\Js::from($timeRemaining)->toHtml() ?>,
+                formattedTime: '',
+                positionError: null,
+                
+                initialize() {
+                    this.formatTime();
+                    this.startTimer();
+                },
+                
+                formatTime() {
+                    const minutes = Math.floor(this.timeRemaining / 60);
+                    const seconds = this.timeRemaining % 60;
+                    this.formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                },
+                
+                startTimer() {
+                    setInterval(() => {
+                        if (this.timeRemaining > 0) {
+                            this.timeRemaining--;
+                            this.formatTime();
+                        } else {
+                            // Time expired
+                            Livewire.dispatch('timeExpired');
+                        }
+                        
+                        // Add warning class when less than 2 minutes remain
+                        if (this.timeRemaining < 120) {
+                            document.getElementById('timer').classList.add('bg-warning');
+                        }
+                    }, 1000);
+                },
+                
+                nextPosition() {
+                    // Clear any previous error
+                    this.positionError = null;
+                    document.getElementById('position-error-container').style.display = 'none';
+                    
+                    // Get current position
+                    const currentPosition = this.positions[this.currentPositionIndex];
+                    
+                    // Check if a selection has been made
+                    const hasSingleCandidate = this.hasSingleCandidate(currentPosition);
+                    let hasSelection = false;
+                    
+                    if (hasSingleCandidate) {
+                        // For single candidate positions, check if YES or NO has been selected
+                        hasSelection = this.hasYesNoVote(currentPosition.id, 'yes') || 
+                                       this.hasYesNoVote(currentPosition.id, 'no');
+                    } else {
+                        // For multiple candidate positions, check if a candidate has been selected
+                        hasSelection = this.hasAnyCandidate(currentPosition.id);
+                    }
+                    
+                    // Only proceed if a selection was made
+                    if (hasSelection) {
+                        if (this.currentPositionIndex < this.positions.length - 1) {
+                            this.currentPositionIndex++;
+                            window.scrollTo(0, 0);
+                        }
+                    } else {
+                        // Show error message when no selection is made
+                        const positionName = currentPosition.name;
+                        this.positionError = `Please make a selection for "${positionName}" before proceeding.`;
+                        document.getElementById('position-error-container').style.display = 'block';
+                        
+                        // Focus on error message for accessibility
+                        setTimeout(() => {
+                            const errorElement = document.getElementById('position-error');
+                            if (errorElement) {
+                                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 100);
+                    }
+                },
+                
+                prevPosition() {
+                    // Always allow going back and clear any error
+                    this.positionError = null;
+                    document.getElementById('position-error-container').style.display = 'none';
+                    
+                    if (this.currentPositionIndex > 0) {
+                        this.currentPositionIndex--;
+                        window.scrollTo(0, 0);
+                    }
+                },
+                
+                isLastPosition() {
+                    return this.currentPositionIndex === this.positions.length - 1;
+                },
+                
+                isFirstPosition() {
+                    return this.currentPositionIndex === 0;
+                },
+                
+                hasSingleCandidate(position) {
+                    return position.candidates.length === 1;
+                },
+                
+                selectCandidate(positionId, candidateId) {
+                    window.Livewire.find('<?php echo e($_instance->getId()); ?>').selectCandidate(positionId, candidateId);
+                },
+                
+                selectYesNo(positionId, value) {
+                    window.Livewire.find('<?php echo e($_instance->getId()); ?>').selectYesNo(positionId, value);
+                },
+                
+                isSelectedCandidate(positionId, candidateId) {
+                    return window.Livewire.find('<?php echo e($_instance->getId()); ?>').get('votes')[positionId] === candidateId;
+                },
+                
+                hasYesNoVote(positionId, value) {
+                    return window.Livewire.find('<?php echo e($_instance->getId()); ?>').get('yesNoVotes')[positionId] === value;
+                },
+                
+                hasAnyCandidate(positionId) {
+                    const vote = window.Livewire.find('<?php echo e($_instance->getId()); ?>').get('votes')[positionId];
+                    return vote !== null && vote !== undefined;
+                },
+                
+                handleVoteSubmitted() {
+                    setTimeout(() => {
+                        window.location.href = <?php echo \Illuminate\Support\Js::from(route('public.elections.thank-you', ['election' => $election, 'sessionId' => $sessionId]))->toHtml() ?>;
+                    }, 1500);
+                }
+            };
+        }
+    </script>
+</div>
+<?php /**PATH /home/johnsonsebire/www/college/resources/views/livewire/election-voting.blade.php ENDPATH**/ ?>

@@ -688,7 +688,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--begin:Menu item-->
             @php
                 $examRoutes = [
-                    'examcenter', 'questionbank', 'exams.results', 'admin.exam-devices.index',
+                    'examcenter', 'questionbank', 'exams.results', 'exams.answer-review.index', 'exams.answer-review.show', 'academics.online-exam-result-policy', 'admin.exam-devices.index',
                     'exam.response.tracker', 'admin.exam-extra-time', 'questionbank.with.slug',
                     'exams.create', 'exams.edit', 'admin.exams.offline', 'admin.exams.offline-scores',
                     'admin.transcripts.generation', 'question.sets', 'question.sets.create', 
@@ -775,7 +775,19 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                         </a>
                     </div>
                     <!--end:Menu item-->
-                    
+                    @hasanyrole('System|Super Admin|Administrator|Academic Officer|Lecturer')
+                    <div class="menu-item"><a class="menu-link {{ request()->routeIs('exams.answer-review.*') ? 'active' : '' }}" href="{{ route('exams.answer-review.index') }}"><span class="menu-bullet"><span class="bullet bullet-dot"></span></span><span class="menu-title">Student Answer Review</span></a></div>
+                    @endhasanyrole
+
+                    @hasanyrole('System|Super Admin|Administrator|Academic Officer')
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('academics.online-exam-result-policy*') ? 'active' : '' }}" href="{{ route('academics.online-exam-result-policy') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Exam Results Visibility</span>
+                        </a>
+                    </div>
+                    @endhasanyrole
+
                     @hasrole('System|Super Admin')
                     <!--begin:Menu item-->
                     <div class="menu-item">
@@ -1105,6 +1117,28 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             </div>
             <!--end:Menu item-->
             @endhasrole
+            @hasanyrole('System|Super Admin|Administrator|Academic Officer')
+            @php $assessmentMenuActive = request()->routeIs('academics.tutor-evaluations', 'academics.tutor-evaluation-reports*'); @endphp
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $assessmentMenuActive ? 'show' : '' }}">
+                <span class="menu-link {{ $assessmentMenuActive ? 'active' : '' }}"><span class="menu-icon"><i class="ki-duotone ki-notepad-edit fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">Tutor Assessment</span><span class="menu-arrow"></span></span>
+                <div class="menu-sub menu-sub-accordion {{ $assessmentMenuActive ? 'show' : '' }}">
+                    <div class="menu-item"><a class="menu-link {{ request()->routeIs('academics.tutor-evaluations') ? 'active' : '' }}" href="{{ route('academics.tutor-evaluations') }}"><span class="menu-bullet"><span class="bullet bullet-dot"></span></span><span class="menu-title">Forms & Campaigns</span></a></div>
+                    <div class="menu-item"><a class="menu-link {{ request()->routeIs('academics.tutor-evaluation-reports*') ? 'active' : '' }}" href="{{ route('academics.tutor-evaluation-reports') }}"><span class="menu-bullet"><span class="bullet bullet-dot"></span></span><span class="menu-title">Reports & Analytics</span></a></div>
+                </div>
+            </div>
+            @endhasanyrole
+
+            @hasanyrole('System|Super Admin|Administrator|Academic Officer')
+            <div class="menu-item"><a class="menu-link {{ request()->routeIs('hostels.*') ? 'active' : '' }}" href="{{ route('hostels.index') }}"><span class="menu-icon"><i class="ki-duotone ki-home-2 fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">Hostel Management</span></a></div>
+            @endhasanyrole
+
+            @hasrole('Student')
+            <div class="menu-item"><a class="menu-link {{ request()->routeIs('student.hostel.*') ? 'active' : '' }}" href="{{ route('student.hostel.applications') }}"><span class="menu-icon"><i class="ki-duotone ki-home fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">Hostel Applications</span></a></div>
+            @endhasrole
+            @hasanyrole('Hostel Warden|Hostel Officer')
+            <div class="menu-item"><a class="menu-link {{ request()->routeIs('warden.hostels.*') ? 'active' : '' }}" href="{{ route('warden.hostels.index') }}"><span class="menu-icon"><i class="ki-duotone ki-home fs-2"><span class="path1"></span><span class="path2"></span></i></span><span class="menu-title">My Hostel Occupancy</span></a></div>
+            @endhasanyrole
+
             @php
             $electionRoutes = [
                 'elections', 'elections.active', 'election.results', 'elections.results.archive', 'admin.election.voter-integrity.index', 'admin.election.voter-integrity', 'admin.elections.ip-blacklist.index'
@@ -1187,80 +1221,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
             <!--end:Menu item-->
             @endhasanyrole
 
-            @can('election management.manage elections')
-                <!--begin:Menu item-->
-            <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ $isElectionActive ? 'show' : '' }}">
-                <!--begin:Menu link-->
-                <span class="menu-link">
-                    <span class="menu-icon">
-                        <i class="ki-duotone ki-chart-pie-3 fs-2">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                            <span class="path3"></span>
-                        </i>
-                    </span>
-                    <span class="menu-title">Election System</span>
-                    <span class="menu-arrow"></span>
-                </span>
-                <!--end:Menu link-->
-                <!--begin:Menu sub-->
-                <div class="menu-sub menu-sub-accordion {{ $isElectionActive ? 'show' : '' }}">
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('elections') ? 'active' : '' }}" href="{{ route('elections') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Manage Elections</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('elections.active') ? 'active' : '' }}" href="{{ route('elections.active') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Active Elections</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('elections.results.archive') ? 'active' : '' }}" href="{{ route('elections.results.archive') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Election Results</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('admin.election.voter-integrity.index') || request()->routeIs('admin.election.voter-integrity') ? 'active' : '' }}" href="{{ route('admin.election.voter-integrity.index') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">Voting Integrity</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                    <!--begin:Menu item-->
-                    <div class="menu-item">
-                        <a class="menu-link {{ request()->routeIs('admin.elections.ip-blacklist.index') ? 'active' : '' }}" href="{{ route('admin.elections.ip-blacklist.index') }}">
-                            <span class="menu-bullet">
-                                <span class="bullet bullet-dot"></span>
-                            </span>
-                            <span class="menu-title">IP Blacklist</span>
-                        </a>
-                    </div>
-                    <!--end:Menu item-->
-                </div>
-                <!--end:Menu sub-->
-            </div>
-            <!--end:Menu item-->
-            @endcan
+
             
             <!--begin:Menu item-->
             @php

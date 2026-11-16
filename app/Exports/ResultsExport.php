@@ -19,7 +19,7 @@ class ResultsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
         $this->filters = $filters; // Pass filters from the controller
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         // Apply filters to fetch students
         $studentsQuery = Student::query();

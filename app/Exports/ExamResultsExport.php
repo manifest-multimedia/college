@@ -21,7 +21,7 @@ class ExamResultsExport implements FromCollection, WithHeadings
         $this->college_class_id = $college_class_id;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         try {
             $exam = Exam::find($this->exam_id);

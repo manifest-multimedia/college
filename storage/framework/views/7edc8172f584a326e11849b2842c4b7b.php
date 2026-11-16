@@ -1,0 +1,187 @@
+<div>
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <h2 class="card-title fw-bold">
+                    <i class="fas fa-vote-yea me-2"></i>
+                    College Elections
+                </h2>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="text-center mb-5">
+                <h4>Welcome to the College Online Voting Platform</h4>
+                <p class="text-muted">
+                    This platform allows students to participate in college-wide elections by voting for their preferred candidates.
+                    <br>All you need is your Student ID to verify your identity and cast your vote.
+                </p>
+                <p> <strong>Note:</strong>
+                    <br /> Ensure you have your Student ID ready for verification.
+                    <br /> You are not allowed to vote for someone else. You will face disciplinary action if you do.
+                    <br /> If you have any issues, please contact the election committee.
+                    <br /> Happy Voting!
+                </p>
+            </div>
+            
+            <!-- Active Elections Section -->
+            <h3 class="mb-3">Active Elections</h3>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($activeElections->count() > 0): ?>
+                <div class="row g-4">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $activeElections; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $election): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0"><?php echo e($election->title); ?></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-column">
+                                        <div class="mb-3">
+                                            <span class="badge badge-primary bg-primary mb-2">Active</span>
+                                            <p><?php echo e($election->description); ?></p>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <small class="text-muted">
+                                                <i class="far fa-calendar-alt me-1"></i>
+                                                Ends on <?php echo e($election->end_time->format('M j, Y g:i A')); ?>
+
+                                            </small>
+                                        </div>
+                                        
+                                        <!-- Time Remaining -->
+                                        <?php
+                                            $hoursRemaining = now()->diffInHours($election->end_time);
+                                        ?>
+                                        
+                                        <div class="d-flex align-items-center mb-4">
+                                            <div class="me-2">
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-clock"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted">Time remaining</small>
+                                                <div class="fw-bold">
+                                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hoursRemaining < 24): ?>
+                                                        <?php echo e($hoursRemaining); ?> hours
+                                                    <?php else: ?>
+                                                        <?php echo e(ceil($hoursRemaining / 24)); ?> days
+                                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-auto">
+                                            <a href="<?php echo e(route('public.elections.show', $election)); ?>" class="btn btn-primary w-100">
+                                                <i class="fas fa-info-circle me-1"></i> View Details & Vote
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            <?php else: ?>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    There are currently no active elections. Please check back later.
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <!-- Upcoming Elections Section -->
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($upcomingElections->count() > 0): ?>
+                <h3 class="mt-5 mb-3">Upcoming Elections</h3>
+                <div class="row g-4">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $upcomingElections; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $election): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0"><?php echo e($election->title); ?></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-column">
+                                        <div class="mb-3">
+                                            <span class="badge badge-secondary bg-secondary mb-2">Upcoming</span>
+                                            <p><?php echo e($election->description); ?></p>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <small class="text-muted">
+                                                <i class="far fa-calendar-alt me-1"></i>
+                                                Starts on <?php echo e($election->start_time->format('M j, Y g:i A')); ?>
+
+                                            </small>
+                                        </div>
+                                        
+                                        <!-- Days Until Start -->
+                                        <?php
+                                            $daysUntil = now()->diffInDays($election->start_time);
+                                        ?>
+                                        
+                                        <div class="d-flex align-items-center mb-4">
+                                            <div class="me-2">
+                                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-hourglass-start"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted">Starting in</small>
+                                                <div class="fw-bold"><?php echo e($daysUntil); ?> days</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-auto">
+                                            <a href="<?php echo e(route('public.elections.show', $election)); ?>" class="btn btn-outline-secondary w-100">
+                                                <i class="fas fa-info-circle me-1"></i> View Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            
+            <!-- Completed Elections Section -->
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($completedElections->count() > 0): ?>
+                <h3 class="mt-5 mb-3">Recently Completed Elections</h3>
+                <div class="row g-4">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $completedElections; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $election): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0"><?php echo e($election->title); ?></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex flex-column">
+                                        <div class="mb-3">
+                                            <span class="badge badge-danger bg-danger mb-2">Completed</span>
+                                            <p><?php echo e($election->description); ?></p>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <small class="text-muted">
+                                                <i class="far fa-calendar-check me-1"></i>
+                                                Ended on <?php echo e($election->end_time->format('M j, Y g:i A')); ?>
+
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="mt-auto">
+                                            <a href="<?php echo e(route('public.elections.show', $election)); ?>" class="btn btn-outline-danger w-100">
+                                                <i class="fas fa-poll me-1"></i> View Results
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php /**PATH /home/johnsonsebire/www/college/resources/views/livewire/public-elections.blade.php ENDPATH**/ ?>

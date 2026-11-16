@@ -26,7 +26,7 @@ class TranscriptExport implements FromCollection, ShouldAutoSize, WithEvents, Wi
     /**
      * @return \Illuminate\Support\Collection
      */
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         return collect($this->transcriptData['transcript_entries']);
     }

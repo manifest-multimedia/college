@@ -100,7 +100,7 @@ class OnlineExamination extends Component
         // Hard cut-off: prevent access outside of exam availability period
         if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
             session()->flash('error', 'The scheduled time for this examination has ended.');
-            return redirect()->route('take-exam');
+            return redirect()->route('student.online-exam-results.show', $this->examSession->id);
         }
 
         if ($this->exam->start_date && now()->isBefore($this->exam->start_date)) {
@@ -1022,7 +1022,6 @@ class OnlineExamination extends Component
             return [
                 'success' => true,
                 'message' => 'Time expired! Your exam has been automatically submitted.',
-                'score' => $score,
                 'submittedAt' => $this->timeExpiredAt->toIso8601String(),
             ];
         } catch (\Exception $e) {

@@ -40,7 +40,7 @@ class ElectionResultsExport implements FromCollection, ShouldAutoSize, WithEvent
     /**
      * @return \Illuminate\Support\Collection
      */
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         $results = collect([]);
 

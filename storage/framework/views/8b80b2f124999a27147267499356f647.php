@@ -1,0 +1,1 @@
+Welcome to 360College<?php /**PATH /home/johnsonsebire/www/college/resources/views/emails/welcome.blade.php ENDPATH**/ ?>

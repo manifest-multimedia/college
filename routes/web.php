@@ -19,6 +19,49 @@ Route::get('/mcq', function () {
 
 Route::post('/upload-file', [FileUploadController::class, 'upload'])->name('file.upload');
 
+// Lecturer-safe academic answer review; does not expose Exam Audit or device logs.
+Route::middleware(['auth:sanctum', 'role:System|Super Admin|Administrator|Academic Officer|Lecturer'])->group(function () {
+    Route::get('/exams/answer-review', [\App\Http\Controllers\Exams\StudentAnswerReviewController::class, 'index'])->name('exams.answer-review.index');
+    Route::get('/exams/answer-review/{session}', [\App\Http\Controllers\Exams\StudentAnswerReviewController::class, 'show'])->name('exams.answer-review.show');
+});
+
+// Warden operations are scoped to active hostel assignments on every request.
+Route::middleware(['auth:sanctum'])->prefix('warden/hostels')->name('warden.hostels.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Hostels\HostelWardenController::class,'index'])->name('index');
+    Route::post('/allocations/{allocation}/transition', [\App\Http\Controllers\Hostels\HostelWardenController::class,'transition'])->name('transition');
+});
+
+// Student accommodation applications are isolated from staff management.
+Route::middleware(['auth:sanctum','role:Student','student.active'])->prefix('student/hostel')->name('student.hostel.')->group(function () {
+    Route::get('/applications', [\App\Http\Controllers\Hostels\HostelApplicationController::class,'studentIndex'])->name('applications');
+    Route::post('/applications', [\App\Http\Controllers\Hostels\HostelApplicationController::class,'submit'])->name('apply');
+});
+
+// Hostel Management: institution configuration and staff-managed accommodation.
+Route::middleware(['auth:sanctum', 'role:System|Super Admin|Administrator|Academic Officer'])->prefix('hostels')->name('hostels.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'index'])->name('index');
+    Route::get('/students/search', [\App\Http\Controllers\Hostels\HostelBulkAllocationController::class, 'search'])->name('students.search');
+    Route::get('/bulk-allocations', [\App\Http\Controllers\Hostels\HostelBulkAllocationController::class, 'index'])->name('bulk.index');
+    Route::post('/bulk-allocations/selection', [\App\Http\Controllers\Hostels\HostelBulkAllocationController::class, 'selection'])->name('bulk.selection');
+    Route::post('/bulk-allocations/preview', [\App\Http\Controllers\Hostels\HostelBulkAllocationController::class, 'preview'])->name('bulk.preview');
+    Route::post('/bulk-allocations/confirm', [\App\Http\Controllers\Hostels\HostelBulkAllocationController::class, 'confirm'])->name('bulk.confirm');
+    Route::post('/settings', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'settings'])->name('settings');
+    Route::get('/applications', [\App\Http\Controllers\Hostels\HostelApplicationController::class,'index'])->name('applications');
+    Route::post('/applications/auto-allocate', [\App\Http\Controllers\Hostels\HostelApplicationController::class,'autoAllocate'])->name('applications.auto-allocate');
+    Route::post('/applications/{application}/decision', [\App\Http\Controllers\Hostels\HostelApplicationController::class,'decide'])->name('applications.decide');
+    Route::get('/operations', [\App\Http\Controllers\Hostels\HostelOperationsController::class,'index'])->name('operations');
+    Route::get('/reports/export', [\App\Http\Controllers\Hostels\HostelOperationsController::class,'export'])->name('reports.export');
+    Route::post('/wardens', [\App\Http\Controllers\Hostels\HostelOperationsController::class,'assignWarden'])->name('wardens.assign');
+    Route::post('/wardens/{warden}/revoke', [\App\Http\Controllers\Hostels\HostelOperationsController::class,'revokeWarden'])->name('wardens.revoke');
+    Route::post('/allocations/{allocation}/transfer', [\App\Http\Controllers\Hostels\HostelOperationsController::class,'transfer'])->name('allocations.transfer');
+    Route::post('/hostel', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'hostel'])->name('hostel');
+    Route::post('/room', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'room'])->name('room');
+    Route::post('/bed', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'bed'])->name('bed');
+    Route::post('/period', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'period'])->name('period');
+    Route::post('/allocate', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'allocate'])->name('allocate');
+    Route::post('/allocation/{allocation}/transition', [\App\Http\Controllers\Hostels\HostelManagementController::class, 'transition'])->name('transition');
+});
+
 // Exam Results Routes (MUST be before wildcard /exams/{slug}/{student_id} route to avoid conflicts)
 Route::middleware(['auth:sanctum', 'role:System|Academic Officer|Administrator|Lecturer'])->group(function () {
     Route::get('/exams/results', [App\Http\Controllers\Admin\ExamResultsController::class, 'index'])
@@ -72,10 +115,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/force-password-change', [App\Http\Controllers\ForcePasswordChangeController::class, 'update'])->name('password.force-change.update');
 });
 
-// Link to Tutor Assessment Form:
-Route::get('/tutor-assessment', function () {
-    return redirect()->away('https://forms.gle/9EpmJY9fTDT6QaUw9');
-});
+// Legacy entry point now resolves to the authenticated, native evaluation portal.
+Route::get('/tutor-assessment', fn () => redirect()->route('student.tutor-evaluations'))->middleware(['auth:sanctum', 'role:Student', 'student.active']);
 
 // Dynamic Sign-Up route based on authentication method (defaults to staff registration)
 Route::get('/sign-up', function () {
@@ -162,6 +203,8 @@ Route::middleware([
         Route::get('/student-information', function () {
             return view('students.information');
         })->name('student.information');
+
+        Route::get('/student/tutor-evaluations', \App\Livewire\Student\TutorEvaluations::class)->name('student.tutor-evaluations');
 
         // Student Assessment Scores
         Route::get('/student/assessment-scores', [App\Http\Controllers\Student\AssessmentScoresController::class, 'index'])->name('student.assessment-scores');
@@ -656,6 +699,22 @@ Route::middleware([
 
             Route::post('/settings', [App\Http\Controllers\AcademicSettingsController::class, 'update'])->name('settings.update');
 
+            Route::middleware('role:System|Super Admin|Administrator|Academic Officer')->group(function () {
+                Route::get('/tutor-evaluation-reports', [\App\Http\Controllers\Academics\TutorEvaluationReportsController::class, 'index'])->name('tutor-evaluation-reports');
+                Route::get('/tutor-evaluation-reports/pdf', [\App\Http\Controllers\Academics\TutorEvaluationReportsController::class, 'pdf'])->name('tutor-evaluation-reports.pdf');
+                Route::get('/tutor-evaluation-reports/xlsx', [\App\Http\Controllers\Academics\TutorEvaluationReportsController::class, 'xlsx'])->name('tutor-evaluation-reports.xlsx');
+                Route::get('/tutor-evaluation-reports/csv', [\App\Http\Controllers\Academics\TutorEvaluationReportsController::class, 'csv'])->name('tutor-evaluation-reports.csv');
+            });
+
+            Route::middleware('role:System|Super Admin|Administrator|Academic Officer')->group(function () {
+                Route::get('/online-exam-result-policy', [\App\Http\Controllers\Academics\OnlineExamResultPolicyController::class, 'index'])->name('online-exam-result-policy');
+                Route::post('/online-exam-result-policy', [\App\Http\Controllers\Academics\OnlineExamResultPolicyController::class, 'save'])->name('online-exam-result-policy.save');
+                Route::post('/online-exam-result-policy/{exam}', [\App\Http\Controllers\Academics\OnlineExamResultPolicyController::class, 'override'])->name('online-exam-result-policy.override');
+                Route::post('/online-exam-result-policy/{exam}/publish', [\App\Http\Controllers\Academics\OnlineExamResultPolicyController::class, 'publish'])->name('online-exam-result-policy.publish');
+            });
+
+            Route::get('/tutor-evaluations', \App\Livewire\Academics\TutorEvaluationManager::class)->middleware('role:System|Super Admin|Administrator|Academic Officer')->name('tutor-evaluations');
+
             // Academic Years
             Route::resource('academic-years', App\Http\Controllers\AcademicYearController::class);
 
@@ -876,6 +935,8 @@ Route::get('/exams/{slug}/{student_id}', function ($slug, $student_id) {
         'student_id' => $student_id,
     ]);
 })->where('slug', '(?!results).*')->name('exams'); // Exclude 'results' from matching
+
+Route::get('/student/online-exam-results/{session}', [\App\Http\Controllers\Student\OnlineExamResultsController::class, 'show'])->middleware('auth:sanctum')->name('student.online-exam-results.show');
 
 Route::get('/take-exam', function () {
     return view('frontend.take-exam');

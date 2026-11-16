@@ -16,9 +16,13 @@ class Exam extends Model
         'date' => 'datetime',
         'enable_proctoring' => 'boolean',
         'allowed_device_types' => 'array',
+        'results_published_at' => 'datetime',
     ];
 
     protected $fillable = [
+        'result_release_override',
+        'result_detail_override',
+        'results_published_at',
         'title',
         'description',
         'course_id',

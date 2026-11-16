@@ -14,6 +14,7 @@
                         </h3>
                     </div>
                     <div>
+                        <a href="{{ route('exams.answer-review.index') }}" class="btn btn-sm btn-light-primary me-3">Student Answer Review</a>
                         <p class="text-muted mb-0">View and export exam results for all students</p>
                     </div>
                 </div>

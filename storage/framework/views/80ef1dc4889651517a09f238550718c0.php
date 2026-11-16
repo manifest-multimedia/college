@@ -1,0 +1,455 @@
+<div>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session()->has('success')): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?php echo e(session('success')); ?>
+
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session()->has('error')): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?php echo e(session('error')); ?>
+
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($student): ?>
+    <div class="d-flex justify-content-end mb-5">
+        <a href="<?php echo e(route('students.edit', $student->id)); ?>" class="btn btn-primary">
+            <i class="fas fa-edit me-2"></i>Edit Student
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Student Basic Information -->
+        <div class="col-lg-6 mb-5">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="card-title">
+                        <h3 class="card-title fw-bold text-gray-800">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-5 text-center">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($student->profile_photo_url): ?>
+                            <img class="rounded-circle mb-3 shadow-sm" src="<?php echo e($student->profile_photo_url); ?>" alt="<?php echo e($student->first_name); ?>" width="150" height="150">
+                        <?php else: ?>
+                            <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 150px; height: 150px;">
+                                <span class="fs-1 fw-bold text-primary"><?php echo e(substr($student->first_name, 0, 1)); ?><?php echo e(substr($student->last_name, 0, 1)); ?></span>
+                            </div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <h3 class="fw-bold"><?php echo e($student->first_name); ?> <?php echo e($student->other_name); ?> <?php echo e($student->last_name); ?></h3>
+                        <span class="badge badge-light-primary px-3 py-2 fs-6"><?php echo e($student->student_id); ?></span>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-row-bordered">
+                            <tbody>
+                                <tr>
+                                    <th class="w-25 bg-light">Email</th>
+                                    <td><?php echo e($student->email); ?></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Phone</th>
+                                    <td><?php echo e($student->mobile_number ?? 'Not provided'); ?></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Status</th>
+                                    <td>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($student->status == 'Active'): ?>
+                                            <span class="badge badge-light-success"><?php echo e($student->status); ?></span>
+                                        <?php elseif($student->status == 'Inactive'): ?>
+                                            <span class="badge badge-light-danger"><?php echo e($student->status); ?></span>
+                                        <?php else: ?>
+                                            <span class="badge badge-light-warning"><?php echo e($student->status); ?></span>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Academic Information -->
+        <div class="col-lg-6 mb-5">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <div class="card-title">
+                        <h3 class="card-title fw-bold text-gray-800">
+                            <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                        </h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-row-bordered">
+                            <tbody>
+                                <tr>
+                                    <th class="w-25 bg-light">Program</th>
+                                    <td><?php echo e($student->CollegeClass->name ?? 'Not assigned'); ?></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Cohort</th>
+                                    <td><?php echo e($student->Cohort->name ?? 'Not assigned'); ?></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Entry Date</th>
+                                    <td><?php echo e($student->created_at ? $student->created_at->format('F d, Y') : 'Not available'); ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Student Information Cards -->
+            <div class="card shadow-sm mt-5">
+                <div class="card-header">
+                    <div class="card-title">
+                        <h3 class="card-title fw-bold text-gray-800">
+                            <i class="fas fa-clipboard-list me-2"></i>Academic Progress
+                        </h3>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- You can add academic progress indicators here -->
+                    <div class="notice d-flex bg-light-info rounded border border-info border-dashed p-6">
+                        <span class="svg-icon svg-icon-2tx svg-icon-info me-4">
+                            <i class="fas fa-info-circle fs-1 text-info"></i>
+                        </span>
+                        <div class="d-flex flex-stack flex-grow-1">
+                            <div class="fw-semibold">
+                                <h4 class="text-gray-900 fw-bold">Academic Information</h4>
+                                <div class="fs-6 text-gray-700">
+                                    View the student's course registrations, grades, and academic records in the appropriate sections.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->hasRole(['System', 'Super Admin', 'Administrator', 'Academic Officer'])): ?>
+        <?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('student-identification-manager', ['studentId' => $student->id]);
+
+$__key = null;
+
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3075722237-0', $__key);
+
+$__html = app('livewire')->mount($__name, $__params, $__key);
+
+echo $__html;
+
+unset($__html);
+unset($__key);
+unset($__name);
+unset($__params);
+unset($__split);
+if (isset($__slots)) unset($__slots);
+?>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    
+    <?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('student-emergency-contacts', ['studentId' => $student->id]);
+
+$__key = null;
+
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-3075722237-1', $__key);
+
+$__html = app('livewire')->mount($__name, $__params, $__key);
+
+echo $__html;
+
+unset($__html);
+unset($__key);
+unset($__name);
+unset($__params);
+unset($__split);
+if (isset($__slots)) unset($__slots);
+?>
+
+    <!-- Exams Taken -->
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->hasRole(['Super Admin', 'System User'])): ?>
+    <div class="card shadow-sm mb-5">
+        <div class="card-header">
+            <div class="card-title">
+                <h3 class="card-title fw-bold text-gray-800">
+                    <i class="fas fa-laptop-code me-2"></i>Exams Taken
+                </h3>
+            </div>
+        </div>
+        <div class="card-body">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($student->examSessions && $student->examSessions->count() > 0): ?>
+                <div class="table-responsive">
+                    <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                        <thead>
+                            <tr class="fw-bold text-muted">
+                                <th class="min-w-150px">Exam</th>
+                                <th class="min-w-140px">Started</th>
+                                <th class="min-w-140px">Completed</th>
+                                <th class="min-w-100px">Score</th>
+                                <th class="min-w-100px">Status</th>
+                                <th class="min-w-100px text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $student->examSessions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $session): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
+                                    $scoreData = $this->getSessionScore($session);
+                                    $examName = $this->getExamName($session);
+                                ?>
+                                <tr>
+                                    <td>
+                                        <div class="text-dark fw-bold text-hover-primary fs-6"><?php echo e($examName); ?></div>
+                                        <span class="text-muted fw-semibold text-muted d-block fs-7"><?php echo e($session->exam->slug ?? ''); ?></span>
+                                    </td>
+                                    <td>
+                                        <div class="text-dark fw-bold d-block fs-6"><?php echo e($session->started_at ? $session->started_at->format('M d, Y H:i') : 'N/A'); ?></div>
+                                    </td>
+                                    <td>
+                                        <div class="text-dark fw-bold d-block fs-6"><?php echo e($session->completed_at ? $session->completed_at->format('M d, Y H:i') : 'N/A'); ?></div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-light-primary fs-7 fw-bold"><?php echo e($scoreData['obtained']); ?> / <?php echo e($scoreData['total']); ?> (<?php echo e($scoreData['percentage']); ?>%)</span>
+                                    </td>
+                                    <td>
+                                        <?php
+                                            $status = $this->getSessionStatus($session);
+                                        ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($status === 'completed'): ?>
+                                            <span class="badge badge-light-success">Completed</span>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($session->is_restored): ?>
+                                                <br><small class="text-warning mt-1"><i class="bi bi-arrow-clockwise me-1"></i>Restored</small>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <?php elseif($status === 'expired'): ?>
+                                            <span class="badge badge-light-danger">Expired</span>
+                                        <?php elseif($status === 'active'): ?>
+                                            <span class="badge badge-light-warning">Active</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-light-secondary">Not Started</span>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->canRestoreSession($session)): ?>
+                                                <button wire:click="openRestoreModal(<?php echo e($session->id); ?>)" 
+                                                        class="btn btn-icon btn-bg-light btn-active-color-warning btn-sm" 
+                                                        title="Restore Session">
+                                                    <i class="bi bi-arrow-clockwise fs-4 text-warning"></i>
+                                                </button>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            <button wire:click="deleteExamSession(<?php echo e($session->id); ?>)" 
+                                                    wire:confirm="Are you sure you want to delete this exam session? This action cannot be undone."
+                                                    class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                                    title="Delete Session">
+                                                <i class="fas fa-trash fs-4"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="notice d-flex bg-light-warning rounded border border-warning border-dashed p-6">
+                    <span class="svg-icon svg-icon-2tx svg-icon-warning me-4">
+                        <i class="fas fa-exclamation-circle fs-1 text-warning"></i>
+                    </span>
+                    <div class="d-flex flex-stack flex-grow-1">
+                        <div class="fw-semibold">
+                            <h4 class="text-gray-900 fw-bold">No Exams Found</h4>
+                            <div class="fs-6 text-gray-700">
+                                This student has not taken any exams yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    
+    <!-- Financial Information -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-header">
+            <div class="card-title">
+                <h3 class="card-title fw-bold text-gray-800">
+                    <i class="fas fa-money-bill me-2"></i>Financial Information
+                </h3>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="notice d-flex bg-light-primary rounded border border-primary border-dashed p-6">
+                <span class="svg-icon svg-icon-2tx svg-icon-primary me-4">
+                    <i class="fas fa-info-circle fs-1 text-primary"></i>
+                </span>
+                <div class="d-flex flex-stack flex-grow-1">
+                    <div class="fw-semibold">
+                        <h4 class="text-gray-900 fw-bold">Financial Records</h4>
+                        <div class="fs-6 text-gray-700">
+                            To view detailed financial records for this student, please visit the Finance module.
+                        </div>
+                    </div>
+                    <a href="<?php echo e(route('finance.payments')); ?>?student=<?php echo e($student->id); ?>" class="btn btn-primary">View Financial Records</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <div class="card-title">
+                <h3 class="card-title fw-bold text-gray-800">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </h3>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                <!-- This is a placeholder for potential student activities -->
+                <div class="timeline-item">
+                    <div class="timeline-line w-40px"></div>
+                    <div class="timeline-icon symbol symbol-circle symbol-40px">
+                        <div class="symbol-label bg-light">
+                            <i class="fas fa-edit fs-2 text-gray-500"></i>
+                        </div>
+                    </div>
+                    <div class="timeline-content mb-10 mt-n1">
+                        <div class="pe-3 mb-5">
+                            <div class="fs-5 fw-bold mb-2">Profile Updated</div>
+                            <div class="d-flex align-items-center mt-1 fs-6">
+                                <div class="text-muted me-2 fs-7">Updated on</div>
+                                <div class="text-muted me-2 fs-7"><?php echo e($student->updated_at->format('F d, Y')); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-line w-40px"></div>
+                    <div class="timeline-icon symbol symbol-circle symbol-40px">
+                        <div class="symbol-label bg-light">
+                            <i class="fas fa-user-plus fs-2 text-gray-500"></i>
+                        </div>
+                    </div>
+                    <div class="timeline-content mb-10 mt-n1">
+                        <div class="pe-3 mb-5">
+                            <div class="fs-5 fw-bold mb-2">Student Created</div>
+                            <div class="d-flex align-items-center mt-1 fs-6">
+                                <div class="text-muted me-2 fs-7">Created on</div>
+                                <div class="text-muted me-2 fs-7"><?php echo e($student->created_at->format('F d, Y')); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php else: ?>
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-10">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle fs-2 mb-3"></i>
+                <h4>Student not found</h4>
+                <p>The student information could not be loaded. Please try again or contact support if the problem persists.</p>
+                <a href="<?php echo e(route('students')); ?>" class="btn btn-primary">Back to Students</a>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+    <!-- Restore Session Modal -->
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($showRestoreModal): ?>
+        <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-arrow-clockwise me-2 text-warning"></i>
+                            Restore Exam Session
+                        </h5>
+                        <button type="button" class="btn-close" wire:click="cancelRestore"></button>
+                    </div>
+                    <div class="modal-body">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($restoringSessionId): ?>
+                            <?php
+                                $restoringSession = \App\Models\ExamSession::with(['exam.course'])->find($restoringSessionId);
+                            ?>
+                            
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($restoringSession): ?>
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    You are about to restore the exam session:
+                                    <br><strong><?php echo e($student->first_name); ?> <?php echo e($student->last_name); ?></strong>
+                                    <br>Examination: <strong><?php echo e($restoringSession->exam->display_title); ?></strong>
+                                    <br>Course: <strong><?php echo e($restoringSession->exam->course->name ?? 'Unknown Course'); ?></strong>
+                                    <br>Started: <?php echo e($restoringSession->started_at->format('M d, Y g:i A')); ?>
+
+                                </div>
+                                
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($errorMessage): ?>
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                        <?php echo e($errorMessage); ?>
+
+                                    </div>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Minutes to Grant*</label>
+                                    <input type="number" wire:model="restoreMinutes" class="form-control" min="5" max="120" placeholder="30">
+                                    <div class="form-text">How many additional minutes should the student have to complete the exam?</div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['restoreMinutes'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="text-danger"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Reason for Restoration*</label>
+                                    <textarea wire:model="restoreReason" class="form-control" rows="3" placeholder="Provide a reason for restoring this exam session"></textarea>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['restoreReason'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="text-danger"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="cancelRestore">Cancel</button>
+                        <button type="button" class="btn btn-warning" wire:click="confirmRestore">
+                            <i class="bi bi-arrow-clockwise me-2"></i>
+                            Restore Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+</div>
+<?php /**PATH /home/johnsonsebire/www/college/resources/views/livewire/student-details.blade.php ENDPATH**/ ?>

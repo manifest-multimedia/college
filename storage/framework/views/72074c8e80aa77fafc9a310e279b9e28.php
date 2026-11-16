@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Student Results</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11px;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 50px;
+            color: rgba(200, 200, 200, 0.2);
+            font-weight: bold;
+            z-index: -1;
+            text-align: center;
+            line-height: 1.2;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #333;
+        }
+        
+        .header .logo {
+            max-width: 120px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #000;
+        }
+        
+        .header p {
+            font-size: 10px;
+            color: #666;
+            margin: 2px 0;
+        }
+        
+        .student-info {
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        
+        .student-info table {
+            width: 100%;
+        }
+        
+        .student-info td {
+            padding: 4px;
+            font-size: 10px;
+        }
+        
+        .student-info td:first-child {
+            font-weight: bold;
+            width: 30%;
+        }
+        
+        .notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            color: #856404;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .results-table thead th {
+            background-color: #343a40;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .results-table tbody td {
+            padding: 7px;
+            border: 1px solid #dee2e6;
+            font-size: 10px;
+        }
+        
+        .results-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .status-pass {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-resit {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .status-carryover, .status-fail {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .summary-section {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .summary-section h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #000;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+        }
+        
+        .summary-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .summary-item {
+            display: table-cell;
+            text-align: center;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        
+        .summary-label {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .summary-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #000;
+            margin-top: 3px;
+        }
+        
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+            padding: 10px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <!-- Watermark -->
+    <div class="watermark">
+        NOT AN<br>
+        OFFICIAL<br>
+        TRANSCRIPT
+    </div>
+    
+    <!-- Header -->
+    <div class="header">
+        <?php
+            $logoPath = public_path(config('branding.logo.primary'));
+            if (file_exists($logoPath)) {
+                $imageData = base64_encode(file_get_contents($logoPath));
+                $mimeType = mime_content_type($logoPath);
+                $logoSrc = "data:{$mimeType};base64,{$imageData}";
+            } else {
+                $logoSrc = null;
+            }
+        ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($logoSrc): ?>
+            <img src="<?php echo e($logoSrc); ?>" alt="College Logo" class="logo">
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        <h1><?php echo e(config('school.name', 'College Management System')); ?></h1>
+        <p><?php echo e(config('school.address', '')); ?></p>
+        <p style="margin-top: 8px; font-size: 14px; font-weight: bold;">STUDENT ACADEMIC RESULTS</p>
+    </div>
+    
+    <!-- Notice -->
+    <div class="notice">
+        ⚠ THIS IS NOT AN OFFICIAL TRANSCRIPT ⚠
+    </div>
+    
+    <!-- Student Information -->
+    <div class="student-info">
+        <table>
+            <tr>
+                <td>Student Name:</td>
+                <td><?php echo e($student->full_name ?? $student->name); ?></td>
+                <td>Student ID:</td>
+                <td><?php echo e($student->student_id); ?></td>
+            </tr>
+            <tr>
+                <td>Email:</td>
+                <td><?php echo e($student->email); ?></td>
+                <td>Program:</td>
+                <td><?php echo e($student->collegeClass->name ?? 'N/A'); ?></td>
+            </tr>
+            <tr>
+                <td>Generated Date:</td>
+                <td><?php echo e($generated_date); ?></td>
+                <td>Cohort:</td>
+                <td><?php echo e($student->cohort->name ?? 'N/A'); ?></td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Results Table -->
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 12%;">Course Code</th>
+                <th style="width: 35%;">Course Name</th>
+                <th style="width: 10%;">Credit Hrs</th>
+                <th style="width: 10%;">Grade</th>
+                <th style="width: 10%;">Grade Pts</th>
+                <th style="width: 18%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $scores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $score): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+                <td class="text-center"><?php echo e($index + 1); ?></td>
+                <td class="text-center"><strong><?php echo e($score['course_code']); ?></strong></td>
+                <td><?php echo e($score['course_name']); ?></td>
+                <td class="text-center"><?php echo e($score['credit_hours']); ?></td>
+                <td class="text-center"><strong><?php echo e($score['grade_letter']); ?></strong></td>
+                <td class="text-center"><strong><?php echo e(number_format($score['grade_points'], 1)); ?></strong></td>
+                <td class="text-center status-<?php echo e(strtolower($score['status'])); ?>"><?php echo e($score['status']); ?></td>
+            </tr>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+        </tbody>
+    </table>
+    
+    <!-- Summary Section -->
+    <div class="summary-section">
+        <h3>Academic Summary</h3>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-label">Total Credits</div>
+                <div class="summary-value"><?php echo e($summary['total_credits']); ?></div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">CGPA</div>
+                <div class="summary-value" style="color: <?php echo e($summary['cgpa'] >= 3.0 ? '#28a745' : ($summary['cgpa'] >= 2.0 ? '#ffc107' : '#dc3545')); ?>">
+                    <?php echo e(number_format($summary['cgpa'], 2)); ?>
+
+                </div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Overall Remark</div>
+                <div class="summary-value" style="font-size: 14px;"><?php echo e($summary['overall_remark']); ?></div>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 10px; text-align: center;">
+            Passed: <strong><?php echo e($summary['passed_courses']); ?></strong> | 
+            Failed: <strong><?php echo e($summary['failed_courses']); ?></strong>
+        </div>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($summary['semester_remarks'])): ?>
+        <div style="margin-top: 12px; border-top: 1px solid #dee2e6; padding-top: 10px;">
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">Academic Progress by Semester</div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 4px 8px; background-color: #343a40; color: white; border: 1px solid #dee2e6;">Semester</th>
+                        <th style="text-align: center; padding: 4px 8px; background-color: #343a40; color: white; border: 1px solid #dee2e6;">Progress Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__currentLoopData = $summary['semester_remarks']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $semName => $remark): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
+                        $remarkColor = match($remark) {
+                            'Pass', 'Promoted' => '#28a745',
+                            'Probation', 'Repeat' => '#856404',
+                            'Dismissed' => '#dc3545',
+                            default => '#333',
+                        };
+                    ?>
+                    <tr>
+                        <td style="padding: 4px 8px; border: 1px solid #dee2e6;"><?php echo e($semName); ?></td>
+                        <td style="padding: 4px 8px; border: 1px solid #dee2e6; text-align: center; font-weight: bold; color: <?php echo e($remarkColor); ?>;"><?php echo e($remark); ?></td>
+                    </tr>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>IMPORTANT NOTICE:</strong> This document is for informational purposes only and does not constitute an official academic transcript.</p>
+        <p>For official transcripts, please contact the Academic Registry.</p>
+        <p>Generated: <?php echo e($generated_date); ?></p>
+    </div>
+</body>
+</html>
+<?php /**PATH /home/johnsonsebire/www/college/resources/views/student/assessment-scores-pdf.blade.php ENDPATH**/ ?>

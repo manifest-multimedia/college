@@ -552,6 +552,7 @@ class OnlineExaminationV2 extends Component
             $this->examSession->update([
                 'completed_at' => now(),
                 'auto_submitted' => true,
+                'score' => app(\App\Services\ResultsService::class)->calculateOnlineExamScore($this->examSession)['correct_answers'],
             ]);
 
             $this->readOnlyMode = true;
@@ -582,6 +583,7 @@ class OnlineExaminationV2 extends Component
                 $this->examSession->update([
                     'completed_at' => $timeExpiredAt,
                     'auto_submitted' => true,
+                    'score' => app(\App\Services\ResultsService::class)->calculateOnlineExamScore($this->examSession)['correct_answers'],
                 ]);
 
                 $this->readOnlyMode = true;
@@ -634,6 +636,7 @@ class OnlineExaminationV2 extends Component
                 $this->examSession->update([
                     'completed_at' => now(),
                     'auto_submitted' => false,
+                    'score' => app(\App\Services\ResultsService::class)->calculateOnlineExamScore($this->examSession)['correct_answers'],
                 ]);
 
                 Log::info('V2 Exam Submitted', [
@@ -647,7 +650,7 @@ class OnlineExaminationV2 extends Component
 
             session()->flash('message', 'Exam submitted successfully.');
 
-            return redirect()->route('take-exam');
+            return redirect()->route('student.online-exam-results.show', $this->examSession->id);
 
         } catch (\Throwable $th) {
             Log::error('V2 Exam Submission Error', [

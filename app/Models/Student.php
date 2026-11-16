@@ -50,6 +50,11 @@ class Student extends Model
     /**
      * A student is portal-eligible only when their record is explicitly active.
      */
+    public function hostelAllocations()
+    {
+        return $this->hasMany(\App\Models\Hostel\HostelAllocation::class);
+    }
+
     public function isActive(): bool
     {
         return strtolower(trim((string) $this->status)) === 'active';

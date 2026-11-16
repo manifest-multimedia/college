@@ -23,7 +23,7 @@ class ExamResultExport implements FromCollection, WithHeadings
         $this->student = Student::with('user')->where('student_id', $student_id)->first();
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         $exam = Exam::find($this->exam_id);
         //   dd($this->student->name, $this->student->user->id,$exam->id, $exam->course->name);
