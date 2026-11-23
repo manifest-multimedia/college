@@ -650,7 +650,7 @@ class OnlineExaminationV2 extends Component
 
             session()->flash('message', 'Exam submitted successfully.');
 
-            return redirect()->route('student.online-exam-results.show', $this->examSession->id);
+            return redirect()->route('take-exam');
 
         } catch (\Throwable $th) {
             Log::error('V2 Exam Submission Error', [

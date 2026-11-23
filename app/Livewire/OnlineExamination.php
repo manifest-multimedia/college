@@ -100,7 +100,7 @@ class OnlineExamination extends Component
         // Hard cut-off: prevent access outside of exam availability period
         if ($this->exam->end_date && now()->isAfter($this->exam->end_date)) {
             session()->flash('error', 'The scheduled time for this examination has ended.');
-            return redirect()->route('student.online-exam-results.show', $this->examSession->id);
+            return redirect()->route('take-exam');
         }
 
         if ($this->exam->start_date && now()->isBefore($this->exam->start_date)) {
