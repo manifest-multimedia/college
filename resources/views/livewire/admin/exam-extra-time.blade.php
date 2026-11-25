@@ -243,7 +243,7 @@
                         </thead>
                         <tbody>
                             @foreach($examSessions as $session)
-                                <tr>
+                                <tr wire:key="exam-extra-time-session-{{ $session->id }}">
                                     @if(!$applyToAll)
                                     <td>
                                         <div class="form-check form-check-sm form-check-custom">
@@ -310,6 +310,7 @@
                 </div>
                 
                 <div class="mt-5">
+                    <div class="text-muted mb-2">Showing {{ $examSessions->firstItem() }}–{{ $examSessions->lastItem() }} of {{ $examSessions->total() }} sessions</div>
                     {{ $examSessions->links() }}
                 </div>
                 

@@ -153,6 +153,7 @@ class ExamExtraTime extends Component
 
     public function updatedSearch()
     {
+        $this->resetPage();
         // Clear previous found students when search is updated
         if (strlen($this->search) >= 3) {
             $this->processMultipleStudentIds();
@@ -160,6 +161,11 @@ class ExamExtraTime extends Component
             $this->foundStudents = [];
             $this->foundUserIds = [];
         }
+    }
+
+    public function updatedPerPage()
+    {
+        $this->resetPage();
     }
 
     public function processMultipleStudentIds()
@@ -221,6 +227,7 @@ class ExamExtraTime extends Component
         // Get sessions with student and exam info
         $sessions = $query->with(['student', 'exam.course'])
             ->orderBy('started_at', 'desc')
+            ->orderByDesc('id')
             ->get();
 
         // Apply session state filtering after fetching
@@ -243,8 +250,8 @@ class ExamExtraTime extends Component
         });
 
         // Manually paginate the filtered collection
-        $page = request()->get('page', 1);
-        $perPage = $this->perPage;
+        $perPage = max(1, (int) $this->perPage);
+        $page = max(1, min((int) $this->getPage(), (int) ceil($filteredSessions->count() / $perPage)));
         $offset = ($page - 1) * $perPage;
         
         $paginatedItems = $filteredSessions->slice($offset, $perPage)->values();
@@ -254,7 +261,7 @@ class ExamExtraTime extends Component
             $filteredSessions->count(),
             $perPage,
             $page,
-            ['path' => request()->url(), 'query' => request()->query()]
+            ['path' => LengthAwarePaginator::resolveCurrentPath(), 'pageName' => 'page']
         );
     }
 
