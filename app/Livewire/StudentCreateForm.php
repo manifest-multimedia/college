@@ -190,11 +190,16 @@ class StudentCreateForm extends Component
             });
 
             // Create a user account for the student
+            // Default password = student_id (index number), same as import + students:reset-passwords
             try {
+                $initialPassword = filled($student->student_id)
+                    ? (string) $student->student_id
+                    : 'password';
+
                 $user = User::create([
                     'name' => $this->first_name.' '.$this->last_name,
                     'email' => $this->email,
-                    'password' => Hash::make('password'), // Default password
+                    'password' => Hash::make($initialPassword),
                 ]);
 
                 // Assign student role if it exists
@@ -212,7 +217,10 @@ class StudentCreateForm extends Component
                 Log::warning('Could not create user account for student: '.$e->getMessage());
             }
 
-            session()->flash('success', 'Student created successfully.');
+            $passwordHint = filled($student->student_id)
+                ? ' Login password is their student ID (index number): '.$student->student_id.'.'
+                : '';
+            session()->flash('success', 'Student created successfully.'.$passwordHint);
 
             return redirect()->route('students.show', $student->id);
         } catch (\Exception $e) {

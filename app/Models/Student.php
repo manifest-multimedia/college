@@ -256,10 +256,15 @@ class Student extends Model
     {
         // Only create a user if a valid email exists and there is no existing user with the same email
         if ($this->email && ! User::where('email', $this->email)->exists()) {
+            // Match StudentImporter / students:reset-passwords: password = student_id (index number)
+            $initialPassword = filled($this->student_id)
+                ? (string) $this->student_id
+                : 'password';
+
             $user = User::create([
                 'name' => ($this->first_name ?? 'N/A').' '.($this->other_name ?? 'N/A').' '.($this->last_name ?? 'N/A'),
                 'email' => $this->email,
-                'password' => Hash::make('password'),
+                'password' => Hash::make($initialPassword),
             ]);
 
             // Assign Student role to newly created user

@@ -352,8 +352,9 @@
                                 <div class="fw-semibold">
                                     <h4 class="text-gray-900 fw-bold">User Account Creation</h4>
                                     <div class="fs-6 text-gray-700">
-                                        A user account will be automatically created for this student with default password "password". 
-                                        The student can login and change their password after account creation.
+                                        A user account will be created automatically. The initial login password is the student's
+                                        <strong>student ID (index number)</strong> — same as imported students.
+                                        They can change it after first login.
                                     </div>
                                 </div>
                             </div>
