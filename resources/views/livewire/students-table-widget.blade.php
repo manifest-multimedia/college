@@ -43,18 +43,14 @@
                     <span class="badge bg-light text-gray-700 fw-semibold fs-7 px-2.5 py-1 border border-gray-300 rounded-2" style="font-variant-numeric: tabular-nums;">
                         {{ number_format($studentsTotal) }}
                     </span>
-                    @if(!empty($selectedStudents) && count($selectedStudents) > 0)
-                        <span class="badge bg-light-primary text-primary fw-semibold fs-7 px-2.5 py-1 border border-primary border-opacity-25 rounded-2 ms-1">
-                            {{ count($selectedStudents) }} selected
-                        </span>
-                    @endif
+
                 </div>
 
                 <!-- Desktop Single-Row Filter System -->
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     
                     <!-- Search Input (Flexible 40-50%) -->
-                    <div class="position-relative flex-grow-1" style="max-width: 420px; min-width: 220px;">
+                    <div class="position-relative flex-grow-1" style="max-width: 420px; min-width: min(100%, 220px);">
                         <span class="position-absolute top-50 translate-middle-y ms-3 text-muted">
                             <i class="fas fa-search fs-6"></i>
                         </span>
@@ -73,7 +69,7 @@
                     </div>
 
                     <!-- Programme Filter (220-280px) -->
-                    <div style="min-width: 200px; max-width: 260px;" class="flex-grow-1 flex-sm-grow-0">
+                    <div style="min-width: min(100%, 200px); max-width: 260px;" class="flex-grow-1 flex-sm-grow-0">
                         <select class="form-select form-select-solid" 
                                 style="height: 42px; border-radius: 8px; font-size: 0.875rem;" 
                                 wire:model.live="programFilter">
@@ -85,7 +81,7 @@
                     </div>
 
                     <!-- Cohort Filter (180-240px) -->
-                    <div style="min-width: 180px; max-width: 220px;" class="flex-grow-1 flex-sm-grow-0">
+                    <div style="min-width: min(100%, 180px); max-width: 220px;" class="flex-grow-1 flex-sm-grow-0">
                         <select class="form-select form-select-solid" 
                                 style="height: 42px; border-radius: 8px; font-size: 0.875rem;" 
                                 wire:model.live="cohortFilter">
@@ -97,7 +93,7 @@
                     </div>
 
                     <!-- Gender Filter (130-160px) -->
-                    <div style="min-width: 130px; max-width: 160px;" class="flex-grow-1 flex-sm-grow-0">
+                    <div style="min-width: min(100%, 130px); max-width: 160px;" class="flex-grow-1 flex-sm-grow-0">
                         <select class="form-select form-select-solid" 
                                 style="height: 42px; border-radius: 8px; font-size: 0.875rem;" 
                                 wire:model.live="genderFilter">
@@ -109,7 +105,7 @@
                     </div>
 
                     <!-- Status Filter -->
-                    <div style="min-width: 140px; max-width: 170px;" class="flex-grow-1 flex-sm-grow-0">
+                    <div style="min-width: min(100%, 140px); max-width: 170px;" class="flex-grow-1 flex-sm-grow-0">
                         <select class="form-select form-select-solid"
                                 style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
                                 wire:model.live="statusFilter">
@@ -130,19 +126,6 @@
                             <i class="fas fa-file-export me-1.5 text-muted fs-7"></i>
                             Export
                         </button>
-
-                        @if(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
-                            <button class="btn btn-light-secondary border d-inline-flex align-items-center" style="height:42px;border-radius:8px;font-size:.875rem" wire:click="openRegenerationHistory"><i class="fas fa-history me-2"></i>ID History</button>
-                        @endif
-                        @if($cohortFilter && auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
-                            <button type="button" 
-                                    class="btn btn-light-warning border border-warning border-opacity-50 text-warning-dark fw-medium d-inline-flex align-items-center px-3" 
-                                    style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
-                                    wire:click="confirmIdRegeneration">
-                                <i class="fas fa-sync-alt me-1.5 fs-7"></i>
-                                Regenerate IDs
-                            </button>
-                        @endif
 
                         @if(auth()->user() && auth()->user()->hasRole('System'))
                             <div class="dropdown">
@@ -187,15 +170,13 @@
                             {{ count($selectedStudents) }} student(s) selected
                         </span>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
                         @if(auth()->user() && auth()->user()->hasRole('System'))
                             <button type="button" class="btn btn-sm btn-warning py-1 px-3 fs-7 fw-semibold text-dark" wire:click="openStudentPasswordReset('selected')">
                                 <i class="fas fa-key me-1"></i> Reset Passwords
                             </button>
                         @endif
-                        @if(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
-                            <button type="button" class="btn btn-sm btn-light-warning border border-warning py-1 px-3 fs-7 fw-semibold" wire:click="confirmIdRegeneration('selected')"><i class="fas fa-sync-alt me-1"></i> Regenerate Selected IDs</button>
-                        @endif
+
                         <button type="button" class="btn btn-sm btn-primary py-1 px-3 fs-7 fw-semibold" wire:click="exportStudents">
                             Export Selected
                         </button>
@@ -297,8 +278,8 @@
                             <th class="align-middle fw-bold text-uppercase" style="width: 150px; min-width: 150px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Student ID</th>
                             <th class="align-middle fw-bold text-uppercase" style="min-width: 240px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Student Name</th>
                             <th class="align-middle fw-bold text-uppercase" style="width: 100px; min-width: 100px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Gender</th>
-                            <th class="align-middle fw-bold text-uppercase" style="min-width: 220px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Programme</th>
-                            <th class="align-middle fw-bold text-uppercase" style="width: 140px; min-width: 140px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Cohort</th>
+                            <th class="align-middle fw-bold text-uppercase" style="min-width: min(100%, 220px); font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Programme</th>
+                            <th class="align-middle fw-bold text-uppercase" style="width: 140px; min-width: min(100%, 140px); font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Cohort</th>
                             <th class="align-middle fw-bold text-uppercase text-center" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Status</th>
                             <th class="align-middle fw-bold text-uppercase text-end" style="width: 110px; min-width: 110px; font-size: 0.75rem; letter-spacing: 0.05em; padding: 12px 16px; color: #475569;">Actions</th>
                         </tr>
@@ -486,92 +467,6 @@
                 <div class="modal-footer bg-light py-3 px-4 border-0">
                     <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="$set('confirmingStudentDeletion', false)">Cancel</button>
                     <button type="button" class="btn btn-sm btn-danger fw-semibold px-4" wire:click="deleteStudent">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    @if($showRegenerationHistory)
-    <div class="modal fade show" style="display:block;background-color:rgba(0,0,0,.5)" role="dialog" aria-modal="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Student ID regeneration history</h5><button class="btn-close" wire:click="$set('showRegenerationHistory', false)" aria-label="Close"></button></div>
-                <div class="modal-body">
-                    <div wire:poll.5s class="mb-4">
-                        <h6 class="fw-bold">Recent operations</h6>
-                        <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Cohort</th><th>Requested</th><th>Status</th><th>Committed students</th><th>Details</th></tr></thead><tbody>
-                        @forelse($this->regenerationOperations as $operation)
-                            <tr wire:key="operation-{{ $operation->id }}"><td>{{ $operation->cohort_name }}</td><td>{{ $operation->created_at }}</td><td>{{ ucfirst($operation->status) }}</td><td>{{ $operation->processed }} / {{ $operation->total }}</td><td>{{ $operation->message ?? ($operation->status === 'processing' ? 'Validating and applying changes atomically' : '') }}</td></tr>
-                        @empty<tr><td colspan="5" class="text-muted">No operations yet.</td></tr>@endforelse
-                        </tbody></table></div>
-                    </div>
-                    <p class="text-muted">Most recent 100 committed batches.</p>
-                    @if($restoreBatchId)
-                        <div class="alert alert-warning">Restore the original IDs for this entire batch? Restoration is blocked if student records have changed.
-                            <button class="btn btn-sm btn-danger ms-2" wire:click="restoreRegenerationBatch" wire:loading.attr="disabled">Confirm restoration</button>
-                        </div>
-                    @endif
-                    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Date</th><th>Cohort</th><th>Initiated by</th><th>Mode</th><th>Changed</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-                    @forelse($this->regenerationBatches as $batch)
-                        <tr wire:key="batch-{{ $batch->id }}"><td>{{ $batch->created_at }}</td><td>{{ $batch->cohort_name ?? 'Deleted cohort' }}</td><td>{{ $batch->actor_name ?? 'Unknown' }}</td><td>{{ str_replace('_', ' ', $batch->mode) }}</td><td>{{ $batch->changed_count }}</td><td>{{ $batch->restored_at ? 'Restored' : 'Committed' }}</td><td><button class="btn btn-sm btn-light-primary" wire:click="downloadRegenerationMapping('{{ $batch->id }}')">CSV</button>
-                        @if(!$batch->restored_at && $batch->changed_count && auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator']))<button class="btn btn-sm btn-light-danger" wire:click="confirmRestoreBatch('{{ $batch->id }}')">Restore</button>@endif</td></tr>
-                    @empty<tr><td colspan="7" class="text-center text-muted">No regeneration history yet.</td></tr>@endforelse
-                    </tbody></table></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <!-- ID Regeneration Modal -->
-    @if($confirmingIdRegeneration)
-    <div class="modal fade show" tabindex="-1" style="display:block;background-color:rgba(0,0,0,.5)" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header py-3 px-4">
-                    <h5 class="modal-title fw-bold">Regenerate Student IDs</h5>
-                    <button type="button" class="btn-close" wire:click="cancelIdRegeneration" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="alert alert-warning">@if($regenerationSelectedIds !== null) Only the {{ count($regenerationSelectedIds) }} selected students will be included. @else All students in the selected cohort will be included, regardless of other filters. @endif Review the proposed IDs before confirming.</div>
-                    <label for="regeneration-mode" class="form-label fw-semibold">Regeneration mode</label>
-                    <select id="regeneration-mode" class="form-select mb-3" wire:model.live="regenerationMode">
-                        <option value="preserve_sequence">Preserve existing sequence (recommended)</option>
-                        <option value="resequence">Regenerate and resequence (assign new numbers)</option>
-                    </select>
-                    @if($regenerationMode === 'resequence')
-                        <div class="alert alert-warning">Resequencing assigns new numbers in alphabetical order, including students whose IDs were manually edited. Choose Preserve existing sequence for a format-only change.</div>
-                    @endif
-                    @if($regenerationMode === 'preserve_sequence')
-                        <label for="source-pattern" class="form-label fw-semibold">Original ID pattern</label>
-                        <input id="source-pattern" class="form-control" wire:model.live.debounce.400ms="regenerationSourcePattern" placeholder="Original pattern with sequence token">
-                        <div class="form-text mb-3">Enter the previous pattern, not the new branding pattern. For example, DN/26/0021 uses {PROGRAM}/{YEAR_SIMPLE}/{SEQUENCE_4}. The sequence 0021 will be retained.</div>
-                    @endif
-                    @error('regenerationSourcePattern') <div class="text-danger">{{ $message }}</div> @enderror
-                    <button class="btn btn-primary btn-sm mb-3" wire:click="previewRegeneration" wire:loading.attr="disabled">Generate preview</button>
-                    <span wire:loading wire:target="previewRegeneration" class="text-muted ms-2">Preparing preview…</span>
-                    @if(!empty($regenerationPreview))
-                        @if(!empty($regenerationPreview['errors']))
-                            <div class="alert alert-danger">Preview blocked. {{ $regenerationPreview['message'] ?? 'Unable to generate IDs.' }}</div>
-                        @else
-                            <p class="fw-semibold">{{ $regenerationPreview['success'] }} students · {{ collect($regenerationPreview['updated_students'])->filter(fn($row) => $row['old_id'] !== $row['new_id'])->count() }} changed · No detected conflicts</p>
-                            <div class="table-responsive" style="max-height:350px;overflow:auto">
-                                <table class="table table-sm align-middle">
-                                    <thead><tr><th>Student</th><th>Current ID</th><th>Proposed ID</th></tr></thead>
-                                    <tbody>
-                                    @foreach($regenerationPreview['updated_students'] as $row)
-                                        <tr wire:key="regeneration-preview-{{ $row['id'] }}"><td>{{ $row['name'] }}</td><td>{{ $row['old_id'] ?? 'Not assigned' }}</td><td>{{ $row['new_id'] }}</td></tr>
-                                    @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
-                    @endif
-                </div>
-                <div class="modal-footer bg-light py-3 px-4">
-                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="cancelIdRegeneration">Cancel</button>
-                    <button type="button" class="btn btn-sm btn-warning fw-semibold" wire:click="regenerateIds" wire:loading.attr="disabled" @disabled(empty($regenerationPreview['hash']) || empty($regenerationPreview['success']) || !empty($regenerationPreview['errors']))>Confirm regeneration</button>
                 </div>
             </div>
         </div>
