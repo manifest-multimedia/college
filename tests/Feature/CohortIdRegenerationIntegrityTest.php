@@ -87,6 +87,20 @@ class CohortIdRegenerationIntegrityTest extends TestCase
         $this->assertDatabaseHas('student_id_regeneration_batches', ['id' => $result['batch_id'], 'restored_by' => $actor->id]);
     }
 
+    public function test_duplicate_active_operation_is_rejected(): void
+    {
+        [$cohort] = $this->students();
+        $actor = User::factory()->create();
+        \Illuminate\Support\Facades\Queue::fake();
+        $operations = app(\App\Services\StudentIdRegenerationOperations::class);
+        $id = $operations->enqueue($cohort->id, $actor->id, 'resequence', null, 'preview-hash', 2);
+        $this->assertDatabaseHas('student_id_regeneration_operations', ['id' => $id, 'status' => 'queued']);
+        $this->assertTrue($operations->claim($id));
+        $this->assertFalse($operations->claim($id));
+        $this->expectException(\RuntimeException::class);
+        $operations->enqueue($cohort->id, $actor->id, 'resequence', null, 'preview-hash', 2);
+    }
+
     private function students(): array
     {
         $cohort = Cohort::create(['name' => 'Integrity cohort', 'slug' => 'integrity-cohort', 'academic_year' => '2026/2027']);
