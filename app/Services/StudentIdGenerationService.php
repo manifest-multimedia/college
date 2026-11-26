@@ -19,7 +19,8 @@ class StudentIdGenerationService
         string $firstName,
         string $lastName,
         ?int $collegeClassId = null,
-        ?int $academicYearId = null
+        ?int $academicYearId = null,
+        bool $allowFallback = true
     ): string {
         $maxRetries = 5;
         $attempt = 0;
@@ -91,6 +92,10 @@ class StudentIdGenerationService
                 // Short delay before retry
                 usleep(100000);
             }
+        }
+
+        if (! $allowFallback) {
+            throw new \RuntimeException('Unable to generate a unique ID using the configured format.');
         }
 
         // Final fallback if all retries failed
@@ -867,119 +872,61 @@ class StudentIdGenerationService
      * Re-generate student IDs for existing students in a specific cohort
      * This will re-sequence all students in the cohort
      */
-    public function regenerateStudentIdsForCohort(int $cohortId): array
+    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null): array
     {
-        $results = [
-            'success' => 0,
-            'errors' => 0,
-            'updated_students' => [],
-            'failed_students' => [],
-        ];
+        $results = ['success' => 0, 'errors' => 0, 'updated_students' => [], 'failed_students' => []];
+        $total = 0;
+        $student = null;
 
         try {
-            DB::beginTransaction();
+            return DB::transaction(function () use ($cohortId, $initiatedBy, $results, &$total, &$student) {
+                \App\Models\Cohort::query()->lockForUpdate()->findOrFail($cohortId);
+                $students = Student::where('cohort_id', $cohortId)
+                    ->orderBy('last_name')->orderBy('first_name')->orderBy('id')
+                    ->lockForUpdate()->get();
+                $total = $students->count();
+                $originalIds = $students->pluck('student_id', 'id');
 
-            // Get all students in the cohort - EVERY student, no filters
-            $students = Student::where('cohort_id', $cohortId)
-                ->orderBy('last_name', 'asc')
-                ->orderBy('first_name', 'asc')
-                ->lockForUpdate() // Lock them to prevent concurrent modifications
-                ->get();
+                foreach ($students as $student) {
+                    $student->student_id = null;
+                    $student->saveQuietly();
+                }
 
-            Log::info('Cohort regeneration: starting', [
-                'cohort_id' => $cohortId,
-                'total_students' => $students->count(),
-                'student_ids_before' => $students->pluck('student_id', 'id')->toArray(),
-            ]);
-
-            if ($students->isEmpty()) {
-                DB::rollBack();
-                Log::warning('Cohort regeneration: no students found', ['cohort_id' => $cohortId]);
-
-                return $results;
-            }
-
-            // First, clear their IDs to allow proper re-sequencing
-            $clearedIds = [];
-            foreach ($students as $student) {
-                $clearedIds[] = [
-                    'id' => $student->id,
-                    'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
-                    'old_id' => $student->student_id,
-                ];
-                $student->student_id = null;
-                $student->saveQuietly();
-            }
-
-            Log::info('Cohort regeneration: cleared all IDs', [
-                'cohort_id' => $cohortId,
-                'students_cleared' => count($clearedIds),
-                'sample_cleared' => array_slice($clearedIds, 0, 5),
-            ]);
-
-            // Now regenerate
-            foreach ($students as $student) {
-                try {
+                foreach ($students as $student) {
+                    $oldId = $originalIds[$student->id];
                     $newId = $this->generateStudentId(
-                        $student->first_name ?? '',
-                        $student->last_name ?? '',
-                        $student->college_class_id,
-                        $student->academic_year_id
+                        $student->first_name ?? '', $student->last_name ?? '',
+                        $student->college_class_id, $student->academic_year_id, false
                     );
-
+                    if (trim($newId) === '' || ! $this->isStudentIdUnique($newId)) {
+                        throw new \RuntimeException('Invalid or duplicate generated student ID.');
+                    }
                     $student->student_id = $newId;
                     $student->save();
-
-                    $studentInfo = [
-                        'id' => $student->id,
-                        'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
-                        'new_id' => $newId,
-                    ];
-
-                    $results['updated_students'][] = $studentInfo;
+                    if ($oldId !== $newId) {
+                        DB::table('student_id_changes')->where('student_id', $student->id)
+                            ->where('status', 'active')->update(['status' => 'superseded', 'updated_at' => now()]);
+                        DB::table('student_id_changes')->insert([
+                            'student_id' => $student->id, 'old_student_id' => $oldId ?? '',
+                            'new_student_id' => $newId, 'changed_by' => $initiatedBy ?? auth()->id(),
+                            'status' => 'active', 'notes' => $oldId === null ? 'Original ID was null' : 'Cohort regeneration',
+                            'created_at' => now(), 'updated_at' => now(),
+                        ]);
+                    }
+                    $results['updated_students'][] = ['id' => $student->id, 'old_id' => $oldId, 'new_id' => $newId];
                     $results['success']++;
-
-                    // Log each successful regeneration
-                    Log::debug('Regenerated student ID', array_merge($studentInfo, ['cohort_id' => $cohortId]));
-
-                } catch (\Throwable $e) {
-                    $results['errors']++;
-                    $results['failed_students'][] = [
-                        'id' => $student->id,
-                        'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
-                        'previous_id' => $student->student_id,
-                        'error' => $e->getMessage(),
-                    ];
-                    Log::error('Error regenerating ID for student in cohort', [
-                        'student_id' => $student->id,
-                        'cohort_id' => $cohortId,
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Do NOT throw; continue with other students so partial progress is preserved
                 }
-            }
 
-            DB::commit();
-
-            Log::info('Cohort regeneration: transaction committed', [
-                'cohort_id' => $cohortId,
-                'success' => $results['success'],
-                'errors' => $results['errors'],
-            ]);
-
+                return $results;
+            });
         } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Error in cohort student ID regeneration', [
-                'cohort_id' => $cohortId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            $results['success'] = 0;
-            $results['errors'] = isset($students) ? $students->count() : 0;
+            Log::error('Cohort student ID regeneration rolled back', ['cohort_id' => $cohortId, 'error' => $e->getMessage()]);
+            $results['errors'] = max(1, $total);
             $results['message'] = $e->getMessage();
+            if ($student) {
+                $results['failed_students'][] = ['id' => $student->id, 'error' => $e->getMessage()];
+            }
+            return $results;
         }
-
-        return $results;
     }
 }

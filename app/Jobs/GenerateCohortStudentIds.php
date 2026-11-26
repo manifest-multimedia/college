@@ -47,7 +47,7 @@ class GenerateCohortStudentIds implements ShouldQueue
         if ($this->regenerateAll === true) {
             try {
                 $totalInCohort = $cohort->students()->count();
-                $result = $idService->regenerateStudentIdsForCohort($this->cohortId);
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId);
 
                 Log::info('GenerateCohortStudentIds: regeneration completed', [
                     'cohort_id' => $this->cohortId,
