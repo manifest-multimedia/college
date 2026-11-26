@@ -13,7 +13,7 @@ use RuntimeException;
 
 final class StudentIdRegenerationOperations
 {
-    public function enqueue(int $cohort, int $actor, string $mode, ?string $pattern, string $hash, int $total): string
+    public function enqueue(int $cohort, int $actor, string $mode, ?string $pattern, string $hash, int $total, ?array $selectedIds = null): string
     {
         $id = DB::transaction(function () use ($cohort, $actor, $total) {
             Cohort::query()->lockForUpdate()->findOrFail($cohort);
@@ -25,7 +25,7 @@ final class StudentIdRegenerationOperations
             return $id;
         });
         try {
-            GenerateCohortStudentIds::dispatch($cohort, $actor, true, $mode, $pattern, $hash, $id);
+            GenerateCohortStudentIds::dispatch($cohort, $actor, true, $mode, $pattern, $hash, $id, $selectedIds);
         } catch (\Throwable $e) {
             $this->fail($id, 'Unable to dispatch regeneration.');
             throw $e;

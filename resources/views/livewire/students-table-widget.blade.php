@@ -34,10 +34,10 @@
     <div class="card mb-xl-10 border border-gray-200 shadow-none rounded-3">
         <!-- Toolbar & Filter Surface -->
         <div class="p-4 p-md-5 border-bottom border-gray-200">
-            <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+            <div class="d-flex flex-column gap-3">
                 
                 <!-- Title & Count Badge -->
-                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                     <h3 class="fw-bold text-gray-900 fs-4 mb-0">Students</h3>
                     <span class="text-muted fs-5 fw-normal">·</span>
                     <span class="badge bg-light text-gray-700 fw-semibold fs-7 px-2.5 py-1 border border-gray-300 rounded-2" style="font-variant-numeric: tabular-nums;">
@@ -51,7 +51,7 @@
                 </div>
 
                 <!-- Desktop Single-Row Filter System -->
-                <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3 flex-grow-1 justify-content-lg-end">
+                <div class="d-flex flex-wrap align-items-center gap-2">
                     
                     <!-- Search Input (Flexible 40-50%) -->
                     <div class="position-relative flex-grow-1" style="max-width: 420px; min-width: 220px;">
@@ -122,7 +122,7 @@
                     </div>
 
                     <!-- Tertiary Export & Actions -->
-                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <button type="button" 
                                 class="btn btn-light-secondary border border-gray-300 text-gray-700 fw-medium d-inline-flex align-items-center px-3" 
                                 style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
@@ -132,7 +132,7 @@
                         </button>
 
                         @if(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
-                            <button class="btn btn-light-secondary border" wire:click="openRegenerationHistory">ID History</button>
+                            <button class="btn btn-light-secondary border d-inline-flex align-items-center" style="height:42px;border-radius:8px;font-size:.875rem" wire:click="openRegenerationHistory"><i class="fas fa-history me-2"></i>ID History</button>
                         @endif
                         @if($cohortFilter && auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
                             <button type="button" 
@@ -180,7 +180,7 @@
 
             <!-- Contextual Selected Action Bar -->
             @if(!empty($selectedStudents) && count($selectedStudents) > 0)
-                <div class="mt-3 pt-3 border-top border-gray-200 d-flex align-items-center justify-content-between bg-light-primary rounded-2 px-3 py-2">
+                <div class="mt-3 d-flex flex-wrap gap-2 align-items-center justify-content-between bg-light-primary rounded-2 px-3 py-2">
                     <div class="d-flex align-items-center gap-2">
                         <i class="fas fa-check-circle text-primary fs-6"></i>
                         <span class="fw-semibold text-gray-800 fs-7">
@@ -192,6 +192,9 @@
                             <button type="button" class="btn btn-sm btn-warning py-1 px-3 fs-7 fw-semibold text-dark" wire:click="openStudentPasswordReset('selected')">
                                 <i class="fas fa-key me-1"></i> Reset Passwords
                             </button>
+                        @endif
+                        @if(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
+                            <button type="button" class="btn btn-sm btn-light-warning border border-warning py-1 px-3 fs-7 fw-semibold" wire:click="confirmIdRegeneration('selected')"><i class="fas fa-sync-alt me-1"></i> Regenerate Selected IDs</button>
                         @endif
                         <button type="button" class="btn btn-sm btn-primary py-1 px-3 fs-7 fw-semibold" wire:click="exportStudents">
                             Export Selected
@@ -531,7 +534,7 @@
                     <button type="button" class="btn-close" wire:click="cancelIdRegeneration" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="alert alert-warning">All students in the selected cohort will be included, regardless of other filters. Review the proposed IDs before confirming.</div>
+                    <div class="alert alert-warning">@if($regenerationSelectedIds !== null) Only the {{ count($regenerationSelectedIds) }} selected students will be included. @else All students in the selected cohort will be included, regardless of other filters. @endif Review the proposed IDs before confirming.</div>
                     <label for="regeneration-mode" class="form-label fw-semibold">Regeneration mode</label>
                     <select id="regeneration-mode" class="form-select mb-3" wire:model.live="regenerationMode">
                         <option value="resequence">Regenerate and resequence</option>
