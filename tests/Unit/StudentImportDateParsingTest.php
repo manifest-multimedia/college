@@ -299,7 +299,7 @@ class InspectableDateStudentImporter extends StudentImporter
         {
             private int $sequence = 0;
 
-            public function generateStudentId(string $firstName, string $lastName, ?int $collegeClassId = null, ?int $academicYearId = null): string
+            public function generateStudentId(string $firstName, string $lastName, ?int $collegeClassId = null, ?int $academicYearId = null, bool $allowFallback = true): string
             {
                 return 'GENERATED/'.++$this->sequence;
             }

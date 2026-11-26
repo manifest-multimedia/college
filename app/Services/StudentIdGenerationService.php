@@ -19,7 +19,8 @@ class StudentIdGenerationService
         string $firstName,
         string $lastName,
         ?int $collegeClassId = null,
-        ?int $academicYearId = null
+        ?int $academicYearId = null,
+        bool $allowFallback = true
     ): string {
         $maxRetries = 5;
         $attempt = 0;
@@ -91,6 +92,10 @@ class StudentIdGenerationService
                 // Short delay before retry
                 usleep(100000);
             }
+        }
+
+        if (! $allowFallback) {
+            throw new \RuntimeException('Unable to generate a unique ID using the configured format.');
         }
 
         // Final fallback if all retries failed
@@ -200,7 +205,8 @@ class StudentIdGenerationService
         string $firstName,
         string $lastName,
         ?int $collegeClassId = null,
-        ?int $academicYearId = null
+        ?int $academicYearId = null,
+        ?int $preservedSequence = null
     ): string {
         $customPattern = config('branding.student_id.custom_pattern');
 
@@ -238,7 +244,9 @@ class StudentIdGenerationService
         // Resolve fixed parts first, then allocate against the actual custom
         // pattern. Structured/simple patterns may not match these identifiers.
         $template = str_replace(array_keys($replacements), array_values($replacements), $customPattern);
-        $studentId = $this->fillCustomSequence($template, $firstName, $lastName);
+        $studentId = $preservedSequence === null
+            ? $this->fillCustomSequence($template, $firstName, $lastName)
+            : str_replace(['{SEQUENCE_3}', '{SEQUENCE_4}'], [str_pad($preservedSequence, 3, '0', STR_PAD_LEFT), str_pad($preservedSequence, 4, '0', STR_PAD_LEFT)], $template);
 
         Log::info('Generated Custom Student ID', [
             'student_id' => $studentId,
@@ -867,119 +875,130 @@ class StudentIdGenerationService
      * Re-generate student IDs for existing students in a specific cohort
      * This will re-sequence all students in the cohort
      */
-    public function regenerateStudentIdsForCohort(int $cohortId): array
+    public function extractPreservedSequence(string $oldId, string $sourcePattern): int
     {
-        $results = [
-            'success' => 0,
-            'errors' => 0,
-            'updated_students' => [],
-            'failed_students' => [],
-        ];
+        $tokens = preg_split('/(\{[A-Z_0-9]+\})/', $sourcePattern, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        $regex = '';
+        $count = 0;
+        foreach ($tokens as $token) {
+            if (in_array($token, ['{SEQUENCE_3}', '{SEQUENCE_4}'], true)) {
+                $count++;
+                $regex .= $token === '{SEQUENCE_3}' ? '([0-9]{3,})' : '([0-9]{4,})';
+            } elseif (in_array($token, ['{INSTITUTION}', '{INSTITUTION_SIMPLE}', '{PROGRAM}', '{PROGRAM_SIMPLE}', '{YEAR_FULL}', '{YEAR_SIMPLE}', '{FIRST_NAME}', '{LAST_NAME}'], true)) {
+                $regex .= '.+?';
+            } else {
+                $regex .= preg_quote($token, '~');
+            }
+        }
+        // Require a literal separator before the sequence, or a fixed-width suffix.
+        // Reject ambiguous adjacent variable-width fields rather than guessing.
+        if ($count !== 1 || preg_match('/\}\{SEQUENCE_[34]\}|\{SEQUENCE_[34]\}\{/', $sourcePattern)
+            || ! preg_match('~^'.$regex.'$~D', $oldId, $matches)
+            || (int) $matches[1] < 1 || strlen(ltrim($matches[1], '0')) > 9) {
+            throw new \InvalidArgumentException('Cannot safely extract sequence from the original ID and source pattern.');
+        }
+        return (int) $matches[1];
+    }
+
+    private function buildIdWithSequence(Student $student, int $sequence): string
+    {
+        $format = config('branding.student_id.format', 'structured');
+        $class = $student->college_class_id;
+        $year = $student->academic_year_id;
+        if ($format === 'custom') {
+            $pattern = (string) config('branding.student_id.custom_pattern');
+            if (preg_match_all('/\{SEQUENCE_[34]\}/', $pattern) !== 1) {
+                throw new \InvalidArgumentException('Target custom pattern must contain exactly one sequence token.');
+            }
+            return $this->generateCustomStudentId($student->first_name ?? '', $student->last_name ?? '', $class, $year, $sequence);
+        }
+        if ($format === 'simple') {
+            return $this->getSimpleInstitutionPrefix().$this->getSimpleProgramCode($class).$this->getSimpleAcademicYear($year).str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        }
+        return $this->getInstitutionPrefix().'/'.$this->getProgramCode($class).'/'.$this->getAcademicYearCode($year).'/'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null, bool $preview = false, ?string $expectedHash = null, ?string $operationId = null): array
+    {
+        $results = ['success' => 0, 'errors' => 0, 'updated_students' => [], 'failed_students' => []];
+        $total = 0;
+        $student = null;
 
         try {
-            DB::beginTransaction();
+            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $preview, $expectedHash, $operationId, $results, &$total, &$student) {
+                \App\Models\Cohort::query()->lockForUpdate()->findOrFail($cohortId);
+                $students = Student::where('cohort_id', $cohortId)
+                    ->orderBy('last_name')->orderBy('first_name')->orderBy('id')
+                    ->lockForUpdate()->get();
+                $total = $students->count();
+                $originalIds = $students->pluck('student_id', 'id');
 
-            // Get all students in the cohort - EVERY student, no filters
-            $students = Student::where('cohort_id', $cohortId)
-                ->orderBy('last_name', 'asc')
-                ->orderBy('first_name', 'asc')
-                ->lockForUpdate() // Lock them to prevent concurrent modifications
-                ->get();
-
-            Log::info('Cohort regeneration: starting', [
-                'cohort_id' => $cohortId,
-                'total_students' => $students->count(),
-                'student_ids_before' => $students->pluck('student_id', 'id')->toArray(),
-            ]);
-
-            if ($students->isEmpty()) {
-                DB::rollBack();
-                Log::warning('Cohort regeneration: no students found', ['cohort_id' => $cohortId]);
-
-                return $results;
-            }
-
-            // First, clear their IDs to allow proper re-sequencing
-            $clearedIds = [];
-            foreach ($students as $student) {
-                $clearedIds[] = [
-                    'id' => $student->id,
-                    'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
-                    'old_id' => $student->student_id,
-                ];
-                $student->student_id = null;
-                $student->saveQuietly();
-            }
-
-            Log::info('Cohort regeneration: cleared all IDs', [
-                'cohort_id' => $cohortId,
-                'students_cleared' => count($clearedIds),
-                'sample_cleared' => array_slice($clearedIds, 0, 5),
-            ]);
-
-            // Now regenerate
-            foreach ($students as $student) {
-                try {
-                    $newId = $this->generateStudentId(
-                        $student->first_name ?? '',
-                        $student->last_name ?? '',
-                        $student->college_class_id,
-                        $student->academic_year_id
-                    );
-
-                    $student->student_id = $newId;
-                    $student->save();
-
-                    $studentInfo = [
-                        'id' => $student->id,
-                        'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
-                        'new_id' => $newId,
-                    ];
-
-                    $results['updated_students'][] = $studentInfo;
-                    $results['success']++;
-
-                    // Log each successful regeneration
-                    Log::debug('Regenerated student ID', array_merge($studentInfo, ['cohort_id' => $cohortId]));
-
-                } catch (\Throwable $e) {
-                    $results['errors']++;
-                    $results['failed_students'][] = [
-                        'id' => $student->id,
-                        'name' => trim(($student->first_name ?? '').' '.($student->last_name ?? '')),
-                        'previous_id' => $student->student_id,
-                        'error' => $e->getMessage(),
-                    ];
-                    Log::error('Error regenerating ID for student in cohort', [
-                        'student_id' => $student->id,
-                        'cohort_id' => $cohortId,
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Do NOT throw; continue with other students so partial progress is preserved
+                if (! in_array($mode, ['resequence', 'preserve_sequence'], true)) {
+                    throw new \InvalidArgumentException('Unknown regeneration mode.');
                 }
-            }
+                $sequences = [];
+                if ($mode === 'preserve_sequence') {
+                    foreach ($students as $student) {
+                        $sequences[$student->id] = $this->extractPreservedSequence((string) $student->student_id, (string) $sourcePattern);
+                    }
+                }
+                foreach ($students as $student) {
+                    $student->student_id = null;
+                    $student->saveQuietly();
+                }
 
-            DB::commit();
+                foreach ($students as $student) {
+                    $oldId = $originalIds[$student->id];
+                    $newId = $mode === 'preserve_sequence'
+                        ? $this->buildIdWithSequence($student, $sequences[$student->id])
+                        : $this->generateStudentId(
+                        $student->first_name ?? '', $student->last_name ?? '',
+                        $student->college_class_id, $student->academic_year_id, false
+                    );
+                    if (trim($newId) === '' || str_contains($newId, '{') || ! $this->isStudentIdUnique($newId)) {
+                        throw new \RuntimeException('Invalid or duplicate generated student ID.');
+                    }
+                    $student->student_id = $newId;
+                    $student->saveQuietly();
+                    if (! $preview && $oldId !== $newId) {
+                        DB::table('student_id_changes')->where('student_id', $student->id)
+                            ->where('status', 'active')->update(['status' => 'superseded', 'updated_at' => now()]);
+                        DB::table('student_id_changes')->insert([
+                            'student_id' => $student->id, 'old_student_id' => $oldId ?? '',
+                            'new_student_id' => $newId, 'changed_by' => $initiatedBy ?? auth()->id(),
+                            'status' => 'active', 'notes' => $oldId === null ? 'Original ID was null' : 'Cohort regeneration',
+                            'created_at' => now(), 'updated_at' => now(),
+                        ]);
+                    }
+                    $results['updated_students'][] = ['id' => $student->id, 'name' => trim($student->first_name.' '.$student->last_name), 'old_id' => $oldId, 'new_id' => $newId];
+                    $results['success']++;
+                }
 
-            Log::info('Cohort regeneration: transaction committed', [
-                'cohort_id' => $cohortId,
-                'success' => $results['success'],
-                'errors' => $results['errors'],
-            ]);
+                app(StudentIdReferenceUpdater::class)->apply($results['updated_students']);
 
+                $results['hash'] = hash('sha256', json_encode([$cohortId, $mode, $sourcePattern, config('branding.student_id'), $results['updated_students']], JSON_THROW_ON_ERROR));
+                if ($expectedHash !== null && ! hash_equals($expectedHash, $results['hash'])) {
+                    throw new \RuntimeException('The preview is stale. Generate a new preview before confirming.');
+                }
+                if ($preview) {
+                    throw new StudentIdPreviewRollback($results);
+                }
+                $results['batch_id'] = app(StudentIdRegenerationHistory::class)->record($cohortId, $initiatedBy ?? auth()->id(), $mode, $sourcePattern, $results['updated_students']);
+                if ($operationId !== null) {
+                    app(StudentIdRegenerationOperations::class)->complete($operationId, $results['batch_id'], $results['success']);
+                }
+                return $results;
+            });
+        } catch (StudentIdPreviewRollback $e) {
+            return $e->results;
         } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Error in cohort student ID regeneration', [
-                'cohort_id' => $cohortId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            $results['success'] = 0;
-            $results['errors'] = isset($students) ? $students->count() : 0;
+            Log::error('Cohort student ID regeneration rolled back', ['cohort_id' => $cohortId, 'error' => $e->getMessage()]);
+            $results['errors'] = max(1, $total);
             $results['message'] = $e->getMessage();
+            if ($student) {
+                $results['failed_students'][] = ['id' => $student->id, 'error' => $e->getMessage()];
+            }
+            return $results;
         }
-
-        return $results;
     }
 }
