@@ -23,7 +23,8 @@ class GenerateCohortStudentIds implements ShouldQueue
         public string $mode = 'resequence',
         public ?string $sourcePattern = null,
         public ?string $expectedHash = null,
-        public ?string $operationId = null
+        public ?string $operationId = null,
+        public ?array $selectedIds = null
     ) {}
 
     /**
@@ -51,7 +52,7 @@ class GenerateCohortStudentIds implements ShouldQueue
             if (! $operations->claim($this->operationId)) { return; }
             try {
                 app(\App\Services\BrandingSettingsService::class)->apply();
-                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern, false, $this->expectedHash, $this->operationId);
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern, false, $this->expectedHash, $this->operationId, $this->selectedIds ?? null);
                 if ($result['errors'] > 0) {
                     throw new \RuntimeException('Regeneration rolled back. Review the preview and server logs.');
                 }

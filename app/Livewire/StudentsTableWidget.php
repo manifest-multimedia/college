@@ -44,6 +44,8 @@ class StudentsTableWidget extends Component
     public array $regenerationPreview = [];
     #[\Livewire\Attributes\Locked]
     public ?int $regenerationCohort = null;
+    #[\Livewire\Attributes\Locked]
+    public ?array $regenerationSelectedIds = null;
 
 
     public $showingExportModal = false;
@@ -313,15 +315,26 @@ class StudentsTableWidget extends Component
      *
      * @return void
      */
-    public function confirmIdRegeneration()
+    public function confirmIdRegeneration(string $scope = 'cohort')
     {
         $this->authorizeRegeneration();
-        if (! $this->cohortFilter) {
-            session()->flash('error', 'Please select a cohort first to regenerate IDs.');
-
-            return;
+        $this->regenerationSelectedIds = null;
+        if ($scope === 'selected') {
+            $ids = array_values(array_unique(array_map('intval', $this->selectedStudents)));
+            $students = $this->getFilteredStudentsQuery()->whereIn('id', $ids)->get(['id', 'cohort_id']);
+            if (! $ids || $students->count() !== count($ids) || $students->pluck('cohort_id')->unique()->count() !== 1 || ! $students->first()->cohort_id) {
+                session()->flash('error', 'Select students belonging to one cohort before regenerating IDs.');
+                return;
+            }
+            $this->regenerationCohort = (int) $students->first()->cohort_id;
+            $this->regenerationSelectedIds = $ids;
+        } else {
+            if (! $this->cohortFilter) {
+                session()->flash('error', 'Please select a cohort first to regenerate IDs.');
+                return;
+            }
+            $this->regenerationCohort = (int) $this->cohortFilter;
         }
-        $this->regenerationCohort = (int) $this->cohortFilter;
         $this->regenerationPreview = [];
         $this->regenerationMode = 'resequence';
         $this->regenerationSourcePattern = '';
@@ -422,22 +435,22 @@ class StudentsTableWidget extends Component
     public function previewRegeneration(\App\Services\StudentIdGenerationService $service): void
     {
         $this->authorizeRegeneration();
-        abort_unless($this->confirmingIdRegeneration && $this->regenerationCohort === (int) $this->cohortFilter, 422);
+        abort_unless($this->confirmingIdRegeneration && ($this->regenerationSelectedIds !== null || $this->regenerationCohort === (int) $this->cohortFilter), 422);
         $this->validate(['regenerationMode' => 'required|in:resequence,preserve_sequence', 'regenerationSourcePattern' => 'required_if:regenerationMode,preserve_sequence|max:255']);
         app(\App\Services\BrandingSettingsService::class)->apply();
-        $this->regenerationPreview = $service->regenerateStudentIdsForCohort($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, true);
+        $this->regenerationPreview = $service->regenerateStudentIdsForCohort($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, true, selectedIds: $this->regenerationSelectedIds);
     }
 
     public function regenerateIds(): void
     {
         $this->authorizeRegeneration();
-        abort_unless($this->confirmingIdRegeneration && $this->regenerationCohort === (int) $this->cohortFilter, 422);
+        abort_unless($this->confirmingIdRegeneration && ($this->regenerationSelectedIds !== null || $this->regenerationCohort === (int) $this->cohortFilter), 422);
         if (empty($this->regenerationPreview['hash']) || empty($this->regenerationPreview['success']) || ! empty($this->regenerationPreview['errors'])) {
             session()->flash('error', 'Generate a successful preview before confirming.');
             return;
         }
         try {
-            app(\App\Services\StudentIdRegenerationOperations::class)->enqueue($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash'], $this->regenerationPreview['success']);
+            app(\App\Services\StudentIdRegenerationOperations::class)->enqueue($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash'], $this->regenerationPreview['success'], $this->regenerationSelectedIds);
         } catch (\Throwable $e) {
             Log::warning('Regeneration enqueue failed', ['error' => $e->getMessage()]);
             session()->flash('error', 'Unable to queue regeneration. Check for an existing active operation.');

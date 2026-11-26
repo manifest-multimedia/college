@@ -101,6 +101,19 @@ class CohortIdRegenerationIntegrityTest extends TestCase
         $operations->enqueue($cohort->id, $actor->id, 'resequence', null, 'preview-hash', 2);
     }
 
+    public function test_selected_regeneration_leaves_unselected_student_unchanged(): void
+    {
+        [$cohort, $first, $second] = $this->students();
+        config(['branding.student_id.format' => 'custom', 'branding.student_id.custom_pattern' => 'NEW/{SEQUENCE_3}']);
+        $service = app(StudentIdGenerationService::class);
+        $preview = $service->regenerateStudentIdsForCohort($cohort->id, preview: true, selectedIds: [$first->id]);
+        $this->assertSame(1, $preview['success']);
+        $result = $service->regenerateStudentIdsForCohort($cohort->id, expectedHash: $preview['hash'], selectedIds: [$first->id]);
+        $this->assertSame(1, $result['success']);
+        $this->assertSame('OLD/002', $second->fresh()->student_id);
+        $this->assertDatabaseCount('student_id_changes', 1);
+    }
+
     private function students(): array
     {
         $cohort = Cohort::create(['name' => 'Integrity cohort', 'slug' => 'integrity-cohort', 'academic_year' => '2026/2027']);

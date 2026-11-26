@@ -918,19 +918,23 @@ class StudentIdGenerationService
         return $this->getInstitutionPrefix().'/'.$this->getProgramCode($class).'/'.$this->getAcademicYearCode($year).'/'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
     }
 
-    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null, bool $preview = false, ?string $expectedHash = null, ?string $operationId = null): array
+    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null, bool $preview = false, ?string $expectedHash = null, ?string $operationId = null, ?array $selectedIds = null): array
     {
         $results = ['success' => 0, 'errors' => 0, 'updated_students' => [], 'failed_students' => []];
         $total = 0;
         $student = null;
 
         try {
-            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $preview, $expectedHash, $operationId, $results, &$total, &$student) {
+            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $preview, $expectedHash, $operationId, $selectedIds, $results, &$total, &$student) {
                 \App\Models\Cohort::query()->lockForUpdate()->findOrFail($cohortId);
                 $students = Student::where('cohort_id', $cohortId)
+                    ->when($selectedIds !== null, fn ($query) => $query->whereIn('id', $selectedIds))
                     ->orderBy('last_name')->orderBy('first_name')->orderBy('id')
                     ->lockForUpdate()->get();
                 $total = $students->count();
+                if ($selectedIds !== null && ($total === 0 || $total !== count(array_unique($selectedIds)))) {
+                    throw new \RuntimeException('Selected students no longer belong to the approved cohort.');
+                }
                 $originalIds = $students->pluck('student_id', 'id');
 
                 if (! in_array($mode, ['resequence', 'preserve_sequence'], true)) {
