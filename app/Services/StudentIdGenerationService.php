@@ -983,6 +983,7 @@ class StudentIdGenerationService
                 if ($preview) {
                     throw new StudentIdPreviewRollback($results);
                 }
+                $results['batch_id'] = app(StudentIdRegenerationHistory::class)->record($cohortId, $initiatedBy ?? auth()->id(), $mode, $sourcePattern, $results['updated_students']);
                 return $results;
             });
         } catch (StudentIdPreviewRollback $e) {

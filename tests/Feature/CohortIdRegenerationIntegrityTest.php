@@ -73,6 +73,20 @@ class CohortIdRegenerationIntegrityTest extends TestCase
         $this->assertSame($password, $user->fresh()->password);
     }
 
+    public function test_batch_history_and_restoration(): void
+    {
+        [$cohort, $first, $second] = $this->students();
+        $actor = User::factory()->create();
+        config(['branding.student_id.format' => 'custom', 'branding.student_id.custom_pattern' => 'NEW/{SEQUENCE_3}']);
+        $result = app(StudentIdGenerationService::class)->regenerateStudentIdsForCohort($cohort->id, $actor->id);
+        $this->assertSame(2, $result['success']);
+        $this->assertDatabaseHas('student_id_regeneration_batches', ['id' => $result['batch_id'], 'initiated_by' => $actor->id, 'changed_count' => 2]);
+        app(\App\Services\StudentIdRegenerationHistory::class)->restore($result['batch_id'], $actor->id);
+        $this->assertSame('OLD/001', $first->fresh()->student_id);
+        $this->assertSame('OLD/002', $second->fresh()->student_id);
+        $this->assertDatabaseHas('student_id_regeneration_batches', ['id' => $result['batch_id'], 'restored_by' => $actor->id]);
+    }
+
     private function students(): array
     {
         $cohort = Cohort::create(['name' => 'Integrity cohort', 'slug' => 'integrity-cohort', 'academic_year' => '2026/2027']);
