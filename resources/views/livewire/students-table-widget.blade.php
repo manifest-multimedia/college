@@ -131,6 +131,9 @@
                             Export
                         </button>
 
+                        @if(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
+                            <button class="btn btn-light-secondary border" wire:click="openRegenerationHistory">ID History</button>
+                        @endif
                         @if($cohortFilter && auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
                             <button type="button" 
                                     class="btn btn-light-warning border border-warning border-opacity-50 text-warning-dark fw-medium d-inline-flex align-items-center px-3" 
@@ -480,6 +483,38 @@
                 <div class="modal-footer bg-light py-3 px-4 border-0">
                     <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="$set('confirmingStudentDeletion', false)">Cancel</button>
                     <button type="button" class="btn btn-sm btn-danger fw-semibold px-4" wire:click="deleteStudent">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($showRegenerationHistory)
+    <div class="modal fade show" style="display:block;background-color:rgba(0,0,0,.5)" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Student ID regeneration history</h5><button class="btn-close" wire:click="$set('showRegenerationHistory', false)" aria-label="Close"></button></div>
+                <div class="modal-body">
+                    <div wire:poll.5s class="mb-4">
+                        <h6 class="fw-bold">Recent operations</h6>
+                        <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Cohort</th><th>Requested</th><th>Status</th><th>Committed students</th><th>Details</th></tr></thead><tbody>
+                        @forelse($this->regenerationOperations as $operation)
+                            <tr wire:key="operation-{{ $operation->id }}"><td>{{ $operation->cohort_name }}</td><td>{{ $operation->created_at }}</td><td>{{ ucfirst($operation->status) }}</td><td>{{ $operation->processed }} / {{ $operation->total }}</td><td>{{ $operation->message ?? ($operation->status === 'processing' ? 'Validating and applying changes atomically' : '') }}</td></tr>
+                        @empty<tr><td colspan="5" class="text-muted">No operations yet.</td></tr>@endforelse
+                        </tbody></table></div>
+                    </div>
+                    <p class="text-muted">Most recent 100 committed batches.</p>
+                    @if($restoreBatchId)
+                        <div class="alert alert-warning">Restore the original IDs for this entire batch? Restoration is blocked if student records have changed.
+                            <button class="btn btn-sm btn-danger ms-2" wire:click="restoreRegenerationBatch" wire:loading.attr="disabled">Confirm restoration</button>
+                        </div>
+                    @endif
+                    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Date</th><th>Cohort</th><th>Initiated by</th><th>Mode</th><th>Changed</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+                    @forelse($this->regenerationBatches as $batch)
+                        <tr wire:key="batch-{{ $batch->id }}"><td>{{ $batch->created_at }}</td><td>{{ $batch->cohort_name ?? 'Deleted cohort' }}</td><td>{{ $batch->actor_name ?? 'Unknown' }}</td><td>{{ str_replace('_', ' ', $batch->mode) }}</td><td>{{ $batch->changed_count }}</td><td>{{ $batch->restored_at ? 'Restored' : 'Committed' }}</td><td><button class="btn btn-sm btn-light-primary" wire:click="downloadRegenerationMapping('{{ $batch->id }}')">CSV</button>
+                        @if(!$batch->restored_at && $batch->changed_count && auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator']))<button class="btn btn-sm btn-light-danger" wire:click="confirmRestoreBatch('{{ $batch->id }}')">Restore</button>@endif</td></tr>
+                    @empty<tr><td colspan="7" class="text-center text-muted">No regeneration history yet.</td></tr>@endforelse
+                    </tbody></table></div>
                 </div>
             </div>
         </div>
