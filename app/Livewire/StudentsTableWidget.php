@@ -343,6 +343,67 @@ class StudentsTableWidget extends Component
      *
      * @return void
      */
+    public bool $showRegenerationHistory = false;
+    #[\Livewire\Attributes\Locked]
+    public ?string $restoreBatchId = null;
+
+    public function openRegenerationHistory(): void
+    {
+        $this->authorizeRegeneration();
+        $this->restoreBatchId = null;
+        $this->showRegenerationHistory = true;
+    }
+
+    public function getRegenerationOperationsProperty()
+    {
+        $this->authorizeRegeneration();
+        return DB::table('student_id_regeneration_operations as o')->leftJoin('cohorts as c', 'c.id', '=', 'o.cohort_id')->select('o.*', 'c.name as cohort_name')->orderByDesc('o.created_at')->limit(30)->get();
+    }
+
+    public function getRegenerationBatchesProperty()
+    {
+        $this->authorizeRegeneration();
+        return DB::table('student_id_regeneration_batches as b')->leftJoin('cohorts as c', 'c.id', '=', 'b.cohort_id')->leftJoin('users as u', 'u.id', '=', 'b.initiated_by')->select('b.id', 'b.mode', 'b.changed_count', 'b.created_at', 'b.restored_at', 'c.name as cohort_name', 'u.name as actor_name')->orderByDesc('b.created_at')->limit(100)->get();
+    }
+
+    public function downloadRegenerationMapping(string $id)
+    {
+        $this->authorizeRegeneration();
+        $batch = DB::table('student_id_regeneration_batches')->where('id', $id)->first();
+        abort_unless($batch, 404);
+        $mapping = json_decode($batch->mapping, true, 512, JSON_THROW_ON_ERROR);
+        return response()->streamDownload(function () use ($mapping) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Internal ID', 'Student', 'Previous ID', 'New ID'], ',', '"', '');
+            foreach ($mapping as $row) {
+                $cells = [$row['id'], $row['name'], $row['old_id'], $row['new_id']];
+                fputcsv($file, array_map(fn ($v) => preg_match('/^[\s]*[=+@-]/', (string) $v) ? "'".$v : $v, $cells), ',', '"', '');
+            }
+            fclose($file);
+        }, 'student-id-mapping-'.$id.'.csv');
+    }
+
+    public function confirmRestoreBatch(string $id): void
+    {
+        abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator']), 403);
+        $this->restoreBatchId = $id;
+    }
+
+    public function restoreRegenerationBatch(): void
+    {
+        abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator']), 403);
+        abort_unless($this->showRegenerationHistory && $this->restoreBatchId, 422);
+        try {
+            app(\App\Services\StudentIdRegenerationHistory::class)->restore($this->restoreBatchId, auth()->id());
+            session()->flash('success', 'Regeneration batch restored.');
+        } catch (\Throwable $e) {
+            Log::warning('Student ID batch restoration failed', ['batch' => $this->restoreBatchId, 'error' => $e->getMessage()]);
+            session()->flash('error', 'Restoration blocked. Verify current IDs and dependent records before retrying.');
+        }
+        $this->restoreBatchId = null;
+        $this->showRegenerationHistory = false;
+    }
+
     private function authorizeRegeneration(): void
     {
         abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']), 403);
@@ -375,7 +436,14 @@ class StudentsTableWidget extends Component
             session()->flash('error', 'Generate a successful preview before confirming.');
             return;
         }
-        GenerateCohortStudentIds::dispatch($this->regenerationCohort, auth()->id(), true, $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash']);
+        try {
+            app(\App\Services\StudentIdRegenerationOperations::class)->enqueue($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash'], $this->regenerationPreview['success']);
+        } catch (\Throwable $e) {
+            Log::warning('Regeneration enqueue failed', ['error' => $e->getMessage()]);
+            session()->flash('error', 'Unable to queue regeneration. Check for an existing active operation.');
+            return;
+        }
+        $this->showRegenerationHistory = true;
         $this->regenerationPreview = [];
         $this->confirmingIdRegeneration = false;
         session()->flash('success', 'Student ID regeneration queued. Changes will only be applied if the preview still matches.');

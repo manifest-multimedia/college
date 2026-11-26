@@ -918,14 +918,14 @@ class StudentIdGenerationService
         return $this->getInstitutionPrefix().'/'.$this->getProgramCode($class).'/'.$this->getAcademicYearCode($year).'/'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
     }
 
-    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null, bool $preview = false, ?string $expectedHash = null): array
+    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null, bool $preview = false, ?string $expectedHash = null, ?string $operationId = null): array
     {
         $results = ['success' => 0, 'errors' => 0, 'updated_students' => [], 'failed_students' => []];
         $total = 0;
         $student = null;
 
         try {
-            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $preview, $expectedHash, $results, &$total, &$student) {
+            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $preview, $expectedHash, $operationId, $results, &$total, &$student) {
                 \App\Models\Cohort::query()->lockForUpdate()->findOrFail($cohortId);
                 $students = Student::where('cohort_id', $cohortId)
                     ->orderBy('last_name')->orderBy('first_name')->orderBy('id')
@@ -982,6 +982,10 @@ class StudentIdGenerationService
                 }
                 if ($preview) {
                     throw new StudentIdPreviewRollback($results);
+                }
+                $results['batch_id'] = app(StudentIdRegenerationHistory::class)->record($cohortId, $initiatedBy ?? auth()->id(), $mode, $sourcePattern, $results['updated_students']);
+                if ($operationId !== null) {
+                    app(StudentIdRegenerationOperations::class)->complete($operationId, $results['batch_id'], $results['success']);
                 }
                 return $results;
             });
