@@ -495,6 +495,14 @@
             <div class="modal-content">
                 <div class="modal-header"><h5 class="modal-title">Student ID regeneration history</h5><button class="btn-close" wire:click="$set('showRegenerationHistory', false)" aria-label="Close"></button></div>
                 <div class="modal-body">
+                    <div wire:poll.5s class="mb-4">
+                        <h6 class="fw-bold">Recent operations</h6>
+                        <div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Cohort</th><th>Requested</th><th>Status</th><th>Committed students</th><th>Details</th></tr></thead><tbody>
+                        @forelse($this->regenerationOperations as $operation)
+                            <tr wire:key="operation-{{ $operation->id }}"><td>{{ $operation->cohort_name }}</td><td>{{ $operation->created_at }}</td><td>{{ ucfirst($operation->status) }}</td><td>{{ $operation->processed }} / {{ $operation->total }}</td><td>{{ $operation->message ?? ($operation->status === 'processing' ? 'Validating and applying changes atomically' : '') }}</td></tr>
+                        @empty<tr><td colspan="5" class="text-muted">No operations yet.</td></tr>@endforelse
+                        </tbody></table></div>
+                    </div>
                     <p class="text-muted">Most recent 100 committed batches.</p>
                     @if($restoreBatchId)
                         <div class="alert alert-warning">Restore the original IDs for this entire batch? Restoration is blocked if student records have changed.

@@ -354,6 +354,12 @@ class StudentsTableWidget extends Component
         $this->showRegenerationHistory = true;
     }
 
+    public function getRegenerationOperationsProperty()
+    {
+        $this->authorizeRegeneration();
+        return DB::table('student_id_regeneration_operations as o')->leftJoin('cohorts as c', 'c.id', '=', 'o.cohort_id')->select('o.*', 'c.name as cohort_name')->orderByDesc('o.created_at')->limit(30)->get();
+    }
+
     public function getRegenerationBatchesProperty()
     {
         $this->authorizeRegeneration();
@@ -430,7 +436,14 @@ class StudentsTableWidget extends Component
             session()->flash('error', 'Generate a successful preview before confirming.');
             return;
         }
-        GenerateCohortStudentIds::dispatch($this->regenerationCohort, auth()->id(), true, $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash']);
+        try {
+            app(\App\Services\StudentIdRegenerationOperations::class)->enqueue($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash'], $this->regenerationPreview['success']);
+        } catch (\Throwable $e) {
+            Log::warning('Regeneration enqueue failed', ['error' => $e->getMessage()]);
+            session()->flash('error', 'Unable to queue regeneration. Check for an existing active operation.');
+            return;
+        }
+        $this->showRegenerationHistory = true;
         $this->regenerationPreview = [];
         $this->confirmingIdRegeneration = false;
         session()->flash('success', 'Student ID regeneration queued. Changes will only be applied if the preview still matches.');
