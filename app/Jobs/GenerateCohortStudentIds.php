@@ -21,7 +21,9 @@ class GenerateCohortStudentIds implements ShouldQueue
         public ?int $initiatedByUserId = null,
         public bool $regenerateAll = false,
         public string $mode = 'resequence',
-        public ?string $sourcePattern = null
+        public ?string $sourcePattern = null,
+        public ?string $expectedHash = null,
+        public ?string $operationId = null
     ) {}
 
     /**
@@ -33,9 +35,33 @@ class GenerateCohortStudentIds implements ShouldQueue
      * The number of times the job may be attempted.
      */
     public int $tries = 3;
+    public bool $failOnTimeout = true;
+
+    public function failed(?\Throwable $exception): void
+    {
+        if ($this->operationId !== null) {
+            app(\App\Services\StudentIdRegenerationOperations::class)->fail($this->operationId, 'Queue execution failed or timed out.');
+        }
+    }
 
     public function handle(StudentIdGenerationService $idService): void
     {
+        if ($this->regenerateAll && $this->operationId !== null) {
+            $operations = app(\App\Services\StudentIdRegenerationOperations::class);
+            if (! $operations->claim($this->operationId)) { return; }
+            try {
+                app(\App\Services\BrandingSettingsService::class)->apply();
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern, false, $this->expectedHash, $this->operationId);
+                if ($result['errors'] > 0) {
+                    throw new \RuntimeException('Regeneration rolled back. Review the preview and server logs.');
+                }
+                $operations->notify($this->operationId);
+            } catch (\Throwable $e) {
+                $operations->fail($this->operationId, 'Regeneration failed. Generate a fresh preview and review server logs.');
+                $this->fail($e);
+            }
+            return;
+        }
         $cohort = Cohort::find($this->cohortId);
         if (! $cohort) {
             Log::warning('GenerateCohortStudentIds: Cohort not found', [
@@ -48,8 +74,9 @@ class GenerateCohortStudentIds implements ShouldQueue
         // If explicitly asked to regenerate all IDs for the cohort, delegate to the service helper
         if ($this->regenerateAll === true) {
             try {
+                app(\App\Services\BrandingSettingsService::class)->apply();
                 $totalInCohort = $cohort->students()->count();
-                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern);
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern, false, $this->expectedHash);
 
                 Log::info('GenerateCohortStudentIds: regeneration completed', [
                     'cohort_id' => $this->cohortId,
