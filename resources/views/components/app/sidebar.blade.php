@@ -1307,7 +1307,7 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     'settings.general', 'settings.users', 'settings.roles', 
                     'settings.permissions', 'settings.backup', 'settings.departments',
                     'settings.user-departments', 'admin.branding.index', 'settings.api',
-                    'settings.assessment-settings', 'settings.sms-provider', 'admin.payment-providers'
+                    'settings.assessment-settings', 'settings.sms-provider', 'admin.payment-providers', 'students.id-regeneration'
                 ];
                 $isSettingsActive = in_array(request()->route()->getName(), $settingsRoutes);
             @endphp
@@ -1425,6 +1425,14 @@ data-kt-drawer-toggle="#kt_aside_toggle">
                     </div>
                     <!--end:Menu item-->
                     
+                    @hasanyrole('System|Super Admin')
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('students.id-regeneration') ? 'active' : '' }}" href="{{ route('students.id-regeneration') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Student ID Regeneration</span>
+                        </a>
+                    </div>
+                    @endhasanyrole
                     @hasanyrole('System|Super Admin')
                     <div class="menu-item">
                         <a class="menu-link {{ request()->routeIs('settings.sms-provider') ? 'active' : '' }}" href="{{ route('settings.sms-provider') }}">

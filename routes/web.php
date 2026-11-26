@@ -332,6 +332,9 @@ Route::middleware([
         return redirect()->route('admin.assessment-scores.index');
     })->middleware(['auth:sanctum', 'role:Administrator|Super Admin|Academic Officer|System|Finance Manager|Lecturer'])->name('assessment-scores');
 
+    Route::view('/students/id-regeneration', 'student-id-regeneration')
+        ->middleware('role:System|Super Admin')->name('students.id-regeneration');
+
     // Administrator routes
     Route::middleware(['role:Administrator|Super Admin|Academic Officer|System|Finance Manager'])->group(function () {
         Route::get('/students', function () {
