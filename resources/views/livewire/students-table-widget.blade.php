@@ -537,13 +537,16 @@
                     <div class="alert alert-warning">@if($regenerationSelectedIds !== null) Only the {{ count($regenerationSelectedIds) }} selected students will be included. @else All students in the selected cohort will be included, regardless of other filters. @endif Review the proposed IDs before confirming.</div>
                     <label for="regeneration-mode" class="form-label fw-semibold">Regeneration mode</label>
                     <select id="regeneration-mode" class="form-select mb-3" wire:model.live="regenerationMode">
-                        <option value="resequence">Regenerate and resequence</option>
-                        <option value="preserve_sequence">Preserve existing sequence</option>
+                        <option value="preserve_sequence">Preserve existing sequence (recommended)</option>
+                        <option value="resequence">Regenerate and resequence (assign new numbers)</option>
                     </select>
+                    @if($regenerationMode === 'resequence')
+                        <div class="alert alert-warning">Resequencing assigns new numbers in alphabetical order, including students whose IDs were manually edited. Choose Preserve existing sequence for a format-only change.</div>
+                    @endif
                     @if($regenerationMode === 'preserve_sequence')
                         <label for="source-pattern" class="form-label fw-semibold">Original ID pattern</label>
                         <input id="source-pattern" class="form-control" wire:model.live.debounce.400ms="regenerationSourcePattern" placeholder="Original pattern with sequence token">
-                        <div class="form-text mb-3">Enter the previous pattern, not the new branding pattern. Use a clearly delimited sequence token.</div>
+                        <div class="form-text mb-3">Enter the previous pattern, not the new branding pattern. For example, DN/26/0021 uses {PROGRAM}/{YEAR_SIMPLE}/{SEQUENCE_4}. The sequence 0021 will be retained.</div>
                     @endif
                     @error('regenerationSourcePattern') <div class="text-danger">{{ $message }}</div> @enderror
                     <button class="btn btn-primary btn-sm mb-3" wire:click="previewRegeneration" wire:loading.attr="disabled">Generate preview</button>

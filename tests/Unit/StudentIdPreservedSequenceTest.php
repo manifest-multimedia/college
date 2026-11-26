@@ -14,6 +14,15 @@ class StudentIdPreservedSequenceTest extends TestCase
         $this->assertSame(42, $service->extractPreservedSequence('COL-0042-RGN', '{INSTITUTION}-{SEQUENCE_4}-{PROGRAM}'));
     }
 
+    public function test_dental_nursing_format_change_preserves_manual_sequence(): void
+    {
+        $service = new StudentIdGenerationService;
+        $pattern = '{PROGRAM}/{YEAR_SIMPLE}/{SEQUENCE_4}';
+        foreach (['0021', '0001', '0002'] as $sequence) {
+            $this->assertSame((int) $sequence, $service->extractPreservedSequence('DN/26/'.$sequence, $pattern));
+        }
+    }
+
     public function test_rejects_ambiguous_adjacent_tokens(): void
     {
         $this->expectException(\InvalidArgumentException::class);

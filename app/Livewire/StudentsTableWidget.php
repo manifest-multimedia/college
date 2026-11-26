@@ -38,7 +38,7 @@ class StudentsTableWidget extends Component
     public $studentToDelete = null;
 
     public $confirmingIdRegeneration = false;
-    public string $regenerationMode = 'resequence';
+    public string $regenerationMode = 'preserve_sequence';
     public string $regenerationSourcePattern = '';
     #[\Livewire\Attributes\Locked]
     public array $regenerationPreview = [];
@@ -336,7 +336,7 @@ class StudentsTableWidget extends Component
             $this->regenerationCohort = (int) $this->cohortFilter;
         }
         $this->regenerationPreview = [];
-        $this->regenerationMode = 'resequence';
+        $this->regenerationMode = 'preserve_sequence';
         $this->regenerationSourcePattern = '';
         $this->confirmingIdRegeneration = true;
     }
