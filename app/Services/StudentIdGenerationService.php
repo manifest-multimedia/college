@@ -918,14 +918,14 @@ class StudentIdGenerationService
         return $this->getInstitutionPrefix().'/'.$this->getProgramCode($class).'/'.$this->getAcademicYearCode($year).'/'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
     }
 
-    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null): array
+    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null, bool $preview = false, ?string $expectedHash = null): array
     {
         $results = ['success' => 0, 'errors' => 0, 'updated_students' => [], 'failed_students' => []];
         $total = 0;
         $student = null;
 
         try {
-            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $results, &$total, &$student) {
+            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $preview, $expectedHash, $results, &$total, &$student) {
                 \App\Models\Cohort::query()->lockForUpdate()->findOrFail($cohortId);
                 $students = Student::where('cohort_id', $cohortId)
                     ->orderBy('last_name')->orderBy('first_name')->orderBy('id')
@@ -959,8 +959,8 @@ class StudentIdGenerationService
                         throw new \RuntimeException('Invalid or duplicate generated student ID.');
                     }
                     $student->student_id = $newId;
-                    $student->save();
-                    if ($oldId !== $newId) {
+                    $student->saveQuietly();
+                    if (! $preview && $oldId !== $newId) {
                         DB::table('student_id_changes')->where('student_id', $student->id)
                             ->where('status', 'active')->update(['status' => 'superseded', 'updated_at' => now()]);
                         DB::table('student_id_changes')->insert([
@@ -970,12 +970,21 @@ class StudentIdGenerationService
                             'created_at' => now(), 'updated_at' => now(),
                         ]);
                     }
-                    $results['updated_students'][] = ['id' => $student->id, 'old_id' => $oldId, 'new_id' => $newId];
+                    $results['updated_students'][] = ['id' => $student->id, 'name' => trim($student->first_name.' '.$student->last_name), 'old_id' => $oldId, 'new_id' => $newId];
                     $results['success']++;
                 }
 
+                $results['hash'] = hash('sha256', json_encode([$cohortId, $mode, $sourcePattern, config('branding.student_id'), $results['updated_students']], JSON_THROW_ON_ERROR));
+                if ($expectedHash !== null && ! hash_equals($expectedHash, $results['hash'])) {
+                    throw new \RuntimeException('The preview is stale. Generate a new preview before confirming.');
+                }
+                if ($preview) {
+                    throw new StudentIdPreviewRollback($results);
+                }
                 return $results;
             });
+        } catch (StudentIdPreviewRollback $e) {
+            return $e->results;
         } catch (\Throwable $e) {
             Log::error('Cohort student ID regeneration rolled back', ['cohort_id' => $cohortId, 'error' => $e->getMessage()]);
             $results['errors'] = max(1, $total);

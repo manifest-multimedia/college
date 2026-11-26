@@ -38,6 +38,13 @@ class StudentsTableWidget extends Component
     public $studentToDelete = null;
 
     public $confirmingIdRegeneration = false;
+    public string $regenerationMode = 'resequence';
+    public string $regenerationSourcePattern = '';
+    #[\Livewire\Attributes\Locked]
+    public array $regenerationPreview = [];
+    #[\Livewire\Attributes\Locked]
+    public ?int $regenerationCohort = null;
+
 
     public $showingExportModal = false;
 
@@ -308,11 +315,16 @@ class StudentsTableWidget extends Component
      */
     public function confirmIdRegeneration()
     {
+        $this->authorizeRegeneration();
         if (! $this->cohortFilter) {
             session()->flash('error', 'Please select a cohort first to regenerate IDs.');
 
             return;
         }
+        $this->regenerationCohort = (int) $this->cohortFilter;
+        $this->regenerationPreview = [];
+        $this->regenerationMode = 'resequence';
+        $this->regenerationSourcePattern = '';
         $this->confirmingIdRegeneration = true;
     }
 
@@ -331,22 +343,42 @@ class StudentsTableWidget extends Component
      *
      * @return void
      */
-    public function regenerateIds(\App\Services\StudentIdGenerationService $service)
+    private function authorizeRegeneration(): void
     {
-        if (! $this->cohortFilter) {
+        abort_unless(auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']), 403);
+    }
+
+    public function updatedRegenerationMode(): void
+    {
+        $this->regenerationPreview = [];
+    }
+
+    public function updatedRegenerationSourcePattern(): void
+    {
+        $this->regenerationPreview = [];
+    }
+
+    public function previewRegeneration(\App\Services\StudentIdGenerationService $service): void
+    {
+        $this->authorizeRegeneration();
+        abort_unless($this->confirmingIdRegeneration && $this->regenerationCohort === (int) $this->cohortFilter, 422);
+        $this->validate(['regenerationMode' => 'required|in:resequence,preserve_sequence', 'regenerationSourcePattern' => 'required_if:regenerationMode,preserve_sequence|max:255']);
+        app(\App\Services\BrandingSettingsService::class)->apply();
+        $this->regenerationPreview = $service->regenerateStudentIdsForCohort($this->regenerationCohort, auth()->id(), $this->regenerationMode, $this->regenerationSourcePattern, true);
+    }
+
+    public function regenerateIds(): void
+    {
+        $this->authorizeRegeneration();
+        abort_unless($this->confirmingIdRegeneration && $this->regenerationCohort === (int) $this->cohortFilter, 422);
+        if (empty($this->regenerationPreview['hash']) || empty($this->regenerationPreview['success']) || ! empty($this->regenerationPreview['errors'])) {
+            session()->flash('error', 'Generate a successful preview before confirming.');
             return;
         }
-
-        try {
-            // Pass regenerateAll=true so the job resequences all students in the cohort
-            GenerateCohortStudentIds::dispatch((int) $this->cohortFilter, auth()->id(), true);
-            session()->flash('success', 'Student ID regeneration has been queued. You can continue using the app; we will notify you when it completes.');
-        } catch (\Throwable $e) {
-            Log::error('Error queueing ID regeneration: '.$e->getMessage());
-            session()->flash('error', 'Could not queue ID regeneration. Please try again or contact support.');
-        }
-
+        GenerateCohortStudentIds::dispatch($this->regenerationCohort, auth()->id(), true, $this->regenerationMode, $this->regenerationSourcePattern, $this->regenerationPreview['hash']);
+        $this->regenerationPreview = [];
         $this->confirmingIdRegeneration = false;
+        session()->flash('success', 'Student ID regeneration queued. Changes will only be applied if the preview still matches.');
     }
 
     /**

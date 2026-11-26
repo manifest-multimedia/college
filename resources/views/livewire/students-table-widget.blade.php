@@ -131,7 +131,7 @@
                             Export
                         </button>
 
-                        @if($cohortFilter)
+                        @if($cohortFilter && auth()->user()?->hasAnyRole(['System', 'Super Admin', 'Administrator', 'Academic Officer']))
                             <button type="button" 
                                     class="btn btn-light-warning border border-warning border-opacity-50 text-warning-dark fw-medium d-inline-flex align-items-center px-3" 
                                     style="height: 42px; border-radius: 8px; font-size: 0.875rem;"
@@ -488,22 +488,49 @@
 
     <!-- ID Regeneration Modal -->
     @if($confirmingIdRegeneration)
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade show" tabindex="-1" style="display:block;background-color:rgba(0,0,0,.5)" aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-warning text-dark py-3 px-4">
-                    <h5 class="modal-title fw-bold fs-6">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Regenerate Student IDs
-                    </h5>
-                    <button type="button" class="btn-close" wire:click="$set('confirmingIdRegeneration', false)"></button>
+                <div class="modal-header py-3 px-4">
+                    <h5 class="modal-title fw-bold">Regenerate Student IDs</h5>
+                    <button type="button" class="btn-close" wire:click="cancelIdRegeneration" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <p class="mb-0 text-gray-800 fs-6">This action will regenerate IDs for all students in the selected cohort. Are you sure you want to proceed?</p>
+                    <div class="alert alert-warning">All students in the selected cohort will be included, regardless of other filters. Review the proposed IDs before confirming.</div>
+                    <label for="regeneration-mode" class="form-label fw-semibold">Regeneration mode</label>
+                    <select id="regeneration-mode" class="form-select mb-3" wire:model.live="regenerationMode">
+                        <option value="resequence">Regenerate and resequence</option>
+                        <option value="preserve_sequence">Preserve existing sequence</option>
+                    </select>
+                    @if($regenerationMode === 'preserve_sequence')
+                        <label for="source-pattern" class="form-label fw-semibold">Original ID pattern</label>
+                        <input id="source-pattern" class="form-control" wire:model.live.debounce.400ms="regenerationSourcePattern" placeholder="Original pattern with sequence token">
+                        <div class="form-text mb-3">Enter the previous pattern, not the new branding pattern. Use a clearly delimited sequence token.</div>
+                    @endif
+                    @error('regenerationSourcePattern') <div class="text-danger">{{ $message }}</div> @enderror
+                    <button class="btn btn-primary btn-sm mb-3" wire:click="previewRegeneration" wire:loading.attr="disabled">Generate preview</button>
+                    <span wire:loading wire:target="previewRegeneration" class="text-muted ms-2">Preparing preview…</span>
+                    @if(!empty($regenerationPreview))
+                        @if(!empty($regenerationPreview['errors']))
+                            <div class="alert alert-danger">Preview blocked. {{ $regenerationPreview['message'] ?? 'Unable to generate IDs.' }}</div>
+                        @else
+                            <p class="fw-semibold">{{ $regenerationPreview['success'] }} students · {{ collect($regenerationPreview['updated_students'])->filter(fn($row) => $row['old_id'] !== $row['new_id'])->count() }} changed · No detected conflicts</p>
+                            <div class="table-responsive" style="max-height:350px;overflow:auto">
+                                <table class="table table-sm align-middle">
+                                    <thead><tr><th>Student</th><th>Current ID</th><th>Proposed ID</th></tr></thead>
+                                    <tbody>
+                                    @foreach($regenerationPreview['updated_students'] as $row)
+                                        <tr wire:key="regeneration-preview-{{ $row['id'] }}"><td>{{ $row['name'] }}</td><td>{{ $row['old_id'] ?? 'Not assigned' }}</td><td>{{ $row['new_id'] }}</td></tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    @endif
                 </div>
-                <div class="modal-footer bg-light py-3 px-4 border-0">
-                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="$set('confirmingIdRegeneration', false)">Cancel</button>
-                    <button type="button" class="btn btn-sm btn-warning text-dark fw-semibold px-4" wire:click="regenerateIds">Regenerate</button>
+                <div class="modal-footer bg-light py-3 px-4">
+                    <button type="button" class="btn btn-sm btn-light-secondary border" wire:click="cancelIdRegeneration">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-warning fw-semibold" wire:click="regenerateIds" wire:loading.attr="disabled" @disabled(empty($regenerationPreview['hash']) || empty($regenerationPreview['success']) || !empty($regenerationPreview['errors']))>Confirm regeneration</button>
                 </div>
             </div>
         </div>

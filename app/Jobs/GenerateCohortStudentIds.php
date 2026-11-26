@@ -21,7 +21,8 @@ class GenerateCohortStudentIds implements ShouldQueue
         public ?int $initiatedByUserId = null,
         public bool $regenerateAll = false,
         public string $mode = 'resequence',
-        public ?string $sourcePattern = null
+        public ?string $sourcePattern = null,
+        public ?string $expectedHash = null
     ) {}
 
     /**
@@ -48,8 +49,9 @@ class GenerateCohortStudentIds implements ShouldQueue
         // If explicitly asked to regenerate all IDs for the cohort, delegate to the service helper
         if ($this->regenerateAll === true) {
             try {
+                app(\App\Services\BrandingSettingsService::class)->apply();
                 $totalInCohort = $cohort->students()->count();
-                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern);
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern, false, $this->expectedHash);
 
                 Log::info('GenerateCohortStudentIds: regeneration completed', [
                     'cohort_id' => $this->cohortId,

@@ -38,6 +38,22 @@ class CohortIdRegenerationIntegrityTest extends TestCase
         $this->assertDatabaseCount('student_id_changes', 0);
     }
 
+    public function test_preview_rolls_back_and_stale_confirmation_is_rejected(): void
+    {
+        [$cohort, $first, $second] = $this->students();
+        config(['branding.student_id.format' => 'custom', 'branding.student_id.custom_pattern' => 'NEW/{SEQUENCE_3}']);
+        $service = app(StudentIdGenerationService::class);
+        $preview = $service->regenerateStudentIdsForCohort($cohort->id, preview: true);
+        $this->assertSame(2, $preview['success']);
+        $this->assertSame('OLD/001', $first->fresh()->student_id);
+        $this->assertDatabaseCount('student_id_changes', 0);
+        config(['branding.student_id.custom_pattern' => 'OTHER/{SEQUENCE_3}']);
+        $result = $service->regenerateStudentIdsForCohort($cohort->id, expectedHash: $preview['hash']);
+        $this->assertSame(0, $result['success']);
+        $this->assertSame('OLD/002', $second->fresh()->student_id);
+        $this->assertDatabaseCount('student_id_changes', 0);
+    }
+
     private function students(): array
     {
         $cohort = Cohort::create(['name' => 'Integrity cohort', 'slug' => 'integrity-cohort', 'academic_year' => '2026/2027']);
