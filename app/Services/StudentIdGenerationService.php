@@ -974,6 +974,8 @@ class StudentIdGenerationService
                     $results['success']++;
                 }
 
+                app(StudentIdReferenceUpdater::class)->apply($results['updated_students']);
+
                 $results['hash'] = hash('sha256', json_encode([$cohortId, $mode, $sourcePattern, config('branding.student_id'), $results['updated_students']], JSON_THROW_ON_ERROR));
                 if ($expectedHash !== null && ! hash_equals($expectedHash, $results['hash'])) {
                     throw new \RuntimeException('The preview is stale. Generate a new preview before confirming.');

@@ -54,6 +54,25 @@ class CohortIdRegenerationIntegrityTest extends TestCase
         $this->assertDatabaseCount('student_id_changes', 0);
     }
 
+    public function test_regeneration_preserves_user_credentials_and_blocks_reused_ids(): void
+    {
+        [$cohort, $first, $second] = $this->students();
+        $user = User::factory()->create(['email' => $first->email]);
+        $first->user_id = $user->id;
+        $first->saveQuietly();
+        $password = $user->password;
+        config(['branding.student_id.format' => 'custom', 'branding.student_id.custom_pattern' => 'OLD/{SEQUENCE_3}', 'branding.student_id.sequence_start' => 2]);
+        $service = app(StudentIdGenerationService::class);
+        $result = $service->regenerateStudentIdsForCohort($cohort->id);
+        $this->assertSame(0, $result['success']);
+        $this->assertSame('OLD/001', $first->fresh()->student_id);
+        config(['branding.student_id.custom_pattern' => 'NEW/{SEQUENCE_3}']);
+        $result = $service->regenerateStudentIdsForCohort($cohort->id);
+        $this->assertSame(2, $result['success']);
+        $this->assertSame($user->id, $first->fresh()->user_id);
+        $this->assertSame($password, $user->fresh()->password);
+    }
+
     private function students(): array
     {
         $cohort = Cohort::create(['name' => 'Integrity cohort', 'slug' => 'integrity-cohort', 'academic_year' => '2026/2027']);
