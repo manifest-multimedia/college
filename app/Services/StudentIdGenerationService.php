@@ -205,7 +205,8 @@ class StudentIdGenerationService
         string $firstName,
         string $lastName,
         ?int $collegeClassId = null,
-        ?int $academicYearId = null
+        ?int $academicYearId = null,
+        ?int $preservedSequence = null
     ): string {
         $customPattern = config('branding.student_id.custom_pattern');
 
@@ -243,7 +244,9 @@ class StudentIdGenerationService
         // Resolve fixed parts first, then allocate against the actual custom
         // pattern. Structured/simple patterns may not match these identifiers.
         $template = str_replace(array_keys($replacements), array_values($replacements), $customPattern);
-        $studentId = $this->fillCustomSequence($template, $firstName, $lastName);
+        $studentId = $preservedSequence === null
+            ? $this->fillCustomSequence($template, $firstName, $lastName)
+            : str_replace(['{SEQUENCE_3}', '{SEQUENCE_4}'], [str_pad($preservedSequence, 3, '0', STR_PAD_LEFT), str_pad($preservedSequence, 4, '0', STR_PAD_LEFT)], $template);
 
         Log::info('Generated Custom Student ID', [
             'student_id' => $studentId,
@@ -872,14 +875,57 @@ class StudentIdGenerationService
      * Re-generate student IDs for existing students in a specific cohort
      * This will re-sequence all students in the cohort
      */
-    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null): array
+    public function extractPreservedSequence(string $oldId, string $sourcePattern): int
+    {
+        $tokens = preg_split('/(\{[A-Z_0-9]+\})/', $sourcePattern, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        $regex = '';
+        $count = 0;
+        foreach ($tokens as $token) {
+            if (in_array($token, ['{SEQUENCE_3}', '{SEQUENCE_4}'], true)) {
+                $count++;
+                $regex .= $token === '{SEQUENCE_3}' ? '([0-9]{3,})' : '([0-9]{4,})';
+            } elseif (in_array($token, ['{INSTITUTION}', '{INSTITUTION_SIMPLE}', '{PROGRAM}', '{PROGRAM_SIMPLE}', '{YEAR_FULL}', '{YEAR_SIMPLE}', '{FIRST_NAME}', '{LAST_NAME}'], true)) {
+                $regex .= '.+?';
+            } else {
+                $regex .= preg_quote($token, '~');
+            }
+        }
+        // Require a literal separator before the sequence, or a fixed-width suffix.
+        // Reject ambiguous adjacent variable-width fields rather than guessing.
+        if ($count !== 1 || preg_match('/\}\{SEQUENCE_[34]\}|\{SEQUENCE_[34]\}\{/', $sourcePattern)
+            || ! preg_match('~^'.$regex.'$~D', $oldId, $matches)
+            || (int) $matches[1] < 1 || strlen(ltrim($matches[1], '0')) > 9) {
+            throw new \InvalidArgumentException('Cannot safely extract sequence from the original ID and source pattern.');
+        }
+        return (int) $matches[1];
+    }
+
+    private function buildIdWithSequence(Student $student, int $sequence): string
+    {
+        $format = config('branding.student_id.format', 'structured');
+        $class = $student->college_class_id;
+        $year = $student->academic_year_id;
+        if ($format === 'custom') {
+            $pattern = (string) config('branding.student_id.custom_pattern');
+            if (preg_match_all('/\{SEQUENCE_[34]\}/', $pattern) !== 1) {
+                throw new \InvalidArgumentException('Target custom pattern must contain exactly one sequence token.');
+            }
+            return $this->generateCustomStudentId($student->first_name ?? '', $student->last_name ?? '', $class, $year, $sequence);
+        }
+        if ($format === 'simple') {
+            return $this->getSimpleInstitutionPrefix().$this->getSimpleProgramCode($class).$this->getSimpleAcademicYear($year).str_pad($sequence, 4, '0', STR_PAD_LEFT);
+        }
+        return $this->getInstitutionPrefix().'/'.$this->getProgramCode($class).'/'.$this->getAcademicYearCode($year).'/'.str_pad($sequence, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function regenerateStudentIdsForCohort(int $cohortId, ?int $initiatedBy = null, string $mode = 'resequence', ?string $sourcePattern = null): array
     {
         $results = ['success' => 0, 'errors' => 0, 'updated_students' => [], 'failed_students' => []];
         $total = 0;
         $student = null;
 
         try {
-            return DB::transaction(function () use ($cohortId, $initiatedBy, $results, &$total, &$student) {
+            return DB::transaction(function () use ($cohortId, $initiatedBy, $mode, $sourcePattern, $results, &$total, &$student) {
                 \App\Models\Cohort::query()->lockForUpdate()->findOrFail($cohortId);
                 $students = Student::where('cohort_id', $cohortId)
                     ->orderBy('last_name')->orderBy('first_name')->orderBy('id')
@@ -887,6 +933,15 @@ class StudentIdGenerationService
                 $total = $students->count();
                 $originalIds = $students->pluck('student_id', 'id');
 
+                if (! in_array($mode, ['resequence', 'preserve_sequence'], true)) {
+                    throw new \InvalidArgumentException('Unknown regeneration mode.');
+                }
+                $sequences = [];
+                if ($mode === 'preserve_sequence') {
+                    foreach ($students as $student) {
+                        $sequences[$student->id] = $this->extractPreservedSequence((string) $student->student_id, (string) $sourcePattern);
+                    }
+                }
                 foreach ($students as $student) {
                     $student->student_id = null;
                     $student->saveQuietly();
@@ -894,11 +949,13 @@ class StudentIdGenerationService
 
                 foreach ($students as $student) {
                     $oldId = $originalIds[$student->id];
-                    $newId = $this->generateStudentId(
+                    $newId = $mode === 'preserve_sequence'
+                        ? $this->buildIdWithSequence($student, $sequences[$student->id])
+                        : $this->generateStudentId(
                         $student->first_name ?? '', $student->last_name ?? '',
                         $student->college_class_id, $student->academic_year_id, false
                     );
-                    if (trim($newId) === '' || ! $this->isStudentIdUnique($newId)) {
+                    if (trim($newId) === '' || str_contains($newId, '{') || ! $this->isStudentIdUnique($newId)) {
                         throw new \RuntimeException('Invalid or duplicate generated student ID.');
                     }
                     $student->student_id = $newId;

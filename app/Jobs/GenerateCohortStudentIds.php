@@ -19,7 +19,9 @@ class GenerateCohortStudentIds implements ShouldQueue
     public function __construct(
         public int $cohortId,
         public ?int $initiatedByUserId = null,
-        public bool $regenerateAll = false
+        public bool $regenerateAll = false,
+        public string $mode = 'resequence',
+        public ?string $sourcePattern = null
     ) {}
 
     /**
@@ -47,7 +49,7 @@ class GenerateCohortStudentIds implements ShouldQueue
         if ($this->regenerateAll === true) {
             try {
                 $totalInCohort = $cohort->students()->count();
-                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId);
+                $result = $idService->regenerateStudentIdsForCohort($this->cohortId, $this->initiatedByUserId, $this->mode, $this->sourcePattern);
 
                 Log::info('GenerateCohortStudentIds: regeneration completed', [
                     'cohort_id' => $this->cohortId,
